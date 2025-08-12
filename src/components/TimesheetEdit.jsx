@@ -63,6 +63,10 @@ function TimesheetEdit({ headerId }) {
 
   const [debugInfo, setDebugInfo] = useState({ ap: null, headerIdProp: headerId ?? null, headerIdResolved: null });
   const [resolvedHeaderId, setResolvedHeaderId] = useState(null);
+  const effectiveHeaderId = useMemo(
+    () => resolvedHeaderId ?? header?.id ?? headerId ?? null,
+    [resolvedHeaderId, header?.id, headerId]
+  );
 
   const prevLinesSigRef = useRef("");
 
@@ -287,7 +291,7 @@ function TimesheetEdit({ headerId }) {
     const nowIso = new Date().toISOString();
     const newLine = {
       id: newId,
-      header_id: headerId,
+      header_id: effectiveHeaderId,
       job_no: "",
       job_task_no: "",
       description: "",
@@ -345,7 +349,7 @@ function TimesheetEdit({ headerId }) {
           out.date = null;
         }
       } else if (key === "header_id") {
-        out.header_id = headerId;
+        out.header_id = effectiveHeaderId;
       } else if (key === "company") {
         out.company = header?.company ?? row.company ?? "";
       } else if (key === "creado") {
@@ -364,6 +368,8 @@ function TimesheetEdit({ headerId }) {
         out.resource_no = row.resource_no ?? header?.resource_no ?? "";
       } else if (key === "resource_responsible") {
         out.resource_responsible = row.resource_responsible ?? header?.resource_no ?? "";
+      } else if (key === "quantity") {
+        out.quantity = Number(row.quantity) || 0;
       } else {
         out[key] = row[key] ?? null;
       }
@@ -436,7 +442,7 @@ function TimesheetEdit({ headerId }) {
     const { data: linesData, error: refreshErr } = await supabaseClient
       .from("timesheet")
       .select("*")
-      .eq("header_id", headerId);
+      .eq("header_id", effectiveHeaderId);
 
     if (refreshErr) {
       console.error("Error refrescando líneas:", refreshErr);
