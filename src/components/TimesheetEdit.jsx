@@ -37,6 +37,30 @@ function TimesheetEdit({ headerId }) {
   const [errors, setErrors] = useState({});
   const [calendarHolidays, setCalendarHolidays] = useState([]);
 
+  // === Calendario (estado + helpers)
+  const [calendarDays, setCalendarDays] = useState([]); // [{ d, iso, need, got, status }]
+  const [dailyRequired, setDailyRequired] = useState({}); // { 'YYYY-MM-DD': hours }
+  const [dailyImputed, setDailyImputed] = useState({}); // { 'YYYY-MM-DD': hours }
+  const [calRange, setCalRange] = useState({ year: null, month: null }); // month: 1-12
+  const [firstOffset, setFirstOffset] = useState(0); // lunes=0..domingo=6
+
+  function parseAllocationPeriod(ap) {
+    const m = /^M(\d{2})-M(\d{2})$/.exec(ap || "");
+    if (!m) return null;
+    const yy = parseInt(m[1], 10);
+    const year = 2000 + yy;
+    const month = parseInt(m[2], 10); // 1..12
+    return { year, month };
+  }
+  function daysInMonth(year, month) { // month: 1..12
+    return new Date(year, month, 0).getDate();
+  }
+  function isoOf(y, m, d) {
+    const mm = String(m).padStart(2, "0");
+    const dd = String(d).padStart(2, "0");
+    return `${y}-${mm}-${dd}`;
+  }
+
   const [debugInfo, setDebugInfo] = useState({ ap: null, headerIdProp: headerId ?? null, headerIdResolved: null });
   const [resolvedHeaderId, setResolvedHeaderId] = useState(null);
 
@@ -116,6 +140,102 @@ function TimesheetEdit({ headerId }) {
     fetchData();
   }, [headerId, location.search]);
 
+  // === Construir datos para el calendario (requerido vs imputado por día)
+  useEffect(() => {
+    async function buildCalendar() {
+      if (!header) return;
+      const apInfo = parseAllocationPeriod(header.allocation_period);
+      if (!apInfo) return;
+      const { year, month } = apInfo;
+      setCalRange({ year, month });
+
+      const first = new Date(year, month - 1, 1);
+      const js = first.getDay(); // 0=Dom .. 6=Sáb
+      const offset = (js + 6) % 7; // Lunes=0 .. Domingo=6
+      setFirstOffset(offset);
+
+      // Resolver código de calendario desde la cabecera (fallbacks)
+      const calendarCode = header?.resource_calendar ?? header?.calendar_code ?? header?.calendar_type ?? null;
+      if (!calendarCode) {
+        console.warn("No calendar code found in header (resource_calendar/calendar_code/calendar_type)");
+        setCalendarDays([]);
+        return;
+      }
+
+      const fromIso = isoOf(year, month, 1);
+      const toIso = isoOf(year, month, daysInMonth(year, month));
+
+      // 1) Horas requeridas por día del calendario laboral
+      const { data: calRows, error: calErr } = await supabaseClient
+        .from("calendar_period_days")
+        .select("day,hours_working,holiday")
+        .eq("allocation_period", header.allocation_period)
+        .eq("calendar_code", calendarCode);
+      if (calErr) {
+        console.error("Error cargando calendar_period_days:", calErr);
+        return;
+      }
+      const req = {};
+      (calRows || []).forEach((r) => {
+        const iso = (r.day || "").slice(0, 10);
+        req[iso] = Number(r.hours_working) || 0;
+      });
+      setDailyRequired(req);
+
+      // 2) Horas imputadas por día (sumando quantity de lines del header)
+      const { data: tRows, error: tErr } = await supabaseClient
+        .from("timesheet")
+        .select("date,quantity")
+        .eq("header_id", resolvedHeaderId || header.id)
+        .gte("date", fromIso)
+        .lte("date", toIso);
+      if (tErr) {
+        console.error("Error cargando imputaciones:", tErr);
+        return;
+      }
+      const imp = {};
+      (tRows || []).forEach((r) => {
+        const iso = (r.date || "").slice(0, 10);
+        const q = Number(r.quantity) || 0;
+        imp[iso] = (imp[iso] || 0) + q;
+      });
+      setDailyImputed(imp);
+
+      // 3) Construir arreglo de días con estado usando festivos, solo festivos en gris
+      const EPS = 0.01;
+      // Construir holidaySet (solo festivos en el calendario)
+      const holidaySet = new Set();
+      (calRows || []).forEach((day) => {
+        const iso = (day.day || "").slice(0, 10);
+        if (day.holiday === true) {
+          holidaySet.add(iso);
+        }
+      });
+
+      const arr = [];
+      const totalDays = daysInMonth(year, month);
+      for (let d = 1; d <= totalDays; d++) {
+        const iso = isoOf(year, month, d);
+        const requiredHours = req[iso] ?? 0;
+        const got = imp[iso] ?? 0;
+
+        let status = "neutral";
+        if (holidaySet.has(iso)) {
+          status = "sin-horas"; // solo festivos en gris
+        } else if (got >= (requiredHours - EPS)) {
+          status = "completo"; // completo con tolerancia
+        } else {
+          status = "falta";    // faltan horas
+        }
+
+        arr.push({ d, iso, need: requiredHours, got, status });
+      }
+      setCalendarDays(arr);
+    }
+
+    buildCalendar();
+  }, [header, resolvedHeaderId]);
+
   // -- Sincronizar estado de edición desde `lines` solo cuando cambian de verdad
   useEffect(() => {
     const safe = Array.isArray(lines) ? lines : [];
@@ -147,11 +267,13 @@ function TimesheetEdit({ headerId }) {
   useEffect(() => {
     async function fetchHolidays() {
       if (!header) return;
+      const calendarCode = header?.resource_calendar ?? header?.calendar_code ?? header?.calendar_type ?? null;
+      if (!calendarCode) return;
       const { data, error } = await supabaseClient
         .from("calendar_period_days")
         .select("*")
         .eq("allocation_period", header?.allocation_period)
-        .eq("calendar_code", header?.resource_calendar)
+        .eq("calendar_code", calendarCode)
         .eq("holiday", true);
       if (error) console.error("Error cargando festivos:", error);
       setCalendarHolidays(data || []);
@@ -391,26 +513,111 @@ function TimesheetEdit({ headerId }) {
           Lista Parte Trabajo
         </button>
       </div>
-      <TimesheetHeader header={header} />
-      <h3>Líneas</h3>
-      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-        <button onClick={saveAllEdits}>Guardar todos</button>
+      {/* Header y calendario: calendario flotante a la derecha, sin ocupar ancho de líneas */}
+      <div style={{ position: "relative", marginBottom: 12 }}>
+        {/* Header ocupa todo el ancho, con padding a la derecha para no quedar debajo del calendario */}
+        <div style={{ paddingRight: 234 }}>
+          <TimesheetHeader header={header} />
+        </div>
+
+        {/* Calendario compacto ABSOLUTO a la derecha */}
+        <div style={{ width: "210px", position: "absolute", top: 0, right: 24 }}>
+          <div style={{ border: "1px solid #d9d9d9", borderRadius: 6, padding: 12, background: "#fff" }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>
+              {calRange.month ? `${String(calRange.month).padStart(2, "0")}/${calRange.year}` : "Mes"}
+            </div>
+            {/* Cabecera de días L-M-X-J-V-S-D */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(7, 1fr)",
+                gap: 4,
+                fontSize: 12,
+                color: "#666",
+                marginBottom: 6,
+              }}
+            >
+              {["L", "M", "X", "J", "V", "S", "D"].map((d) => (
+                <div key={d} style={{ textAlign: "center" }}>{d}</div>
+              ))}
+            </div>
+            {/* Celdas del mes */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(7, 1fr)",
+                gap: 4,
+              }}
+            >
+              {Array.from({ length: firstOffset }).map((_, i) => (
+                <div key={`pad-${i}`} />
+              ))}
+              {calendarDays.map((day) => {
+                let bg = "#f0f0f0"; // gris por defecto
+                if (day.status === "completo" || day.status === "ok") bg = "#2e7d32"; // verde
+                else if (day.status === "falta" || day.status === "missing") bg = "#e53935"; // rojo
+                else if (day.status === "sin-horas" || day.status === "neutral") bg = "#f0f0f0"; // gris
+                return (
+                  <div
+                    key={day.iso}
+                    style={{ textAlign: "center" }}
+                    title={`${day.iso} • Req: ${day.need} • Imp: ${day.got}`}
+                  >
+                    <div
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        padding: "3px 0",
+                        borderRadius: 5,
+                        background: bg,
+                        color: day.status === "sin-horas" ? "#333" : "#fff",
+                        fontSize: 11,
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {day.d}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Leyenda */}
+            <div style={{ display: "flex", gap: 10, marginTop: 10, fontSize: 11, color: "#555", alignItems: "center" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 12, height: 12, background: "#e53935", borderRadius: 3 }} /> Falta
+              </span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 12, height: 12, background: "#2e7d32", borderRadius: 3 }} /> Completo
+              </span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 12, height: 12, background: "#f0f0f0", borderRadius: 3 }} /> Sin horas
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
-      <TimesheetLines
-        lines={lines}
-        editFormData={editFormData}
-        errors={errors}
-        inputRefs={inputRefs}
-        calendarOpenFor={calendarOpenFor}
-        setCalendarOpenFor={setCalendarOpenFor}
-        handleInputChange={handleInputChange}
-        handleDateInputChange={handleDateInputChange}
-        handleDateInputBlur={handleDateInputBlur}
-        handleInputFocus={handleInputFocus}
-        handleKeyDown={handleKeyDown}
-        header={header}
-        calendarHolidays={calendarHolidays}
-      />
+      {/* Sección de líneas debajo, ocupa todo el ancho */}
+      <div style={{ marginTop: 24 }}>
+        <h3>Líneas</h3>
+        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+          <button onClick={saveAllEdits}>Guardar todos</button>
+        </div>
+        <TimesheetLines
+          lines={lines}
+          editFormData={editFormData}
+          errors={errors}
+          inputRefs={inputRefs}
+          calendarOpenFor={calendarOpenFor}
+          setCalendarOpenFor={setCalendarOpenFor}
+          handleInputChange={handleInputChange}
+          handleDateInputChange={handleDateInputChange}
+          handleDateInputBlur={handleDateInputBlur}
+          handleInputFocus={handleInputFocus}
+          handleKeyDown={handleKeyDown}
+          header={header}
+          calendarHolidays={calendarHolidays}
+        />
+      </div>
     </div>
   );
 }
