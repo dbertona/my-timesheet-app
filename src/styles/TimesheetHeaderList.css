@@ -1,5 +1,5 @@
 .timesheet-table {
-  font-size: 16px;
+  font-size: 12px;
   font-family: "Segoe UI", Arial, sans-serif;
   border-collapse: collapse;
   width: 100%;
@@ -12,4 +12,8 @@
 
 .timesheet-table th {
   background-color: #f4f4f4;
+}
+.timesheet-title {
+  font-size: 18px; /* o el tamaño que quieras */
+  font-weight: normal; /* si no quieres negrita */
 }

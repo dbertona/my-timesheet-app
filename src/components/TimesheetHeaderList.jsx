@@ -37,7 +37,7 @@ function TimesheetHeaderList({ headers: propHeaders }) {
 
   return (
     <div>
-      <h2>Partes de Trabajo</h2>
+      <h2 className="timesheet-title">Partes de Trabajo</h2>
       {headers.length === 0 ? (
         <p>No hay cabeceras disponibles.</p>
       ) : (
