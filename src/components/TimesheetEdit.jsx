@@ -60,6 +60,15 @@ function TimesheetEdit({ headerId }) {
     const dd = String(d).padStart(2, "0");
     return `${y}-${mm}-${dd}`;
   }
+  function toIsoFromInput(value) {
+    if (!value) return null;
+    if (typeof value === "string" && value.includes("/")) {
+      const [dd, mm, yyyy] = value.split("/");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    // fallback: assume ISO or Date string
+    return String(value).slice(0, 10);
+  }
 
   const [debugInfo, setDebugInfo] = useState({ ap: null, headerIdProp: headerId ?? null, headerIdResolved: null });
   const [resolvedHeaderId, setResolvedHeaderId] = useState(null);
@@ -226,10 +235,10 @@ function TimesheetEdit({ headerId }) {
         let status = "neutral";
         if (holidaySet.has(iso)) {
           status = "sin-horas"; // solo festivos en gris
-        } else if (got >= (requiredHours - EPS)) {
-          status = "completo"; // completo con tolerancia
-        } else {
-          status = "falta";    // faltan horas
+        } else if (requiredHours > 0) {
+          if (got >= (requiredHours - EPS)) status = "completo"; // verde
+          else if (got > 0)                status = "parcial";  // amarillo
+          else                              status = "cero";     // rojo
         }
 
         arr.push({ d, iso, need: requiredHours, got, status });
@@ -239,6 +248,46 @@ function TimesheetEdit({ headerId }) {
 
     buildCalendar();
   }, [header, resolvedHeaderId]);
+
+  // === Actualizar colores del calendario en vivo según ediciones locales (sin grabar)
+  useEffect(() => {
+    if (!calRange?.year || !calRange?.month) return;
+
+    const EPS = 0.01;
+    // Festivos (solo estos van en gris)
+    const holidaySet = new Set((calendarHolidays || []).map((h) => (h.day || "").slice(0, 10)));
+
+    // Horas imputadas "en vivo" desde el formulario (editFormData)
+    const liveImp = {};
+    Object.values(editFormData || {}).forEach((row) => {
+      const iso = toIsoFromInput(row?.date);
+      if (!iso) return;
+      const q = Number(row?.quantity) || 0;
+      liveImp[iso] = (liveImp[iso] || 0) + q;
+    });
+
+    // Construir arreglo de días con estado (usando dailyRequired + liveImp)
+    const arr = [];
+    const totalDays = daysInMonth(calRange.year, calRange.month);
+    for (let d = 1; d <= totalDays; d++) {
+      const iso = isoOf(calRange.year, calRange.month, d);
+      const need = dailyRequired?.[iso] ?? 0;
+      const got = liveImp?.[iso] ?? 0;
+
+      let status = "neutral";
+      if (holidaySet.has(iso)) {
+        status = "sin-horas";           // festivo → gris
+      } else if (need > 0) {
+        if (got >= (need - EPS)) status = "completo"; // verde
+        else if (got > 0)        status = "parcial";  // amarillo
+        else                      status = "cero";     // rojo
+      }
+
+      arr.push({ d, iso, need, got, status });
+    }
+
+    setCalendarDays(arr);
+  }, [editFormData, dailyRequired, calRange, calendarHolidays]);
 
   // -- Sincronizar estado de edición desde `lines` solo cuando cambian de verdad
   useEffect(() => {
@@ -559,20 +608,22 @@ function TimesheetEdit({ headerId }) {
                 <div key={`pad-${i}`} />
               ))}
               {calendarDays.map((day) => {
-                // Nueva lógica de color
-                // 1. Festivo
-                const isHoliday = (date) => {
-                  return calendarHolidays.some(h => (h.day || "").slice(0,10) === date);
-                };
-                let backgroundColor = undefined;
-                if (isHoliday(day.iso)) {
-                  backgroundColor = 'lightgray';
-                } else if (day.need > 0 && day.got === 0) {
-                  backgroundColor = 'red';
-                } else if (day.need > 0 && day.got > 0 && day.got < day.need) {
-                  backgroundColor = 'yellow';
-                } else if (day.need > 0 && day.got >= day.need) {
-                  backgroundColor = 'lightgreen';
+                let backgroundColor;
+                switch (day.status) {
+                  case "sin-horas":
+                    backgroundColor = "lightgray"; // festivo
+                    break;
+                  case "cero":
+                    backgroundColor = "red"; // requerido y 0 imputado
+                    break;
+                  case "parcial":
+                    backgroundColor = "yellow"; // requerido y >0 pero < requerido
+                    break;
+                  case "completo":
+                    backgroundColor = "lightgreen"; // suficiente
+                    break;
+                  default:
+                    backgroundColor = undefined; // sin color especial
                 }
                 return (
                   <div
@@ -589,11 +640,11 @@ function TimesheetEdit({ headerId }) {
                         backgroundColor,
                         background: backgroundColor,
                         color:
-                          backgroundColor === "lightgray"
-                            ? "#333"
-                            : backgroundColor === "yellow"
+                          backgroundColor === "yellow" || backgroundColor === "lightgray"
                             ? "#222"
-                            : "#fff",
+                            : backgroundColor
+                            ? "#fff"
+                            : "inherit",
                         fontSize: 11,
                         lineHeight: 1.2,
                       }}
