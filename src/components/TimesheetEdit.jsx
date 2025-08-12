@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { supabaseClient } from "../supabaseClient";
 import { format } from "date-fns";
 import TimesheetHeader from "./TimesheetHeader";
@@ -27,6 +28,7 @@ const SAFE_COLUMNS = [
 
 function TimesheetEdit({ headerId }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [header, setHeader] = useState(null);
   const [lines, setLines] = useState([]);
@@ -35,40 +37,84 @@ function TimesheetEdit({ headerId }) {
   const [errors, setErrors] = useState({});
   const [calendarHolidays, setCalendarHolidays] = useState([]);
 
+  const [debugInfo, setDebugInfo] = useState({ ap: null, headerIdProp: headerId ?? null, headerIdResolved: null });
+  const [resolvedHeaderId, setResolvedHeaderId] = useState(null);
+
   const prevLinesSigRef = useRef("");
 
-  // -- Carga inicial
+  // -- Carga inicial (por headerId o por allocation_period del mes actual)
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
 
-      const { data: headerData, error: headerErr } = await supabaseClient
-        .from("resource_timesheet_header")
-        .select("*")
-        .eq("id", headerId)
-        .single();
-      if (headerErr) console.error("Error cargando cabecera:", headerErr);
+      // 0) Construir allocation_period desde query o por defecto (mes actual)
+      const params = new URLSearchParams(location.search);
+      let ap = params.get("allocation_period");
+      if (!ap) {
+        const now = new Date();
+        const yy = String(now.getFullYear()).slice(-2); // "25"
+        const mm = String(now.getMonth() + 1).padStart(2, "0"); // "08"
+        ap = `M${yy}-M${mm}`; // p.ej. M25-M08
+      }
+
+      // 1) Resolver header a cargar
+      let headerData = null;
+      let headerIdResolved = headerId || null;
+
+      if (headerIdResolved) {
+        const { data: h, error: headerErr } = await supabaseClient
+          .from("resource_timesheet_header")
+          .select("*")
+          .eq("id", headerIdResolved)
+          .single();
+        if (headerErr) console.error("Error cargando cabecera:", headerErr);
+        headerData = h || null;
+      } else {
+        // Buscar por allocation_period exacto
+        const { data: h, error: headerErr } = await supabaseClient
+          .from("resource_timesheet_header")
+          .select("*")
+          .eq("allocation_period", ap)
+          .order("id", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (headerErr) console.error("Error cargando cabecera por allocation_period:", headerErr);
+        headerData = h || null;
+        headerIdResolved = headerData?.id || null;
+      }
+
       setHeader(headerData);
+      setResolvedHeaderId(headerIdResolved);
+      setDebugInfo({ ap, headerIdProp: headerId ?? null, headerIdResolved });
 
-      const { data: linesData, error: linesErr } = await supabaseClient
-        .from("timesheet")
-        .select("*")
-        .eq("header_id", headerId);
-      if (linesErr) console.error("Error cargando líneas:", linesErr);
+      // 2) Cargar líneas si tenemos cabecera
+      if (headerIdResolved) {
+        const { data: linesData, error: linesErr } = await supabaseClient
+          .from("timesheet")
+          .select("*")
+          .eq("header_id", headerIdResolved);
+        if (linesErr) console.error("Error cargando líneas:", linesErr);
 
-      if (linesData) {
-        linesData.sort((a, b) => new Date(a.date) - new Date(b.date));
-        const linesFormatted = linesData.map((line) => ({
-          ...line,
-          date: line.date ? format(new Date(line.date), "dd/MM/yyyy") : "",
-        }));
-        setLines(linesFormatted);
+        if (linesData) {
+          linesData.sort((a, b) => new Date(a.date) - new Date(b.date));
+          const linesFormatted = linesData.map((line) => ({
+            ...line,
+            date: line.date ? format(new Date(line.date), "dd/MM/yyyy") : "",
+          }));
+          setLines(linesFormatted);
+        } else {
+          setLines([]);
+        }
+      } else {
+        // Si no encontramos cabecera, limpiamos líneas
+        setLines([]);
       }
 
       setLoading(false);
     }
-    if (headerId) fetchData();
-  }, [headerId]);
+
+    fetchData();
+  }, [headerId, location.search]);
 
   // -- Sincronizar estado de edición desde `lines` solo cuando cambian de verdad
   useEffect(() => {
@@ -291,7 +337,6 @@ function TimesheetEdit({ headerId }) {
     }
   };
 
-  if (!headerId) return <div>Seleccione una cabecera para editar.</div>;
   if (loading) return <div>Cargando datos...</div>;
 
   return (

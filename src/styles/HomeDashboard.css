@@ -1,0 +1,207 @@
+.dashboard-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.dashboard-title {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.dashboard-card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  text-align: center;
+  font-size: 18px;
+  color: #007bff;
+  text-decoration: none;
+  transition: background 0.3s ease;
+}
+
+.dashboard-card:hover {
+  background: #f0f0f0;
+}
+/* ======= Dashboard (estilo Business Central) ======= */
+:root {
+  --bc-teal: #007c89;         /* teal BC */
+  --bc-teal-dark: #006b76;
+  --bc-bg: #f5f7f9;
+  --bc-white: #ffffff;
+}
+
+.dash {
+  padding: 20px;
+  background: var(--bc-bg);
+  min-height: 100vh;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.dash__header { margin-bottom: 16px; }
+
+.dash__greeting {
+  font-size: 28px;
+  font-weight: 700;
+  color: #19a0ac;            /* similar al saludo de tu app */
+  margin: 0;
+}
+
+/* Grid responsive: 1 / 2 / 3 columnas con reparto completo del ancho */
+/* Both BC and new dashboard grid share the same styles */
+.dash__grid, .dashboard-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(1, minmax(0, 1fr)); /* móvil */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .dash__grid, .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* tablet/medianas */
+  }
+}
+
+@media (min-width: 992px) {
+  .dash__grid, .dashboard-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* portátil/escritorio */
+  }
+}
+
+/* Cada tarjeta: BC style + responsive width */
+.bc-card, .dashboard-card {
+  background: var(--bc-teal);
+  color: var(--bc-white);
+  border: 1px solid var(--bc-teal-dark);
+  border-radius: 4px;
+  padding: 16px;
+  height: 160px;                  /* alto parecido al de BC */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* título arriba, valor centro, línea+icono abajo */
+  width: 90%;
+  margin: 0 auto;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.bc-card__title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.1;
+  margin: 0 0 4px 0;
+}
+
+.bc-card__value {
+  font-size: 44px;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  align-self: flex-start;         /* similar a BC (alineado a la izquierda) */
+  margin-left: 4px;
+}
+
+/* Línea divisoria inferior */
+.bc-card__line {
+  border-top: 2px solid rgba(255,255,255,0.85);
+  margin: 8px 0 0;
+}
+
+/* Icono > abajo a la izquierda */
+.bc-card__icon {
+  font-size: 18px;
+  line-height: 1;
+  margin-top: 6px;
+  opacity: 0.9;
+}
+
+/* === BC-like top menu (enlaces superiores) === */
+.bc-menu {
+  display: flex;
+  align-items: center;
+  gap: 28px;               /* separación entre ítems */
+  padding: 8px 0 12px;     /* respiración arriba/abajo */
+  border-bottom: 1px solid #d9d9d9; /* separador sutil */
+  margin-bottom: 16px;     /* separa del grid de tarjetas */
+}
+
+.bc-menu-item a {
+  text-decoration: none;   /* sin subrayado por defecto */
+  color: var(--bc-teal);   /* mismo tono que el resto de la UI */
+  font-size: 15px;
+  font-weight: 600;        /* aspecto de acción/pestaña de BC */
+}
+
+
+/* Estado activo opcional por clase */
+.bc-menu-item--active a {
+  color: var(--bc-teal-dark);
+  border-bottom: 2px solid var(--bc-teal-dark);
+  padding-bottom: 2px;
+}
+
+.bc-card:hover, .dashboard-card:hover, .bc-card:focus, .dashboard-card:focus {
+  background: var(--bc-teal-dark);
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+/* === Menú superior estilo Business Central (refinado) === */
+.bc-menu {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 4px 0 10px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 14px;
+}
+
+.bc-menu-item { display: flex; }
+
+.bc-menu-item a {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 4px;
+  text-decoration: none; /* Sin subrayado por defecto */
+  color: var(--bc-teal);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.bc-menu-item a:hover {
+  background: rgba(0, 124, 137, 0.08);
+  text-decoration: none; /* Sin subrayado en hover */
+}
+
+.bc-menu-item a:focus-visible {
+  outline: 2px solid rgba(0, 124, 137, 0.35);
+  outline-offset: 2px;
+  border-radius: 4px;
+  text-decoration: underline; /* Subrayado solo en foco visible */
+}
+
+.bc-menu-item--active a {
+  color: #008489;
+  background: rgba(0, 124, 137, 0.08);
+  border-bottom: 2px solid #008489;
+}
+
+.bc-menu-item a:visited { color: var(--bc-teal); }
