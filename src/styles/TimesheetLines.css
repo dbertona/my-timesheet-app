@@ -1,0 +1,142 @@
+/* Tabla base */
+.ts-table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Encabezados y celdas */
+.ts-th {
+  position: relative;
+  text-align: center;
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+.ts-td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+.ts-cell { position: relative; }
+
+/* Resizer de columnas */
+.ts-resizer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+}
+
+/* Inputs base */
+.ts-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 4px 6px;
+  box-sizing: border-box;
+  outline: none;
+  outline-color: transparent;
+  outline-offset: 0;
+  box-shadow: none;
+  font: inherit;
+  background: transparent;
+  cursor: text;
+}
+.ts-input.has-error {
+  border: 1px solid #e11d48;
+  border-radius: 4px;
+}
+.ts-input.pr-icon { padding-right: 26px; }
+
+/* Dropdowns */
+.ts-dropdown {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  width: max(100%, 420px);
+  min-width: 420px;
+  max-height: 360px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 6px 16px rgba(0,0,0,.12);
+  z-index: 1000;
+}
+.ts-dropdown__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  background: #fff;
+}
+.ts-dropdown__header input {
+  width: 100%;
+  border: none;
+  outline: none;
+}
+
+/* Iconos (chevron, calendario) */
+.ts-icon {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #4A90E2;
+}
+.ts-icon--chevron { font-size: 16px; }
+.ts-icon--calendar { font-size: 18px; }
+
+/* Datepicker popover */
+.ts-datepop {
+  position: absolute;
+  left: 0;
+  top: 32px;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.13);
+  background: #fff;
+}
+
+/* Mensajes de error debajo del campo */
+.ts-error {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  color: #e11d48;
+  font-size: 0.8em;
+  background-color: #ffe6e9;
+  padding: 2px 4px;
+  border-radius: 3px;
+  z-index: 1;
+  margin-top: 2px;
+}
+:root {
+  --ts-font-family: "Segoe UI", SegoeUI, system-ui, -apple-system, BlinkMacSystemFont,
+                    "Helvetica Neue", Arial, Inter, "Noto Sans", "Liberation Sans", sans-serif;
+  --ts-font-size: 12px; /* ajusta aquí si quieres cambiar todo el módulo */
+}
+
+/* Fuerza tipografía y tamaño dentro del módulo (por encima de defaults de libs) */
+.ts-table,
+.ts-th,
+.ts-td,
+.ts-input,
+.ts-dropdown,
+.ts-dropdown__header,
+.ts-datepop,
+.ts-error {
+  font-family: var(--ts-font-family) !important;
+  font-size: var(--ts-font-size) !important;
+}
+/* Override fuerte: tipografía y tamaño en todo el grid dentro de .ts-responsive */
+.ts-responsive .ts-table,
+.ts-responsive .ts-table * {
+  font-family: var(--ts-font-family) !important;
+  font-size: var(--ts-font-size) !important;
+}

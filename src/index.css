@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  font-family: "Segoe UI", SegoeUI, -apple-system, BlinkMacSystemFont,
+               "Helvetica Neue", Arial, Inter, "Noto Sans", "Liberation Sans",
+               system-ui, sans-serif;
+  font-size: clamp(12px, 0.9vw + 10px, 16px);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
+}
+
+body {
+  font-family: inherit;
+}
+
+* {
+  font-family: inherit;
+}
+
+table, th, td, input, button, select, textarea {
+  font-family: inherit !important;
+  font-size: inherit;
+}

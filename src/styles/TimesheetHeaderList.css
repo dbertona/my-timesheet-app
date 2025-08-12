@@ -1,0 +1,15 @@
+.timesheet-table {
+  font-size: 16px;
+  font-family: "Segoe UI", Arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.timesheet-table th, .timesheet-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+
+.timesheet-table th {
+  background-color: #f4f4f4;
+}
