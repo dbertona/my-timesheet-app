@@ -559,10 +559,21 @@ function TimesheetEdit({ headerId }) {
                 <div key={`pad-${i}`} />
               ))}
               {calendarDays.map((day) => {
-                let bg = "#f0f0f0"; // gris por defecto
-                if (day.status === "completo" || day.status === "ok") bg = "#2e7d32"; // verde
-                else if (day.status === "falta" || day.status === "missing") bg = "#e53935"; // rojo
-                else if (day.status === "sin-horas" || day.status === "neutral") bg = "#f0f0f0"; // gris
+                // Nueva lógica de color
+                // 1. Festivo
+                const isHoliday = (date) => {
+                  return calendarHolidays.some(h => (h.day || "").slice(0,10) === date);
+                };
+                let backgroundColor = undefined;
+                if (isHoliday(day.iso)) {
+                  backgroundColor = 'lightgray';
+                } else if (day.need > 0 && day.got === 0) {
+                  backgroundColor = 'red';
+                } else if (day.need > 0 && day.got > 0 && day.got < day.need) {
+                  backgroundColor = 'yellow';
+                } else if (day.need > 0 && day.got >= day.need) {
+                  backgroundColor = 'lightgreen';
+                }
                 return (
                   <div
                     key={day.iso}
@@ -575,8 +586,14 @@ function TimesheetEdit({ headerId }) {
                         width: "100%",
                         padding: "3px 0",
                         borderRadius: 5,
-                        background: bg,
-                        color: day.status === "sin-horas" ? "#333" : "#fff",
+                        backgroundColor,
+                        background: backgroundColor,
+                        color:
+                          backgroundColor === "lightgray"
+                            ? "#333"
+                            : backgroundColor === "yellow"
+                            ? "#222"
+                            : "#fff",
                         fontSize: 11,
                         lineHeight: 1.2,
                       }}
@@ -588,16 +605,32 @@ function TimesheetEdit({ headerId }) {
               })}
             </div>
             {/* Leyenda */}
-            <div style={{ display: "flex", gap: 10, marginTop: 10, fontSize: 11, color: "#555", alignItems: "center" }}>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <span style={{ width: 12, height: 12, background: "#e53935", borderRadius: 3 }} /> Falta
-              </span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <span style={{ width: 12, height: 12, background: "#2e7d32", borderRadius: 3 }} /> Completo
-              </span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <span style={{ width: 12, height: 12, background: "#f0f0f0", borderRadius: 3 }} /> Sin horas
-              </span>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "space-around",
+                gap: "6px",
+                marginTop: "8px",
+                fontSize: "12px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}>
+                <span style={{ width: "12px", height: "12px", backgroundColor: "red", borderRadius: "3px" }}></span>
+                Sin Horas
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}>
+                <span style={{ width: "12px", height: "12px", backgroundColor: "yellow", borderRadius: "3px" }}></span>
+                Parcial
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}>
+                <span style={{ width: "12px", height: "12px", backgroundColor: "lightgreen", borderRadius: "3px" }}></span>
+                Completo
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}>
+                <span style={{ width: "12px", height: "12px", backgroundColor: "lightgray", borderRadius: "3px" }}></span>
+                Festivo
+              </div>
             </div>
           </div>
         </div>
