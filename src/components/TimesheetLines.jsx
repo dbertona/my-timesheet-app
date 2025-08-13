@@ -9,6 +9,8 @@ import { supabaseClient } from "../supabaseClient";
 import "../styles/TimesheetResponsive.css";
 import "../styles/TimesheetLines.css";
 import TIMESHEET_FIELDS, { TIMESHEET_LABELS, TIMESHEET_ALIGN, COL_MIN_WIDTH, COL_MAX_WIDTH, DEFAULT_COL_WIDTH } from "../constants/timesheetFields";
+import ProjectCell from "./timesheet/ProjectCell";
+import TaskCell from "./timesheet/TaskCell";
 
 
 export default function TimesheetLines({
@@ -292,241 +294,61 @@ export default function TimesheetLines({
           {safeLines.map((line, lineIndex) => (
             <tr key={line.id}>
               {/* ----- PROYECTO: combo buscable ----- */}
-              <td
-                data-col="job_no"
-                className="ts-td ts-cell"
-                style={{ ...colStyles.job_no, textAlign: getAlign("job_no") }}
-              >
-                <div className="ts-cell">
-                  <div className="ts-cell">
-                    <input
-                      type="text"
-                      name="job_no"
-                      value={editFormData[line.id]?.job_no || ""}
-                      onChange={(e) => {
-                        handleInputChange(line.id, e);
-                        clearFieldError(line.id, "job_no");
-                        setJobFilter((prev) => ({ ...prev, [line.id]: e.target.value }));
-                        if (e.target.value !== editFormData[line.id]?.job_no) {
-                          handleInputChange(line.id, { target: { name: "job_task_no", value: "" } });
-                          clearFieldError(line.id, "job_task_no");
-                        }
-                      }}
-                      onBlur={() => {
-                        const raw = (editFormData[line.id]?.job_no || "").trim();
-                        if (!raw) {
-                          // sin proyecto no mostramos error; la tarea ya se vació en onChange
-                          return;
-                        }
-                        const found = findJob(raw);
-                        if (!found) {
-                          setFieldError(line.id, "job_no", "Proyecto inválido. Debe seleccionar uno de la lista.");
-                          // Mantener foco en el mismo input (tras el blur) para corregir
-                          const el = inputRefs?.current?.[line.id]?.["job_no"];
-                          if (el) setTimeout(() => { el.focus(); el.select(); }, 0);
-                          return;
-                        }
-                        // válido: normaliza casing si hace falta y limpia error
-                        if (found.no !== raw) {
-                          handleInputChange(line.id, { target: { name: "job_no", value: found.no } });
-                        }
-                        clearFieldError(line.id, "job_no");
-                      }}
-                      onFocus={(e) => {
-                        handleInputFocus(line.id, "job_no", e);
-                      }}
-                      onKeyDown={async (e) => {
-                        if (e.key === "Enter") {
-                          const list = getVisibleJobs(line.id);
-                          if (list.length === 1) {
-                            const val = list[0].no;
-                            handleInputChange(line.id, { target: { name: "job_no", value: val } });
-                            clearFieldError(line.id, "job_no");
-                            setJobFilter((prev) => ({ ...prev, [line.id]: val }));
-                            setJobOpenFor(null);
-                            await ensureTasksLoaded(val);
-                            const el = inputRefs.current?.[line.id]?.["job_task_no"];
-                            if (el) { el.focus(); el.select(); }
-                            e.preventDefault();
-                            return;
-                          }
-                        }
-                        handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("job_no"));
-                      }}
-                      ref={hasRefs ? (el) => setSafeRef(line.id, "job_no", el) : null}
-                      className={`ts-input ${localErrors[line.id]?.job_no ? 'has-error' : ''}`}
-                      autoComplete="off"
-                    />
-                    <FiChevronDown
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        setJobOpenFor((prev) => (prev === line.id ? null : line.id));
-                      }}
-                      className="ts-icon ts-icon--chevron"
-                    />
-                  </div>
-
-                  {jobOpenFor === line.id && (
-                    <div className="ts-dropdown" onMouseDown={(e) => e.preventDefault()}>
-                      <div className="ts-dropdown__header">
-                        <FiSearch />
-                        <input
-                          value={jobFilter[line.id] || ""}
-                          onChange={(e) =>
-                            setJobFilter((prev) => ({ ...prev, [line.id]: e.target.value }))
-                          }
-                          placeholder="Buscar proyecto..."
-                          style={{ width: "100%", border: "none", outline: "none" }}
-                        />
-                      </div>
-
-                      {(jobsLoaded ? getVisibleJobs(line.id) : []).map((j) => (
-                        <div
-                          key={j.no}
-                          onMouseDown={async () => {
-                            handleInputChange(line.id, { target: { name: "job_no", value: j.no } });
-                            setJobFilter((prev) => ({ ...prev, [line.id]: j.no }));
-                            setJobOpenFor(null);
-                            handleInputChange(line.id, { target: { name: "job_task_no", value: "" } });
-                            await ensureTasksLoaded(j.no);
-                            const el = inputRefs.current?.[line.id]?.["job_task_no"];
-                            if (el) { el.focus(); el.select(); }
-                          }}
-                          title={`${j.no} - ${j.description || ""}`}
-                        >
-                          <strong>{j.no}</strong> {j.description ? `— ${j.description}` : ""}
-                        </div>
-                      ))}
-
-                      {jobsLoaded && getVisibleJobs(line.id).length === 0 && (
-                        <div style={{ padding: "8px", color: "#999" }}>Sin resultados…</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {localErrors[line.id]?.job_no && (
-                  <div className="ts-error">
-                    {localErrors[line.id].job_no}
-                  </div>
-                )}
-              </td>
+              <ProjectCell
+                line={line}
+                lineIndex={lineIndex}
+                colStyle={colStyles.job_no}
+                align={getAlign("job_no")}
+                editFormData={editFormData}
+                inputRefs={inputRefs}
+                hasRefs={hasRefs}
+                setSafeRef={setSafeRef}
+                handlers={{
+                  handleInputChange,
+                  handleInputFocus,
+                  handleKeyDown,
+                  setFieldError,
+                  clearFieldError,
+                }}
+                jobsState={{
+                  jobsLoaded,
+                  jobFilter,
+                  setJobFilter,
+                  jobOpenFor,
+                  setJobOpenFor,
+                  getVisibleJobs,
+                  ensureTasksLoaded,
+                  findJob,
+                }}
+              />
 
               {/* ----- TAREA: combo dependiente ----- */}
-              <td
-                data-col="job_task_no"
-                className="ts-td ts-cell"
-                style={{ ...colStyles.job_task_no, textAlign: getAlign("job_task_no") }}
-              >
-                <div className="ts-cell">
-                  <div className="ts-cell">
-                    <input
-                      type="text"
-                      name="job_task_no"
-                      value={editFormData[line.id]?.job_task_no || ""}
-                      onChange={(e) => {
-                        handleInputChange(line.id, e);
-                        clearFieldError(line.id, "job_task_no");
-                        setTaskFilter((prev) => ({ ...prev, [line.id]: e.target.value }));
-                      }}
-                      onBlur={async () => {
-                        const jobNo = editFormData[line.id]?.job_no || "";
-                        const raw = (editFormData[line.id]?.job_task_no || "").trim();
-                        if (!raw) return;
-                        if (jobNo && !tasksByJob[jobNo]) {
-                          await ensureTasksLoaded(jobNo);
-                        }
-                        const found = findTask(jobNo, raw);
-                        if (!found) {
-                          setFieldError(line.id, "job_task_no", "Tarea inválida para el proyecto seleccionado.");
-                          const el = inputRefs?.current?.[line.id]?.["job_task_no"];
-                          if (el) setTimeout(() => { el.focus(); el.select(); }, 0);
-                          return;
-                        }
-                        if (found.no !== raw) {
-                          handleInputChange(line.id, { target: { name: "job_task_no", value: found.no } });
-                        }
-                        clearFieldError(line.id, "job_task_no");
-                      }}
-                      onFocus={async (e) => {
-                        handleInputFocus(line.id, "job_task_no", e);
-                        const jobNo = editFormData[line.id]?.job_no || "";
-                        if (jobNo) await ensureTasksLoaded(jobNo);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          const jobNo = editFormData[line.id]?.job_no || "";
-                          const list = getVisibleTasks(line.id, jobNo);
-                          if (list.length === 1) {
-                            const val = list[0].no;
-                            handleInputChange(line.id, { target: { name: "job_task_no", value: val } });
-                            clearFieldError(line.id, "job_task_no");
-                            setTaskFilter((prev) => ({ ...prev, [line.id]: val }));
-                            setTaskOpenFor(null);
-                            e.preventDefault();
-                            return;
-                          }
-                        }
-                        handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("job_task_no"));
-                      }}
-                      ref={hasRefs ? (el) => setSafeRef(line.id, "job_task_no", el) : null}
-                      className={`ts-input ${localErrors[line.id]?.job_task_no ? 'has-error' : ''}`}
-                      autoComplete="off"
-                    />
-                    <FiChevronDown
-                      onMouseDown={async (e) => {
-                        e.preventDefault();
-                        const jobNo = editFormData[line.id]?.job_no || "";
-                        if (jobNo) await ensureTasksLoaded(jobNo);
-                        setTaskOpenFor((prev) => (prev === line.id ? null : line.id));
-                      }}
-                      className="ts-icon ts-icon--chevron"
-                    />
-                  </div>
-
-                  {taskOpenFor === line.id && (
-                    <div className="ts-dropdown" onMouseDown={(e) => e.preventDefault()}>
-                      <div className="ts-dropdown__header">
-                        <FiSearch />
-                        <input
-                          value={taskFilter[line.id] || ""}
-                          onChange={(e) =>
-                            setTaskFilter((prev) => ({ ...prev, [line.id]: e.target.value }))
-                          }
-                          placeholder="Buscar tarea..."
-                          style={{ width: "100%", border: "none", outline: "none" }}
-                        />
-                      </div>
-
-                      {(editFormData[line.id]?.job_no
-                        ? getVisibleTasks(line.id, editFormData[line.id]?.job_no)
-                        : []
-                      ).map((t) => (
-                        <div
-                          key={t.no}
-                          onMouseDown={() => {
-                            handleInputChange(line.id, { target: { name: "job_task_no", value: t.no } });
-                            setTaskFilter((prev) => ({ ...prev, [line.id]: t.no }));
-                            setTaskOpenFor(null);
-                          }}
-                          title={`${t.no} - ${t.description || ""}`}
-                        >
-                          <strong>{t.no}</strong> {t.description ? `— ${t.description}` : ""}
-                        </div>
-                      ))}
-
-                      {editFormData[line.id]?.job_no &&
-                        getVisibleTasks(line.id, editFormData[line.id]?.job_no).length === 0 && (
-                          <div style={{ padding: "8px", color: "#999" }}>Sin resultados…</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {localErrors[line.id]?.job_task_no && (
-                  <div className="ts-error">
-                    {localErrors[line.id].job_task_no}
-                  </div>
-                )}
-              </td>
+              <TaskCell
+                line={line}
+                lineIndex={lineIndex}
+                colStyle={colStyles.job_task_no}
+                align={getAlign("job_task_no")}
+                editFormData={editFormData}
+                inputRefs={inputRefs}
+                hasRefs={hasRefs}
+                setSafeRef={setSafeRef}
+                handlers={{
+                  handleInputChange,
+                  handleInputFocus,
+                  handleKeyDown,
+                  setFieldError,
+                  clearFieldError,
+                }}
+                tasksState={{
+                  taskFilter,
+                  setTaskFilter,
+                  taskOpenFor,
+                  setTaskOpenFor,
+                  getVisibleTasks,
+                  ensureTasksLoaded,
+                  findTask,
+                }}
+              />
 
               {/* ----- Descripción ----- */}
               <td
@@ -653,18 +475,62 @@ export default function TimesheetLines({
               <td
                 data-col="quantity"
                 className="ts-td"
-                style={{ ...colStyles.quantity, textAlign: getAlign("quantity") }}
+                style={{ ...colStyles.quantity, textAlign: getAlign("quantity"), verticalAlign: "top" }}
               >
-                <input
-                  type="text"
-                  name="quantity"
-                  value={editFormData[line.id]?.quantity ?? ""}
-                  onChange={(e) => handleInputChange(line.id, e)}
-                  onFocus={(e) => handleInputFocus(line.id, "quantity", e)}
-                  onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("quantity"))}
-                  ref={hasRefs ? (el) => setSafeRef(line.id, "quantity", el) : null}
-                  className="ts-input"
-                />
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <input
+                    type="text"
+                    name="quantity"
+                    value={(() => {
+                      const q = editFormData[line.id]?.quantity;
+                      if (typeof q === "number" || typeof q === "string") return q;
+                      if (q && typeof q === "object" && "value" in q) return q.value;
+                      return "";
+                    })()}
+                    onChange={(e) => {
+                      handleInputChange(line.id, {
+                        target: { name: "quantity", value: e.target.value.replace(",", ".") },
+                      });
+                    }}
+                    onFocus={(e) => handleInputFocus(line.id, "quantity", e)}
+                    onBlur={(e) => {
+                      const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
+                      if (hasError) {
+                        const el = inputRefs?.current?.[line.id]?.["quantity"];
+                        if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
+                      if ((e.key === "Enter" || e.key === "Tab") && hasError) {
+                        e.preventDefault();
+                        const el = inputRefs?.current?.[line.id]?.["quantity"];
+                        if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
+                        return;
+                      }
+                      handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("quantity"));
+                    }}
+                    ref={hasRefs ? (el) => setSafeRef(line.id, "quantity", el) : null}
+                    className={`ts-input ${
+                      errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id])
+                        ? "has-error"
+                        : ""
+                    }`}
+                    autoComplete="off"
+                  />
+
+                  {/* Mensaje de error debajo del input, en la misma celda */}
+                  {errors[line.id]?.quantity && (
+                    <span style={{ color: "red", fontSize: "0.8em", marginTop: 2, position: "static", alignSelf: "flex-start" }}>
+                      {errors[line.id].quantity}
+                    </span>
+                  )}
+                  {typeof errors[line.id] === "string" && errors[line.id] && (
+                    <span style={{ color: "red", fontSize: "0.8em", marginTop: 2, position: "static", alignSelf: "flex-start" }}>
+                      {errors[line.id]}
+                    </span>
+                  )}
+                </div>
               </td>
 
               {/* ----- Fecha (derecha) ----- */}

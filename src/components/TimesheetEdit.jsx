@@ -1,3 +1,4 @@
+// src/components/TimesheetEdit.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -43,6 +44,7 @@ function TimesheetEdit({ headerId }) {
   const [dailyImputed, setDailyImputed] = useState({}); // { 'YYYY-MM-DD': hours }
   const [calRange, setCalRange] = useState({ year: null, month: null }); // month: 1-12
   const [firstOffset, setFirstOffset] = useState(0); // lunes=0..domingo=6
+  const [hasDailyErrors, setHasDailyErrors] = useState(false);
 
   function parseAllocationPeriod(ap) {
     const m = /^M(\d{2})-M(\d{2})$/.exec(ap || "");
@@ -68,6 +70,23 @@ function TimesheetEdit({ headerId }) {
     }
     // fallback: assume ISO or Date string
     return String(value).slice(0, 10);
+  }
+  function toDisplayDate(value) {
+    if (!value) return "";
+    const s = String(value);
+    // Already in dd/MM/yyyy
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+    // Try ISO YYYY-MM-DD or take first 10 chars
+    const iso = s.slice(0, 10);
+    const [y, m, d] = iso.split("-");
+    if (y && m && d) {
+      try {
+        return format(new Date(Number(y), Number(m) - 1, Number(d)), "dd/MM/yyyy");
+      } catch (_) {
+        return "";
+      }
+    }
+    return "";
   }
 
   const [debugInfo, setDebugInfo] = useState({ ap: null, headerIdProp: headerId ?? null, headerIdResolved: null });
@@ -136,7 +155,7 @@ function TimesheetEdit({ headerId }) {
           linesData.sort((a, b) => new Date(a.date) - new Date(b.date));
           const linesFormatted = linesData.map((line) => ({
             ...line,
-            date: line.date ? format(new Date(line.date), "dd/MM/yyyy") : "",
+            date: toDisplayDate(line.date),
           }));
           setLines(linesFormatted);
         } else {
@@ -289,31 +308,112 @@ function TimesheetEdit({ headerId }) {
     setCalendarDays(arr);
   }, [editFormData, dailyRequired, calRange, calendarHolidays]);
 
+  // === Validación en vivo: tope diario y festivos (no permitir imputar)
+  useEffect(() => {
+    // Necesitamos rangos y requeridas cargadas
+    if (!calRange?.year || !calRange?.month) return;
+    const hasReq = dailyRequired && Object.keys(dailyRequired).length > 0;
+    if (!hasReq) return; // evitar poner cantidades a 0 antes de tener requeridas
+
+    // 1) Conjunto de festivos (solo estos bloquean por gris)
+    const holidaySet = new Set((calendarHolidays || []).map((h) => (h.day || "").slice(0, 10)));
+
+    // 2) Requeridas por día
+    const req = dailyRequired || {};
+
+    // 3) Totales por día desde el formulario
+    const totals = {};
+    for (const row of Object.values(editFormData || {})) {
+      const iso = toIsoFromInput(row?.date);
+      if (!iso) continue;
+      totals[iso] = (totals[iso] || 0) + (Number(row?.quantity) || 0);
+    }
+
+    // 4) Construir mapa de errores por línea y normalizar cantidades inválidas en festivo
+    const nextErrors = {};
+    let changedSomething = false;
+    const nextEdit = { ...editFormData };
+
+    for (const [id, row] of Object.entries(editFormData || {})) {
+      const iso = toIsoFromInput(row?.date);
+      if (!iso) continue;
+      const required = Number(req[iso] || 0);
+      const isHoliday = holidaySet.has(iso);
+      const qNum = Number(row?.quantity) || 0;
+
+      if (isHoliday) {
+        // Festivo: no permitir imputar
+        if (qNum > 0) {
+          // autocorregimos a 0
+          nextEdit[id] = { ...row, quantity: 0 };
+          changedSomething = true;
+          nextErrors[id] = { ...(nextErrors[id] || {}), quantity: "Día festivo: no se permiten horas" };
+        } else {
+          nextErrors[id] = { ...(nextErrors[id] || {}), quantity: "Día festivo: no se permiten horas" };
+        }
+        continue; // no más validaciones sobre festivos
+      }
+
+      if (required <= 0) {
+        // Día sin horas requeridas: no permitir imputar
+        if (qNum > 0) {
+          nextEdit[id] = { ...row, quantity: 0 };
+          changedSomething = true;
+        }
+        nextErrors[id] = { ...(nextErrors[id] || {}), quantity: "Día sin horas requeridas: no se permiten horas" };
+        continue;
+      }
+
+      // Exceso sobre tope diario: marcar todas las líneas de ese día
+      const totalForDay = Number(totals[iso] || 0);
+      const EPS = 0.01;
+      if (totalForDay > required + EPS) {
+        nextErrors[id] = { ...(nextErrors[id] || {}), quantity: `Excede tope diario (${totalForDay.toFixed(2)} / ${required.toFixed(2)})` };
+      }
+    }
+
+    if (changedSomething) {
+      setEditFormData(nextEdit);
+    }
+
+    setErrors(nextErrors);
+    setHasDailyErrors(Object.keys(nextErrors).length > 0);
+  }, [editFormData, dailyRequired, calendarHolidays, calRange]);
+
   // -- Sincronizar estado de edición desde `lines` solo cuando cambian de verdad
   useEffect(() => {
     const safe = Array.isArray(lines) ? lines : [];
-    const sig = JSON.stringify(
-      safe.map((l) => ({
-        id: l.id,
-        job_no: l.job_no ?? "",
-        job_task_no: l.job_task_no ?? "",
-        description: l.description ?? "",
-        work_type: l.work_type ?? "",
-        quantity: l.quantity ?? "",
-        date: l.date ?? "",
-        department_code: l.department_code ?? "",
-        company: l.company ?? "",
-        resource_no: l.resource_no ?? "",
-      }))
-    );
-    if (prevLinesSigRef.current === sig) return;
-    prevLinesSigRef.current = sig;
+    // Firma basada SOLO en los IDs de las líneas para detectar altas/bajas, no cambios de contenido
+    const idsSig = JSON.stringify(safe.map((l) => String(l.id)).sort());
+    if (prevLinesSigRef.current === idsSig) return;
+    prevLinesSigRef.current = idsSig;
 
-    const map = {};
-    for (const l of safe) {
-      map[l.id] = { ...l };
-    }
-    setEditFormData(map);
+    setEditFormData((prev) => {
+      const next = { ...prev };
+
+      // Conjunto de IDs actuales en `lines`
+      const currentIds = new Set(safe.map((l) => String(l.id)));
+
+      // 1) Agregar líneas nuevas que aún no estén en `editFormData` (NO sobrescribe las existentes)
+      for (const l of safe) {
+        const id = String(l.id);
+        if (!(id in next)) {
+          next[id] = {
+            ...l,
+            date: toDisplayDate(l.date),
+          };
+        }
+      }
+
+      // 2) (Opcional) Eliminar de `editFormData` las líneas que ya no existen en `lines`
+      for (const id of Object.keys(next)) {
+        if (!currentIds.has(String(id))) {
+          delete next[id];
+        }
+      }
+
+      return next;
+    });
   }, [lines]);
 
   // -- Festivos
@@ -426,13 +526,19 @@ function TimesheetEdit({ headerId }) {
     return out;
   };
 
-  // -- Hook de edición
+  // -- Festivos: obtener lista de fechas ISO (YYYY-MM-DD) de los festivos
+  const festivos = useMemo(
+    () => (calendarHolidays || []).map((h) => (h.day || "").slice(0, 10)),
+    [calendarHolidays]
+  );
+
+  // -- Hook de edición (modificado para interceptar cambios de fecha/cantidad)
   const {
     inputRefs,
     calendarOpenFor,
     setCalendarOpenFor,
-    handleInputChange,
-    handleDateInputChange,
+    handleInputChange: origHandleInputChange,
+    handleDateInputChange: origHandleDateInputChange, // NO usado directamente
     handleDateInputBlur,
     handleInputFocus,
     handleKeyDown,
@@ -446,8 +552,138 @@ function TimesheetEdit({ headerId }) {
     addEmptyLine,
   });
 
+  // -- Router de cambios por campo: deriva quantity/date a sus handlers y el resto al handler original
+  const handleInputChange = (id, eOrPatch) => {
+    const target = eOrPatch && eOrPatch.target ? eOrPatch.target : {};
+    const name = target.name;
+    const value = target.value;
+
+    if (name === "quantity") {
+      handleQuantityChange(id, value);
+      return;
+    }
+    if (name === "date") {
+      handleDateChange(id, value);
+      return;
+    }
+    // Por defecto, usar el handler del hook para los demás campos
+    origHandleInputChange(id, eOrPatch);
+  };
+
+  // -- Custom handleDateChange
+  const handleDateChange = (id, value) => {
+    // value puede ser "dd/MM/yyyy" o similar
+    const iso = toIsoFromInput(value);
+    if (festivos.includes(iso)) {
+      setEditFormData((prev) => ({
+        ...prev,
+        [id]: {
+          ...prev[id],
+          date: value,
+          quantity: 0,
+          isHoliday: true,
+        },
+      }));
+      setErrors((prev) => ({
+        ...prev,
+        [id]: { ...(prev[id] || {}), quantity: "Día festivo: no se permiten horas" },
+      }));
+      return;
+    }
+    // Si no es festivo, limpiar isHoliday y error.quantity
+    setEditFormData((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        date: value,
+        isHoliday: false,
+      },
+    }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      const e = { ...(next[id] || {}) };
+      delete e.quantity;
+      if (Object.keys(e).length === 0) delete next[id];
+      else next[id] = e;
+      return next;
+    });
+  };
+
+  // -- Custom handleQuantityChange
+  const handleQuantityChange = (id, value) => {
+    const row = editFormData[id] || {};
+    const iso = toIsoFromInput(row?.date);
+    // Si la fila es festivo (por isHoliday o porque la fecha está en festivos)
+    if (row?.isHoliday || festivos.includes(iso)) {
+      setEditFormData((prev) => ({
+        ...prev,
+        [id]: {
+          ...prev[id],
+          quantity: 0,
+        },
+      }));
+      setErrors((prev) => ({
+        ...prev,
+        [id]: { ...(prev[id] || {}), quantity: "Día festivo: no se permiten horas" },
+      }));
+      return;
+    }
+    // Validación de tope diario
+    // Sumar todas las quantities de la fecha (incluyendo la edición actual)
+    let total = 0;
+    for (const [lid, lrow] of Object.entries(editFormData)) {
+      if (lid === id) {
+        total += Number(value) || 0;
+      } else {
+        const liso = toIsoFromInput(lrow?.date);
+        if (liso === iso) total += Number(lrow?.quantity) || 0;
+      }
+    }
+    const required = dailyRequired?.[iso] ?? 0;
+    const EPS = 0.01;
+    if (required > 0 && total > required + EPS) {
+      setErrors((prev) => ({
+        ...prev,
+        [id]: { ...(prev[id] || {}), quantity: `Excede tope diario (${total.toFixed(2)} / ${required.toFixed(2)})` },
+      }));
+      setEditFormData((prev) => ({
+        ...prev,
+        [id]: {
+          ...prev[id],
+          quantity: value,
+        },
+      }));
+
+      // 👇 Mantener foco en la misma celda de Cantidad
+      const el = inputRefs?.current?.[id]?.["quantity"];
+      if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
+
+      return;
+    }
+    // Si todo ok, actualizar normalmente
+    setEditFormData((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        quantity: value,
+      },
+    }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      const e = { ...(next[id] || {}) };
+      delete e.quantity;
+      if (Object.keys(e).length === 0) delete next[id];
+      else next[id] = e;
+      return next;
+    });
+  };
+
   // -- Guardar cambios
   const saveAllEdits = async () => {
+    if (hasDailyErrors) {
+      alert("Corrige los errores diarios (festivos o tope superado) antes de guardar.");
+      return;
+    }
     let errorOccurred = false;
     const ids = Object.keys(editFormData);
     const toInsertIds = ids.filter((id) => String(id).startsWith("tmp-"));
@@ -502,7 +738,7 @@ function TimesheetEdit({ headerId }) {
       linesData.sort((a, b) => new Date(a.date) - new Date(b.date));
       const linesFormatted = linesData.map((line) => ({
         ...line,
-        date: line.date ? format(new Date(line.date), "dd/MM/yyyy") : "",
+        date: toDisplayDate(line.date),
       }));
       setLines(linesFormatted);
 
@@ -690,7 +926,9 @@ function TimesheetEdit({ headerId }) {
       <div style={{ marginTop: 24 }}>
         <h3>Líneas</h3>
         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-          <button onClick={saveAllEdits}>Guardar todos</button>
+          <button onClick={saveAllEdits} disabled={hasDailyErrors} title={hasDailyErrors ? "Corrige los errores diarios (festivos o tope superado)" : ""}>
+            Guardar todos
+          </button>
         </div>
         <TimesheetLines
           lines={lines}
@@ -700,7 +938,7 @@ function TimesheetEdit({ headerId }) {
           calendarOpenFor={calendarOpenFor}
           setCalendarOpenFor={setCalendarOpenFor}
           handleInputChange={handleInputChange}
-          handleDateInputChange={handleDateInputChange}
+          handleDateInputChange={handleDateChange}
           handleDateInputBlur={handleDateInputBlur}
           handleInputFocus={handleInputFocus}
           handleKeyDown={handleKeyDown}
