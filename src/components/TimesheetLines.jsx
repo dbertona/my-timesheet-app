@@ -406,7 +406,7 @@ export default function TimesheetLines({
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           const list = getVisibleWorkTypes(line.id);
-                          if (list.length === 1) {
+                      if (list.length === 1) {
                             const val = list[0];
                             handleInputChange(line.id, { target: { name: "work_type", value: val } });
                             clearFieldError(line.id, "work_type");
@@ -415,6 +415,12 @@ export default function TimesheetLines({
                             e.preventDefault();
                             return;
                           }
+                        }
+                        // Alt + ArrowDown: abrir dropdown de servicios
+                        if (e.altKey && e.key === "ArrowDown") {
+                          setWtOpenFor((prev) => (prev === line.id ? null : line.id));
+                          e.preventDefault();
+                          return;
                         }
                         handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
                       }}
@@ -539,8 +545,12 @@ export default function TimesheetLines({
                 style={{ ...colStyles.quantity, textAlign: getAlign("quantity"), verticalAlign: "top" }}
               >
                 <div style={{ display: "flex", flexDirection: "column" }}>
-                  <input
-                    type="text"
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      pattern="^\\\d*(\\\.|\\\,)?\\\d{0,2}$"
+                      step="0.01"
+                      min="0"
                     name="quantity"
                     value={(() => {
                       const q = editFormData[line.id]?.quantity;
@@ -549,9 +559,10 @@ export default function TimesheetLines({
                       return "";
                     })()}
                     onChange={(e) => {
-                      handleInputChange(line.id, {
-                        target: { name: "quantity", value: e.target.value.replace(",", ".") },
-                      });
+                        const raw = (e.target.value || "").replace(/,/g, ".");
+                        if (/^\d*(\.)?\d{0,2}$/.test(raw)) {
+                          handleInputChange(line.id, { target: { name: "quantity", value: raw } });
+                        }
                     }}
                     onFocus={(e) => handleInputFocus(line.id, "quantity", e)}
                     onBlur={(e) => {
@@ -559,7 +570,11 @@ export default function TimesheetLines({
                       if (hasError) {
                         const el = inputRefs?.current?.[line.id]?.["quantity"];
                         if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
-                      }
+                        }
+                        const v = (e.target.value || "").trim();
+                        const num = Math.max(0, Number(v) || 0);
+                        const fixed = num.toFixed(2);
+                        handleInputChange(line.id, { target: { name: "quantity", value: fixed } });
                     }}
                     onKeyDown={(e) => {
                       const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));

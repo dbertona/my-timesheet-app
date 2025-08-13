@@ -39,6 +39,7 @@ function TimesheetEdit({ headerId }) {
   const [calendarHolidays, setCalendarHolidays] = useState([]);
   const calendarBoxRef = useRef(null);
   const [rightPad, setRightPad] = useState(234); // ancho calendario + separación derecha
+  const [calendarHeight, setCalendarHeight] = useState(0);
 
   // === Calendario (estado + helpers)
   const [calendarDays, setCalendarDays] = useState([]); // [{ d, iso, need, got, status }]
@@ -47,6 +48,7 @@ function TimesheetEdit({ headerId }) {
   const [calRange, setCalRange] = useState({ year: null, month: null }); // month: 1-12
   const [firstOffset, setFirstOffset] = useState(0); // lunes=0..domingo=6
   const [hasDailyErrors, setHasDailyErrors] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState(null);
 
   function parseAllocationPeriod(ap) {
     const m = /^M(\d{2})-M(\d{2})$/.exec(ap || "");
@@ -91,6 +93,50 @@ function TimesheetEdit({ headerId }) {
     return "";
   }
 
+  const toTwoDecimalsString = (value) => {
+    if (value === null || value === undefined || value === "") return "0.00";
+    const num = Number(value);
+    if (!isFinite(num)) return "0.00";
+    return Math.max(0, num).toFixed(2);
+  };
+
+  const formatTimeAgo = (date) => {
+    if (!date) return "";
+    const secs = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (secs < 5) return "Guardado ahora";
+    if (secs < 60) return `Guardado hace ${secs}s`;
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `Guardado hace ${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    return `Guardado hace ${hrs}h`;
+  };
+
+  // Pequeño componente para mostrar totales del mes dentro del panel del calendario
+  const TotalsForMonth = ({ dailyRequired, editFormData }) => {
+    const required = Object.values(dailyRequired || {}).reduce((acc, v) => acc + (Number(v) || 0), 0);
+    let imputed = 0;
+    for (const row of Object.values(editFormData || {})) {
+      imputed += Number(row?.quantity) || 0;
+    }
+    const missing = Math.max(0, required - imputed);
+    return (
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>Requeridas</span>
+          <strong>{required.toFixed(2)}</strong>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>Imputadas</span>
+          <strong>{imputed.toFixed(2)}</strong>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>Faltan</span>
+          <strong>{missing.toFixed(2)}</strong>
+        </div>
+      </div>
+    );
+  };
+
   const [debugInfo, setDebugInfo] = useState({ ap: null, headerIdProp: headerId ?? null, headerIdResolved: null });
   const [resolvedHeaderId, setResolvedHeaderId] = useState(null);
   const effectiveHeaderId = useMemo(
@@ -102,18 +148,29 @@ function TimesheetEdit({ headerId }) {
 
   // -- Carga inicial (por headerId o por allocation_period del mes actual)
   useEffect(() => {
-    // Medir ancho real del calendario para alinear el contenido a la derecha de forma adaptativa
-    function updateRightPad() {
+    // Medir ancho/alto del calendario para alinear y reservar espacio
+    const updateRightPad = () => {
       try {
-        const w = calendarBoxRef.current ? calendarBoxRef.current.offsetWidth : 0;
-        // Separación visual a la derecha igual a la que usa el calendario (right: 24)
-        const GAP_RIGHT = 24;
-        setRightPad((w || 0) + GAP_RIGHT);
+        const el = calendarBoxRef.current;
+        const w = el ? el.offsetWidth : 0;
+        // Margen de seguridad adicional para evitar solapamiento visual con la tabla
+        const SAFE_GAP_RIGHT = 36; // 24 de separación + 12 extra
+        setRightPad((w || 0) + SAFE_GAP_RIGHT);
+        const h = el ? el.offsetHeight : 0;
+        setCalendarHeight(h || 0);
       } catch (_) {}
-    }
+    };
     updateRightPad();
     window.addEventListener("resize", updateRightPad);
-    return () => window.removeEventListener("resize", updateRightPad);
+    let ro;
+    if (window.ResizeObserver && calendarBoxRef.current) {
+      ro = new ResizeObserver(updateRightPad);
+      ro.observe(calendarBoxRef.current);
+    }
+    return () => {
+      window.removeEventListener("resize", updateRightPad);
+      if (ro && calendarBoxRef.current) ro.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -188,6 +245,28 @@ function TimesheetEdit({ headerId }) {
 
     fetchData();
   }, [headerId, location.search]);
+
+  // Re-render periódico para actualizar el mensaje "Guardado hace X"
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (lastSavedAt) setLastSavedAt((d) => (d ? new Date(d) : d));
+    }, 5000);
+    return () => clearInterval(t);
+  }, [lastSavedAt]);
+
+  // Atajo global: Ctrl/Cmd + Enter para guardar
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (!hasDailyErrors) {
+          saveAllEdits();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [hasDailyErrors]);
 
   // === Construir datos para el calendario (requerido vs imputado por día)
   useEffect(() => {
@@ -418,6 +497,7 @@ function TimesheetEdit({ headerId }) {
           next[id] = {
             ...l,
             date: toDisplayDate(l.date),
+            quantity: toTwoDecimalsString(l.quantity),
           };
         }
       }
@@ -462,7 +542,7 @@ function TimesheetEdit({ headerId }) {
       job_task_no: "",
       description: "",
       work_type: "",
-      quantity: 0,
+      quantity: "0.00",
       date: "",
       department_code: header?.department_code || "",
       company: header?.company || "",
@@ -739,6 +819,7 @@ function TimesheetEdit({ headerId }) {
     }
 
     alert("Todas las líneas se han guardado correctamente.");
+    setLastSavedAt(new Date());
 
     // Refrescar
     const { data: linesData, error: refreshErr } = await supabaseClient
@@ -761,7 +842,7 @@ function TimesheetEdit({ headerId }) {
 
       const initialEditData = {};
       linesFormatted.forEach((line) => {
-        initialEditData[line.id] = { ...line };
+        initialEditData[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
       });
       setEditFormData(initialEditData);
     }
@@ -822,15 +903,26 @@ function TimesheetEdit({ headerId }) {
         </button>
       </div>
       {/* Header y calendario: calendario flotante a la derecha, sin ocupar ancho de líneas */}
-      <div style={{ position: "relative", marginBottom: 12 }}>
+      <div style={{ position: "relative", marginBottom: 12, minHeight: calendarHeight }}>
         {/* Header ocupa todo el ancho, con padding a la derecha para no quedar debajo del calendario */}
         <div style={{ paddingRight: rightPad }}>
           <TimesheetHeader header={header} />
         </div>
 
-        {/* Calendario compacto ABSOLUTO a la derecha */}
-        <div ref={calendarBoxRef} style={{ width: "210px", position: "absolute", top: 0, right: 24 }}>
-          <div style={{ border: "1px solid #d9d9d9", borderRadius: 6, padding: 12, background: "#fff" }}>
+        {/* Tarjeta de totales (estilo BC) + Calendario a la derecha */}
+        <div style={{ position: "absolute", top: 0, right: 24, display: "flex", gap: 12, alignItems: "flex-start" }}>
+          {/* Tarjeta compacta con totales, reutiliza clases BC */}
+          <div className="bc-card bc-card--compact">
+            <div className="bc-card__title bc-card__title--small">Resumen mes</div>
+            <div className="summary-grid">
+              <span>Requeridas</span><strong>{Object.values(dailyRequired||{}).reduce((a,b)=>a+(Number(b)||0),0).toFixed(2)}</strong>
+              <span>Imputadas</span><strong>{Object.values(editFormData||{}).reduce((a,r)=>a+(Number(r?.quantity)||0),0).toFixed(2)}</strong>
+              <span>Faltan</span><strong>{(Math.max(0, Object.values(dailyRequired||{}).reduce((a,b)=>a+(Number(b)||0),0) - Object.values(editFormData||{}).reduce((a,r)=>a+(Number(r?.quantity)||0),0))).toFixed(2)}</strong>
+            </div>
+          </div>
+
+          {/* Calendario compacto */}
+          <div ref={calendarBoxRef} style={{ width: 210, border: "1px solid #d9d9d9", borderRadius: 6, padding: 12, background: "#fff" }}>
             <div style={{ fontWeight: 700, marginBottom: 8 }}>
               {calRange.month ? `${String(calRange.month).padStart(2, "0")}/${calRange.year}` : "Mes"}
             </div>
@@ -908,44 +1000,49 @@ function TimesheetEdit({ headerId }) {
                 );
               })}
             </div>
-            {/* Leyenda */}
+            {/* Leyenda (2 columnas) */}
             <div
               style={{
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "space-around",
-                gap: "6px",
-                marginTop: "8px",
-                fontSize: "12px",
+                display: "grid",
+                gridTemplateColumns: "auto auto",
+                justifyContent: "space-between",
+                alignItems: "center",
+                rowGap: 6,
+                columnGap: 8,
+                marginTop: 8,
+                fontSize: 12,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}>
-                <span style={{ width: "12px", height: "12px", backgroundColor: "red", borderRadius: "3px" }}></span>
-                Sin Horas
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 10, height: 10, backgroundColor: "red", borderRadius: 3 }}></span>
+                <span>Sin horas</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}>
-                <span style={{ width: "12px", height: "12px", backgroundColor: "yellow", borderRadius: "3px" }}></span>
-                Parcial
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 10, height: 10, backgroundColor: "yellow", borderRadius: 3 }}></span>
+                <span>Parcial</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}>
-                <span style={{ width: "12px", height: "12px", backgroundColor: "lightgreen", borderRadius: "3px" }}></span>
-                Completo
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 10, height: 10, backgroundColor: "lightgreen", borderRadius: 3 }}></span>
+                <span>Completo</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}>
-                <span style={{ width: "12px", height: "12px", backgroundColor: "lightgray", borderRadius: "3px" }}></span>
-                Festivo
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 10, height: 10, backgroundColor: "lightgray", borderRadius: 3 }}></span>
+                <span>Festivo</span>
               </div>
             </div>
+
+            {/* Totales del mes: ahora en tarjeta; removidos aquí para no duplicar */}
           </div>
         </div>
       </div>
       {/* Sección de líneas debajo, ocupa todo el ancho, alineada con margen derecho del calendario */}
       <div style={{ marginTop: 24, paddingRight: rightPad }}>
         <h3>Líneas</h3>
-        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
           <button onClick={saveAllEdits} disabled={hasDailyErrors} title={hasDailyErrors ? "Corrige los errores diarios (festivos o tope superado)" : ""}>
             Guardar todos
           </button>
+          <span style={{ color: "#666", fontSize: 12 }}>{formatTimeAgo(lastSavedAt)}</span>
         </div>
         <TimesheetLines
           lines={lines}

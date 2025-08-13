@@ -102,6 +102,29 @@
   min-width: 0;
 }
 
+/* Variante compacta reutilizable para paneles laterales (p. ej. resumen al lado del calendario) */
+.bc-card--compact {
+  width: 180px;
+  height: auto;
+  padding: 12px;
+  border-radius: 6px;
+}
+
+.bc-card__title--small {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+/* Grid sencillo para pares etiqueta/valor en tarjetas compactas */
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 6px;
+  column-gap: 12px;
+  font-size: 13px;
+}
+
 .bc-card__title {
   font-size: 16px;
   font-weight: 600;
