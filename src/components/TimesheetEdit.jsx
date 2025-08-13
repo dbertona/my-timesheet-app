@@ -37,6 +37,8 @@ function TimesheetEdit({ headerId }) {
   const [editFormData, setEditFormData] = useState({});
   const [errors, setErrors] = useState({});
   const [calendarHolidays, setCalendarHolidays] = useState([]);
+  const calendarBoxRef = useRef(null);
+  const [rightPad, setRightPad] = useState(234); // ancho calendario + separación derecha
 
   // === Calendario (estado + helpers)
   const [calendarDays, setCalendarDays] = useState([]); // [{ d, iso, need, got, status }]
@@ -99,6 +101,21 @@ function TimesheetEdit({ headerId }) {
   const prevLinesSigRef = useRef("");
 
   // -- Carga inicial (por headerId o por allocation_period del mes actual)
+  useEffect(() => {
+    // Medir ancho real del calendario para alinear el contenido a la derecha de forma adaptativa
+    function updateRightPad() {
+      try {
+        const w = calendarBoxRef.current ? calendarBoxRef.current.offsetWidth : 0;
+        // Separación visual a la derecha igual a la que usa el calendario (right: 24)
+        const GAP_RIGHT = 24;
+        setRightPad((w || 0) + GAP_RIGHT);
+      } catch (_) {}
+    }
+    updateRightPad();
+    window.addEventListener("resize", updateRightPad);
+    return () => window.removeEventListener("resize", updateRightPad);
+  }, []);
+
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
@@ -807,12 +824,12 @@ function TimesheetEdit({ headerId }) {
       {/* Header y calendario: calendario flotante a la derecha, sin ocupar ancho de líneas */}
       <div style={{ position: "relative", marginBottom: 12 }}>
         {/* Header ocupa todo el ancho, con padding a la derecha para no quedar debajo del calendario */}
-        <div style={{ paddingRight: 234 }}>
+        <div style={{ paddingRight: rightPad }}>
           <TimesheetHeader header={header} />
         </div>
 
         {/* Calendario compacto ABSOLUTO a la derecha */}
-        <div style={{ width: "210px", position: "absolute", top: 0, right: 24 }}>
+        <div ref={calendarBoxRef} style={{ width: "210px", position: "absolute", top: 0, right: 24 }}>
           <div style={{ border: "1px solid #d9d9d9", borderRadius: 6, padding: 12, background: "#fff" }}>
             <div style={{ fontWeight: 700, marginBottom: 8 }}>
               {calRange.month ? `${String(calRange.month).padStart(2, "0")}/${calRange.year}` : "Mes"}
@@ -922,8 +939,8 @@ function TimesheetEdit({ headerId }) {
           </div>
         </div>
       </div>
-      {/* Sección de líneas debajo, ocupa todo el ancho */}
-      <div style={{ marginTop: 24 }}>
+      {/* Sección de líneas debajo, ocupa todo el ancho, alineada con margen derecho del calendario */}
+      <div style={{ marginTop: 24, paddingRight: rightPad }}>
         <h3>Líneas</h3>
         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
           <button onClick={saveAllEdits} disabled={hasDailyErrors} title={hasDailyErrors ? "Corrige los errores diarios (festivos o tope superado)" : ""}>

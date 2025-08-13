@@ -471,6 +471,67 @@ export default function TimesheetLines({
                 )}
               </td>
 
+              {/* ----- Fecha (derecha) ----- */}
+              <td
+                data-col="date"
+                className="ts-td ts-cell"
+                style={{ ...colStyles.date, textAlign: getAlign("date") }}
+              >
+                <div className="ts-cell" style={{ width: "100%", display: "flex", alignItems: "center" }}>
+                  <input
+                    type="text"
+                    name="date"
+                    value={editFormData[line.id]?.date || ""}
+                    onChange={(e) => handleDateInputChange(line.id, e.target.value)}
+                    onBlur={(e) => handleDateInputBlur(line.id, e.target.value)}
+                    onFocus={(e) => handleInputFocus(line.id, "date", e)}
+                    onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("date"))}
+                    ref={hasRefs ? (el) => setSafeRef(line.id, "date", el) : null}
+                    className={`ts-input pr-icon ${errors[line.id]?.date ? 'has-error' : ''}`}
+                    autoComplete="off"
+                    id={`input-date-${line.id}`}
+                  />
+                  <FiCalendar
+                    onClick={() => setCalendarOpenFor(line.id)}
+                    className="ts-icon ts-icon--calendar"
+                    tabIndex={-1}
+                    aria-label="Abrir calendario"
+                  />
+                  {calendarOpenFor === line.id && (
+                    <div className="ts-datepop">
+                      <ReactDatePicker
+                        selected={parseDate(editFormData[line.id]?.date)}
+                        onChange={(date) => {
+                          const formatted = formatDate(date);
+                          handleDateInputChange(line.id, formatted);
+                          handleDateInputBlur(line.id, formatted);
+                          setCalendarOpenFor(null);
+                        }}
+                        onClickOutside={() => setCalendarOpenFor(null)}
+                        dateFormat="dd/MM/yyyy"
+                        minDate={header ? new Date(header.from_date) : null}
+                        maxDate={header ? new Date(header.to_date) : null}
+                        filterDate={(date) => {
+                          if (!calendarHolidays || calendarHolidays.length === 0) return true;
+                          const dayISO = format(date, "yyyy-MM-dd");
+                          return !calendarHolidays.some((h) => {
+                            const hISO = typeof h.day === "string" ? h.day : format(h.day, "yyyy-MM-dd");
+                            return hISO === dayISO && h.holiday === true;
+                          });
+                        }}
+                        inline
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {errors[line.id]?.date && (
+                  <div className="ts-error">
+                    {errors[line.id].date}
+                  </div>
+                )}
+              </td>
+
               {/* ----- Cantidad (derecha) ----- */}
               <td
                 data-col="quantity"
@@ -531,67 +592,6 @@ export default function TimesheetLines({
                     </span>
                   )}
                 </div>
-              </td>
-
-              {/* ----- Fecha (derecha) ----- */}
-              <td
-                data-col="date"
-                className="ts-td ts-cell"
-                style={{ ...colStyles.date, textAlign: getAlign("date") }}
-              >
-                <div className="ts-cell" style={{ width: "100%", display: "flex", alignItems: "center" }}>
-                  <input
-                    type="text"
-                    name="date"
-                    value={editFormData[line.id]?.date || ""}
-                    onChange={(e) => handleDateInputChange(line.id, e.target.value)}
-                    onBlur={(e) => handleDateInputBlur(line.id, e.target.value)}
-                    onFocus={(e) => handleInputFocus(line.id, "date", e)}
-                    onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("date"))}
-                    ref={hasRefs ? (el) => setSafeRef(line.id, "date", el) : null}
-                    className={`ts-input pr-icon ${errors[line.id]?.date ? 'has-error' : ''}`}
-                    autoComplete="off"
-                    id={`input-date-${line.id}`}
-                  />
-                  <FiCalendar
-                    onClick={() => setCalendarOpenFor(line.id)}
-                    className="ts-icon ts-icon--calendar"
-                    tabIndex={-1}
-                    aria-label="Abrir calendario"
-                  />
-                  {calendarOpenFor === line.id && (
-                    <div className="ts-datepop">
-                      <ReactDatePicker
-                        selected={parseDate(editFormData[line.id]?.date)}
-                        onChange={(date) => {
-                          const formatted = formatDate(date);
-                          handleDateInputChange(line.id, formatted);
-                          handleDateInputBlur(line.id, formatted);
-                          setCalendarOpenFor(null);
-                        }}
-                        onClickOutside={() => setCalendarOpenFor(null)}
-                        dateFormat="dd/MM/yyyy"
-                        minDate={header ? new Date(header.from_date) : null}
-                        maxDate={header ? new Date(header.to_date) : null}
-                        filterDate={(date) => {
-                          if (!calendarHolidays || calendarHolidays.length === 0) return true;
-                          const dayISO = format(date, "yyyy-MM-dd");
-                          return !calendarHolidays.some((h) => {
-                            const hISO = typeof h.day === "string" ? h.day : format(h.day, "yyyy-MM-dd");
-                            return hISO === dayISO && h.holiday === true;
-                          });
-                        }}
-                        inline
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {errors[line.id]?.date && (
-                  <div className="ts-error">
-                    {errors[line.id].date}
-                  </div>
-                )}
               </td>
 
               {/* ----- Departamento ----- */}

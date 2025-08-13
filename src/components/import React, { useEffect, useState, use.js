@@ -97,8 +97,8 @@ function TimesheetEdit({ headerId }) {
     "job_task_no",
     "description",
     "work_type",
-    "quantity",
     "date",
+    "quantity",
     "department_code",
   ];
 
@@ -332,9 +332,9 @@ function TimesheetEdit({ headerId }) {
               <th>Nº tarea</th>
               <th>Descripción</th>
               <th>Tipo trabajo</th>
-              <th>Cantidad</th>
               <th>Fecha día trabajo</th>
-              <th>Código departamento</th>
+              <th>Cantidad</th>
+              <th>Departamento</th>
             </tr>
           </thead>
           <tbody>

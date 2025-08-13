@@ -6,8 +6,8 @@ const TIMESHEET_FIELDS = [
   "job_task_no",
   "description",
   "work_type",
-  "quantity",
   "date",
+  "quantity",
   "department_code",
 ];
 
@@ -19,7 +19,7 @@ export const TIMESHEET_LABELS = {
   work_type: "Tipo trabajo",
   quantity: "Cantidad",
   date: "Fecha día trabajo",
-  department_code: "Código departamento",
+  department_code: "Departamento",
 };
 
 // Alineación por columna (para inputs y celdas)
@@ -39,8 +39,8 @@ export const COL_MIN_WIDTH = {
   job_task_no: 130,
   description: 260,
   work_type: 120,
-  quantity: 90,
   date: 120,
+  quantity: 90,
   department_code: 140,
 };
 
@@ -49,8 +49,8 @@ export const COL_MAX_WIDTH = {
   job_task_no: 240,
   description: 420,
   work_type: 220,
-  quantity: 140,
   date: 160,
+  quantity: 140,
   department_code: 200,
 };
 
