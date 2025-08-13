@@ -5,7 +5,7 @@ import { useLocation } from "react-router-dom";
 import { supabaseClient } from "../supabaseClient";
 import toast from "react-hot-toast";
 import "../styles/HomeDashboard.css";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import TimesheetHeader from "./TimesheetHeader";
 import TimesheetLines from "./TimesheetLines";
@@ -148,6 +148,7 @@ function TimesheetEdit({ headerId }) {
   );
 
   const prevLinesSigRef = useRef("");
+  const autosaveTimersRef = useRef({}); // { [lineId]: timeoutId }
 
   // -- Carga inicial (por headerId o por allocation_period del mes actual)
   useEffect(() => {
@@ -269,6 +270,52 @@ function TimesheetEdit({ headerId }) {
     setEditFormData(initialEditData);
   }, [linesQuery.data]);
 
+  // --- Autosave per-line (debounced) ---
+  const updateLineMutation = useMutation({
+    mutationFn: async (id) => {
+      const row = prepareRowForDb(editFormData[id] || {}, {});
+      const { error } = await supabaseClient.from("timesheet").update(row).eq("id", id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (id) => {
+      toast.success("Guardado", { id: `autosave-${id}`, duration: 1200 });
+      setLastSavedAt(new Date());
+      queryClient.invalidateQueries({ queryKey: ["lines", effectiveHeaderId] }).catch(() => {});
+    },
+    onError: (err, id) => {
+      console.error("Autosave error line", id, err);
+      toast.error("Error auto‑guardando línea");
+    },
+  });
+
+  const scheduleAutosave = (id) => {
+    try {
+      if (!id) return;
+      if (String(id).startsWith("tmp-")) return; // no actualizar filas aún no insertadas
+      // Evitar guardar si hay errores visibles en ESTA línea
+      const hasLineErrors = !!errors[id] && Object.values(errors[id]).some(Boolean);
+      if (hasLineErrors) return;
+      const prev = autosaveTimersRef.current[id];
+      if (prev) clearTimeout(prev);
+      autosaveTimersRef.current[id] = setTimeout(() => {
+        updateLineMutation.mutate(id);
+      }, 900);
+    } catch {}
+  };
+
+  const saveLineNow = (id) => {
+    try {
+      if (!id) return;
+      if (String(id).startsWith("tmp-")) return;
+      const hasLineErrors = !!errors[id] && Object.values(errors[id]).some(Boolean);
+      if (hasLineErrors) return;
+      const prev = autosaveTimersRef.current[id];
+      if (prev) clearTimeout(prev);
+      updateLineMutation.mutate(id);
+    } catch {}
+  };
+
   // Re-render periódico para actualizar el mensaje "Guardado hace X"
   useEffect(() => {
     const t = setInterval(() => {
@@ -277,19 +324,7 @@ function TimesheetEdit({ headerId }) {
     return () => clearInterval(t);
   }, [lastSavedAt]);
 
-  // Atajo global: Ctrl/Cmd + Enter para guardar
-  useEffect(() => {
-    const onKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-        e.preventDefault();
-        if (!hasDailyErrors) {
-          saveAllEdits();
-        }
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [hasDailyErrors]);
+  // (El atajo global Ctrl/Cmd + Enter se elimina, ya que ahora el autosave es por campo)
 
   // === Construir datos para el calendario (requerido vs imputado por día)
   useEffect(() => {
@@ -466,22 +501,14 @@ function TimesheetEdit({ headerId }) {
           // autocorregimos a 0
           nextEdit[id] = { ...row, quantity: 0 };
           changedSomething = true;
-          nextErrors[id] = { ...(nextErrors[id] || {}), quantity: "Día festivo: no se permiten horas" };
+          nextErrors[id] = { ...(nextErrors[id] || {}), date: "Día festivo: no se permiten horas" };
         } else {
-          nextErrors[id] = { ...(nextErrors[id] || {}), quantity: "Día festivo: no se permiten horas" };
+          nextErrors[id] = { ...(nextErrors[id] || {}), date: "Día festivo: no se permiten horas" };
         }
         continue; // no más validaciones sobre festivos
       }
 
-      if (required <= 0) {
-        // Día sin horas requeridas: no permitir imputar
-        if (qNum > 0) {
-          nextEdit[id] = { ...row, quantity: 0 };
-          changedSomething = true;
-        }
-        nextErrors[id] = { ...(nextErrors[id] || {}), quantity: "Día sin horas requeridas: no se permiten horas" };
-        continue;
-      }
+      // Nota: permitimos imputar aunque required <= 0 (sin error ni autocorrección)
 
       // Exceso sobre tope diario: marcar todas las líneas de ese día
       const totalForDay = Number(totals[iso] || 0);
@@ -706,7 +733,7 @@ function TimesheetEdit({ headerId }) {
       }));
       setErrors((prev) => ({
         ...prev,
-        [id]: { ...(prev[id] || {}), quantity: "Día festivo: no se permiten horas" },
+        [id]: { ...(prev[id] || {}), date: "Día festivo: no se permiten horas" },
       }));
       return;
     }
@@ -722,7 +749,7 @@ function TimesheetEdit({ headerId }) {
     setErrors((prev) => {
       const next = { ...prev };
       const e = { ...(next[id] || {}) };
-      delete e.quantity;
+      delete e.date;
       if (Object.keys(e).length === 0) delete next[id];
       else next[id] = e;
       return next;
@@ -744,7 +771,7 @@ function TimesheetEdit({ headerId }) {
       }));
       setErrors((prev) => ({
         ...prev,
-        [id]: { ...(prev[id] || {}), quantity: "Día festivo: no se permiten horas" },
+        [id]: { ...(prev[id] || {}), date: "Día festivo: no se permiten horas" },
       }));
       return;
     }
@@ -1041,9 +1068,6 @@ function TimesheetEdit({ headerId }) {
       <div style={{ marginTop: 24, paddingRight: rightPad }}>
         <h3>Líneas</h3>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-          <button onClick={saveAllEdits} disabled={hasDailyErrors} title={hasDailyErrors ? "Corrige los errores diarios (festivos o tope superado)" : ""}>
-            Guardar todos
-          </button>
           <span style={{ color: "#666", fontSize: 12 }}>{formatTimeAgo(lastSavedAt)}</span>
         </div>
         <TimesheetLines
@@ -1060,6 +1084,8 @@ function TimesheetEdit({ headerId }) {
           handleKeyDown={handleKeyDown}
           header={header}
           calendarHolidays={calendarHolidays}
+          scheduleAutosave={scheduleAutosave}
+          saveLineNow={saveLineNow}
         />
       </div>
     </div>

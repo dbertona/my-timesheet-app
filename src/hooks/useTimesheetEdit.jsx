@@ -229,7 +229,7 @@ export default function useTimesheetEdit({
       return;
     }
 
-    const isNav = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(key);
+    const isNav = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab", "Enter"].includes(key);
     if (!isNav) return;
 
     // Si estamos en "date", expandimos y validamos antes de movernos
@@ -281,7 +281,7 @@ export default function useTimesheetEdit({
       if (nextFieldIndex === TIMESHEET_FIELDS.length - 1) {
         nextLineIndex = lineIndex > 0 ? lineIndex - 1 : lines.length - 1;
       }
-    } else if (key === "ArrowRight" || key === "Tab") {
+    } else if (key === "ArrowRight" || key === "Tab" || key === "Enter") {
       nextFieldIndex = fieldIndex < TIMESHEET_FIELDS.length - 1 ? fieldIndex + 1 : 0;
       if (nextFieldIndex === 0) {
         // hemos envuelto a la primera columna → bajar de fila

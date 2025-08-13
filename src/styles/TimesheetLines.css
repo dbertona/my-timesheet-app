@@ -46,8 +46,9 @@
   cursor: text;
 }
 .ts-input.has-error {
-  border: 1px solid #e11d48;
-  border-radius: 4px;
+  border: 1px solid rgba(225, 29, 72, 0.75);
+  border-radius: 6px;
+  background: #fff7f9;
 }
 .ts-input.pr-icon { padding-right: 26px; }
 
@@ -108,13 +109,28 @@
   position: absolute;
   top: 100%;
   left: 0;
-  color: #e11d48;
-  font-size: 0.8em;
-  background-color: #ffe6e9;
-  padding: 2px 4px;
-  border-radius: 3px;
-  z-index: 1;
-  margin-top: 2px;
+  z-index: 2;
+  margin-top: 4px;
+}
+
+/* Estilo pill para mensajes inline más agradables */
+.ts-inline-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #7a0b20;
+  background-color: #ffe8ee;
+  border: 1px solid rgba(225, 29, 72, 0.25);
+  border-radius: 999px;
+  padding: 2px 6px;
+  line-height: 1.2;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+}
+.ts-inline-error__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #e11d48;
 }
 :root {
   --ts-font-family: "Segoe UI", SegoeUI, system-ui, -apple-system, BlinkMacSystemFont,

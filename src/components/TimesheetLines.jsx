@@ -28,6 +28,8 @@ export default function TimesheetLines({
   handleKeyDown,
   header,
   calendarHolidays = [],
+  scheduleAutosave,
+  saveLineNow,
 }) {
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
     TIMESHEET_FIELDS,
@@ -342,6 +344,10 @@ export default function TimesheetLines({
                   name="description"
                   value={editFormData[line.id]?.description || ""}
                   onChange={(e) => handleInputChange(line.id, e)}
+                  onBlur={() => {
+                    if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                    else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                  }}
                   onFocus={(e) => handleInputFocus(line.id, "description", e)}
                   onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("description"))}
                   ref={hasRefs ? (el) => setSafeRef(line.id, "description", el) : null}
@@ -380,22 +386,57 @@ export default function TimesheetLines({
                           handleInputChange(line.id, { target: { name: "work_type", value: found } });
                         }
                         clearFieldError(line.id, "work_type");
+                        if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                        else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
                       }}
                       onFocus={(e) => {
                         handleInputFocus(line.id, "work_type", e);
                       }}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") {
+                        const isAdvance = e.key === "Enter" || e.key === "Tab";
+                        if (isAdvance) {
+                          const raw = (editFormData[line.id]?.work_type || "").trim();
+                          // Permitir vacío
+                          if (!raw) {
+                            clearFieldError(line.id, "work_type");
+                            if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                            else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                            handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
+                            return;
+                          }
+                          // Si coincide exacto con un servicio válido
+                          const exact = findWorkType(raw);
+                          if (exact) {
+                            if (exact !== raw) {
+                              handleInputChange(line.id, { target: { name: "work_type", value: exact } });
+                            }
+                            clearFieldError(line.id, "work_type");
+                            if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                            else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                            e.preventDefault();
+                            handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
+                            return;
+                          }
+                          // Si hay una única coincidencia visible, seleccionarla
                           const list = getVisibleWorkTypes(line.id);
-                      if (list.length === 1) {
+                          if (list.length === 1) {
                             const val = list[0];
                             handleInputChange(line.id, { target: { name: "work_type", value: val } });
                             clearFieldError(line.id, "work_type");
                             setWtFilter((prev) => ({ ...prev, [line.id]: val }));
                             setWtOpenFor(null);
+                            if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                            else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
                             e.preventDefault();
+                            handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
                             return;
                           }
+                          // Inválido → no avanzar, marcar error
+                          e.preventDefault();
+                          setFieldError(line.id, "work_type", "Servicio inválido. Debe seleccionar uno de la lista.");
+                          const el = inputRefs?.current?.[line.id]?.["work_type"];
+                          if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
+                          return;
                         }
                         // Alt + ArrowDown: abrir dropdown de servicios
                         if (e.altKey && e.key === "ArrowDown") {
@@ -470,7 +511,10 @@ export default function TimesheetLines({
                     name="date"
                     value={editFormData[line.id]?.date || ""}
                     onChange={(e) => handleDateInputChange(line.id, e.target.value)}
-                    onBlur={(e) => handleDateInputBlur(line.id, e.target.value)}
+                    onBlur={(e) => {
+                      handleDateInputBlur(line.id, e.target.value);
+                      typeof scheduleAutosave === 'function' && scheduleAutosave(line.id);
+                    }}
                     onFocus={(e) => handleInputFocus(line.id, "date", e)}
                     onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("date"))}
                     ref={hasRefs ? (el) => setSafeRef(line.id, "date", el) : null}
@@ -492,6 +536,7 @@ export default function TimesheetLines({
                           const formatted = formatDate(date);
                           handleDateInputChange(line.id, formatted);
                           handleDateInputBlur(line.id, formatted);
+                          if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
                           setCalendarOpenFor(null);
                         }}
                         onClickOutside={() => setCalendarOpenFor(null)}
@@ -514,7 +559,10 @@ export default function TimesheetLines({
 
                 {errors[line.id]?.date && (
                   <div className="ts-error">
-                    {errors[line.id].date}
+                    <span className="ts-inline-error">
+                      <span className="ts-inline-error__dot" />
+                      {errors[line.id].date}
+                    </span>
                   </div>
                 )}
               </td>
@@ -551,11 +599,13 @@ export default function TimesheetLines({
                       if (hasError) {
                         const el = inputRefs?.current?.[line.id]?.["quantity"];
                         if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
-                        }
-                        const v = (e.target.value || "").trim();
-                        const num = Math.max(0, Number(v) || 0);
-                        const fixed = num.toFixed(2);
-                        handleInputChange(line.id, { target: { name: "quantity", value: fixed } });
+                      }
+                      const v = (e.target.value || "").trim();
+                      const num = Math.max(0, Number(v) || 0);
+                      const fixed = num.toFixed(2);
+                      handleInputChange(line.id, { target: { name: "quantity", value: fixed } });
+                      if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                      else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
                     }}
                     onKeyDown={(e) => {
                       const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
@@ -564,6 +614,10 @@ export default function TimesheetLines({
                         const el = inputRefs?.current?.[line.id]?.["quantity"];
                         if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
                         return;
+                      }
+                      if (e.key === "Enter" || e.key === "Tab") {
+                        if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                        else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
                       }
                       handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("quantity"));
                     }}
@@ -578,12 +632,14 @@ export default function TimesheetLines({
 
                   {/* Mensaje de error debajo del input, en la misma celda */}
                   {errors[line.id]?.quantity && (
-                    <span style={{ color: "red", fontSize: "0.8em", marginTop: 2, position: "static", alignSelf: "flex-start" }}>
+                    <span className="ts-inline-error" style={{ alignSelf: "flex-start", marginTop: 4 }}>
+                      <span className="ts-inline-error__dot" />
                       {errors[line.id].quantity}
                     </span>
                   )}
                   {typeof errors[line.id] === "string" && errors[line.id] && (
-                    <span style={{ color: "red", fontSize: "0.8em", marginTop: 2, position: "static", alignSelf: "flex-start" }}>
+                    <span className="ts-inline-error" style={{ alignSelf: "flex-start", marginTop: 4 }}>
+                      <span className="ts-inline-error__dot" />
                       {errors[line.id]}
                     </span>
                   )}
