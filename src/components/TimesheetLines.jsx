@@ -11,6 +11,7 @@ import "../styles/TimesheetLines.css";
 import TIMESHEET_FIELDS, { TIMESHEET_LABELS, TIMESHEET_ALIGN, COL_MIN_WIDTH, COL_MAX_WIDTH, DEFAULT_COL_WIDTH } from "../constants/timesheetFields";
 import ProjectCell from "./timesheet/ProjectCell";
 import TaskCell from "./timesheet/TaskCell";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 
 export default function TimesheetLines({
@@ -50,8 +51,7 @@ export default function TimesheetLines({
   // ===============================
   // Jobs & Job Tasks (combos)
   // ===============================
-  const [jobs, setJobs] = useState([]); // [{no, description}]
-  const [jobsLoaded, setJobsLoaded] = useState(false);
+  // Eliminado estado local de jobs: usamos React Query
   const [jobFilter, setJobFilter] = useState({}); // { [lineId]: "filtro" }
   const [jobOpenFor, setJobOpenFor] = useState(null); // lineId con dropdown abierto
 
@@ -60,21 +60,14 @@ export default function TimesheetLines({
   const [taskOpenFor, setTaskOpenFor] = useState(null); // lineId con dropdown abierto para tareas
 
   // Servicios (work_type) por recurso actual
-  const [workTypes, setWorkTypes] = useState([]); // ["DEV", "CONS", ...]
-  const [workTypesLoaded, setWorkTypesLoaded] = useState(false);
+  // Eliminado estado local de workTypes: usamos React Query
   const [wtFilter, setWtFilter] = useState({}); // { [lineId]: "filtro" }
   const [wtOpenFor, setWtOpenFor] = useState(null); // lineId con dropdown abierto
 
-  // Carga de proyectos (solo "Open" y asignados al recurso actual via job_team)
-  useEffect(() => {
-    let cancelled = false;
-    const loadJobs = async () => {
-      if (!header?.resource_no) {
-        setJobs([]);
-        setJobsLoaded(true);
-        return;
-      }
-      // Requiere relación FK job(no) -> job_team(job_no) en la BD
+  // React Query: Carga y cache de proyectos por recurso
+  const jobsQuery = useQuery({
+    queryKey: ["jobs", header?.resource_no],
+    queryFn: async () => {
       const { data, error } = await supabaseClient
         .from("job")
         .select("no, description, status, job_team!inner(resource_no)")
@@ -82,67 +75,55 @@ export default function TimesheetLines({
         .eq("job_team.resource_no", header.resource_no)
         .order("no")
         .limit(1000);
+      if (error) throw error;
+      return (data || []).map(j => ({ no: j.no, description: j.description }));
+    },
+    enabled: !!header?.resource_no,
+    staleTime: 5 * 60 * 1000,
+  });
+  const jobs = jobsQuery.data || [];
+  const jobsLoaded = !jobsQuery.isLoading;
 
-      if (cancelled) return;
-      if (error) {
-        console.error("Error cargando proyectos (job):", error);
-        setJobs([]);
-      } else {
-        setJobs((data || []).map(j => ({ no: j.no, description: j.description })));
-      }
-      setJobsLoaded(true);
-    };
-    loadJobs();
-    return () => { cancelled = true; };
-  }, [header?.resource_no]);
-
-  // Carga de servicios (work_type) filtrados por recurso actual
-  useEffect(() => {
-    let cancelled = false;
-    const loadWorkTypes = async () => {
-      if (!header?.resource_no) {
-        setWorkTypes([]);
-        setWorkTypesLoaded(true);
-        return;
-      }
+  // React Query: Carga y cache de servicios por recurso
+  const workTypesQuery = useQuery({
+    queryKey: ["workTypes", header?.resource_no],
+    queryFn: async () => {
       const { data, error } = await supabaseClient
         .from("resource_cost")
         .select("work_type")
         .eq("resource_no", header.resource_no)
         .order("work_type")
         .limit(2000);
-      if (cancelled) return;
-      if (error) {
-        console.error("Error cargando servicios (resource_cost):", error);
-        setWorkTypes([]);
-      } else {
-        const list = (data || []).map((r) => r.work_type).filter(Boolean);
-        const dedup = Array.from(new Set(list));
-        setWorkTypes(dedup);
-      }
-      setWorkTypesLoaded(true);
-    };
-    loadWorkTypes();
-    return () => { cancelled = true; };
-  }, [header?.resource_no]);
+      if (error) throw error;
+      const list = (data || []).map((r) => r.work_type).filter(Boolean);
+      return Array.from(new Set(list));
+    },
+    enabled: !!header?.resource_no,
+    staleTime: 5 * 60 * 1000,
+  });
+  const workTypes = workTypesQuery.data || [];
+  const workTypesLoaded = !workTypesQuery.isLoading;
 
-  // Cargar tareas para un job y cachear
+  // Tareas por job: usar React Query como caché programática
+  const queryClient = useQueryClient();
   const ensureTasksLoaded = async (jobNo) => {
     if (!jobNo) return [];
-    if (tasksByJob[jobNo]) return tasksByJob[jobNo];
-    const { data, error } = await supabaseClient
-      .from("job_task")
-      .select("job_no, no, description")
-      .eq("job_no", jobNo)
-      .order("no")
-      .limit(1000);
-    if (error) {
-      console.error("Error cargando tareas (job_task):", error);
-      setTasksByJob((prev) => ({ ...prev, [jobNo]: [] }));
-      return [];
-    }
-    setTasksByJob((prev) => ({ ...prev, [jobNo]: data || [] }));
-    return data || [];
+    const data = await queryClient.fetchQuery({
+      queryKey: ["tasks", jobNo],
+      queryFn: async () => {
+        const { data, error } = await supabaseClient
+          .from("job_task")
+          .select("job_no, no, description")
+          .eq("job_no", jobNo)
+          .order("no")
+          .limit(1000);
+        if (error) throw error;
+        return data || [];
+      },
+      staleTime: 5 * 60 * 1000,
+    });
+    setTasksByJob((prev) => ({ ...prev, [jobNo]: data }));
+    return data;
   };
 
   // Filtrados visibles

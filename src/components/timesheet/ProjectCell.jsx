@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 import TIMESHEET_FIELDS from "../../constants/timesheetFields";
 
@@ -32,6 +32,22 @@ export default function ProjectCell({
     ensureTasksLoaded,
     findJob,
   } = jobsState;
+
+  // Prefetch: cuando se abre el dropdown de proyectos o cambia el filtro,
+  // pre-cargamos tareas de los primeros candidatos visibles (hasta 5) para
+  // que el despliegue de tareas sea inmediato al seleccionar.
+  useEffect(() => {
+    if (jobOpenFor !== line.id || !jobsLoaded) return;
+    try {
+      const candidates = (getVisibleJobs(line.id) || []).slice(0, 5);
+      candidates.forEach((j) => {
+        if (j?.no) Promise.resolve(ensureTasksLoaded(j.no)).catch(() => {});
+      });
+    } catch {}
+    // Dependemos del valor del filtro específico de esta línea para reaccionar
+    // a los cambios que hace el usuario al escribir.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobOpenFor, jobsLoaded, jobFilter?.[line.id]]);
 
   return (
     <td

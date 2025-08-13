@@ -3,6 +3,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { supabaseClient } from "../supabaseClient";
+import toast from "react-hot-toast";
+import "../styles/HomeDashboard.css";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import TimesheetHeader from "./TimesheetHeader";
 import TimesheetLines from "./TimesheetLines";
@@ -197,7 +200,10 @@ function TimesheetEdit({ headerId }) {
           .select("*")
           .eq("id", headerIdResolved)
           .single();
-        if (headerErr) console.error("Error cargando cabecera:", headerErr);
+        if (headerErr) {
+          console.error("Error cargando cabecera:", headerErr);
+          toast.error("Error cargando cabecera");
+        }
         headerData = h || null;
       } else {
         // Buscar por allocation_period exacto
@@ -208,7 +214,10 @@ function TimesheetEdit({ headerId }) {
           .order("id", { ascending: false })
           .limit(1)
           .maybeSingle();
-        if (headerErr) console.error("Error cargando cabecera por allocation_period:", headerErr);
+        if (headerErr) {
+          console.error("Error cargando cabecera por allocation_period:", headerErr);
+          toast.error("No se encontró cabecera para el período");
+        }
         headerData = h || null;
         headerIdResolved = headerData?.id || null;
       }
@@ -217,25 +226,8 @@ function TimesheetEdit({ headerId }) {
       setResolvedHeaderId(headerIdResolved);
       setDebugInfo({ ap, headerIdProp: headerId ?? null, headerIdResolved });
 
-      // 2) Cargar líneas si tenemos cabecera
-      if (headerIdResolved) {
-        const { data: linesData, error: linesErr } = await supabaseClient
-          .from("timesheet")
-          .select("*")
-          .eq("header_id", headerIdResolved);
-        if (linesErr) console.error("Error cargando líneas:", linesErr);
-
-        if (linesData) {
-          linesData.sort((a, b) => new Date(a.date) - new Date(b.date));
-          const linesFormatted = linesData.map((line) => ({
-            ...line,
-            date: toDisplayDate(line.date),
-          }));
-          setLines(linesFormatted);
-        } else {
-          setLines([]);
-        }
-      } else {
+      // 2) Las líneas ahora se cargan vía React Query (ver linesQuery)
+      if (!headerIdResolved) {
         // Si no encontramos cabecera, limpiamos líneas
         setLines([]);
       }
@@ -245,6 +237,37 @@ function TimesheetEdit({ headerId }) {
 
     fetchData();
   }, [headerId, location.search]);
+
+  // React Query: cargar líneas por header_id, con cache y estados
+  const effectiveKey = effectiveHeaderId;
+  const queryClient = useQueryClient();
+  const linesQuery = useQuery({
+    queryKey: ["lines", effectiveKey],
+    enabled: !!effectiveKey,
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabaseClient
+        .from("timesheet")
+        .select("*")
+        .eq("header_id", effectiveKey);
+      if (error) throw error;
+      const sorted = (data || []).sort((a, b) => new Date(a.date) - new Date(b.date));
+      return sorted.map((line) => ({ ...line, date: toDisplayDate(line.date) }));
+    },
+    onError: () => toast.error("Error cargando líneas"),
+  });
+
+  // Cuando llegan las líneas, actualizar estado local y edición inicial con dos decimales
+  useEffect(() => {
+    if (!linesQuery.data) return;
+    const linesFormatted = linesQuery.data;
+    setLines(linesFormatted);
+    const initialEditData = {};
+    linesFormatted.forEach((line) => {
+      initialEditData[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
+    });
+    setEditFormData(initialEditData);
+  }, [linesQuery.data]);
 
   // Re-render periódico para actualizar el mensaje "Guardado hace X"
   useEffect(() => {
@@ -778,7 +801,7 @@ function TimesheetEdit({ headerId }) {
   // -- Guardar cambios
   const saveAllEdits = async () => {
     if (hasDailyErrors) {
-      alert("Corrige los errores diarios (festivos o tope superado) antes de guardar.");
+      toast.error("Corrige los errores diarios antes de guardar");
       return;
     }
     let errorOccurred = false;
@@ -814,38 +837,17 @@ function TimesheetEdit({ headerId }) {
     }
 
     if (errorOccurred) {
-      alert("Hubo errores al guardar. Revisa la consola.");
+      toast.error("Hubo errores al guardar");
       return;
     }
 
-    alert("Todas las líneas se han guardado correctamente.");
+    toast.success("Guardado correctamente");
     setLastSavedAt(new Date());
 
-    // Refrescar
-    const { data: linesData, error: refreshErr } = await supabaseClient
-      .from("timesheet")
-      .select("*")
-      .eq("header_id", effectiveHeaderId);
-
-    if (refreshErr) {
-      console.error("Error refrescando líneas:", refreshErr);
-      return;
-    }
-
-    if (linesData) {
-      linesData.sort((a, b) => new Date(a.date) - new Date(b.date));
-      const linesFormatted = linesData.map((line) => ({
-        ...line,
-        date: toDisplayDate(line.date),
-      }));
-      setLines(linesFormatted);
-
-      const initialEditData = {};
-      linesFormatted.forEach((line) => {
-        initialEditData[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
-      });
-      setEditFormData(initialEditData);
-    }
+    // Invalidate para que React Query recargue líneas
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["lines", effectiveHeaderId] });
+    } catch {}
   };
 
   if (loading) return <div>Cargando datos...</div>;
