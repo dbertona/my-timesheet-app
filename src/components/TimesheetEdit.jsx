@@ -3,6 +3,11 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { supabaseClient } from "../supabaseClient";
+import { fetchTimesheetLines, updateTimesheetLine, prepareRowForDb } from "../api/timesheet";
+import { toDisplayDate, toIsoFromInput } from "../utils/dateHelpers";
+import { buildHolidaySet, computeTotalsByIso } from "../utils/validation";
+import { fetchCalendarDays } from "../api/calendar";
+import useCalendarData from "../hooks/useCalendarData";
 import toast from "react-hot-toast";
 import "../styles/HomeDashboard.css";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -10,6 +15,9 @@ import { format } from "date-fns";
 import TimesheetHeader from "./TimesheetHeader";
 import TimesheetLines from "./TimesheetLines";
 import useTimesheetEdit from "../hooks/useTimesheetEdit";
+import BcCard from "./ui/BcCard";
+import useTimesheetLines from "../hooks/useTimesheetLines";
+import CalendarPanel from "./timesheet/CalendarPanel";
 
 // ✅ columnas existentes en la tabla 'timesheet'
 const SAFE_COLUMNS = [
@@ -40,16 +48,27 @@ function TimesheetEdit({ headerId }) {
   const [editFormData, setEditFormData] = useState({});
   const [errors, setErrors] = useState({});
   const [calendarHolidays, setCalendarHolidays] = useState([]);
-  const calendarBoxRef = useRef(null);
-  const [rightPad, setRightPad] = useState(234); // ancho calendario + separación derecha
-  const [calendarHeight, setCalendarHeight] = useState(0);
+  const [rightPad, setRightPad] = useState(234);
 
-  // === Calendario (estado + helpers)
-  const [calendarDays, setCalendarDays] = useState([]); // [{ d, iso, need, got, status }]
-  const [dailyRequired, setDailyRequired] = useState({}); // { 'YYYY-MM-DD': hours }
-  const [dailyImputed, setDailyImputed] = useState({}); // { 'YYYY-MM-DD': hours }
-  const [calRange, setCalRange] = useState({ year: null, month: null }); // month: 1-12
-  const [firstOffset, setFirstOffset] = useState(0); // lunes=0..domingo=6
+  // IDs de cabecera resueltos antes de usar hooks que dependen de ello
+  const [debugInfo, setDebugInfo] = useState({ ap: null, headerIdProp: headerId ?? null, headerIdResolved: null });
+  const [resolvedHeaderId, setResolvedHeaderId] = useState(null);
+  const effectiveHeaderId = useMemo(
+    () => resolvedHeaderId ?? header?.id ?? headerId ?? null,
+    [resolvedHeaderId, header?.id, headerId]
+  );
+
+  // === Calendario (estado + helpers) ahora en hook dedicado
+  const {
+    calRange,
+    firstOffset,
+    calendarDays,
+    dailyRequired,
+    calendarHolidays: calHolidaysFromHook,
+    requiredSum,
+    imputedSum,
+    missingSum,
+  } = useCalendarData(header, resolvedHeaderId, editFormData);
   const [hasDailyErrors, setHasDailyErrors] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState(null);
 
@@ -140,42 +159,13 @@ function TimesheetEdit({ headerId }) {
     );
   };
 
-  const [debugInfo, setDebugInfo] = useState({ ap: null, headerIdProp: headerId ?? null, headerIdResolved: null });
-  const [resolvedHeaderId, setResolvedHeaderId] = useState(null);
-  const effectiveHeaderId = useMemo(
-    () => resolvedHeaderId ?? header?.id ?? headerId ?? null,
-    [resolvedHeaderId, header?.id, headerId]
-  );
+
 
   const prevLinesSigRef = useRef("");
   const autosaveTimersRef = useRef({}); // { [lineId]: timeoutId }
 
   // -- Carga inicial (por headerId o por allocation_period del mes actual)
-  useEffect(() => {
-    // Medir ancho/alto del calendario para alinear y reservar espacio
-    const updateRightPad = () => {
-      try {
-        const el = calendarBoxRef.current;
-        const w = el ? el.offsetWidth : 0;
-        // Margen de seguridad adicional para evitar solapamiento visual con la tabla
-        const SAFE_GAP_RIGHT = 36; // 24 de separación + 12 extra
-        setRightPad((w || 0) + SAFE_GAP_RIGHT);
-        const h = el ? el.offsetHeight : 0;
-        setCalendarHeight(h || 0);
-      } catch (_) {}
-    };
-    updateRightPad();
-    window.addEventListener("resize", updateRightPad);
-    let ro;
-    if (window.ResizeObserver && calendarBoxRef.current) {
-      ro = new ResizeObserver(updateRightPad);
-      ro.observe(calendarBoxRef.current);
-    }
-    return () => {
-      window.removeEventListener("resize", updateRightPad);
-      if (ro && calendarBoxRef.current) ro.disconnect();
-    };
-  }, []);
+  // Right pad se actualiza desde CalendarPanel a través de estado compartido
 
   useEffect(() => {
     async function fetchData() {
@@ -242,46 +232,35 @@ function TimesheetEdit({ headerId }) {
   // React Query: cargar líneas por header_id, con cache y estados
   const effectiveKey = effectiveHeaderId;
   const queryClient = useQueryClient();
-  const linesQuery = useQuery({
-    queryKey: ["lines", effectiveKey],
-    enabled: !!effectiveKey,
-    staleTime: 60 * 1000,
-    queryFn: async () => {
-      const { data, error } = await supabaseClient
-        .from("timesheet")
-        .select("*")
-        .eq("header_id", effectiveKey);
-      if (error) throw error;
-      const sorted = (data || []).sort((a, b) => new Date(a.date) - new Date(b.date));
-      return sorted.map((line) => ({ ...line, date: toDisplayDate(line.date) }));
-    },
-    onError: () => toast.error("Error cargando líneas"),
-  });
+  const linesHook = useTimesheetLines(effectiveKey);
+  useEffect(() => {
+    if (linesHook.error) toast.error("Error cargando líneas");
+  }, [linesHook.error]);
 
   // Cuando llegan las líneas, actualizar estado local y edición inicial con dos decimales
   useEffect(() => {
-    if (!linesQuery.data) return;
-    const linesFormatted = linesQuery.data;
+    if (!linesHook.data) return;
+    const sorted = (linesHook.data || []).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const linesFormatted = sorted.map((line) => ({ ...line, date: toDisplayDate(line.date) }));
     setLines(linesFormatted);
     const initialEditData = {};
     linesFormatted.forEach((line) => {
       initialEditData[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
     });
     setEditFormData(initialEditData);
-  }, [linesQuery.data]);
+  }, [linesHook.data]);
 
   // --- Autosave per-line (debounced) ---
   const updateLineMutation = useMutation({
     mutationFn: async (id) => {
-      const row = prepareRowForDb(editFormData[id] || {}, {});
-      const { error } = await supabaseClient.from("timesheet").update(row).eq("id", id);
-      if (error) throw error;
+      const row = prepareRowForDb(editFormData[id] || {}, { header });
+      await updateTimesheetLine(id, row);
       return id;
     },
-    onSuccess: (id) => {
+    onSuccess: async (id) => {
       toast.success("Guardado", { id: `autosave-${id}`, duration: 1200 });
       setLastSavedAt(new Date());
-      queryClient.invalidateQueries({ queryKey: ["lines", effectiveHeaderId] }).catch(() => {});
+      try { await linesHook.invalidate(); } catch {}
     },
     onError: (err, id) => {
       console.error("Autosave error line", id, err);
@@ -326,141 +305,10 @@ function TimesheetEdit({ headerId }) {
 
   // (El atajo global Ctrl/Cmd + Enter se elimina, ya que ahora el autosave es por campo)
 
-  // === Construir datos para el calendario (requerido vs imputado por día)
+  // calendarHolidays seguirá disponible en este componente para validaciones
   useEffect(() => {
-    async function buildCalendar() {
-      if (!header) return;
-      const apInfo = parseAllocationPeriod(header.allocation_period);
-      if (!apInfo) return;
-      const { year, month } = apInfo;
-      setCalRange({ year, month });
-
-      const first = new Date(year, month - 1, 1);
-      const js = first.getDay(); // 0=Dom .. 6=Sáb
-      const offset = (js + 6) % 7; // Lunes=0 .. Domingo=6
-      setFirstOffset(offset);
-
-      // Resolver código de calendario desde la cabecera (fallbacks)
-      const calendarCode = header?.resource_calendar ?? header?.calendar_code ?? header?.calendar_type ?? null;
-      if (!calendarCode) {
-        console.warn("No calendar code found in header (resource_calendar/calendar_code/calendar_type)");
-        setCalendarDays([]);
-        return;
-      }
-
-      const fromIso = isoOf(year, month, 1);
-      const toIso = isoOf(year, month, daysInMonth(year, month));
-
-      // 1) Horas requeridas por día del calendario laboral
-      const { data: calRows, error: calErr } = await supabaseClient
-        .from("calendar_period_days")
-        .select("day,hours_working,holiday")
-        .eq("allocation_period", header.allocation_period)
-        .eq("calendar_code", calendarCode);
-      if (calErr) {
-        console.error("Error cargando calendar_period_days:", calErr);
-        return;
-      }
-      const req = {};
-      (calRows || []).forEach((r) => {
-        const iso = (r.day || "").slice(0, 10);
-        req[iso] = Number(r.hours_working) || 0;
-      });
-      setDailyRequired(req);
-
-      // 2) Horas imputadas por día (sumando quantity de lines del header)
-      const { data: tRows, error: tErr } = await supabaseClient
-        .from("timesheet")
-        .select("date,quantity")
-        .eq("header_id", resolvedHeaderId || header.id)
-        .gte("date", fromIso)
-        .lte("date", toIso);
-      if (tErr) {
-        console.error("Error cargando imputaciones:", tErr);
-        return;
-      }
-      const imp = {};
-      (tRows || []).forEach((r) => {
-        const iso = (r.date || "").slice(0, 10);
-        const q = Number(r.quantity) || 0;
-        imp[iso] = (imp[iso] || 0) + q;
-      });
-      setDailyImputed(imp);
-
-      // 3) Construir arreglo de días con estado usando festivos, solo festivos en gris
-      const EPS = 0.01;
-      // Construir holidaySet (solo festivos en el calendario)
-      const holidaySet = new Set();
-      (calRows || []).forEach((day) => {
-        const iso = (day.day || "").slice(0, 10);
-        if (day.holiday === true) {
-          holidaySet.add(iso);
-        }
-      });
-
-      const arr = [];
-      const totalDays = daysInMonth(year, month);
-      for (let d = 1; d <= totalDays; d++) {
-        const iso = isoOf(year, month, d);
-        const requiredHours = req[iso] ?? 0;
-        const got = imp[iso] ?? 0;
-
-        let status = "neutral";
-        if (holidaySet.has(iso)) {
-          status = "sin-horas"; // solo festivos en gris
-        } else if (requiredHours > 0) {
-          if (got >= (requiredHours - EPS)) status = "completo"; // verde
-          else if (got > 0)                status = "parcial";  // amarillo
-          else                              status = "cero";     // rojo
-        }
-
-        arr.push({ d, iso, need: requiredHours, got, status });
-      }
-      setCalendarDays(arr);
-    }
-
-    buildCalendar();
-  }, [header, resolvedHeaderId]);
-
-  // === Actualizar colores del calendario en vivo según ediciones locales (sin grabar)
-  useEffect(() => {
-    if (!calRange?.year || !calRange?.month) return;
-
-    const EPS = 0.01;
-    // Festivos (solo estos van en gris)
-    const holidaySet = new Set((calendarHolidays || []).map((h) => (h.day || "").slice(0, 10)));
-
-    // Horas imputadas "en vivo" desde el formulario (editFormData)
-    const liveImp = {};
-    Object.values(editFormData || {}).forEach((row) => {
-      const iso = toIsoFromInput(row?.date);
-      if (!iso) return;
-      const q = Number(row?.quantity) || 0;
-      liveImp[iso] = (liveImp[iso] || 0) + q;
-    });
-
-    // Construir arreglo de días con estado (usando dailyRequired + liveImp)
-    const arr = [];
-    const totalDays = daysInMonth(calRange.year, calRange.month);
-    for (let d = 1; d <= totalDays; d++) {
-      const iso = isoOf(calRange.year, calRange.month, d);
-      const need = dailyRequired?.[iso] ?? 0;
-      const got = liveImp?.[iso] ?? 0;
-
-      let status = "neutral";
-      if (holidaySet.has(iso)) {
-        status = "sin-horas";           // festivo → gris
-      } else if (need > 0) {
-        if (got >= (need - EPS)) status = "completo"; // verde
-        else if (got > 0)        status = "parcial";  // amarillo
-        else                      status = "cero";     // rojo
-      }
-
-      arr.push({ d, iso, need, got, status });
-    }
-
-    setCalendarDays(arr);
-  }, [editFormData, dailyRequired, calRange, calendarHolidays]);
+    if (Array.isArray(calHolidaysFromHook)) setCalendarHolidays(calHolidaysFromHook);
+  }, [calHolidaysFromHook]);
 
   // === Validación en vivo: tope diario y festivos (no permitir imputar)
   useEffect(() => {
@@ -469,19 +317,13 @@ function TimesheetEdit({ headerId }) {
     const hasReq = dailyRequired && Object.keys(dailyRequired).length > 0;
     if (!hasReq) return; // evitar poner cantidades a 0 antes de tener requeridas
 
-    // 1) Conjunto de festivos (solo estos bloquean por gris)
-    const holidaySet = new Set((calendarHolidays || []).map((h) => (h.day || "").slice(0, 10)));
+    const holidaySet = buildHolidaySet(calendarHolidays);
 
     // 2) Requeridas por día
     const req = dailyRequired || {};
 
     // 3) Totales por día desde el formulario
-    const totals = {};
-    for (const row of Object.values(editFormData || {})) {
-      const iso = toIsoFromInput(row?.date);
-      if (!iso) continue;
-      totals[iso] = (totals[iso] || 0) + (Number(row?.quantity) || 0);
-    }
+    const totals = computeTotalsByIso(editFormData);
 
     // 4) Construir mapa de errores por línea y normalizar cantidades inválidas en festivo
     const nextErrors = {};
@@ -563,23 +405,7 @@ function TimesheetEdit({ headerId }) {
     });
   }, [lines]);
 
-  // -- Festivos
-  useEffect(() => {
-    async function fetchHolidays() {
-      if (!header) return;
-      const calendarCode = header?.resource_calendar ?? header?.calendar_code ?? header?.calendar_type ?? null;
-      if (!calendarCode) return;
-      const { data, error } = await supabaseClient
-        .from("calendar_period_days")
-        .select("*")
-        .eq("allocation_period", header?.allocation_period)
-        .eq("calendar_code", calendarCode)
-        .eq("holiday", true);
-      if (error) console.error("Error cargando festivos:", error);
-      setCalendarHolidays(data || []);
-    }
-    fetchHolidays();
-  }, [header]);
+  // Festivos ahora los aporta el hook
 
   // -- Crear nueva línea local
   const addEmptyLine = () => {
@@ -932,138 +758,18 @@ function TimesheetEdit({ headerId }) {
         </button>
       </div>
       {/* Header y calendario: calendario flotante a la derecha, sin ocupar ancho de líneas */}
-      <div style={{ position: "relative", marginBottom: 12, minHeight: calendarHeight }}>
-        {/* Header ocupa todo el ancho, con padding a la derecha para no quedar debajo del calendario */}
-        <div style={{ paddingRight: rightPad }}>
-          <TimesheetHeader header={header} />
-        </div>
-
-        {/* Tarjeta de totales (estilo BC) + Calendario a la derecha */}
-        <div style={{ position: "absolute", top: 0, right: 24, display: "flex", gap: 12, alignItems: "flex-start" }}>
-          {/* Tarjeta compacta con totales, reutiliza clases BC */}
-          <div className="bc-card bc-card--compact">
-            <div className="bc-card__title bc-card__title--small">Resumen mes</div>
-            <div className="summary-grid">
-              <span>Requeridas</span><strong>{Object.values(dailyRequired||{}).reduce((a,b)=>a+(Number(b)||0),0).toFixed(2)}</strong>
-              <span>Imputadas</span><strong>{Object.values(editFormData||{}).reduce((a,r)=>a+(Number(r?.quantity)||0),0).toFixed(2)}</strong>
-              <span>Faltan</span><strong>{(Math.max(0, Object.values(dailyRequired||{}).reduce((a,b)=>a+(Number(b)||0),0) - Object.values(editFormData||{}).reduce((a,r)=>a+(Number(r?.quantity)||0),0))).toFixed(2)}</strong>
-            </div>
-          </div>
-
-          {/* Calendario compacto */}
-          <div ref={calendarBoxRef} style={{ width: 210, border: "1px solid #d9d9d9", borderRadius: 6, padding: 12, background: "#fff" }}>
-            <div style={{ fontWeight: 700, marginBottom: 8 }}>
-              {calRange.month ? `${String(calRange.month).padStart(2, "0")}/${calRange.year}` : "Mes"}
-            </div>
-            {/* Cabecera de días L-M-X-J-V-S-D */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(7, 1fr)",
-                gap: 4,
-                fontSize: 12,
-                color: "#666",
-                marginBottom: 6,
-              }}
-            >
-              {["L", "M", "X", "J", "V", "S", "D"].map((d) => (
-                <div key={d} style={{ textAlign: "center" }}>{d}</div>
-              ))}
-            </div>
-            {/* Celdas del mes */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(7, 1fr)",
-                gap: 4,
-              }}
-            >
-              {Array.from({ length: firstOffset }).map((_, i) => (
-                <div key={`pad-${i}`} />
-              ))}
-              {calendarDays.map((day) => {
-                let backgroundColor;
-                switch (day.status) {
-                  case "sin-horas":
-                    backgroundColor = "lightgray"; // festivo
-                    break;
-                  case "cero":
-                    backgroundColor = "red"; // requerido y 0 imputado
-                    break;
-                  case "parcial":
-                    backgroundColor = "yellow"; // requerido y >0 pero < requerido
-                    break;
-                  case "completo":
-                    backgroundColor = "lightgreen"; // suficiente
-                    break;
-                  default:
-                    backgroundColor = undefined; // sin color especial
-                }
-                return (
-                  <div
-                    key={day.iso}
-                    style={{ textAlign: "center" }}
-                    title={`${day.iso} • Req: ${day.need} • Imp: ${day.got}`}
-                  >
-                    <div
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        padding: "3px 0",
-                        borderRadius: 5,
-                        backgroundColor,
-                        background: backgroundColor,
-                        color:
-                          backgroundColor === "yellow" || backgroundColor === "lightgray"
-                            ? "#222"
-                            : backgroundColor
-                            ? "#fff"
-                            : "inherit",
-                        fontSize: 11,
-                        lineHeight: 1.2,
-                      }}
-                    >
-                      {day.d}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {/* Leyenda (2 columnas) */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "auto auto",
-                justifyContent: "space-between",
-                alignItems: "center",
-                rowGap: 6,
-                columnGap: 8,
-                marginTop: 8,
-                fontSize: 12,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ width: 10, height: 10, backgroundColor: "red", borderRadius: 3 }}></span>
-                <span>Sin horas</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ width: 10, height: 10, backgroundColor: "yellow", borderRadius: 3 }}></span>
-                <span>Parcial</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ width: 10, height: 10, backgroundColor: "lightgreen", borderRadius: 3 }}></span>
-                <span>Completo</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ width: 10, height: 10, backgroundColor: "lightgray", borderRadius: 3 }}></span>
-                <span>Festivo</span>
-              </div>
-            </div>
-
-            {/* Totales del mes: ahora en tarjeta; removidos aquí para no duplicar */}
-          </div>
-        </div>
+      <div style={{ paddingRight: rightPad }}>
+        <TimesheetHeader header={header} />
       </div>
+      <CalendarPanel
+        calRange={calRange}
+        firstOffset={firstOffset}
+        calendarDays={calendarDays}
+        requiredSum={requiredSum}
+        imputedSum={imputedSum}
+        missingSum={missingSum}
+        rightPadState={[rightPad, setRightPad]}
+      />
       {/* Sección de líneas debajo, ocupa todo el ancho, alineada con margen derecho del calendario */}
       <div style={{ marginTop: 24, paddingRight: rightPad }}>
         <h3>Líneas</h3>

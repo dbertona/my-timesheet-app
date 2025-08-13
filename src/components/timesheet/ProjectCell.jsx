@@ -1,4 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
+import useDropdownFilter from "../../utils/useDropdownFilter";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 import TIMESHEET_FIELDS from "../../constants/timesheetFields";
 
@@ -11,6 +13,7 @@ export default function ProjectCell({
   inputRefs,
   hasRefs,
   setSafeRef,
+  error,
   handlers,
   jobsState,
 }) {
@@ -22,16 +25,13 @@ export default function ProjectCell({
     clearFieldError,
   } = handlers;
 
-  const {
-    jobsLoaded,
-    jobFilter,
-    setJobFilter,
-    jobOpenFor,
-    setJobOpenFor,
-    getVisibleJobs,
-    ensureTasksLoaded,
-    findJob,
-  } = jobsState;
+  const { jobsLoaded, ensureTasksLoaded, findJob, jobs = [] } = jobsState;
+  const jobsFilter = useDropdownFilter();
+  const jobFilter = jobsFilter.filterByLine;
+  const setJobFilter = jobsFilter.setFilterByLine;
+  const jobOpenFor = jobsFilter.openFor;
+  const setJobOpenFor = jobsFilter.setOpenFor;
+  const getVisibleJobs = (lineId) => jobsFilter.getVisible(lineId, jobs, (j) => `${j.no} ${j.description || ""}`);
 
   // Prefetch: cuando se abre el dropdown de proyectos o cambia el filtro,
   // pre-cargamos tareas de los primeros candidatos visibles (hasta 5) para
@@ -48,6 +48,15 @@ export default function ProjectCell({
     // a los cambios que hace el usuario al escribir.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobOpenFor, jobsLoaded, jobFilter?.[line.id]]);
+
+  // Virtualización: hooks deben llamarse siempre, nunca condicionalmente
+  const parentRef = useRef(null);
+  const items = useMemo(() => getVisibleJobs(line.id) || [], [getVisibleJobs, line.id, jobFilter?.[line.id], jobsLoaded, jobs]);
+  const rowVirtualizer = useVirtualizer({
+    count: jobOpenFor === line.id && jobsLoaded ? items.length : 0,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 28,
+  });
 
   return (
     <td
@@ -94,16 +103,26 @@ export default function ProjectCell({
                 });
               }
               clearFieldError(line.id, "job_no");
+              setJobOpenFor(null);
             }}
             onFocus={(e) => handleInputFocus(line.id, "job_no", e)}
             onKeyDown={async (e) => {
+              if (e.altKey && e.key === "ArrowDown") {
+                setJobOpenFor(line.id);
+                e.preventDefault();
+                return;
+              }
+              if (e.altKey && e.key === "ArrowUp") {
+                setJobOpenFor(null);
+                e.preventDefault();
+                return;
+              }
               if (e.key === "Enter") {
-                const list = getVisibleJobs(line.id);
-                if (list.length === 1) {
-                  const val = list[0].no;
-                  handleInputChange(line.id, {
-                    target: { name: "job_no", value: val },
-                  });
+                const list = getVisibleJobs(line.id) || [];
+                const candidate = list[0];
+                if (candidate) {
+                  const val = candidate.no;
+                  handleInputChange(line.id, { target: { name: "job_no", value: val } });
                   clearFieldError(line.id, "job_no");
                   setJobFilter((prev) => ({ ...prev, [line.id]: val }));
                   setJobOpenFor(null);
@@ -144,39 +163,39 @@ export default function ProjectCell({
                 placeholder="Buscar proyecto..."
                 style={{ width: "100%", border: "none", outline: "none" }}
               />
+              {!jobsLoaded && <span className="ts-spinner" aria-label="Cargando" />}
             </div>
-
-            {(jobsLoaded ? getVisibleJobs(line.id) : []).map((j) => (
-              <div
-                key={j.no}
-                onMouseDown={async () => {
-                  // Establecemos el proyecto seleccionado sin tocar otros campos.
-                  handleInputChange(line.id, {
-                    target: { name: "job_no", value: j.no },
-                  });
-                  setJobFilter((prev) => ({ ...prev, [line.id]: j.no }));
-                  setJobOpenFor(null);
-
-                  // Al cambiar de proyecto, solo reiniciamos la tarea.
-                  handleInputChange(line.id, {
-                    target: { name: "job_task_no", value: "" },
-                  });
-
-                  await ensureTasksLoaded(j.no);
-                  const el = inputRefs.current?.[line.id]?.["job_task_no"];
-                  if (el) {
-                    el.focus();
-                    el.select();
-                  }
-                }}
-                title={`${j.no} - ${j.description || ""}`}
-              >
-                <strong>{j.no}</strong>{" "}
-                {j.description ? `— ${j.description}` : ""}
+            {!jobsLoaded ? (
+              <div style={{ padding: "8px", color: "#999" }}>Cargando…</div>
+            ) : (
+              <div ref={parentRef} style={{ height: 220, overflow: 'auto' }}>
+                <div style={{ height: rowVirtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
+                  {rowVirtualizer.getVirtualItems().map((v) => {
+                    const j = items[v.index];
+                    return (
+                      <div
+                        key={j.no}
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${v.start}px)` }}
+                        onMouseDown={async () => {
+                          handleInputChange(line.id, { target: { name: 'job_no', value: j.no } });
+                          setJobFilter((prev) => ({ ...prev, [line.id]: j.no }));
+                          setJobOpenFor(null);
+                          handleInputChange(line.id, { target: { name: 'job_task_no', value: '' } });
+                          await ensureTasksLoaded(j.no);
+                          const el = inputRefs.current?.[line.id]?.['job_task_no'];
+                          if (el) { el.focus(); el.select(); }
+                        }}
+                        title={`${j.no} - ${j.description || ''}`}
+                      >
+                        <strong>{j.no}</strong> {j.description ? `— ${j.description}` : ''}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            ))}
+            )}
 
-            {jobsLoaded && getVisibleJobs(line.id).length === 0 && (
+            {jobsLoaded && items.length === 0 && (
               <div style={{ padding: "8px", color: "#999" }}>
                 Sin resultados…
               </div>
@@ -184,6 +203,9 @@ export default function ProjectCell({
           </div>
         )}
       </div>
+      {error && (
+        <div className="ts-error"><span className="ts-inline-error"><span className="ts-inline-error__dot" />{error}</span></div>
+      )}
     </td>
   );
 }

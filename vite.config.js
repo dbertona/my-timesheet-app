@@ -11,6 +11,18 @@ const dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(file
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom"],
+          vendor_ui: ["react-hot-toast", "react-icons"],
+          tanstack: ["@tanstack/react-query", "@tanstack/react-virtual"],
+          date: ["date-fns", "react-datepicker"],
+        }
+      }
+    }
+  },
   test: {
     projects: [{
       extends: true,

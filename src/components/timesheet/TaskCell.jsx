@@ -1,6 +1,8 @@
 // src/components/timesheet/TaskCell.jsx
-import React from "react";
+import React, { useMemo, useRef } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import useDropdownFilter from "../../utils/useDropdownFilter";
 import TIMESHEET_FIELDS from "../../constants/timesheetFields";
 
 export default function TaskCell({
@@ -12,6 +14,7 @@ export default function TaskCell({
   inputRefs,
   hasRefs,
   setSafeRef,
+  error,
   handlers,
   tasksState,
 }) {
@@ -23,15 +26,23 @@ export default function TaskCell({
     clearFieldError,
   } = handlers;
 
-  const {
-    taskFilter,
-    setTaskFilter,
-    taskOpenFor,
-    setTaskOpenFor,
-    getVisibleTasks,
-    ensureTasksLoaded,
-    findTask,
-  } = tasksState;
+  const { ensureTasksLoaded, findTask, tasksByJob = {} } = tasksState;
+  const tasksFilter = useDropdownFilter();
+  const taskFilter = tasksFilter.filterByLine;
+  const setTaskFilter = tasksFilter.setFilterByLine;
+  const taskOpenFor = tasksFilter.openFor;
+  const setTaskOpenFor = tasksFilter.setOpenFor;
+  const getVisibleTasks = (lineId, jobNo) => tasksFilter.getVisible(lineId, (tasksByJob[jobNo]||[]), (t) => `${t.no} ${t.description||""}`);
+
+  // Virtualización siempre montada para mantener orden de hooks estable
+  const parentRef = useRef(null);
+  const jobNo = editFormData[line.id]?.job_no || "";
+  const items = useMemo(() => (jobNo ? getVisibleTasks(line.id, jobNo) : []), [getVisibleTasks, line.id, jobNo, taskFilter?.[line.id], tasksByJob]);
+  const rowVirtualizer = useVirtualizer({
+    count: taskOpenFor === line.id ? items.length : 0,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 28,
+  });
 
   return (
     <td
@@ -72,6 +83,7 @@ export default function TaskCell({
                 });
               }
               clearFieldError(line.id, "job_task_no");
+              setTaskOpenFor(null);
             }}
             onFocus={async (e) => {
               handleInputFocus(line.id, "job_task_no", e);
@@ -79,14 +91,23 @@ export default function TaskCell({
               if (jobNo) await ensureTasksLoaded(jobNo);
             }}
             onKeyDown={(e) => {
+              if (e.altKey && e.key === "ArrowDown") {
+                setTaskOpenFor(line.id);
+                e.preventDefault();
+                return;
+              }
+              if (e.altKey && e.key === "ArrowUp") {
+                setTaskOpenFor(null);
+                e.preventDefault();
+                return;
+              }
               if (e.key === "Enter") {
                 const jobNo = editFormData[line.id]?.job_no || "";
-                const list = getVisibleTasks(line.id, jobNo);
-                if (list.length === 1) {
-                  const val = list[0].no;
-                  handleInputChange(line.id, {
-                    target: { name: "job_task_no", value: val },
-                  });
+                const list = getVisibleTasks(line.id, jobNo) || [];
+                const candidate = list[0];
+                if (candidate) {
+                  const val = candidate.no;
+                  handleInputChange(line.id, { target: { name: "job_task_no", value: val } });
                   clearFieldError(line.id, "job_task_no");
                   setTaskFilter((prev) => ({ ...prev, [line.id]: val }));
                   setTaskOpenFor(null);
@@ -128,36 +149,40 @@ export default function TaskCell({
               />
             </div>
 
-            {(editFormData[line.id]?.job_no
-              ? getVisibleTasks(line.id, editFormData[line.id]?.job_no)
-              : []
-            ).map((t) => (
-              <div
-                key={t.no}
-                onMouseDown={() => {
-                  handleInputChange(line.id, {
-                    target: { name: "job_task_no", value: t.no },
-                  });
-                  setTaskFilter((prev) => ({ ...prev, [line.id]: t.no }));
-                  setTaskOpenFor(null);
-                }}
-                title={`${t.no} - ${t.description || ""}`}
-              >
-                <strong>{t.no}</strong>{" "}
-                {t.description ? `— ${t.description}` : ""}
+            <div ref={parentRef} style={{ height: 220, overflow: 'auto' }}>
+              <div style={{ height: rowVirtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
+                {rowVirtualizer.getVirtualItems().map((v) => {
+                  const t = items[v.index];
+                  if (!t) return null;
+                  return (
+                    <div
+                      key={t.no}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${v.start}px)` }}
+                      onMouseDown={() => {
+                        handleInputChange(line.id, { target: { name: 'job_task_no', value: t.no } });
+                        setTaskFilter((prev) => ({ ...prev, [line.id]: t.no }));
+                        setTaskOpenFor(null);
+                      }}
+                      title={`${t.no} - ${t.description || ''}`}
+                    >
+                      <strong>{t.no}</strong> {t.description ? `— ${t.description}` : ''}
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+            </div>
 
-            {editFormData[line.id]?.job_no &&
-              getVisibleTasks(line.id, editFormData[line.id]?.job_no).length ===
-                0 && (
-                <div style={{ padding: "8px", color: "#999" }}>
-                  Sin resultados…
-                </div>
-              )}
+            {jobNo && items.length === 0 && (
+              <div style={{ padding: "8px", color: "#999" }}>
+                Sin resultados…
+              </div>
+            )}
           </div>
         )}
       </div>
+      {error && (
+        <div className="ts-error"><span className="ts-inline-error"><span className="ts-inline-error__dot" />{error}</span></div>
+      )}
     </td>
   );
 }

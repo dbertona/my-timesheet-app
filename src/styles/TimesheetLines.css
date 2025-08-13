@@ -76,6 +76,17 @@
   top: 0;
   background: #fff;
 }
+.ts-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0,0,0,0.15);
+  border-top-color: #4A90E2;
+  border-radius: 50%;
+  animation: ts-spin 0.8s linear infinite;
+}
+@keyframes ts-spin {
+  to { transform: rotate(360deg); }
+}
 .ts-dropdown__header input {
   width: 100%;
   border: none;
@@ -105,13 +116,9 @@
 }
 
 /* Mensajes de error debajo del campo */
-.ts-error {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 2;
-  margin-top: 4px;
-}
+/* Reservar espacio para que el pill no tape otras celdas */
+.ts-td.ts-cell > .ts-cell { margin-bottom: 6px; }
+.ts-error { position: static; margin-top: 4px; }
 
 /* Estilo pill para mensajes inline más agradables */
 .ts-inline-error {

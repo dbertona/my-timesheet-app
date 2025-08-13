@@ -1,17 +1,21 @@
 // src/components/TimesheetLines.jsx
 import React, { useEffect, useRef, useState } from "react";
-import ReactDatePicker from "react-datepicker";
-import { FiCalendar, FiChevronDown, FiSearch } from "react-icons/fi";
+import { FiChevronDown, FiSearch } from "react-icons/fi";
 import { format } from "date-fns";
 import { parseDate, formatDate } from "../utils/dateHelpers";
 import useColumnResize from "../hooks/useColumnResize";
 import { supabaseClient } from "../supabaseClient";
+import { useJobs, useWorkTypes, useTasks } from "../hooks/useTimesheetQueries";
 import "../styles/TimesheetResponsive.css";
 import "../styles/TimesheetLines.css";
 import TIMESHEET_FIELDS, { TIMESHEET_LABELS, TIMESHEET_ALIGN, COL_MIN_WIDTH, COL_MAX_WIDTH, DEFAULT_COL_WIDTH } from "../constants/timesheetFields";
 import ProjectCell from "./timesheet/ProjectCell";
 import TaskCell from "./timesheet/TaskCell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import InlineError from "./ui/InlineError";
+import DecimalInput from "./ui/DecimalInput";
+import DateInput from "./ui/DateInput";
+import EditableCell from "./ui/EditableCell";
 
 
 export default function TimesheetLines({
@@ -66,45 +70,15 @@ export default function TimesheetLines({
   const [wtFilter, setWtFilter] = useState({}); // { [lineId]: "filtro" }
   const [wtOpenFor, setWtOpenFor] = useState(null); // lineId con dropdown abierto
 
-  // React Query: Carga y cache de proyectos por recurso
-  const jobsQuery = useQuery({
-    queryKey: ["jobs", header?.resource_no],
-    queryFn: async () => {
-      const { data, error } = await supabaseClient
-        .from("job")
-        .select("no, description, status, job_team!inner(resource_no)")
-        .eq("status", "Open")
-        .eq("job_team.resource_no", header.resource_no)
-        .order("no")
-        .limit(1000);
-      if (error) throw error;
-      return (data || []).map(j => ({ no: j.no, description: j.description }));
-    },
-    enabled: !!header?.resource_no,
-    staleTime: 5 * 60 * 1000,
-  });
+  // React Query: Carga y cache de proyectos por recurso (hook reutilizable)
+  const jobsQuery = useJobs(header?.resource_no);
   const jobs = jobsQuery.data || [];
   const jobsLoaded = !jobsQuery.isLoading;
 
   // React Query: Carga y cache de servicios por recurso
-  const workTypesQuery = useQuery({
-    queryKey: ["workTypes", header?.resource_no],
-    queryFn: async () => {
-      const { data, error } = await supabaseClient
-        .from("resource_cost")
-        .select("work_type")
-        .eq("resource_no", header.resource_no)
-        .order("work_type")
-        .limit(2000);
-      if (error) throw error;
-      const list = (data || []).map((r) => r.work_type).filter(Boolean);
-      return Array.from(new Set(list));
-    },
-    enabled: !!header?.resource_no,
-    staleTime: 5 * 60 * 1000,
-  });
-  const workTypes = workTypesQuery.data || [];
-  const workTypesLoaded = !workTypesQuery.isLoading;
+  const workTypesQuery = useWorkTypes(header?.resource_no);
+  const workTypes = Array.isArray(workTypesQuery.data) ? workTypesQuery.data : [];
+  const workTypesLoaded = workTypesQuery.isSuccess;
 
   // Tareas por job: usar React Query como caché programática
   const queryClient = useQueryClient();
@@ -112,6 +86,7 @@ export default function TimesheetLines({
     if (!jobNo) return [];
     const data = await queryClient.fetchQuery({
       queryKey: ["tasks", jobNo],
+      staleTime: 5 * 60 * 1000,
       queryFn: async () => {
         const { data, error } = await supabaseClient
           .from("job_task")
@@ -122,7 +97,6 @@ export default function TimesheetLines({
         if (error) throw error;
         return data || [];
       },
-      staleTime: 5 * 60 * 1000,
     });
     setTasksByJob((prev) => ({ ...prev, [jobNo]: data }));
     return data;
@@ -159,7 +133,7 @@ export default function TimesheetLines({
   const findWorkType = (val) => {
     if (!val) return null;
     const v = String(val).trim().toLowerCase();
-    return workTypes.find((wt) => wt?.toLowerCase() === v) || null;
+    return (workTypes || []).find((wt) => wt?.toLowerCase() === v) || null;
   };
   const isValidWorkType = (val) => !!findWorkType(val);
 
@@ -286,6 +260,7 @@ export default function TimesheetLines({
                 inputRefs={inputRefs}
                 hasRefs={hasRefs}
                 setSafeRef={setSafeRef}
+                error={localErrors[line.id]?.job_no}
                 handlers={{
                   handleInputChange,
                   handleInputFocus,
@@ -295,6 +270,7 @@ export default function TimesheetLines({
                 }}
                 jobsState={{
                   jobsLoaded,
+                  jobs,
                   jobFilter,
                   setJobFilter,
                   jobOpenFor,
@@ -315,6 +291,7 @@ export default function TimesheetLines({
                 inputRefs={inputRefs}
                 hasRefs={hasRefs}
                 setSafeRef={setSafeRef}
+                error={localErrors[line.id]?.job_task_no}
                 handlers={{
                   handleInputChange,
                   handleInputFocus,
@@ -323,6 +300,7 @@ export default function TimesheetLines({
                   clearFieldError,
                 }}
                 tasksState={{
+                  tasksByJob,
                   taskFilter,
                   setTaskFilter,
                   taskOpenFor,
@@ -334,9 +312,7 @@ export default function TimesheetLines({
               />
 
               {/* ----- Descripción ----- */}
-              <td
-                data-col="description"
-                className="ts-td"
+              <EditableCell
                 style={{ ...colStyles.description, textAlign: getAlign("description") }}
               >
                 <input
@@ -353,13 +329,12 @@ export default function TimesheetLines({
                   ref={hasRefs ? (el) => setSafeRef(line.id, "description", el) : null}
                   className="ts-input"
                 />
-              </td>
+              </EditableCell>
 
               {/* ----- Servicio (work_type): combo por recurso ----- */}
-              <td
-                data-col="work_type"
-                className="ts-td ts-cell"
+              <EditableCell
                 style={{ ...colStyles.work_type, textAlign: getAlign("work_type") }}
+                error={localErrors[line.id]?.work_type}
               >
                 <div className="ts-cell">
                   <div className="ts-cell">
@@ -492,164 +467,89 @@ export default function TimesheetLines({
                     </div>
                   )}
                 </div>
-                {localErrors[line.id]?.work_type && (
-                  <div className="ts-error">
-                    {localErrors[line.id].work_type}
-                  </div>
-                )}
-              </td>
+              </EditableCell>
 
               {/* ----- Fecha (derecha) ----- */}
-              <td
-                data-col="date"
-                className="ts-td ts-cell"
+              <EditableCell
                 style={{ ...colStyles.date, textAlign: getAlign("date") }}
+                error={errors[line.id]?.date}
+                errorId={`input-date-${line.id}-err`}
               >
-                <div className="ts-cell" style={{ width: "100%", display: "flex", alignItems: "center" }}>
-                  <input
-                    type="text"
-                    name="date"
-                    value={editFormData[line.id]?.date || ""}
-                    onChange={(e) => handleDateInputChange(line.id, e.target.value)}
-                    onBlur={(e) => {
-                      handleDateInputBlur(line.id, e.target.value);
-                      typeof scheduleAutosave === 'function' && scheduleAutosave(line.id);
-                    }}
-                    onFocus={(e) => handleInputFocus(line.id, "date", e)}
-                    onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("date"))}
-                    ref={hasRefs ? (el) => setSafeRef(line.id, "date", el) : null}
-                    className={`ts-input pr-icon ${errors[line.id]?.date ? 'has-error' : ''}`}
-                    autoComplete="off"
-                    id={`input-date-${line.id}`}
-                  />
-                  <FiCalendar
-                    onClick={() => setCalendarOpenFor(line.id)}
-                    className="ts-icon ts-icon--calendar"
-                    tabIndex={-1}
-                    aria-label="Abrir calendario"
-                  />
-                  {calendarOpenFor === line.id && (
-                    <div className="ts-datepop">
-                      <ReactDatePicker
-                        selected={parseDate(editFormData[line.id]?.date)}
-                        onChange={(date) => {
-                          const formatted = formatDate(date);
-                          handleDateInputChange(line.id, formatted);
-                          handleDateInputBlur(line.id, formatted);
-                          if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                          setCalendarOpenFor(null);
-                        }}
-                        onClickOutside={() => setCalendarOpenFor(null)}
-                        dateFormat="dd/MM/yyyy"
-                        minDate={header ? new Date(header.from_date) : null}
-                        maxDate={header ? new Date(header.to_date) : null}
-                        filterDate={(date) => {
-                          if (!calendarHolidays || calendarHolidays.length === 0) return true;
-                          const dayISO = format(date, "yyyy-MM-dd");
-                          return !calendarHolidays.some((h) => {
-                            const hISO = typeof h.day === "string" ? h.day : format(h.day, "yyyy-MM-dd");
-                            return hISO === dayISO && h.holiday === true;
-                          });
-                        }}
-                        inline
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {errors[line.id]?.date && (
-                  <div className="ts-error">
-                    <span className="ts-inline-error">
-                      <span className="ts-inline-error__dot" />
-                      {errors[line.id].date}
-                    </span>
-                  </div>
-                )}
-              </td>
+                <DateInput
+                  name="date"
+                  value={editFormData[line.id]?.date || ""}
+                  onChange={(val) => handleDateInputChange(line.id, val)}
+                  onBlur={(val) => {
+                    handleDateInputBlur(line.id, val);
+                    if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                  }}
+                  onFocus={(e) => handleInputFocus(line.id, "date", e)}
+                  onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("date"))}
+                  inputRef={hasRefs ? (el) => setSafeRef(line.id, "date", el) : null}
+                  calendarOpen={calendarOpenFor === line.id}
+                  setCalendarOpen={(open) => setCalendarOpenFor(open ? line.id : null)}
+                  header={header}
+                  calendarHolidays={calendarHolidays}
+                  className={`ts-input pr-icon ${errors[line.id]?.date ? 'has-error' : ''}`}
+                  inputId={`input-date-${line.id}`}
+                />
+              </EditableCell>
 
               {/* ----- Cantidad (derecha) ----- */}
-              <td
-                data-col="quantity"
-                className="ts-td"
+              <EditableCell
                 style={{ ...colStyles.quantity, textAlign: getAlign("quantity"), verticalAlign: "top" }}
+                error={errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id])}
               >
                 <div style={{ display: "flex", flexDirection: "column" }}>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      pattern="^\\\d*(\\\.|\\\,)?\\\d{0,2}$"
-                      step="0.01"
-                      min="0"
-                    name="quantity"
-                    value={(() => {
-                      const q = editFormData[line.id]?.quantity;
-                      if (typeof q === "number" || typeof q === "string") return q;
-                      if (q && typeof q === "object" && "value" in q) return q.value;
-                      return "";
-                    })()}
-                    onChange={(e) => {
-                        const raw = (e.target.value || "").replace(/,/g, ".");
-                        if (/^\d*(\.)?\d{0,2}$/.test(raw)) {
-                          handleInputChange(line.id, { target: { name: "quantity", value: raw } });
+                    <DecimalInput
+                      name="quantity"
+                      value={(() => {
+                        const q = editFormData[line.id]?.quantity;
+                        if (typeof q === "number" || typeof q === "string") return q;
+                        if (q && typeof q === "object" && "value" in q) return q.value;
+                        return "";
+                      })()}
+                      onChange={({ target: { name, value } }) => handleInputChange(line.id, { target: { name, value } })}
+                      onFocus={(e) => handleInputFocus(line.id, "quantity", e)}
+                      onBlur={({ target: { name, value } }) => {
+                        const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
+                        if (hasError) {
+                          const el = inputRefs?.current?.[line.id]?.["quantity"];
+                          if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
                         }
-                    }}
-                    onFocus={(e) => handleInputFocus(line.id, "quantity", e)}
-                    onBlur={(e) => {
-                      const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
-                      if (hasError) {
-                        const el = inputRefs?.current?.[line.id]?.["quantity"];
-                        if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
-                      }
-                      const v = (e.target.value || "").trim();
-                      const num = Math.max(0, Number(v) || 0);
-                      const fixed = num.toFixed(2);
-                      handleInputChange(line.id, { target: { name: "quantity", value: fixed } });
-                      if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                      else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                    }}
-                    onKeyDown={(e) => {
-                      const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
-                      if ((e.key === "Enter" || e.key === "Tab") && hasError) {
-                        e.preventDefault();
-                        const el = inputRefs?.current?.[line.id]?.["quantity"];
-                        if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
-                        return;
-                      }
-                      if (e.key === "Enter" || e.key === "Tab") {
+                        handleInputChange(line.id, { target: { name, value } });
                         if (typeof saveLineNow === 'function') saveLineNow(line.id);
                         else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                      }
-                      handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("quantity"));
-                    }}
-                    ref={hasRefs ? (el) => setSafeRef(line.id, "quantity", el) : null}
-                    className={`ts-input ${
-                      errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id])
-                        ? "has-error"
-                        : ""
-                    }`}
-                    autoComplete="off"
-                  />
-
-                  {/* Mensaje de error debajo del input, en la misma celda */}
-                  {errors[line.id]?.quantity && (
-                    <span className="ts-inline-error" style={{ alignSelf: "flex-start", marginTop: 4 }}>
-                      <span className="ts-inline-error__dot" />
-                      {errors[line.id].quantity}
-                    </span>
-                  )}
-                  {typeof errors[line.id] === "string" && errors[line.id] && (
-                    <span className="ts-inline-error" style={{ alignSelf: "flex-start", marginTop: 4 }}>
-                      <span className="ts-inline-error__dot" />
-                      {errors[line.id]}
-                    </span>
-                  )}
+                      }}
+                      onKeyDown={(e) => {
+                        const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
+                        if ((e.key === "Enter" || e.key === "Tab") && hasError) {
+                          e.preventDefault();
+                          const el = inputRefs?.current?.[line.id]?.["quantity"];
+                          if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
+                          return;
+                        }
+                        if (e.key === "Enter" || e.key === "Tab") {
+                          if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                          else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                        }
+                        handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("quantity"));
+                      }}
+                      inputRef={hasRefs ? (el) => setSafeRef(line.id, "quantity", el) : null}
+                      className={`ts-input ${
+                        errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id])
+                          ? "has-error"
+                          : ""
+                      }`}
+                      min={0}
+                      step={0.01}
+                      decimals={2}
+                    />
                 </div>
-              </td>
+              </EditableCell>
 
               {/* ----- Departamento ----- */}
-              <td
-                data-col="department_code"
-                className="ts-td"
+              <EditableCell
                 style={{ ...colStyles.department_code, textAlign: getAlign("department_code") }}
               >
                 <input
@@ -662,7 +562,7 @@ export default function TimesheetLines({
                   ref={hasRefs ? (el) => setSafeRef(line.id, "department_code", el) : null}
                   className="ts-input"
                 />
-              </td>
+              </EditableCell>
             </tr>
           ))}
         </tbody>
