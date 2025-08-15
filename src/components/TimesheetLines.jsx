@@ -13,9 +13,12 @@ import ProjectCell from "./timesheet/ProjectCell";
 import TaskCell from "./timesheet/TaskCell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import InlineError from "./ui/InlineError";
-import DecimalInput from "./ui/DecimalInput";
+import { DecimalInput } from "./ui/DecimalInput";
 import DateInput from "./ui/DateInput";
 import EditableCell from "./ui/EditableCell";
+import { VALIDATION, LABELS } from '../constants/i18n';
+import { toast } from 'react-hot-toast';
+import { prepareRowForDb } from '../api/timesheet';
 
 
 export default function TimesheetLines({
@@ -31,9 +34,13 @@ export default function TimesheetLines({
   handleInputFocus,
   handleKeyDown,
   header,
-  calendarHolidays = [],
+  calendarHolidays,
   scheduleAutosave,
   saveLineNow,
+  savingByLine = {},
+  onLinesChange,
+  deleteLineMutation,
+  insertLineMutation,
 }) {
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
     TIMESHEET_FIELDS,
@@ -53,6 +60,9 @@ export default function TimesheetLines({
 
   const getAlign = (key) => (TIMESHEET_ALIGN?.[key] || "left");
 
+  // Estado para el modal de confirmación
+  const [deleteModal, setDeleteModal] = useState({ show: false, lineId: null, lineData: null });
+
 
   // ===============================
   // Jobs & Job Tasks (combos)
@@ -69,6 +79,7 @@ export default function TimesheetLines({
   // Eliminado estado local de workTypes: usamos React Query
   const [wtFilter, setWtFilter] = useState({}); // { [lineId]: "filtro" }
   const [wtOpenFor, setWtOpenFor] = useState(null); // lineId con dropdown abierto
+  const [wtActiveIndex, setWtActiveIndex] = useState(-1); // índice del ítem activo para work_type
 
   // React Query: Carga y cache de proyectos por recurso (hook reutilizable)
   const jobsQuery = useJobs(header?.resource_no);
@@ -104,13 +115,78 @@ export default function TimesheetLines({
 
   // Filtrados visibles
   const getVisibleJobs = (lineId) => {
-    const q = (jobFilter[lineId] || "").toLowerCase();
-    if (!q) return jobs;
-    return jobs.filter(
-      (j) =>
-        j.no?.toLowerCase().includes(q) ||
-        j.description?.toLowerCase().includes(q)
+    const filter = jobFilter[lineId] || "";
+    if (!filter) return jobs;
+    return jobs.filter((j) =>
+      j.no.toLowerCase().includes(filter.toLowerCase()) ||
+      (j.description || "").toLowerCase().includes(filter.toLowerCase())
     );
+  };
+
+  // Funciones de acciones
+  const handleDeleteLine = (lineId) => {
+    const lineToDelete = lines.find(line => line.id === lineId);
+    if (!lineToDelete) return;
+
+    // Mostrar modal de confirmación
+    setDeleteModal({
+      show: true,
+      lineId: lineId,
+      lineData: lineToDelete
+    });
+  };
+
+  const confirmDeleteLine = () => {
+    if (!deleteModal.lineId) return;
+
+    // Eliminar línea usando la mutación
+    deleteLineMutation.mutate(deleteModal.lineId);
+
+    // Cerrar modal
+    setDeleteModal({ show: false, lineId: null, lineData: null });
+  };
+
+  const cancelDeleteLine = () => {
+    setDeleteModal({ show: false, lineId: null, lineData: null });
+  };
+
+  const handleDuplicateLine = (lineId) => {
+    const originalLine = lines.find(line => line.id === lineId);
+    if (!originalLine) return;
+
+    // Encontrar el índice de la línea original
+    const originalIndex = lines.findIndex(line => line.id === lineId);
+
+    // Crear nueva línea con datos copiados (mantener formato de fecha original)
+    const newLineData = {
+      header_id: header?.id,
+      job_no: originalLine.job_no,
+      job_task_no: originalLine.job_task_no,
+      description: `${originalLine.description || ''} (copia)`,
+      work_type: originalLine.work_type,
+      quantity: 0, // Resetear cantidad
+      date: originalLine.date, // Mantener formato original (dd/mm/aaaa)
+      department_code: originalLine.department_code,
+      company: header?.company || "",
+      resource_no: header?.resource_no || "",
+    };
+
+    // Preparar datos para la base de datos usando prepareRowForDb
+    const preparedData = prepareRowForDb(newLineData, { header });
+
+    // Insertar nueva línea usando React Query
+    insertLineMutation.mutate(preparedData, {
+      onSuccess: (newLine) => {
+        // Insertar la nueva línea en la posición correcta (debajo de la original)
+        const updatedLines = [...lines];
+        updatedLines.splice(originalIndex + 1, 0, newLine);
+
+        // Actualizar el estado local para mostrar la línea en la posición correcta
+        if (typeof onLinesChange === 'function') {
+          onLinesChange(updatedLines, editFormData, errors);
+        }
+      }
+    });
   };
 
   const getVisibleTasks = (lineId, jobNo) => {
@@ -228,22 +304,19 @@ export default function TimesheetLines({
       <table ref={tableRef} className="ts-table">
         <thead>
           <tr>
-            {TIMESHEET_FIELDS.map((key) => (
+            {TIMESHEET_FIELDS.map((field) => (
               <th
-                key={key}
-                data-col={key}
-                className="ts-th"
-                style={{ ...colStyles[key] }}
+                key={field}
+                style={{
+                  minWidth: COL_MIN_WIDTH[field],
+                  maxWidth: COL_MAX_WIDTH[field],
+                  width: COL_MIN_WIDTH[field],
+                }}
               >
-                {TIMESHEET_LABELS?.[key] || key}
-                <span
-                  className="ts-resizer"
-                  onMouseDown={(e) => onMouseDown(e, key)}
-                  onDoubleClick={() => handleAutoFit(key)}
-                  aria-hidden
-                />
+                {TIMESHEET_LABELS[field] || field}
               </th>
             ))}
+            <th style={{ width: 80 }}>Acciones</th>
           </tr>
         </thead>
 
@@ -267,6 +340,8 @@ export default function TimesheetLines({
                   handleKeyDown,
                   setFieldError,
                   clearFieldError,
+                  scheduleAutosave,
+                  saveLineNow,
                 }}
                 jobsState={{
                   jobsLoaded,
@@ -298,6 +373,8 @@ export default function TimesheetLines({
                   handleKeyDown,
                   setFieldError,
                   clearFieldError,
+                  scheduleAutosave,
+                  saveLineNow,
                 }}
                 tasksState={{
                   tasksByJob,
@@ -352,7 +429,7 @@ export default function TimesheetLines({
                         if (!raw) return; // permitir vacío sin error
                         const found = findWorkType(raw);
                         if (!found) {
-                          setFieldError(line.id, "work_type", "Servicio inválido. Debe seleccionar uno de la lista.");
+                          setFieldError(line.id, "work_type", VALIDATION.INVALID_WORK_TYPE);
                           const el = inputRefs?.current?.[line.id]?.["work_type"];
                           if (el) setTimeout(() => { el.focus(); el.select(); }, 0);
                           return;
@@ -408,7 +485,7 @@ export default function TimesheetLines({
                           }
                           // Inválido → no avanzar, marcar error
                           e.preventDefault();
-                          setFieldError(line.id, "work_type", "Servicio inválido. Debe seleccionar uno de la lista.");
+                          setFieldError(line.id, "work_type", VALIDATION.INVALID_WORK_TYPE);
                           const el = inputRefs?.current?.[line.id]?.["work_type"];
                           if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
                           return;
@@ -416,6 +493,21 @@ export default function TimesheetLines({
                         // Alt + ArrowDown: abrir dropdown de servicios
                         if (e.altKey && e.key === "ArrowDown") {
                           setWtOpenFor((prev) => (prev === line.id ? null : line.id));
+                          setWtActiveIndex(0);
+                          e.preventDefault();
+                          return;
+                        }
+                        // Alt + ArrowUp: cerrar dropdown
+                        if (e.altKey && e.key === "ArrowUp") {
+                          setWtOpenFor(null);
+                          setWtActiveIndex(-1);
+                          e.preventDefault();
+                          return;
+                        }
+                        // Escape: cerrar dropdown
+                        if (e.key === "Escape") {
+                          setWtOpenFor(null);
+                          setWtActiveIndex(-1);
                           e.preventDefault();
                           return;
                         }
@@ -424,6 +516,11 @@ export default function TimesheetLines({
                       ref={hasRefs ? (el) => setSafeRef(line.id, "work_type", el) : null}
                       className={`ts-input ${localErrors[line.id]?.work_type ? 'has-error' : ''}`}
                       autoComplete="off"
+                      aria-expanded={wtOpenFor === line.id}
+                      aria-haspopup="listbox"
+                      aria-controls={`worktype-dropdown-${line.id}`}
+                      role="combobox"
+                      aria-autocomplete="list"
                     />
                     <FiChevronDown
                       onMouseDown={(e) => {
@@ -435,18 +532,76 @@ export default function TimesheetLines({
                   </div>
 
                   {wtOpenFor === line.id && (
-                    <div className="ts-dropdown" onMouseDown={(e) => e.preventDefault()}>
+                    <div
+                      className="ts-dropdown"
+                      onMouseDown={(e) => e.preventDefault()}
+                      id={`worktype-dropdown-${line.id}`}
+                      role="listbox"
+                      aria-label="Lista de tipos de trabajo"
+                      onKeyDown={(e) => {
+                        const items = getVisibleWorkTypes(line.id) || [];
+                        if (items.length === 0) return;
+
+                        if (e.key === "Escape") {
+                          setWtOpenFor(null);
+                          setWtActiveIndex(-1);
+                          e.preventDefault();
+                          return;
+                        }
+
+                        // Navegación con flechas
+                        if (e.key === "ArrowDown") {
+                          const newIndex = Math.min(wtActiveIndex + 1, items.length - 1);
+                          setWtActiveIndex(newIndex);
+                          e.preventDefault();
+                          return;
+                        }
+                        if (e.key === "ArrowUp") {
+                          const newIndex = Math.max(wtActiveIndex - 1, 0);
+                          setWtActiveIndex(newIndex);
+                          e.preventDefault();
+                          return;
+                        }
+                        if (e.key === "Home") {
+                          setWtActiveIndex(0);
+                          e.preventDefault();
+                          return;
+                        }
+                        if (e.key === "End") {
+                          setWtActiveIndex(items.length - 1);
+                          e.preventDefault();
+                          return;
+                        }
+
+                        // Seleccionar con Enter
+                        if (e.key === "Enter" && wtActiveIndex >= 0 && wtActiveIndex < items.length) {
+                          const selected = items[wtActiveIndex];
+                          handleInputChange(line.id, { target: { name: "work_type", value: selected } });
+                          clearFieldError(line.id, "work_type");
+                          setWtFilter((prev) => ({ ...prev, [line.id]: selected }));
+                          setWtOpenFor(null);
+                          setWtActiveIndex(-1);
+                          if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                          else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                          e.preventDefault();
+                        }
+                      }}
+                    >
                       <div className="ts-dropdown__header">
                         <FiSearch />
                         <input
                           value={wtFilter[line.id] || ""}
-                          onChange={(e) => setWtFilter((prev) => ({ ...prev, [line.id]: e.target.value }))}
-                          placeholder="Buscar servicio..."
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setWtFilter((prev) => ({ ...prev, [line.id]: val }));
+                            setWtOpenFor((prev) => (prev === line.id ? line.id : null));
+                          }}
+                          placeholder={PLACEHOLDERS.WORK_TYPE_SEARCH}
                           style={{ width: "100%", border: "none", outline: "none" }}
                         />
                       </div>
 
-                      {(workTypesLoaded ? getVisibleWorkTypes(line.id) : []).map((wt) => (
+                      {(workTypesLoaded ? getVisibleWorkTypes(line.id) : []).map((wt, index) => (
                         <div
                           key={wt}
                           onMouseDown={() => {
@@ -454,8 +609,24 @@ export default function TimesheetLines({
                             clearFieldError(line.id, "work_type");
                             setWtFilter((prev) => ({ ...prev, [line.id]: wt }));
                             setWtOpenFor(null);
+                            setWtActiveIndex(index);
                           }}
-                          title={wt}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === "Tab") {
+                              handleInputChange(line.id, { target: { name: "work_type", value: wt } });
+                              clearFieldError(line.id, "work_type");
+                              setWtFilter((prev) => ({ ...prev, [line.id]: wt }));
+                              setWtOpenFor(null);
+                              setWtActiveIndex(index);
+                              e.preventDefault();
+                            }
+                          }}
+                          onMouseEnter={() => setWtActiveIndex(index)}
+                          onMouseLeave={() => setWtActiveIndex(-1)}
+                          aria-selected={wtActiveIndex === index}
+                          role="option"
+                          tabIndex={-1}
+                          className={`ts-dropdown__item ${wtActiveIndex === index ? 'ts-dropdown__item--active' : ''}`}
                         >
                           {wt}
                         </div>
@@ -493,6 +664,12 @@ export default function TimesheetLines({
                   className={`ts-input pr-icon ${errors[line.id]?.date ? 'has-error' : ''}`}
                   inputId={`input-date-${line.id}`}
                 />
+                {savingByLine[line.id] ? (
+                  <div className="ts-inline-error" style={{ marginTop: 4, background: "transparent", border: "none", padding: 0 }}>
+                    <span className="ts-spinner" aria-label="Guardando…" />
+                    <span style={{ color: "#666" }}>Guardando…</span>
+                  </div>
+                ) : null}
               </EditableCell>
 
               {/* ----- Cantidad (derecha) ----- */}
@@ -545,6 +722,12 @@ export default function TimesheetLines({
                       step={0.01}
                       decimals={2}
                     />
+                    {savingByLine[line.id] ? (
+                      <div className="ts-inline-error" style={{ marginTop: 4, background: "transparent", border: "none", padding: 0 }}>
+                        <span className="ts-spinner" aria-label="Guardando…" />
+                        <span style={{ color: "#666" }}>Guardando…</span>
+                      </div>
+                    ) : null}
                 </div>
               </EditableCell>
 
@@ -563,10 +746,72 @@ export default function TimesheetLines({
                   className="ts-input"
                 />
               </EditableCell>
+
+              {/* ----- Acciones ----- */}
+              <td style={{ width: 80, textAlign: "center", verticalAlign: "top", padding: "4px" }}>
+                <div style={{ display: "flex", gap: "4px", justifyContent: "center" }}>
+                  <button
+                    type="button"
+                    onClick={() => handleDuplicateLine(line.id)}
+                    title="Duplicar línea"
+                    className="ts-action-btn ts-action-btn--duplicate"
+                    style={{
+                      padding: "4px 6px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      background: "#fff",
+                      cursor: "pointer",
+                      fontSize: "12px",
+                      color: "#666"
+                    }}
+                  >
+                    📋
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteLine(line.id)}
+                    title="Eliminar línea"
+                    className="ts-action-btn ts-action-btn--delete"
+                    style={{
+                      padding: "4px 6px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      background: "#fff",
+                      cursor: "pointer",
+                      fontSize: "12px",
+                      color: "#dc3545"
+                    }}
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {/* Modal de confirmación de eliminación */}
+      {deleteModal.show && (
+        <div className="ts-modal-overlay">
+          <div className="ts-modal">
+            <h3>¿Desea seguir adelante y eliminar?</h3>
+            <p>
+              <strong>Proyecto:</strong> {deleteModal.lineData?.job_no || 'N/A'}<br />
+              <strong>Tarea:</strong> {deleteModal.lineData?.job_task_no || 'N/A'}<br />
+              <strong>Fecha:</strong> {deleteModal.lineData?.date || 'N/A'}
+            </p>
+            <div className="ts-modal-actions">
+              <button onClick={confirmDeleteLine} className="ts-btn ts-btn--danger">
+                Sí
+              </button>
+              <button onClick={cancelDeleteLine} className="ts-btn ts-btn--secondary">
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

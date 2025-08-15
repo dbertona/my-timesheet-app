@@ -4,6 +4,7 @@ import { es } from "date-fns/locale";
 import { FiCalendar } from "react-icons/fi";
 import { parseDate, formatDate } from "../../utils/dateHelpers";
 import { format } from "date-fns";
+import { PLACEHOLDERS } from '../../constants/i18n';
 
 export default function DateInput({
   name = "date",

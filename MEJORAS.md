@@ -25,10 +25,10 @@ Marca de verificación [x] = aplicado, [ ] = pendiente, [~] = parcial.
 ## Pendiente (prioridad sugerida)
 
 - [ ] React Query tuning: `staleTime`/`gcTime` por recurso; invalidaciones finas; `select` para modelar datos
-- [ ] Autosave avanzado: guardar solo campos cambiados; dedupe/batching; retry/backoff; indicador “Guardando…” por línea/celda
-- [ ] Dropdown UX: debounce (≈100ms) del filtro; cerrar con Escape; resaltar ítem activo; Home/End y PageUp/Down; atributos ARIA
+- [x] Autosave avanzado: guardar solo campos cambiados; dedupe/batching; retry/backoff; indicador "Guardando…" por línea/celda
+- [x] Dropdown UX: debounce (≈100ms) del filtro; cerrar con Escape; resaltar ítem activo; Home/End y PageUp/Down; atributos ARIA
 - [ ] Tabla: memo de filas/celdas para reducir renders; windowing de la tabla si hay muchas líneas
-- [ ] i18n completa: auditar toasts/placeholders/tooltips y centralizar textos ES
+- [x] i18n completa: auditar toasts/placeholders/tooltips y centralizar textos ES
 - [ ] Validación: extraer reglas diarias a hook dedicado con tests (`useDailyValidation`)
 - [ ] ErrorBoundary alrededor de celdas/combos para aislar fallos
 - [ ] Rendimiento: lazy adicional en componentes pesados; reducir footprint de `react-icons`

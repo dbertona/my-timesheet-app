@@ -1,3 +1,4 @@
+/* TimesheetLines.css - Modal BC Style v2 */
 /* Tabla base */
 .ts-table {
   border-collapse: collapse;
@@ -65,6 +66,181 @@
   border: 1px solid #ccc;
   box-shadow: 0 6px 16px rgba(0,0,0,.12);
   z-index: 1000;
+}
+
+.ts-dropdown__item {
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.ts-dropdown__item:hover {
+  background-color: #f5f5f5;
+}
+
+.ts-dropdown__item--active {
+  background-color: #e3f2fd !important;
+  outline: 2px solid #2196f3;
+}
+
+/* Botones de acciones */
+.ts-action-btn {
+  transition: all 0.2s ease;
+}
+
+.ts-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.ts-action-btn--duplicate:hover {
+  background-color: #e3f2fd !important;
+  border-color: #2196f3 !important;
+  color: #1976d2 !important;
+}
+
+.ts-action-btn--delete:hover {
+  background-color: #ffebee !important;
+  border-color: #dc3545 !important;
+  color: #c62828 !important;
+}
+
+.ts-action-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Modal de confirmación - Estilo exacto de Business Central */
+.ts-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 10000 !important;
+}
+
+.ts-modal {
+  background: #FFFFFF !important;
+  border-radius: 4px !important;
+  padding: 16px !important;
+  max-width: 400px !important;
+  width: 90% !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid #E1E1E1 !important;
+  font-family: "Segoe UI", "Segoe WP", Segoe, device-segoe, Tahoma, Helvetica, Arial, sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 10pt !important;
+  color: #444 !important;
+  box-sizing: border-box !important;
+}
+
+.ts-modal h3 {
+  margin: 0 0 12px 0 !important;
+  color: #000000 !important;
+  font-size: 11pt !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  line-height: 1.2 !important;
+}
+
+.ts-modal h3::before {
+  content: "?" !important;
+  width: 20px !important;
+  height: 20px !important;
+  background-color: white !important;
+  border: 2px solid rgb(0, 132, 137) !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: rgb(0, 132, 137) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  flex-shrink: 0 !important;
+}
+
+.ts-modal h3::after {
+  content: "?" !important;
+  color: rgb(0, 132, 137) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.ts-modal p {
+  margin: 0 0 16px 0 !important;
+  color: #444 !important;
+  line-height: 1.3 !important;
+  font-size: 9pt !important;
+  padding-left: 26px !important;
+}
+
+.ts-modal p strong {
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+.ts-modal-actions {
+  display: flex !important;
+  gap: 8px !important;
+  justify-content: flex-end !important;
+  padding-left: 26px !important;
+}
+
+.ts-btn {
+  padding: 6px 12px !important;
+  border: 1px solid !important;
+  border-radius: 3px !important;
+  font-family: "Segoe UI", "Segoe WP", Segoe, device-segoe, Tahoma, Helvetica, Arial, sans-serif !important;
+  font-size: 9pt !important;
+  font-weight: 400 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  min-width: 60px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+.ts-btn--danger {
+  background-color: #FFFFFF !important;
+  color: rgb(0, 132, 137) !important;
+  border-color: rgb(0, 132, 137) !important;
+}
+
+.ts-btn--danger:hover {
+  background-color: rgb(0, 132, 137) !important;
+  color: #FFFFFF !important;
+}
+
+.ts-btn--secondary {
+  background-color: #FFFFFF !important;
+  color: #444 !important;
+  border-color: #C1C1C1 !important;
+}
+
+.ts-btn--secondary:hover {
+  background-color: #F8F8F8 !important;
+  border-color: #999 !important;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .ts-dropdown__header {
   display: flex;

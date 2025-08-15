@@ -1,5 +1,5 @@
 // src/components/TimesheetEdit.jsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { supabaseClient } from "../supabaseClient";
@@ -18,6 +18,7 @@ import useTimesheetEdit from "../hooks/useTimesheetEdit";
 import BcCard from "./ui/BcCard";
 import useTimesheetLines from "../hooks/useTimesheetLines";
 import CalendarPanel from "./timesheet/CalendarPanel";
+import { TOAST, PLACEHOLDERS, VALIDATION, LABELS } from '../constants/i18n';
 
 // ✅ columnas existentes en la tabla 'timesheet'
 const SAFE_COLUMNS = [
@@ -71,6 +72,9 @@ function TimesheetEdit({ headerId }) {
   } = useCalendarData(header, resolvedHeaderId, editFormData);
   const [hasDailyErrors, setHasDailyErrors] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState(null);
+  const serverSnapshotRef = useRef({}); // Último estado confirmado por servidor por línea
+  const [savingByLine, setSavingByLine] = useState({}); // { [id]: boolean }
+  const savingMetaRef = useRef({}); // { [id]: { inFlight: boolean, queued: boolean } }
 
   function parseAllocationPeriod(ap) {
     const m = /^M(\d{2})-M(\d{2})$/.exec(ap || "");
@@ -248,25 +252,170 @@ function TimesheetEdit({ headerId }) {
       initialEditData[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
     });
     setEditFormData(initialEditData);
+
+    // Snapshot base para detectar cambios por campo (comparación en espacio DB)
+    const snap = {};
+    linesFormatted.forEach((line) => {
+      snap[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
+    });
+    serverSnapshotRef.current = snap;
   }, [linesHook.data]);
 
-  // --- Autosave per-line (debounced) ---
+  // Construir patch solo con campos cambiados (comparando en forma normalizada para DB)
+  const USER_EDITABLE_KEYS = [
+    "job_no",
+    "job_task_no",
+    "description",
+    "work_type",
+    "quantity",
+    "date",
+    "department_code",
+  ];
+
+  const buildChangedDbPatch = (id) => {
+    const currentRow = editFormData[id] || {};
+    const baseRow = serverSnapshotRef.current[id] || {};
+    const currentDb = prepareRowForDb(currentRow);
+    const baseDb = prepareRowForDb(baseRow);
+
+    const patch = {};
+    for (const key of USER_EDITABLE_KEYS) {
+      const a = currentDb[key];
+      const b = baseDb[key];
+      // Comparación segura para números/strings/fechas ISO
+      if (Number.isFinite(a) || Number.isFinite(b)) {
+        if (Number(a) !== Number(b)) patch[key] = a;
+      } else if (a instanceof Date || b instanceof Date) {
+        if (String(a) !== String(b)) patch[key] = a;
+      } else if (JSON.stringify(a) !== JSON.stringify(b)) {
+        patch[key] = a;
+      }
+    }
+
+    // Mantener consistencia de campo derivado si cambian job_no o description
+    if ("job_no" in patch || "description" in patch) {
+      patch.job_no_and_description = currentDb.job_no_and_description;
+    }
+    return patch;
+  };
+
+  // --- Autosave per-line (debounced, diff-only, retry/backoff, cola por línea) ---
+  // ✅ MUTATION: Actualizar línea individual (autosave)
   const updateLineMutation = useMutation({
-    mutationFn: async (id) => {
-      const row = prepareRowForDb(editFormData[id] || {}, { header });
-      await updateTimesheetLine(id, row);
-      return id;
+    mutationFn: async ({ id, patch }) => {
+      const { data, error } = await supabaseClient
+        .from('timesheet')
+        .update(patch)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
     },
-    onSuccess: async (id) => {
-      toast.success("Guardado", { id: `autosave-${id}`, duration: 1200 });
-      setLastSavedAt(new Date());
-      try { await linesHook.invalidate(); } catch {}
+    onSuccess: (data, variables) => {
+      // ✅ Éxito: Actualizar cache local
+      setLines(prev => prev.map(l => l.id === variables.id ? { ...l, ...variables.patch } : l));
+
+      // ✅ Mostrar toast de éxito
+      toast.success(TOAST.SUCCESS.SAVE_LINE);
+
+      // ✅ Limpiar indicador de guardado
+      setSavingByLine(prev => ({ ...prev, [variables.id]: false }));
     },
-    onError: (err, id) => {
-      console.error("Autosave error line", id, err);
-      toast.error("Error auto‑guardando línea");
-    },
+    onError: (error, variables) => {
+      console.error('Error updating line:', error);
+
+      // ✅ Mostrar toast de error
+      toast.error(TOAST.ERROR.SAVE_LINE);
+
+      // ✅ Limpiar indicador de guardado
+      setSavingByLine(prev => ({ ...prev, [variables.id]: false }));
+
+      // ✅ Reintentar con backoff exponencial
+      const retryCount = savingMetaRef.current[variables.id]?.retryCount || 0;
+      if (retryCount < 3) {
+        const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+        setTimeout(() => {
+          updateLineMutation.mutate(variables);
+        }, delay);
+      }
+    }
   });
+
+  // ✅ MUTATION: Eliminar línea
+  const deleteLineMutation = useMutation({
+    mutationFn: async (lineId) => {
+      const { error } = await supabaseClient
+        .from('timesheet')
+        .delete()
+        .eq('id', lineId);
+
+      if (error) throw error;
+      return lineId;
+    },
+    onSuccess: (lineId) => {
+      // ✅ Éxito: Actualizar estado local
+      setLines(prev => prev.filter(l => l.id !== lineId));
+      setEditFormData(prev => {
+        const updated = { ...prev };
+        delete updated[lineId];
+        return updated;
+      });
+      setErrors(prev => {
+        const updated = { ...prev };
+        delete updated[lineId];
+        return updated;
+      });
+
+      // ✅ Mostrar toast de éxito
+      toast.success(TOAST.SUCCESS.DELETE_LINE);
+    },
+    onError: (error, lineId) => {
+      console.error('Error deleting line:', error);
+
+      // ✅ Mostrar toast de error
+      toast.error(TOAST.ERROR.DELETE_LINE);
+    }
+  });
+
+  // ✅ MUTATION: Insertar línea nueva
+  const insertLineMutation = useMutation({
+    mutationFn: async (lineData) => {
+      const { data, error } = await supabaseClient
+        .from('timesheet')
+        .insert(lineData)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (newLine) => {
+      // ✅ Éxito: Actualizar estado local
+      setLines(prev => [...prev, newLine]);
+      setEditFormData(prev => ({
+        ...prev,
+        [newLine.id]: newLine
+      }));
+
+      // ✅ Mostrar toast de éxito
+      toast.success("Línea duplicada correctamente");
+    },
+    onError: (error) => {
+      console.error('Error inserting line:', error);
+
+      // ✅ Mostrar toast de error
+      toast.error("Error al duplicar la línea");
+    }
+  });
+
+  // ✅ Función para manejar cambios en las líneas desde TimesheetLines
+  const handleLinesChange = useCallback((updatedLines, updatedEditFormData, updatedErrors) => {
+    setLines(updatedLines);
+    if (updatedEditFormData) setEditFormData(updatedEditFormData);
+    if (updatedErrors) setErrors(updatedErrors);
+  }, []);
 
   const scheduleAutosave = (id) => {
     try {
@@ -275,10 +424,20 @@ function TimesheetEdit({ headerId }) {
       // Evitar guardar si hay errores visibles en ESTA línea
       const hasLineErrors = !!errors[id] && Object.values(errors[id]).some(Boolean);
       if (hasLineErrors) return;
+      // Si ya hay un guardado en curso para esta línea, marcar en cola y salir
+      const meta = savingMetaRef.current[id] || {};
+      if (meta.inFlight) {
+        meta.queued = true;
+        savingMetaRef.current[id] = meta;
+        return;
+      }
+      // Construir patch de campos cambiados; si no hay cambios, no guardamos
+      const patch = buildChangedDbPatch(id);
+      if (!patch || Object.keys(patch).length === 0) return;
       const prev = autosaveTimersRef.current[id];
       if (prev) clearTimeout(prev);
       autosaveTimersRef.current[id] = setTimeout(() => {
-        updateLineMutation.mutate(id);
+        updateLineMutation.mutate({ id, patch });
       }, 900);
     } catch {}
   };
@@ -289,9 +448,17 @@ function TimesheetEdit({ headerId }) {
       if (String(id).startsWith("tmp-")) return;
       const hasLineErrors = !!errors[id] && Object.values(errors[id]).some(Boolean);
       if (hasLineErrors) return;
+      const meta = savingMetaRef.current[id] || {};
+      if (meta.inFlight) {
+        meta.queued = true;
+        savingMetaRef.current[id] = meta;
+        return;
+      }
       const prev = autosaveTimersRef.current[id];
       if (prev) clearTimeout(prev);
-      updateLineMutation.mutate(id);
+      const patch = buildChangedDbPatch(id);
+      if (!patch || Object.keys(patch).length === 0) return;
+      updateLineMutation.mutate({ id, patch });
     } catch {}
   };
 
@@ -343,9 +510,9 @@ function TimesheetEdit({ headerId }) {
           // autocorregimos a 0
           nextEdit[id] = { ...row, quantity: 0 };
           changedSomething = true;
-          nextErrors[id] = { ...(nextErrors[id] || {}), date: "Día festivo: no se permiten horas" };
+          nextErrors[id] = { ...(nextErrors[id] || {}), date: VALIDATION.HOLIDAY_NO_HOURS };
         } else {
-          nextErrors[id] = { ...(nextErrors[id] || {}), date: "Día festivo: no se permiten horas" };
+          nextErrors[id] = { ...(nextErrors[id] || {}), date: VALIDATION.HOLIDAY_NO_HOURS };
         }
         continue; // no más validaciones sobre festivos
       }
@@ -559,7 +726,7 @@ function TimesheetEdit({ headerId }) {
       }));
       setErrors((prev) => ({
         ...prev,
-        [id]: { ...(prev[id] || {}), date: "Día festivo: no se permiten horas" },
+        [id]: { ...(prev[id] || {}), date: VALIDATION.HOLIDAY_NO_HOURS },
       }));
       return;
     }
@@ -597,7 +764,7 @@ function TimesheetEdit({ headerId }) {
       }));
       setErrors((prev) => ({
         ...prev,
-        [id]: { ...(prev[id] || {}), date: "Día festivo: no se permiten horas" },
+        [id]: { ...(prev[id] || {}), date: VALIDATION.HOLIDAY_NO_HOURS },
       }));
       return;
     }
@@ -757,21 +924,28 @@ function TimesheetEdit({ headerId }) {
           Lista Parte Trabajo
         </button>
       </div>
-      {/* Header y calendario: calendario flotante a la derecha, sin ocupar ancho de líneas */}
-      <div style={{ paddingRight: rightPad }}>
-        <TimesheetHeader header={header} />
-      </div>
-      <CalendarPanel
-        calRange={calRange}
-        firstOffset={firstOffset}
-        calendarDays={calendarDays}
-        requiredSum={requiredSum}
-        imputedSum={imputedSum}
-        missingSum={missingSum}
-        rightPadState={[rightPad, setRightPad]}
-      />
-      {/* Sección de líneas debajo, ocupa todo el ancho, alineada con margen derecho del calendario */}
-      <div style={{ marginTop: 24, paddingRight: rightPad }}>
+      {/* Header, resumen y calendario en la misma fila, alineados a la derecha */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+        {/* Header a la izquierda */}
+        <div style={{ flex: 1 }}>
+          <TimesheetHeader header={header} />
+        </div>
+
+        {/* Panel derecho con resumen y calendario - fijo a la derecha */}
+        <div style={{ marginLeft: 24, flexShrink: 0 }}>
+          <CalendarPanel
+            calRange={calRange}
+            firstOffset={firstOffset}
+            calendarDays={calendarDays}
+            requiredSum={requiredSum}
+            imputedSum={imputedSum}
+            missingSum={missingSum}
+            rightPadState={[rightPad, setRightPad]}
+          />
+            </div>
+            </div>
+      {/* Sección de líneas debajo, ocupa todo el ancho disponible */}
+      <div style={{ marginTop: 24 }}>
         <h3>Líneas</h3>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
           <span style={{ color: "#666", fontSize: 12 }}>{formatTimeAgo(lastSavedAt)}</span>
@@ -792,6 +966,10 @@ function TimesheetEdit({ headerId }) {
           calendarHolidays={calendarHolidays}
           scheduleAutosave={scheduleAutosave}
           saveLineNow={saveLineNow}
+          savingByLine={savingByLine}
+          onLinesChange={handleLinesChange}
+          deleteLineMutation={deleteLineMutation}
+          insertLineMutation={insertLineMutation}
         />
       </div>
     </div>

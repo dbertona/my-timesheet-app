@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from 'react';
+import { PLACEHOLDERS } from '../../constants/i18n';
 
-export default function DecimalInput({
+export const DecimalInput = ({
   name,
   value,
   onChange,
@@ -8,12 +9,14 @@ export default function DecimalInput({
   onFocus,
   onKeyDown,
   inputRef,
-  className,
+  className = '',
+  disabled = false,
+  placeholder = PLACEHOLDERS.QUANTITY,
   min = 0,
   step = 0.01,
   decimals = 2,
   ...rest
-}) {
+}) => {
   const handleChange = (e) => {
     const input = e.target.value || "";
     const re = new RegExp(`^\\d*(?:[\\.,]\\d{0,${decimals}})?$`);
@@ -44,10 +47,12 @@ export default function DecimalInput({
       min={min}
       pattern={`[0-9]*[.,]?[0-9]{0,${decimals}}`}
       className={className}
+      disabled={disabled}
+      placeholder={placeholder}
       autoComplete="off"
       {...rest}
     />
   );
-}
+};
 
 
