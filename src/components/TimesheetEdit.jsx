@@ -1,23 +1,18 @@
 // src/components/TimesheetEdit.jsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabaseClient } from "../supabaseClient";
-import { fetchTimesheetLines, updateTimesheetLine, prepareRowForDb } from "../api/timesheet";
-import { toDisplayDate, toIsoFromInput } from "../utils/dateHelpers";
-import { buildHolidaySet, computeTotalsByIso } from "../utils/validation";
-import { fetchCalendarDays } from "../api/calendar";
 import useCalendarData from "../hooks/useCalendarData";
-import toast from "react-hot-toast";
-import "../styles/HomeDashboard.css";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { format } from "date-fns";
+import useTimesheetLines from "../hooks/useTimesheetLines";
+import useTimesheetEdit from "../hooks/useTimesheetEdit";
 import TimesheetHeader from "./TimesheetHeader";
 import TimesheetLines from "./TimesheetLines";
-import useTimesheetEdit from "../hooks/useTimesheetEdit";
-import BcCard from "./ui/BcCard";
-import useTimesheetLines from "../hooks/useTimesheetLines";
 import CalendarPanel from "./timesheet/CalendarPanel";
+import { TOAST, PLACEHOLDERS, VALIDATION, LABELS } from "../constants/i18n";
+import { format } from "date-fns";
+import { buildHolidaySet, computeTotalsByIso } from "../utils/validation";
 
 // ✅ columnas existentes en la tabla 'timesheet'
 const SAFE_COLUMNS = [
@@ -70,7 +65,8 @@ function TimesheetEdit({ headerId }) {
     missingSum,
   } = useCalendarData(header, resolvedHeaderId, editFormData);
   const [hasDailyErrors, setHasDailyErrors] = useState(false);
-  const [lastSavedAt, setLastSavedAt] = useState(null);
+  const serverSnapshotRef = useRef({}); // Último estado confirmado por servidor por línea
+  const [savingByLine, setSavingByLine] = useState({}); // { [id]: boolean }
 
   function parseAllocationPeriod(ap) {
     const m = /^M(\d{2})-M(\d{2})$/.exec(ap || "");
@@ -162,12 +158,229 @@ function TimesheetEdit({ headerId }) {
 
 
   const prevLinesSigRef = useRef("");
-  const autosaveTimersRef = useRef({}); // { [lineId]: timeoutId }
+
+  // Estado para controlar cambios no guardados
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Debug: monitorear cambios en hasUnsavedChanges
+  useEffect(() => {
+    console.log('🟣 hasUnsavedChanges cambió a:', hasUnsavedChanges);
+    console.log('🟣 Stack trace:', new Error().stack);
+  }, [hasUnsavedChanges]);
+
+  // Función para marcar que hay cambios
+  const markAsChanged = useCallback(() => {
+    console.log('🔴 markAsChanged llamado - marcando cambios');
+    console.log('🔴 Estado anterior hasUnsavedChanges:', hasUnsavedChanges);
+    setHasUnsavedChanges(true);
+    console.log('🔴 hasUnsavedChanges marcado como true');
+  }, [hasUnsavedChanges]);
+
+  // ✅ Función para manejar cambios en las líneas desde TimesheetLines
+  const handleLinesChange = useCallback((lineId, changes) => {
+    console.log('🟡 handleLinesChange llamado:', lineId, changes);
+    console.log('🟡 Estado actual hasUnsavedChanges:', hasUnsavedChanges);
+
+    // Actualizar solo el editFormData para la línea específica
+    setEditFormData(prev => ({
+      ...prev,
+      [lineId]: {
+        ...prev[lineId],
+        ...changes
+      }
+    }));
+
+    // Marcar que hay cambios no guardados
+    console.log('🟡 Llamando a markAsChanged...');
+    markAsChanged();
+    console.log('🟡 markAsChanged ejecutado');
+  }, [markAsChanged, hasUnsavedChanges]);
+
+  // ✅ MUTATION: Actualizar línea individual
+  const updateLineMutation = useMutation({
+    mutationFn: async ({ lineId, changes }) => {
+      const { data, error } = await supabaseClient
+        .from('timesheet')
+        .update(changes)
+        .eq('id', lineId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data, variables) => {
+      // ✅ Éxito: Actualizar cache local
+      setLines(prev => prev.map(l => l.id === variables.lineId ? { ...l, ...variables.changes } : l));
+
+      // ✅ Mostrar toast de éxito
+      toast.success(TOAST.SUCCESS.SAVE_LINE);
+
+      // ✅ Limpiar indicador de guardado
+      setSavingByLine(prev => ({ ...prev, [variables.lineId]: false }));
+    },
+    onError: (error, variables) => {
+      console.error('Error updating line:', error);
+
+      // ✅ Mostrar toast de error
+      toast.error(TOAST.ERROR.SAVE_LINE);
+
+      // ✅ Limpiar indicador de guardado
+      setSavingByLine(prev => ({ ...prev, [variables.lineId]: false }));
+    }
+  });
+
+  // ✅ MUTATION: Eliminar línea
+  const deleteLineMutation = useMutation({
+    mutationFn: async (lineId) => {
+      const { error } = await supabaseClient
+        .from('timesheet')
+        .delete()
+        .eq('id', lineId);
+
+      if (error) throw error;
+      return lineId;
+    },
+    onSuccess: (lineId) => {
+      // ✅ Éxito: Actualizar estado local
+      setLines(prev => prev.filter(l => l.id !== lineId));
+      setEditFormData(prev => {
+        const updated = { ...prev };
+        delete updated[lineId];
+        return updated;
+      });
+      setErrors(prev => {
+        const updated = { ...prev };
+        delete updated[lineId];
+        return updated;
+      });
+
+      // ✅ Mostrar toast de éxito
+      toast.success(TOAST.SUCCESS.DELETE_LINE);
+    },
+    onError: (error, lineId) => {
+      console.error('Error deleting line:', error);
+
+      // ✅ Mostrar toast de error
+      toast.error(TOAST.ERROR.DELETE_LINE);
+    }
+  });
+
+  // ✅ MUTATION: Insertar línea nueva
+  const insertLineMutation = useMutation({
+    mutationFn: async (lineData) => {
+      const { data, error } = await supabaseClient
+        .from('timesheet')
+        .insert(lineData)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (newLine) => {
+      // ✅ Éxito: Actualizar estado local
+      setLines(prev => [...prev, newLine]);
+      setEditFormData(prev => ({
+        ...prev,
+        [newLine.id]: newLine
+      }));
+
+      // ✅ Mostrar toast de éxito
+      toast.success("Línea duplicada correctamente");
+    },
+    onError: (error) => {
+      console.error('Error inserting line:', error);
+
+      // ✅ Mostrar toast de error
+      toast.error("Error al duplicar la línea");
+    }
+  });
+
+  // Función para guardar toda la tabla
+  const saveAllChanges = useCallback(async () => {
+    if (!hasUnsavedChanges) return;
+
+    setIsSaving(true);
+    try {
+      // Obtener todas las líneas con cambios
+      const linesToSave = Object.keys(editFormData).filter(lineId => {
+        const line = editFormData[lineId];
+        const originalLine = lines.find(l => l.id === lineId);
+        return line && originalLine && JSON.stringify(line) !== JSON.stringify(originalLine);
+      });
+
+      // Guardar cada línea
+      for (const lineId of linesToSave) {
+        const lineData = editFormData[lineId];
+        const originalLine = lines.find(l => l.id === lineId);
+
+        if (lineData && originalLine) {
+          const changedFields = {};
+          Object.keys(lineData).forEach(key => {
+            if (lineData[key] !== originalLine[key]) {
+              changedFields[key] = lineData[key];
+            }
+          });
+
+          if (Object.keys(changedFields).length > 0) {
+            await updateLineMutation.mutateAsync({
+              lineId,
+              changes: changedFields
+            });
+          }
+        }
+      }
+
+      setHasUnsavedChanges(false);
+      toast.success(TOAST.SUCCESS.SAVE_ALL);
+    } catch (error) {
+      console.error('Error saving all changes:', error);
+      toast.error(TOAST.ERROR.SAVE_ALL);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation]);
+
+  // Función común para navegación hacia atrás con validación
+  const handleNavigateBack = useCallback(() => {
+    console.log('🔄 ===== NAVEGACIÓN HACIA ATRÁS =====');
+    console.log('🔄 hasUnsavedChanges:', hasUnsavedChanges);
+    console.log('🔄 Tipo de hasUnsavedChanges:', typeof hasUnsavedChanges);
+    console.log('🔄 Valor booleano:', Boolean(hasUnsavedChanges));
+    console.log('🔄 Estado actual del componente:', {
+      lines: lines?.length || 0,
+      editFormData: Object.keys(editFormData || {}).length,
+      hasUnsavedChanges
+    });
+
+    if (hasUnsavedChanges) {
+      console.log('🔄 ¡CONDICIÓN VERDADERA! Mostrando confirmación...');
+      const confirmar = window.confirm(
+        'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?'
+      );
+      if (confirmar) {
+        console.log('🔄 Usuario confirmó, navegando...');
+        navigate("/");
+      } else {
+        console.log('🔄 Usuario canceló, no navegando');
+      }
+    } else {
+      console.log('🔄 ¡CONDICIÓN FALSA! No hay cambios, navegando sin confirmación...');
+      navigate("/");
+    }
+  }, [hasUnsavedChanges, lines, editFormData, navigate]);
 
   // -- Carga inicial (por headerId o por allocation_period del mes actual)
   // Right pad se actualiza desde CalendarPanel a través de estado compartido
 
   useEffect(() => {
+    console.log('🔵 useEffect 1 - Carga inicial ejecutándose');
+
+    // NO resetear hasUnsavedChanges si ya hay cambios pendientes
+    const shouldPreserveChanges = hasUnsavedChanges;
+
     async function fetchData() {
       setLoading(true);
 
@@ -227,7 +440,13 @@ function TimesheetEdit({ headerId }) {
     }
 
     fetchData();
-  }, [headerId, location.search]);
+
+    // Restaurar hasUnsavedChanges si había cambios pendientes
+    if (shouldPreserveChanges) {
+      console.log('🔵 useEffect 1 - Preservando hasUnsavedChanges como true');
+      setHasUnsavedChanges(true);
+    }
+  }, [headerId, location.search, hasUnsavedChanges]);
 
   // React Query: cargar líneas por header_id, con cache y estados
   const effectiveKey = effectiveHeaderId;
@@ -239,7 +458,12 @@ function TimesheetEdit({ headerId }) {
 
   // Cuando llegan las líneas, actualizar estado local y edición inicial con dos decimales
   useEffect(() => {
+    console.log('🔵 useEffect 3 - Líneas cargadas ejecutándose');
     if (!linesHook.data) return;
+
+    // NO resetear hasUnsavedChanges si ya hay cambios pendientes
+    const shouldPreserveChanges = hasUnsavedChanges;
+
     const sorted = (linesHook.data || []).sort((a, b) => new Date(a.date) - new Date(b.date));
     const linesFormatted = sorted.map((line) => ({ ...line, date: toDisplayDate(line.date) }));
     setLines(linesFormatted);
@@ -248,62 +472,80 @@ function TimesheetEdit({ headerId }) {
       initialEditData[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
     });
     setEditFormData(initialEditData);
-  }, [linesHook.data]);
 
-  // --- Autosave per-line (debounced) ---
-  const updateLineMutation = useMutation({
-    mutationFn: async (id) => {
-      const row = prepareRowForDb(editFormData[id] || {}, { header });
-      await updateTimesheetLine(id, row);
-      return id;
-    },
-    onSuccess: async (id) => {
-      toast.success("Guardado", { id: `autosave-${id}`, duration: 1200 });
-      setLastSavedAt(new Date());
-      try { await linesHook.invalidate(); } catch {}
-    },
-    onError: (err, id) => {
-      console.error("Autosave error line", id, err);
-      toast.error("Error auto‑guardando línea");
-    },
-  });
+    // Snapshot base para detectar cambios por campo (comparación en espacio DB)
+    const snap = {};
+    linesFormatted.forEach((line) => {
+      snap[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
+    });
+    serverSnapshotRef.current = snap;
 
-  const scheduleAutosave = (id) => {
-    try {
-      if (!id) return;
-      if (String(id).startsWith("tmp-")) return; // no actualizar filas aún no insertadas
-      // Evitar guardar si hay errores visibles en ESTA línea
-      const hasLineErrors = !!errors[id] && Object.values(errors[id]).some(Boolean);
-      if (hasLineErrors) return;
-      const prev = autosaveTimersRef.current[id];
-      if (prev) clearTimeout(prev);
-      autosaveTimersRef.current[id] = setTimeout(() => {
-        updateLineMutation.mutate(id);
-      }, 900);
-    } catch {}
-  };
+    // Restaurar hasUnsavedChanges si había cambios pendientes
+    if (shouldPreserveChanges) {
+      console.log('🔵 useEffect 3 - Preservando hasUnsavedChanges como true');
+      setHasUnsavedChanges(true);
+    }
+  }, [linesHook.data, hasUnsavedChanges]);
 
-  const saveLineNow = (id) => {
-    try {
-      if (!id) return;
-      if (String(id).startsWith("tmp-")) return;
-      const hasLineErrors = !!errors[id] && Object.values(errors[id]).some(Boolean);
-      if (hasLineErrors) return;
-      const prev = autosaveTimersRef.current[id];
-      if (prev) clearTimeout(prev);
-      updateLineMutation.mutate(id);
-    } catch {}
-  };
-
-  // Re-render periódico para actualizar el mensaje "Guardado hace X"
+  // Control de navegación - prevenir salir sin guardar
   useEffect(() => {
-    const t = setInterval(() => {
-      if (lastSavedAt) setLastSavedAt((d) => (d ? new Date(d) : d));
-    }, 5000);
-    return () => clearInterval(t);
-  }, [lastSavedAt]);
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?';
+        return e.returnValue;
+      }
+    };
 
-  // (El atajo global Ctrl/Cmd + Enter se elimina, ya que ahora el autosave es por campo)
+    // Control para navegación interna (botón retroceder, etc.)
+    const handlePopState = (e) => {
+      if (hasUnsavedChanges) {
+        const confirmar = window.confirm(
+          'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?'
+        );
+
+        if (!confirmar) {
+          // Si no confirma, volver al estado anterior
+          window.history.pushState(null, '', window.location.href);
+        }
+      }
+    };
+
+    // Agregar un estado al historial ANTES de agregar el listener
+    window.history.pushState(null, '', window.location.href);
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [hasUnsavedChanges]);
+
+  // Solución alternativa: monitorear cambios en el historial
+  useEffect(() => {
+    let currentHistoryLength = window.history.length;
+
+    const checkHistoryChange = () => {
+      if (window.history.length < currentHistoryLength && hasUnsavedChanges) {
+        const confirmar = window.confirm(
+          'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?'
+        );
+
+        if (!confirmar) {
+          // Si no confirma, volver a la página actual
+          window.history.forward();
+        }
+      }
+      currentHistoryLength = window.history.length;
+    };
+
+    // Verificar cada 100ms si cambió el historial
+    const interval = setInterval(checkHistoryChange, 100);
+
+    return () => clearInterval(interval);
+  }, [hasUnsavedChanges]);
 
   // calendarHolidays seguirá disponible en este componente para validaciones
   useEffect(() => {
@@ -343,9 +585,9 @@ function TimesheetEdit({ headerId }) {
           // autocorregimos a 0
           nextEdit[id] = { ...row, quantity: 0 };
           changedSomething = true;
-          nextErrors[id] = { ...(nextErrors[id] || {}), date: "Día festivo: no se permiten horas" };
+          nextErrors[id] = { ...(nextErrors[id] || {}), date: VALIDATION.HOLIDAY_NO_HOURS };
         } else {
-          nextErrors[id] = { ...(nextErrors[id] || {}), date: "Día festivo: no se permiten horas" };
+          nextErrors[id] = { ...(nextErrors[id] || {}), date: VALIDATION.HOLIDAY_NO_HOURS };
         }
         continue; // no más validaciones sobre festivos
       }
@@ -510,8 +752,7 @@ function TimesheetEdit({ headerId }) {
     inputRefs,
     calendarOpenFor,
     setCalendarOpenFor,
-    handleInputChange: origHandleInputChange,
-    handleDateInputChange: origHandleDateInputChange, // NO usado directamente
+    handleDateInputChange,
     handleDateInputBlur,
     handleInputFocus,
     handleKeyDown,
@@ -526,22 +767,28 @@ function TimesheetEdit({ headerId }) {
   });
 
   // -- Router de cambios por campo: deriva quantity/date a sus handlers y el resto al handler original
-  const handleInputChange = (id, eOrPatch) => {
-    const target = eOrPatch && eOrPatch.target ? eOrPatch.target : {};
-    const name = target.name;
-    const value = target.value;
+  const handleInputChange = useCallback((lineId, event) => {
+    const { name, value } = event.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [lineId]: {
+        ...prev[lineId],
+        [name]: value
+      }
+    }));
 
-    if (name === "quantity") {
-      handleQuantityChange(id, value);
-      return;
-    }
-    if (name === "date") {
-      handleDateChange(id, value);
-      return;
-    }
-    // Por defecto, usar el handler del hook para los demás campos
-    origHandleInputChange(id, eOrPatch);
-  };
+    // Marcar que hay cambios no guardados
+    markAsChanged();
+
+    // Limpiar errores del campo
+    setErrors(prev => ({
+      ...prev,
+      [lineId]: {
+        ...prev[lineId],
+        [name]: null
+      }
+    }));
+  }, [markAsChanged]);
 
   // -- Custom handleDateChange
   const handleDateChange = (id, value) => {
@@ -559,8 +806,9 @@ function TimesheetEdit({ headerId }) {
       }));
       setErrors((prev) => ({
         ...prev,
-        [id]: { ...(prev[id] || {}), date: "Día festivo: no se permiten horas" },
+        [id]: { ...(prev[id] || {}), date: VALIDATION.HOLIDAY_NO_HOURS },
       }));
+      markAsChanged();
       return;
     }
     // Si no es festivo, limpiar isHoliday y error.quantity
@@ -580,6 +828,7 @@ function TimesheetEdit({ headerId }) {
       else next[id] = e;
       return next;
     });
+    markAsChanged();
   };
 
   // -- Custom handleQuantityChange
@@ -597,28 +846,12 @@ function TimesheetEdit({ headerId }) {
       }));
       setErrors((prev) => ({
         ...prev,
-        [id]: { ...(prev[id] || {}), date: "Día festivo: no se permiten horas" },
+        [id]: { ...(prev[id] || {}), date: VALIDATION.HOLIDAY_NO_HOURS },
       }));
+      markAsChanged();
       return;
     }
-    // Validación de tope diario
-    // Sumar todas las quantities de la fecha (incluyendo la edición actual)
-    let total = 0;
-    for (const [lid, lrow] of Object.entries(editFormData)) {
-      if (lid === id) {
-        total += Number(value) || 0;
-      } else {
-        const liso = toIsoFromInput(lrow?.date);
-        if (liso === iso) total += Number(lrow?.quantity) || 0;
-      }
-    }
-    const required = dailyRequired?.[iso] ?? 0;
-    const EPS = 0.01;
-    if (required > 0 && total > required + EPS) {
-      setErrors((prev) => ({
-        ...prev,
-        [id]: { ...(prev[id] || {}), quantity: `Excede tope diario (${total.toFixed(2)} / ${required.toFixed(2)})` },
-      }));
+    // Si no es festivo, actualizar cantidad normalmente
       setEditFormData((prev) => ({
         ...prev,
         [id]: {
@@ -626,29 +859,7 @@ function TimesheetEdit({ headerId }) {
           quantity: value,
         },
       }));
-
-      // 👇 Mantener foco en la misma celda de Cantidad
-      const el = inputRefs?.current?.[id]?.["quantity"];
-      if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
-
-      return;
-    }
-    // Si todo ok, actualizar normalmente
-    setEditFormData((prev) => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        quantity: value,
-      },
-    }));
-    setErrors((prev) => {
-      const next = { ...prev };
-      const e = { ...(next[id] || {}) };
-      delete e.quantity;
-      if (Object.keys(e).length === 0) delete next[id];
-      else next[id] = e;
-      return next;
-    });
+    markAsChanged();
   };
 
   // -- Guardar cambios
@@ -712,7 +923,7 @@ function TimesheetEdit({ headerId }) {
         <button
           type="button"
           aria-label="Lista Parte Trabajo"
-          onClick={() => navigate("/")}
+          onClick={handleNavigateBack}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = "#D8EEF1"; // hover suave
             e.currentTarget.style.borderColor = "#007E87";
@@ -741,7 +952,7 @@ function TimesheetEdit({ headerId }) {
         {/* Etiqueta clickable con el mismo color del botón Editar, modificado a color negro */}
         <button
           type="button"
-          onClick={() => navigate("/")}
+          onClick={handleNavigateBack}
           aria-label="Ir a lista de parte de trabajo"
           style={{
             background: "transparent",
@@ -757,24 +968,58 @@ function TimesheetEdit({ headerId }) {
           Lista Parte Trabajo
         </button>
       </div>
-      {/* Header y calendario: calendario flotante a la derecha, sin ocupar ancho de líneas */}
-      <div style={{ paddingRight: rightPad }}>
-        <TimesheetHeader header={header} />
-      </div>
-      <CalendarPanel
-        calRange={calRange}
-        firstOffset={firstOffset}
-        calendarDays={calendarDays}
-        requiredSum={requiredSum}
-        imputedSum={imputedSum}
-        missingSum={missingSum}
-        rightPadState={[rightPad, setRightPad]}
-      />
-      {/* Sección de líneas debajo, ocupa todo el ancho, alineada con margen derecho del calendario */}
-      <div style={{ marginTop: 24, paddingRight: rightPad }}>
-        <h3>Líneas</h3>
+      {/* Header, resumen y calendario en la misma fila, alineados a la derecha */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+        {/* Header a la izquierda */}
+        <div style={{ flex: 1 }}>
+          <TimesheetHeader header={header} />
+        </div>
+
+        {/* Panel derecho con resumen y calendario - fijo a la derecha */}
+        <div style={{ marginLeft: 24, flexShrink: 0 }}>
+          <CalendarPanel
+            calRange={calRange}
+            firstOffset={firstOffset}
+            calendarDays={calendarDays}
+            requiredSum={requiredSum}
+            imputedSum={imputedSum}
+            missingSum={missingSum}
+            rightPadState={[rightPad, setRightPad]}
+          />
+            </div>
+            </div>
+      {/* Sección de líneas debajo, ocupa todo el ancho disponible */}
+      <div style={{ marginTop: 24 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <h3>Líneas del Timesheet</h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {hasUnsavedChanges && (
+                <span style={{ color: "#ff6b35", fontSize: 14, fontWeight: 500 }}>
+                  ⚠️ Cambios sin guardar
+                </span>
+              )}
+              <button
+                onClick={saveAllChanges}
+                disabled={!hasUnsavedChanges || isSaving}
+              style={{
+                  padding: "8px 16px",
+                  backgroundColor: hasUnsavedChanges ? "#007bff" : "#6c757d",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: hasUnsavedChanges && !isSaving ? "pointer" : "not-allowed",
+                  fontSize: "14px",
+                  fontWeight: "500"
+                }}
+              >
+                {isSaving ? "Guardando..." : "Guardar Cambios"}
+              </button>
+                    </div>
+                  </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-          <span style={{ color: "#666", fontSize: 12 }}>{formatTimeAgo(lastSavedAt)}</span>
+            <span style={{ color: "#666", fontSize: 12 }}>
+              {hasUnsavedChanges ? "Cambios pendientes de guardar" : "Sin cambios pendientes"}
+            </span>
         </div>
         <TimesheetLines
           lines={lines}
@@ -790,8 +1035,13 @@ function TimesheetEdit({ headerId }) {
           handleKeyDown={handleKeyDown}
           header={header}
           calendarHolidays={calendarHolidays}
-          scheduleAutosave={scheduleAutosave}
-          saveLineNow={saveLineNow}
+          scheduleAutosave={() => {}} // Eliminado
+          saveLineNow={() => {}} // Eliminado
+          savingByLine={savingByLine}
+          onLinesChange={handleLinesChange}
+          deleteLineMutation={deleteLineMutation}
+          insertLineMutation={insertLineMutation}
+          markAsChanged={markAsChanged}
         />
       </div>
     </div>

@@ -5,7 +5,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import useDropdownFilter from "../../utils/useDropdownFilter";
 import TIMESHEET_FIELDS from "../../constants/timesheetFields";
 
-export default function TaskCell({
+const TaskCell = ({
   line,
   lineIndex,
   colStyle,
@@ -17,7 +17,7 @@ export default function TaskCell({
   error,
   handlers,
   tasksState,
-}) {
+}) => {
   const {
     handleInputChange,
     handleInputFocus,
@@ -186,3 +186,5 @@ export default function TaskCell({
     </td>
   );
 }
+
+export default TaskCell;

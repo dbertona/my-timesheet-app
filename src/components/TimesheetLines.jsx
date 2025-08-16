@@ -1,5 +1,5 @@
 // src/components/TimesheetLines.jsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 import { format } from "date-fns";
 import { parseDate, formatDate } from "../utils/dateHelpers";
@@ -19,34 +19,27 @@ import EditableCell from "./ui/EditableCell";
 
 
 export default function TimesheetLines({
-  lines = [],
-  editFormData = {},
-  errors = {},
+  lines,
+  editFormData,
+  errors,
   inputRefs,
-  calendarOpenFor,
-  setCalendarOpenFor,
-  handleInputChange,
-  handleDateInputChange,
-  handleDateInputBlur,
-  handleInputFocus,
-  handleKeyDown,
+  hasRefs,
+  setSafeRef,
   header,
-  calendarHolidays = [],
+  calendarHolidays,
   scheduleAutosave,
   saveLineNow,
+  savingByLine,
+  onLinesChange,
+  onLineDelete,
+  onLineAdd,
+  markAsChanged,
 }) {
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
     TIMESHEET_FIELDS,
     "timesheet_column_widths",
     DEFAULT_COL_WIDTH
   );
-
-  const hasRefs = !!inputRefs && !!inputRefs.current;
-  const setSafeRef = (lineId, field, el) => {
-    if (!inputRefs?.current) return;
-    if (!inputRefs.current[lineId]) inputRefs.current[lineId] = {};
-    inputRefs.current[lineId][field] = el;
-  };
 
   const safeLines = Array.isArray(lines) ? lines : [];
   const tableRef = useRef(null);
@@ -223,6 +216,57 @@ export default function TimesheetLines({
   // ===============================
   // Render
   // ===============================
+  const handleInputChange = useCallback((lineId, event) => {
+    const { name, value } = event.target;
+
+    // Actualizar el estado local
+    onLinesChange(lineId, { [name]: value });
+  }, [onLinesChange]);
+
+  const handleInputFocus = (lineId, field, event) => {
+    if (inputRefs && inputRefs.current) {
+      inputRefs.current[lineId] = { ...inputRefs.current[lineId], [field]: event.target };
+    }
+  };
+
+  const handleKeyDown = (e, lineIndex, colIndex) => {
+    const colKey = TIMESHEET_FIELDS[colIndex];
+    const isAdvance = e.key === "Enter" || e.key === "Tab";
+
+    if (isAdvance) {
+      const nextColKey = TIMESHEET_FIELDS[colIndex + 1];
+      if (nextColKey) {
+        const nextTh = tableRef.current.querySelector(`thead tr th:nth-child(${colIndex + 2})`);
+        if (nextTh) {
+          nextTh.focus();
+        } else {
+          // If no next column, move to the next row
+          const nextRow = tableRef.current.querySelector(`tbody tr:nth-child(${lineIndex + 2})`);
+          if (nextRow) {
+            nextRow.querySelector("td:first-child input").focus();
+          }
+        }
+      }
+    }
+  };
+
+  const handleDateInputChange = (lineId, val) => {
+    onLinesChange(lineId, { date: val });
+  };
+
+  const handleDateInputBlur = (lineId, val) => {
+    const date = parseDate(val);
+    if (!date) {
+      setFieldError(lineId, "date", "Fecha inválida.");
+      const el = inputRefs?.current?.[lineId]?.["date"];
+      if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
+      return;
+    }
+    onLinesChange(lineId, { date: formatDate(date) });
+  };
+
+  const [calendarOpenFor, setCalendarOpenFor] = useState(null);
+
   return (
     <div className="ts-responsive">
       <table ref={tableRef} className="ts-table">
