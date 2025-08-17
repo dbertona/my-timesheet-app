@@ -1,6 +1,6 @@
 // src/components/TimesheetEdit.jsx
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useBlocker } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabaseClient } from "../supabaseClient";
@@ -492,7 +492,38 @@ function TimesheetEdit({ headerId }) {
     }
   }, [linesHook.data]);
 
-  // Control de navegación - prevenir salir sin guardar
+  // SOLUCIÓN DEFINITIVA: Usar useBlocker de React Router
+  // Esto reemplaza todo el sistema manual de navegación
+  
+  // Bloquear navegación si hay cambios sin guardar
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) => {
+      // Solo bloquear si hay cambios sin guardar y la ubicación cambia
+      return hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname;
+    }
+  );
+
+  // Mostrar modal cuando se bloquea la navegación
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      setNavigationModal({
+        show: true,
+        message: 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?',
+        onConfirm: () => {
+          setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+          // Permitir la navegación bloqueada
+          blocker.proceed();
+        },
+        onCancel: () => {
+          setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+          // Cancelar la navegación bloqueada
+          blocker.reset();
+        }
+      });
+    }
+  }, [blocker.state, blocker.proceed, blocker.reset]);
+
+  // Control para beforeunload (navegación del navegador)
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (hasUnsavedChanges) {
@@ -502,45 +533,8 @@ function TimesheetEdit({ headerId }) {
       }
     };
 
-    // Control para navegación interna (botón retroceder, etc.)
-    const handlePopState = (e) => {
-      if (hasUnsavedChanges && !isNavigating) {
-        setIsNavigating(true);
-        setNavigationModal({
-          show: true,
-          message: 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?',
-          onConfirm: () => {
-            // Si confirma, permitir la navegación
-            setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
-            // Usar timeout para evitar el bucle de popstate
-            setTimeout(() => {
-              setIsNavigating(false);
-              window.history.back();
-            }, 100);
-          },
-          onCancel: () => {
-            // Si no confirma, volver al estado anterior
-            window.history.pushState(null, '', window.location.href);
-            setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
-            setIsNavigating(false);
-          }
-        });
-        // Prevenir la navegación hasta que se confirme
-        e.preventDefault();
-        return false;
-      }
-    };
-
-    // Agregar un estado al historial ANTES de agregar el listener
-    window.history.pushState(null, '', window.location.href);
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('popstate', handlePopState);
-    };
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
   // SOLUCIÓN DEFINITIVA: Solo usar popstate event listener
