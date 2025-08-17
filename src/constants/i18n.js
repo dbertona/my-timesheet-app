@@ -34,5 +34,24 @@ export const LABELS = {
   CANCEL: "Cancelar",
   EDIT: "Editar",
   ADD: "Agregar",
-  CLOSE: "Cerrar"
+  CLOSE: "Cerrar",
+  // 🆕 Constantes para el calendario
+  REQUIRED_HOURS: "Horas requeridas",
+  WORKED_HOURS: "Horas trabajadas",
+  REMAINING_HOURS: "Horas restantes"
+};
+
+// 🆕 Constantes para el calendario
+export const CALENDAR = {
+  DAYS_OF_WEEK: ["L", "M", "X", "J", "V", "S", "D"],
+  MONTHS: [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ],
+  STATUS: {
+    NO_HOURS: "sin-horas",
+    ZERO: "cero",
+    PARTIAL: "parcial",
+    COMPLETE: "completo"
+  }
 };
