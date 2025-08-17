@@ -16,7 +16,7 @@ export default function DecimalInput({
   step = 0.01,
   decimals = 2,
   ...rest
-}) => {
+}) {
   const handleChange = (e) => {
     const input = e.target.value || "";
     const re = new RegExp(`^\\d*(?:[\\.,]\\d{0,${decimals}})?$`);
@@ -53,6 +53,6 @@ export default function DecimalInput({
       {...rest}
     />
   );
-};
+}
 
 
