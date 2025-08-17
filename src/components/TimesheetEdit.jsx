@@ -508,8 +508,8 @@ function TimesheetEdit({ headerId }) {
           onConfirm: () => {
             // Si confirma, permitir la navegación
             setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
-            // Permitir que la navegación continúe
-            window.history.back();
+            // Usar navigate en lugar de window.history.back()
+            navigate(-1);
           },
           onCancel: () => {
             // Si no confirma, volver al estado anterior
@@ -547,8 +547,8 @@ function TimesheetEdit({ headerId }) {
           onConfirm: () => {
             // Si confirma, permitir la navegación
             setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
-            // Permitir que la navegación continúe
-            window.history.back();
+            // Usar navigate en lugar de window.history.back()
+            navigate(-1);
           },
           onCancel: () => {
             // Si no confirma, volver a la página actual
