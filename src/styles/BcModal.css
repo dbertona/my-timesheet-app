@@ -165,3 +165,198 @@
     transform: translateY(0);
   }
 }
+
+/* Estilos para el modal de Business Central */
+.bc-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.bc-modal {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.bc-modal-header {
+  background: #008489;
+  color: white;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bc-modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.bc-modal-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.bc-modal-close:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.bc-modal-content {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.bc-modal-actions {
+  padding: 16px 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.bc-modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.bc-modal-btn-primary {
+  background: #008489;
+  color: white;
+}
+
+.bc-modal-btn-primary:hover {
+  background: #006d71;
+}
+
+.bc-modal-btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.bc-modal-btn-secondary:hover {
+  background: #5a6268;
+}
+
+/* 🆕 Estilos específicos para el modal de validación */
+.validation-summary {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.summary-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #495057;
+}
+
+.validation-details h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #495057;
+  font-weight: 600;
+}
+
+.errors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.error-line {
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.line-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.line-id {
+  font-weight: 600;
+  color: #495057;
+  font-size: 14px;
+}
+
+.go-to-error-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.go-to-error-btn:hover {
+  background: #0056b3;
+}
+
+.line-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-error {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.field-name {
+  font-weight: 600;
+  color: #6c757d;
+  font-size: 13px;
+  min-width: 80px;
+  text-transform: capitalize;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 13px;
+  line-height: 1.4;
+}

@@ -11,9 +11,10 @@ import TimesheetHeader from "./TimesheetHeader";
 import TimesheetLines from "./TimesheetLines";
 import CalendarPanel from "./timesheet/CalendarPanel";
 import BcModal from "./ui/BcModal";
+import ValidationErrorsModal from "./ui/ValidationErrorsModal";
 import { TOAST, PLACEHOLDERS, VALIDATION, LABELS } from "../constants/i18n";
 import { format } from "date-fns";
-import { buildHolidaySet, computeTotalsByIso } from "../utils/validation";
+import { buildHolidaySet, computeTotalsByIso, validateAllData } from "../utils/validation";
 import "../styles/BcModal.css";
 
 // ✅ columnas existentes en la tabla 'timesheet'
@@ -76,6 +77,12 @@ function TimesheetEdit({ headerId }) {
     message: "",
     onConfirm: null,
     onCancel: null
+  });
+
+  // 🆕 Estado para el modal de errores de validación
+  const [validationModal, setValidationModal] = useState({
+    show: false,
+    validation: null
   });
 
   // Bandera para evitar múltiples modales
@@ -312,10 +319,32 @@ function TimesheetEdit({ headerId }) {
     }
   });
 
-  // Función para guardar toda la tabla
+  // 🆕 Función para guardar toda la tabla CON VALIDACIÓN
   const saveAllChanges = useCallback(async () => {
     if (!hasUnsavedChanges) return;
 
+    // 🆕 PASO 1: Validar todos los datos antes de guardar
+    const validation = validateAllData(editFormData, dailyRequired, calendarHolidays);
+    
+    // 🆕 PASO 2: Si hay errores críticos, mostrar modal y bloquear guardado
+    if (!validation.isValid) {
+      setValidationModal({
+        show: true,
+        validation
+      });
+      return;
+    }
+    
+    // 🆕 PASO 3: Si solo hay advertencias, preguntar al usuario
+    if (validation.hasWarnings) {
+      setValidationModal({
+        show: true,
+        validation
+      });
+      return;
+    }
+
+    // ✅ PASO 4: Si todo es válido, proceder con el guardado
     setIsSaving(true);
     try {
       // Obtener todas las líneas con cambios
@@ -361,7 +390,55 @@ function TimesheetEdit({ headerId }) {
     } finally {
       setIsSaving(false);
     }
-  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation]);
+  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, dailyRequired, calendarHolidays]);
+
+  // 🆕 Función para ejecutar guardado sin validación (cuando solo hay advertencias)
+  const executeSaveWithoutValidation = useCallback(async () => {
+    try {
+      // Obtener todas las líneas con cambios
+      const linesToSave = Object.keys(editFormData).filter(lineId => {
+        const line = editFormData[lineId];
+        const originalLine = lines.find(l => l.id === lineId);
+        return line && originalLine && JSON.stringify(line) !== JSON.stringify(originalLine);
+      });
+
+      // Guardar cada línea
+      for (const lineId of linesToSave) {
+        const lineData = editFormData[lineId];
+        const originalLine = lines.find(l => l.id === lineId);
+
+        if (lineData && originalLine) {
+          const changedFields = {};
+          Object.keys(lineData).forEach(key => {
+            if (lineData[key] !== originalLine[key]) {
+              // Convertir fecha a formato ISO antes de enviar a la base de datos
+              if (key === "date" && lineData[key]) {
+                changedFields[key] = toIsoFromInput(lineData[key]);
+              } else {
+                changedFields[key] = lineData[key];
+              }
+            }
+          });
+
+          if (Object.keys(changedFields).length > 0) {
+            await updateLineMutation.mutateAsync({
+              lineId,
+              changes: changedFields,
+              silent: true  // Modo silencioso para guardado masivo
+            });
+          }
+        }
+      }
+
+      setHasUnsavedChanges(false);
+      toast.success(TOAST.SUCCESS.SAVE_ALL);
+    } catch (error) {
+      console.error('Error saving all changes:', error);
+      toast.error(TOAST.ERROR.SAVE_ALL);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [editFormData, lines, updateLineMutation]);
 
   // NOTA: handleNavigateBack eliminado porque useBlocker maneja toda la navegación
   // incluyendo navegación desde botones de la interfaz
@@ -983,7 +1060,7 @@ function TimesheetEdit({ headerId }) {
               <button
                 onClick={saveAllChanges}
                 disabled={!hasUnsavedChanges || isSaving}
-              style={{
+                style={{
                   padding: "8px 16px",
                   backgroundColor: hasUnsavedChanges ? "#007bff" : "#6c757d",
                   color: "white",
@@ -996,6 +1073,29 @@ function TimesheetEdit({ headerId }) {
               >
                 {isSaving ? "Guardando..." : "Guardar Cambios"}
               </button>
+              
+              {/* 🆕 Indicador de estado de validación */}
+              {hasUnsavedChanges && (
+                <div style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  gap: "8px",
+                  fontSize: "12px",
+                  color: hasDailyErrors ? "#dc3545" : "#28a745"
+                }}>
+                  {hasDailyErrors ? (
+                    <>
+                      <span>⚠️</span>
+                      <span>Hay errores que impiden guardar</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>✅</span>
+                      <span>Datos válidos</span>
+                    </>
+                  )}
+                </div>
+              )}
                     </div>
                   </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
@@ -1043,6 +1143,34 @@ function TimesheetEdit({ headerId }) {
       >
         <p>{navigationModal.message}</p>
       </BcModal>
+
+      {/* 🆕 Modal de errores de validación */}
+      <ValidationErrorsModal
+        isOpen={validationModal.show}
+        onClose={() => setValidationModal({ show: false, validation: null })}
+        validation={validationModal.validation}
+        onGoToError={(lineId) => {
+          // Cerrar modal y enfocar la línea con error
+          setValidationModal({ show: false, validation: null });
+          
+          // Encontrar y enfocar la línea con error
+          setTimeout(() => {
+            const firstErrorField = Object.keys(validationModal.validation?.errors[lineId] || {})[0];
+            if (firstErrorField && inputRefs.current?.[lineId]?.[firstErrorField]) {
+              inputRefs.current[lineId][firstErrorField].focus();
+              inputRefs.current[lineId][firstErrorField].select();
+            }
+          }, 100);
+        }}
+        onContinueAnyway={() => {
+          // Cerrar modal y continuar con el guardado (solo advertencias)
+          setValidationModal({ show: false, validation: null });
+          
+          // Ejecutar guardado sin validación (ya sabemos que solo hay advertencias)
+          setIsSaving(true);
+          executeSaveWithoutValidation();
+        }}
+      />
     </div>
   );
 }
