@@ -10,9 +10,11 @@ import useTimesheetEdit from "../hooks/useTimesheetEdit";
 import TimesheetHeader from "./TimesheetHeader";
 import TimesheetLines from "./TimesheetLines";
 import CalendarPanel from "./timesheet/CalendarPanel";
+import BcModal from "./ui/BcModal";
 import { TOAST, PLACEHOLDERS, VALIDATION, LABELS } from "../constants/i18n";
 import { format } from "date-fns";
 import { buildHolidaySet, computeTotalsByIso } from "../utils/validation";
+import "../styles/BcModal.css";
 
 // ✅ columnas existentes en la tabla 'timesheet'
 const SAFE_COLUMNS = [
@@ -67,6 +69,14 @@ function TimesheetEdit({ headerId }) {
   const [hasDailyErrors, setHasDailyErrors] = useState(false);
   const serverSnapshotRef = useRef({}); // Último estado confirmado por servidor por línea
   const [savingByLine, setSavingByLine] = useState({}); // { [id]: boolean }
+  
+  // Estado para el modal de confirmación de navegación
+  const [navigationModal, setNavigationModal] = useState({
+    show: false,
+    message: "",
+    onConfirm: null,
+    onCancel: null
+  });
 
   function parseAllocationPeriod(ap) {
     const m = /^M(\d{2})-M(\d{2})$/.exec(ap || "");
@@ -353,12 +363,12 @@ function TimesheetEdit({ headerId }) {
   // Función común para navegación hacia atrás con validación
   const handleNavigateBack = useCallback(() => {
     if (hasUnsavedChanges) {
-      const confirmar = window.confirm(
-        'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?'
-      );
-      if (confirmar) {
-        navigate("/");
-      }
+      setNavigationModal({
+        show: true,
+        message: 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?',
+        onConfirm: () => navigate("/"),
+        onCancel: () => setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null })
+      });
     } else {
       navigate("/");
     }
@@ -492,14 +502,22 @@ function TimesheetEdit({ headerId }) {
     // Control para navegación interna (botón retroceder, etc.)
     const handlePopState = (e) => {
       if (hasUnsavedChanges) {
-        const confirmar = window.confirm(
-          'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?'
-        );
-
-        if (!confirmar) {
-          // Si no confirma, volver al estado anterior
-          window.history.pushState(null, '', window.location.href);
-        }
+        setNavigationModal({
+          show: true,
+          message: 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?',
+          onConfirm: () => {
+            // Si confirma, permitir la navegación
+            setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+          },
+          onCancel: () => {
+            // Si no confirma, volver al estado anterior
+            window.history.pushState(null, '', window.location.href);
+            setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+          }
+        });
+        // Prevenir la navegación hasta que se confirme
+        e.preventDefault();
+        return false;
       }
     };
 
@@ -521,14 +539,21 @@ function TimesheetEdit({ headerId }) {
 
     const checkHistoryChange = () => {
       if (window.history.length < currentHistoryLength && hasUnsavedChanges) {
-        const confirmar = window.confirm(
-          'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?'
-        );
-
-        if (!confirmar) {
-          // Si no confirma, volver a la página actual
-          window.history.forward();
-        }
+        setNavigationModal({
+          show: true,
+          message: 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?',
+          onConfirm: () => {
+            // Si confirma, permitir la navegación
+            setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+          },
+          onCancel: () => {
+            // Si no confirma, volver a la página actual
+            window.history.forward();
+            setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+          }
+        });
+        // Prevenir la navegación hasta que se confirme
+        return false;
       }
       currentHistoryLength = window.history.length;
     };
@@ -1041,6 +1066,20 @@ function TimesheetEdit({ headerId }) {
           markAsChanged={markAsChanged}
         />
       </div>
+      
+      {/* Modal de confirmación de navegación */}
+      <BcModal
+        isOpen={navigationModal.show}
+        onClose={() => setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null })}
+        title="Confirmar navegación"
+        confirmText="Sí, salir"
+        cancelText="No, cancelar"
+        onConfirm={navigationModal.onConfirm}
+        onCancel={navigationModal.onCancel}
+        confirmButtonType="danger"
+      >
+        <p>{navigationModal.message}</p>
+      </BcModal>
     </div>
   );
 }
