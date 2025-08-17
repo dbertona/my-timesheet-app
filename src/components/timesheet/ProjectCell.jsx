@@ -138,6 +138,22 @@ export default function ProjectCell({
           />
         </div>
 
+        {/* Aviso de proyecto completado o perdido */}
+        {editFormData[line.id]?.job_no && (() => {
+          const selectedJob = jobs.find(j => j.no === editFormData[line.id]?.job_no);
+          if (selectedJob && (selectedJob.status === 'Completed' || selectedJob.status === 'Lost')) {
+            return (
+              <div className="ts-project-status-warning">
+                <span className="ts-project-status-warning__icon">⚠️</span>
+                <span className="ts-project-status-warning__text">
+                  Proyecto {selectedJob.status === 'Completed' ? 'Completado' : 'Perdido'}
+                </span>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
         {jobOpenFor === line.id && (
           <div className="ts-dropdown" onMouseDown={(e) => e.preventDefault()}>
             <div className="ts-dropdown__header">

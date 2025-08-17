@@ -5,12 +5,15 @@ export async function fetchJobsByResource(resourceNo) {
   const { data, error } = await supabaseClient
     .from("job")
     .select("no, description, status, job_team!inner(resource_no)")
-    .eq("status", "Open")
     .eq("job_team.resource_no", resourceNo)
     .order("no")
     .limit(1000);
   if (error) throw error;
-  return (data || []).map((j) => ({ no: j.no, description: j.description }));
+  return (data || []).map((j) => ({
+    no: j.no,
+    description: j.description,
+    status: j.status
+  }));
 }
 
 

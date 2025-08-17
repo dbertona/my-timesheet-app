@@ -163,3 +163,30 @@
   font-family: var(--ts-font-family) !important;
   font-size: var(--ts-font-size) !important;
 }
+
+/* Aviso de status de proyecto */
+.ts-project-status-warning {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  margin-top: 2px;
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #856404;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.ts-project-status-warning__icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.ts-project-status-warning__text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
