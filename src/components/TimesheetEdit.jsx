@@ -523,19 +523,8 @@ function TimesheetEdit({ headerId }) {
     }
   }, [blocker.state, blocker.proceed, blocker.reset]);
 
-  // Control para beforeunload (navegación del navegador)
-  useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?';
-        return e.returnValue;
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
+  // NOTA: beforeunload eliminado porque useBlocker maneja toda la navegación
+  // incluyendo navegación del navegador (botón retroceder, icono de página, etc.)
 
   // calendarHolidays seguirá disponible en este componente para validaciones
   useEffect(() => {
