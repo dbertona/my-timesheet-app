@@ -494,7 +494,7 @@ function TimesheetEdit({ headerId }) {
 
   // SOLUCIÓN DEFINITIVA: Usar useBlocker de React Router
   // Esto reemplaza todo el sistema manual de navegación
-  
+
   // Bloquear navegación si hay cambios sin guardar
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) => {
@@ -537,8 +537,36 @@ function TimesheetEdit({ headerId }) {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // SOLUCIÓN DEFINITIVA: Solo usar popstate event listener
-  // El sistema de interval causaba múltiples modales
+  // SOLUCIÓN DEFINITIVA: Usar useBlocker de React Router
+  // Esto reemplaza todo el sistema manual de navegación
+  
+  // Bloquear navegación si hay cambios sin guardar
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) => {
+      // Solo bloquear si hay cambios sin guardar y la ubicación cambia
+      return hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname;
+    }
+  );
+
+  // Mostrar modal cuando se bloquea la navegación
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      setNavigationModal({
+        show: true,
+        message: 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?',
+        onConfirm: () => {
+          setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+          // Permitir la navegación bloqueada
+          blocker.proceed();
+        },
+        onCancel: () => {
+          setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+          // Cancelar la navegación bloqueada
+          blocker.reset();
+        }
+      });
+    }
+  }, [blocker.state, blocker.proceed, blocker.reset]);
 
   // calendarHolidays seguirá disponible en este componente para validaciones
   useEffect(() => {
