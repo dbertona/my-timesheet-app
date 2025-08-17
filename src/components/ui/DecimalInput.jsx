@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PLACEHOLDERS } from '../../constants/i18n';
 
-export const DecimalInput = ({
+export default function DecimalInput({
   name,
   value,
   onChange,
