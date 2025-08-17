@@ -117,23 +117,13 @@ export default function ProjectCell({
                 e.preventDefault();
                 return;
               }
-              if (e.key === "Enter") {
-                const list = getVisibleJobs(line.id) || [];
-                const candidate = list[0];
-                if (candidate) {
-                  const val = candidate.no;
-                  handleInputChange(line.id, { target: { name: "job_no", value: val } });
-                  clearFieldError(line.id, "job_no");
-                  setJobFilter((prev) => ({ ...prev, [line.id]: val }));
-                  setJobOpenFor(null);
-                  await ensureTasksLoaded(val);
-                  const el = inputRefs.current?.[line.id]?.["job_task_no"];
-                  if (el) { el.focus(); el.select(); }
-                  e.preventDefault();
-                  return;
-                }
+              // TODAS las teclas de navegación usan la misma función
+              if (e.key === "Tab" || e.key === "Enter" || e.key.startsWith("Arrow")) {
+                e.preventDefault(); // Prevenir comportamiento por defecto
+                // job_no está en el índice 0 de TIMESHEET_FIELDS
+                handleKeyDown(e, lineIndex, 0);
+                return;
               }
-              handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("job_no"));
             }}
             ref={hasRefs ? (el) => setSafeRef(line.id, "job_no", el) : null}
             className={`ts-input`}

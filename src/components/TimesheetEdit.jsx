@@ -742,6 +742,8 @@ function TimesheetEdit({ headerId }) {
   // -- Hook de edición (modificado para interceptar cambios de fecha/cantidad)
   const {
     inputRefs,
+    setSafeRef,
+    hasRefs,
     calendarOpenFor,
     setCalendarOpenFor,
     handleDateInputChange,
@@ -1013,11 +1015,14 @@ function TimesheetEdit({ headerId }) {
               {hasUnsavedChanges ? "Cambios pendientes de guardar" : "Sin cambios pendientes"}
             </span>
         </div>
+
         <TimesheetLines
           lines={lines}
           editFormData={editFormData}
           errors={errors}
           inputRefs={inputRefs}
+          hasRefs={hasRefs}
+          setSafeRef={setSafeRef}
           calendarOpenFor={calendarOpenFor}
           setCalendarOpenFor={setCalendarOpenFor}
           handleInputChange={handleInputChange}

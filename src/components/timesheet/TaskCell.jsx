@@ -101,21 +101,13 @@ const TaskCell = ({
                 e.preventDefault();
                 return;
               }
-              if (e.key === "Enter") {
-                const jobNo = editFormData[line.id]?.job_no || "";
-                const list = getVisibleTasks(line.id, jobNo) || [];
-                const candidate = list[0];
-                if (candidate) {
-                  const val = candidate.no;
-                  handleInputChange(line.id, { target: { name: "job_task_no", value: val } });
-                  clearFieldError(line.id, "job_task_no");
-                  setTaskFilter((prev) => ({ ...prev, [line.id]: val }));
-                  setTaskOpenFor(null);
-                  e.preventDefault();
-                  return;
-                }
+              // TODAS las teclas de navegación usan la misma función
+              if (e.key === "Tab" || e.key === "Enter" || e.key.startsWith("Arrow")) {
+                e.preventDefault(); // Prevenir comportamiento por defecto
+                // job_task_no está en el índice 2 de TIMESHEET_FIELDS
+                handleKeyDown(e, lineIndex, 2);
+                return;
               }
-              handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("job_task_no"));
             }}
             ref={hasRefs ? (el) => setSafeRef(line.id, "job_task_no", el) : null}
             className={`ts-input`}

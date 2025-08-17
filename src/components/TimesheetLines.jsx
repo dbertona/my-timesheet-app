@@ -10,7 +10,9 @@ import "../styles/TimesheetResponsive.css";
 import "../styles/TimesheetLines.css";
 import TIMESHEET_FIELDS, { TIMESHEET_LABELS, TIMESHEET_ALIGN, COL_MIN_WIDTH, COL_MAX_WIDTH, DEFAULT_COL_WIDTH } from "../constants/timesheetFields";
 import ProjectCell from "./timesheet/ProjectCell";
+import ProjectDescriptionCell from "./timesheet/ProjectDescriptionCell";
 import TaskCell from "./timesheet/TaskCell";
+import DepartmentCell from "./timesheet/DepartmentCell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import InlineError from "./ui/InlineError";
 import DecimalInput from "./ui/DecimalInput";
@@ -34,6 +36,7 @@ export default function TimesheetLines({
   onLineDelete,
   onLineAdd,
   markAsChanged,
+  handleKeyDown,
 }) {
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
     TIMESHEET_FIELDS,
@@ -45,6 +48,13 @@ export default function TimesheetLines({
   const tableRef = useRef(null);
 
   const getAlign = (key) => (TIMESHEET_ALIGN?.[key] || "left");
+
+  // Función para identificar si una columna es editable
+  const isColumnEditable = (colKey) => {
+    // Columnas NO editables
+    const nonEditableColumns = ["job_no_description", "department_code"];
+    return !nonEditableColumns.includes(colKey);
+  };
 
 
   // ===============================
@@ -229,26 +239,8 @@ export default function TimesheetLines({
     }
   };
 
-  const handleKeyDown = (e, lineIndex, colIndex) => {
-    const colKey = TIMESHEET_FIELDS[colIndex];
-    const isAdvance = e.key === "Enter" || e.key === "Tab";
-
-    if (isAdvance) {
-      const nextColKey = TIMESHEET_FIELDS[colIndex + 1];
-      if (nextColKey) {
-        const nextTh = tableRef.current.querySelector(`thead tr th:nth-child(${colIndex + 2})`);
-        if (nextTh) {
-          nextTh.focus();
-        } else {
-          // If no next column, move to the next row
-          const nextRow = tableRef.current.querySelector(`tbody tr:nth-child(${lineIndex + 2})`);
-          if (nextRow) {
-            nextRow.querySelector("td:first-child input").focus();
-          }
-        }
-      }
-    }
-  };
+    // handleKeyDown viene de useTimesheetEdit.jsx y maneja todas las teclas de navegación
+  // incluyendo ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Tab y Enter
 
   const handleDateInputChange = (lineId, val) => {
     onLinesChange(lineId, { date: val });
@@ -323,6 +315,17 @@ export default function TimesheetLines({
                   ensureTasksLoaded,
                   findJob,
                 }}
+              />
+
+              {/* ----- DESCRIPCIÓN DEL PROYECTO: NO editable ----- */}
+              <ProjectDescriptionCell
+                line={line}
+                lineIndex={lineIndex}
+                colStyle={colStyles.job_no_description}
+                align={getAlign("job_no_description")}
+                jobs={jobs}
+                findJob={findJob}
+                editFormData={editFormData[line.id]} // Pasar editFormData para detectar cambios
               />
 
               {/* ----- TAREA: combo dependiente ----- */}
@@ -592,21 +595,13 @@ export default function TimesheetLines({
                 </div>
               </EditableCell>
 
-              {/* ----- Departamento ----- */}
-              <EditableCell
-                style={{ ...colStyles.department_code, textAlign: getAlign("department_code") }}
-              >
-                <input
-                  type="text"
-                  name="department_code"
-                  value={editFormData[line.id]?.department_code || ""}
-                  onChange={(e) => handleInputChange(line.id, e)}
-                  onFocus={(e) => handleInputFocus(line.id, "department_code", e)}
-                  onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("department_code"))}
-                  ref={hasRefs ? (el) => setSafeRef(line.id, "department_code", el) : null}
-                  className="ts-input"
-                />
-              </EditableCell>
+              {/* ----- Departamento: NO editable ----- */}
+              <DepartmentCell
+                line={line}
+                lineIndex={lineIndex}
+                colStyle={colStyles.department_code}
+                align={getAlign("department_code")}
+              />
             </tr>
           ))}
         </tbody>
