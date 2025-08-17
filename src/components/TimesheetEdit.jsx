@@ -191,9 +191,15 @@ function TimesheetEdit({ headerId }) {
   // ✅ MUTATION: Actualizar línea individual
   const updateLineMutation = useMutation({
     mutationFn: async ({ lineId, changes, silent = false }) => {
+      // Convertir fecha a formato ISO si está presente
+      const processedChanges = { ...changes };
+      if (processedChanges.date) {
+        processedChanges.date = toIsoFromInput(processedChanges.date);
+      }
+
       const { data, error } = await supabaseClient
         .from('timesheet')
-        .update(changes)
+        .update(processedChanges)
         .eq('id', lineId)
         .select()
         .single();
@@ -315,7 +321,12 @@ function TimesheetEdit({ headerId }) {
           const changedFields = {};
           Object.keys(lineData).forEach(key => {
             if (lineData[key] !== originalLine[key]) {
-              changedFields[key] = lineData[key];
+              // Convertir fecha a formato ISO antes de enviar a la base de datos
+              if (key === "date" && lineData[key]) {
+                changedFields[key] = toIsoFromInput(lineData[key]);
+              } else {
+                changedFields[key] = lineData[key];
+              }
             }
           });
 
