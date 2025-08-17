@@ -69,7 +69,7 @@ function TimesheetEdit({ headerId }) {
   const [hasDailyErrors, setHasDailyErrors] = useState(false);
   const serverSnapshotRef = useRef({}); // Último estado confirmado por servidor por línea
   const [savingByLine, setSavingByLine] = useState({}); // { [id]: boolean }
-  
+
   // Estado para el modal de confirmación de navegación
   const [navigationModal, setNavigationModal] = useState({
     show: false,
@@ -508,6 +508,8 @@ function TimesheetEdit({ headerId }) {
           onConfirm: () => {
             // Si confirma, permitir la navegación
             setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+            // Permitir que la navegación continúe
+            window.history.back();
           },
           onCancel: () => {
             // Si no confirma, volver al estado anterior
@@ -545,6 +547,8 @@ function TimesheetEdit({ headerId }) {
           onConfirm: () => {
             // Si confirma, permitir la navegación
             setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+            // Permitir que la navegación continúe
+            window.history.back();
           },
           onCancel: () => {
             // Si no confirma, volver a la página actual
@@ -1066,7 +1070,7 @@ function TimesheetEdit({ headerId }) {
           markAsChanged={markAsChanged}
         />
       </div>
-      
+
       {/* Modal de confirmación de navegación */}
       <BcModal
         isOpen={navigationModal.show}
