@@ -893,7 +893,7 @@ function TimesheetEdit({ headerId }) {
         <button
           type="button"
           aria-label="Lista Parte Trabajo"
-          onClick={handleNavigateBack}
+          onClick={() => navigate("/")}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = "#D8EEF1"; // hover suave
             e.currentTarget.style.borderColor = "#007E87";
