@@ -77,6 +77,9 @@ function TimesheetEdit({ headerId }) {
     onConfirm: null,
     onCancel: null
   });
+  
+  // Bandera para evitar múltiples modales
+  const [isNavigating, setIsNavigating] = useState(false);
 
   function parseAllocationPeriod(ap) {
     const m = /^M(\d{2})-M(\d{2})$/.exec(ap || "");
@@ -501,13 +504,15 @@ function TimesheetEdit({ headerId }) {
 
     // Control para navegación interna (botón retroceder, etc.)
     const handlePopState = (e) => {
-      if (hasUnsavedChanges) {
+      if (hasUnsavedChanges && !isNavigating) {
+        setIsNavigating(true);
         setNavigationModal({
           show: true,
           message: 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?',
           onConfirm: () => {
             // Si confirma, permitir la navegación
             setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+            setIsNavigating(false);
             // Usar navigate en lugar de window.history.back()
             navigate(-1);
           },
@@ -515,6 +520,7 @@ function TimesheetEdit({ headerId }) {
             // Si no confirma, volver al estado anterior
             window.history.pushState(null, '', window.location.href);
             setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+            setIsNavigating(false);
           }
         });
         // Prevenir la navegación hasta que se confirme
@@ -540,13 +546,15 @@ function TimesheetEdit({ headerId }) {
     let currentHistoryLength = window.history.length;
 
     const checkHistoryChange = () => {
-      if (window.history.length < currentHistoryLength && hasUnsavedChanges) {
+      if (window.history.length < currentHistoryLength && hasUnsavedChanges && !isNavigating) {
+        setIsNavigating(true);
         setNavigationModal({
           show: true,
           message: 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?',
           onConfirm: () => {
             // Si confirma, permitir la navegación
             setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+            setIsNavigating(false);
             // Usar navigate en lugar de window.history.back()
             navigate(-1);
           },
@@ -554,6 +562,7 @@ function TimesheetEdit({ headerId }) {
             // Si no confirma, volver a la página actual
             window.history.forward();
             setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+            setIsNavigating(false);
           }
         });
         // Prevenir la navegación hasta que se confirme
