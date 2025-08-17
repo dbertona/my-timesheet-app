@@ -512,8 +512,20 @@ function TimesheetEdit({ headerId }) {
     }
   }, [blocker.state, blocker.proceed, blocker.reset]);
 
-  // NOTA: beforeunload eliminado porque useBlocker maneja toda la navegación
-  // incluyendo navegación del navegador (botón retroceder, icono de página, etc.)
+  // Control para beforeunload (cerrar pestaña, ventana, recargar)
+  // useBlocker NO puede manejar estos eventos del navegador
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // calendarHolidays seguirá disponible en este componente para validaciones
   useEffect(() => {
