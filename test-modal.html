@@ -44,13 +44,13 @@
     <div class="test-container">
         <h1>🧪 Test del Modal BcModal</h1>
         <p>Esta página prueba el modal reutilizable del estilo Business Central que acabamos de integrar.</p>
-        
+
         <h2>Botones de prueba:</h2>
         <button class="test-button" onclick="showBasicModal()">Modal Básico</button>
         <button class="test-button" onclick="showDangerModal()">Modal de Peligro</button>
         <button class="test-button" onclick="showLargeModal()">Modal Grande</button>
         <button class="test-button" onclick="showNoActionsModal()">Modal Sin Acciones</button>
-        
+
         <h2>Funcionalidades del Modal:</h2>
         <ul>
             <li>✅ Estilo exacto de Business Central</li>
@@ -133,23 +133,23 @@
         function showBasicModal() {
             document.getElementById('basicModal').style.display = 'flex';
         }
-        
+
         function showDangerModal() {
             document.getElementById('dangerModal').style.display = 'flex';
         }
-        
+
         function showLargeModal() {
             document.getElementById('largeModal').style.display = 'flex';
         }
-        
+
         function showNoActionsModal() {
             document.getElementById('noActionsModal').style.display = 'flex';
         }
-        
+
         function hideModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
         }
-        
+
         // Cerrar modales haciendo clic en el overlay
         document.querySelectorAll('.ts-modal-overlay').forEach(overlay => {
             overlay.addEventListener('click', function() {
