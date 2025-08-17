@@ -4,9 +4,8 @@ import { FiChevronDown, FiSearch } from "react-icons/fi";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import useDropdownFilter from "../../utils/useDropdownFilter";
 import TIMESHEET_FIELDS from "../../constants/timesheetFields";
-import { PLACEHOLDERS } from '../../constants/i18n';
 
-export default function TaskCell({
+const TaskCell = ({
   line,
   lineIndex,
   colStyle,
@@ -18,15 +17,13 @@ export default function TaskCell({
   error,
   handlers,
   tasksState,
-}) {
+}) => {
   const {
     handleInputChange,
     handleInputFocus,
     handleKeyDown,
     setFieldError,
     clearFieldError,
-    scheduleAutosave,
-    saveLineNow,
   } = handlers;
 
   const { ensureTasksLoaded, findTask, tasksByJob = {} } = tasksState;
@@ -35,10 +32,6 @@ export default function TaskCell({
   const setTaskFilter = tasksFilter.setFilterByLine;
   const taskOpenFor = tasksFilter.openFor;
   const setTaskOpenFor = tasksFilter.setOpenFor;
-  const activeIndex = tasksFilter.activeIndex;
-  const setActiveIndex = tasksFilter.setActiveIndex;
-  const handleKeyNavigation = tasksFilter.handleKeyNavigation;
-  const handleEscape = tasksFilter.handleEscape;
   const getVisibleTasks = (lineId, jobNo) => tasksFilter.getVisible(lineId, (tasksByJob[jobNo]||[]), (t) => `${t.no} ${t.description||""}`);
 
   // Virtualización siempre montada para mantener orden de hooks estable
@@ -91,8 +84,6 @@ export default function TaskCell({
               }
               clearFieldError(line.id, "job_task_no");
               setTaskOpenFor(null);
-              if (typeof saveLineNow === 'function') saveLineNow(line.id);
-              else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
             }}
             onFocus={async (e) => {
               handleInputFocus(line.id, "job_task_no", e);
@@ -102,48 +93,25 @@ export default function TaskCell({
             onKeyDown={(e) => {
               if (e.altKey && e.key === "ArrowDown") {
                 setTaskOpenFor(line.id);
-                setActiveIndex(0);
                 e.preventDefault();
                 return;
               }
               if (e.altKey && e.key === "ArrowUp") {
                 setTaskOpenFor(null);
-                setActiveIndex(-1);
                 e.preventDefault();
                 return;
               }
-              if (e.key === "Escape") {
-                handleEscape();
-                e.preventDefault();
+              // TODAS las teclas de navegación usan la misma función
+              if (e.key === "Tab" || e.key === "Enter" || e.key.startsWith("Arrow")) {
+                e.preventDefault(); // Prevenir comportamiento por defecto
+                // job_task_no está en el índice 2 de TIMESHEET_FIELDS
+                handleKeyDown(e, lineIndex, 2);
                 return;
               }
-              if (e.key === "Enter") {
-                const jobNo = editFormData[line.id]?.job_no || "";
-                const list = getVisibleTasks(line.id, jobNo) || [];
-                const candidate = list[0];
-                if (candidate) {
-                  const val = candidate.no;
-                  handleInputChange(line.id, { target: { name: "job_task_no", value: val } });
-                  clearFieldError(line.id, "job_task_no");
-                  setTaskFilter((prev) => ({ ...prev, [line.id]: val }));
-                  setTaskOpenFor(null);
-                  setActiveIndex(-1);
-                  if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                  else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                  e.preventDefault();
-                  return;
-                }
-              }
-              handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("job_task_no"));
             }}
             ref={hasRefs ? (el) => setSafeRef(line.id, "job_task_no", el) : null}
             className={`ts-input`}
             autoComplete="off"
-            aria-expanded={taskOpenFor === line.id}
-            aria-haspopup="listbox"
-            aria-controls={`task-dropdown-${line.id}`}
-            role="combobox"
-            aria-autocomplete="list"
           />
           <FiChevronDown
             onMouseDown={async (e) => {
@@ -157,41 +125,7 @@ export default function TaskCell({
         </div>
 
         {taskOpenFor === line.id && (
-          <div
-            className="ts-dropdown"
-            onMouseDown={(e) => e.preventDefault()}
-            id={`task-dropdown-${line.id}`}
-            role="listbox"
-            aria-label="Lista de tareas"
-            onKeyDown={(e) => {
-              const items = getVisibleTasks(line.id, editFormData[line.id]?.job_no) || [];
-              if (items.length === 0) return;
-
-              if (e.key === "Escape") {
-                handleEscape();
-                e.preventDefault();
-                return;
-              }
-
-              const newIndex = handleKeyNavigation(e.key, items, activeIndex);
-              if (newIndex !== activeIndex) {
-                setActiveIndex(newIndex);
-                e.preventDefault();
-                return;
-              }
-
-              if (e.key === "Enter" && activeIndex >= 0 && activeIndex < items.length) {
-                const selected = items[activeIndex];
-                handleInputChange(line.id, { target: { name: 'job_task_no', value: selected.no } });
-                setTaskFilter((prev) => ({ ...prev, [line.id]: selected.no }));
-                setTaskOpenFor(null);
-                setActiveIndex(-1);
-                if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                e.preventDefault();
-              }
-            }}
-          >
+          <div className="ts-dropdown" onMouseDown={(e) => e.preventDefault()}>
             <div className="ts-dropdown__header">
               <FiSearch />
               <input
@@ -202,7 +136,7 @@ export default function TaskCell({
                     [line.id]: e.target.value,
                   }))
                 }
-                placeholder={PLACEHOLDERS.TASK_SEARCH}
+                placeholder="Buscar tarea..."
                 style={{ width: "100%", border: "none", outline: "none" }}
               />
             </div>
@@ -212,31 +146,16 @@ export default function TaskCell({
                 {rowVirtualizer.getVirtualItems().map((v) => {
                   const t = items[v.index];
                   if (!t) return null;
-                  const isActive = v.index === activeIndex;
                   return (
                     <div
                       key={t.no}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        transform: `translateY(${v.start}px)`,
-                        backgroundColor: isActive ? '#e3f2fd' : 'transparent',
-                        outline: isActive ? '2px solid #2196f3' : 'none'
-                      }}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${v.start}px)` }}
                       onMouseDown={() => {
                         handleInputChange(line.id, { target: { name: 'job_task_no', value: t.no } });
                         setTaskFilter((prev) => ({ ...prev, [line.id]: t.no }));
                         setTaskOpenFor(null);
-                        setActiveIndex(-1);
-                        if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                        else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
                       }}
                       title={`${t.no} - ${t.description || ''}`}
-                      role="option"
-                      aria-selected={isActive}
-                      tabIndex={isActive ? 0 : -1}
                     >
                       <strong>{t.no}</strong> {t.description ? `— ${t.description}` : ''}
                     </div>
@@ -259,3 +178,5 @@ export default function TaskCell({
     </td>
   );
 }
+
+export default TaskCell;

@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import TIMESHEET_FIELDS from "../constants/timesheetFields";
 import { parse, isBefore, isAfter, format } from "date-fns";
 import { formatDate, parseDate } from "../utils/dateHelpers";
@@ -16,6 +16,16 @@ export default function useTimesheetEdit({
   const selectionRef = useRef({ lineId: null, field: null, start: 0, end: 0 });
   const [calendarOpenFor, setCalendarOpenFor] = useState(null);
   const didInitialFocus = useRef(false); // <-- evita robar foco tras añadir líneas
+
+  // Función para registrar referencias a inputs
+  const setSafeRef = useCallback((lineId, fieldName, element) => {
+    if (element && lineId && fieldName) {
+      if (!inputRefs.current[lineId]) {
+        inputRefs.current[lineId] = {};
+      }
+      inputRefs.current[lineId][fieldName] = element;
+    }
+  }, []);
 
   // -------- Foco inicial: solo una vez --------
   useEffect(() => {
@@ -302,6 +312,34 @@ export default function useTimesheetEdit({
       }
     }
 
+    // Función para identificar si una columna es editable
+    const isColumnEditable = (colKey) => {
+      // Columnas NO editables
+      const nonEditableColumns = ["job_no_description", "department_code"];
+      return !nonEditableColumns.includes(colKey);
+    };
+
+    // Si el siguiente campo no es editable, saltarlo
+    let attempts = 0;
+    const maxAttempts = TIMESHEET_FIELDS.length; // Evitar bucle infinito
+
+    while (!isColumnEditable(TIMESHEET_FIELDS[nextFieldIndex]) && attempts < maxAttempts) {
+      if (key === "ArrowLeft") {
+        // Ir a la columna anterior
+        nextFieldIndex = nextFieldIndex > 0 ? nextFieldIndex - 1 : TIMESHEET_FIELDS.length - 1;
+        if (nextFieldIndex === TIMESHEET_FIELDS.length - 1) {
+          nextLineIndex = nextLineIndex > 0 ? nextLineIndex - 1 : lines.length - 1;
+        }
+      } else if (key === "ArrowRight" || key === "Tab" || key === "Enter") {
+        // Ir a la columna siguiente
+        nextFieldIndex = nextFieldIndex < TIMESHEET_FIELDS.length - 1 ? nextFieldIndex + 1 : 0;
+        if (nextFieldIndex === 0) {
+          nextLineIndex = nextLineIndex < lines.length - 1 ? nextLineIndex + 1 : 0;
+        }
+      }
+      attempts++;
+    }
+
     const nextLineId = lines[nextLineIndex].id;
     const nextFieldName = TIMESHEET_FIELDS[nextFieldIndex];
     const nextInput = inputRefs.current?.[nextLineId]?.[nextFieldName];
@@ -314,6 +352,8 @@ export default function useTimesheetEdit({
 
   return {
     inputRefs,
+    setSafeRef,
+    hasRefs: true,
     calendarOpenFor,
     setCalendarOpenFor,
     handleInputChange,

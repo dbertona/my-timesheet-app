@@ -1,5 +1,5 @@
 // src/components/TimesheetLines.jsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 import { format } from "date-fns";
 import { parseDate, formatDate } from "../utils/dateHelpers";
@@ -10,37 +10,33 @@ import "../styles/TimesheetResponsive.css";
 import "../styles/TimesheetLines.css";
 import TIMESHEET_FIELDS, { TIMESHEET_LABELS, TIMESHEET_ALIGN, COL_MIN_WIDTH, COL_MAX_WIDTH, DEFAULT_COL_WIDTH } from "../constants/timesheetFields";
 import ProjectCell from "./timesheet/ProjectCell";
+import ProjectDescriptionCell from "./timesheet/ProjectDescriptionCell";
 import TaskCell from "./timesheet/TaskCell";
+import DepartmentCell from "./timesheet/DepartmentCell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import InlineError from "./ui/InlineError";
-import { DecimalInput } from "./ui/DecimalInput";
+import DecimalInput from "./ui/DecimalInput";
 import DateInput from "./ui/DateInput";
 import EditableCell from "./ui/EditableCell";
-import { VALIDATION, LABELS } from '../constants/i18n';
-import { toast } from 'react-hot-toast';
-import { prepareRowForDb } from '../api/timesheet';
 
 
 export default function TimesheetLines({
-  lines = [],
-  editFormData = {},
-  errors = {},
+  lines,
+  editFormData,
+  errors,
   inputRefs,
-  calendarOpenFor,
-  setCalendarOpenFor,
-  handleInputChange,
-  handleDateInputChange,
-  handleDateInputBlur,
-  handleInputFocus,
-  handleKeyDown,
+  hasRefs,
+  setSafeRef,
   header,
   calendarHolidays,
   scheduleAutosave,
   saveLineNow,
-  savingByLine = {},
+  savingByLine,
   onLinesChange,
-  deleteLineMutation,
-  insertLineMutation,
+  onLineDelete,
+  onLineAdd,
+  markAsChanged,
+  handleKeyDown,
 }) {
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
     TIMESHEET_FIELDS,
@@ -48,20 +44,17 @@ export default function TimesheetLines({
     DEFAULT_COL_WIDTH
   );
 
-  const hasRefs = !!inputRefs && !!inputRefs.current;
-  const setSafeRef = (lineId, field, el) => {
-    if (!inputRefs?.current) return;
-    if (!inputRefs.current[lineId]) inputRefs.current[lineId] = {};
-    inputRefs.current[lineId][field] = el;
-  };
-
   const safeLines = Array.isArray(lines) ? lines : [];
   const tableRef = useRef(null);
 
   const getAlign = (key) => (TIMESHEET_ALIGN?.[key] || "left");
 
-  // Estado para el modal de confirmación
-  const [deleteModal, setDeleteModal] = useState({ show: false, lineId: null, lineData: null });
+  // Función para identificar si una columna es editable
+  const isColumnEditable = (colKey) => {
+    // Columnas NO editables
+    const nonEditableColumns = ["job_no_description", "department_code"];
+    return !nonEditableColumns.includes(colKey);
+  };
 
 
   // ===============================
@@ -79,7 +72,6 @@ export default function TimesheetLines({
   // Eliminado estado local de workTypes: usamos React Query
   const [wtFilter, setWtFilter] = useState({}); // { [lineId]: "filtro" }
   const [wtOpenFor, setWtOpenFor] = useState(null); // lineId con dropdown abierto
-  const [wtActiveIndex, setWtActiveIndex] = useState(-1); // índice del ítem activo para work_type
 
   // React Query: Carga y cache de proyectos por recurso (hook reutilizable)
   const jobsQuery = useJobs(header?.resource_no);
@@ -115,78 +107,13 @@ export default function TimesheetLines({
 
   // Filtrados visibles
   const getVisibleJobs = (lineId) => {
-    const filter = jobFilter[lineId] || "";
-    if (!filter) return jobs;
-    return jobs.filter((j) =>
-      j.no.toLowerCase().includes(filter.toLowerCase()) ||
-      (j.description || "").toLowerCase().includes(filter.toLowerCase())
+    const q = (jobFilter[lineId] || "").toLowerCase();
+    if (!q) return jobs;
+    return jobs.filter(
+      (j) =>
+        j.no?.toLowerCase().includes(q) ||
+        j.description?.toLowerCase().includes(q)
     );
-  };
-
-  // Funciones de acciones
-  const handleDeleteLine = (lineId) => {
-    const lineToDelete = lines.find(line => line.id === lineId);
-    if (!lineToDelete) return;
-
-    // Mostrar modal de confirmación
-    setDeleteModal({
-      show: true,
-      lineId: lineId,
-      lineData: lineToDelete
-    });
-  };
-
-  const confirmDeleteLine = () => {
-    if (!deleteModal.lineId) return;
-
-    // Eliminar línea usando la mutación
-    deleteLineMutation.mutate(deleteModal.lineId);
-
-    // Cerrar modal
-    setDeleteModal({ show: false, lineId: null, lineData: null });
-  };
-
-  const cancelDeleteLine = () => {
-    setDeleteModal({ show: false, lineId: null, lineData: null });
-  };
-
-  const handleDuplicateLine = (lineId) => {
-    const originalLine = lines.find(line => line.id === lineId);
-    if (!originalLine) return;
-
-    // Encontrar el índice de la línea original
-    const originalIndex = lines.findIndex(line => line.id === lineId);
-
-    // Crear nueva línea con datos copiados (mantener formato de fecha original)
-    const newLineData = {
-      header_id: header?.id,
-      job_no: originalLine.job_no,
-      job_task_no: originalLine.job_task_no,
-      description: `${originalLine.description || ''} (copia)`,
-      work_type: originalLine.work_type,
-      quantity: 0, // Resetear cantidad
-      date: originalLine.date, // Mantener formato original (dd/mm/aaaa)
-      department_code: originalLine.department_code,
-      company: header?.company || "",
-      resource_no: header?.resource_no || "",
-    };
-
-    // Preparar datos para la base de datos usando prepareRowForDb
-    const preparedData = prepareRowForDb(newLineData, { header });
-
-    // Insertar nueva línea usando React Query
-    insertLineMutation.mutate(preparedData, {
-      onSuccess: (newLine) => {
-        // Insertar la nueva línea en la posición correcta (debajo de la original)
-        const updatedLines = [...lines];
-        updatedLines.splice(originalIndex + 1, 0, newLine);
-
-        // Actualizar el estado local para mostrar la línea en la posición correcta
-        if (typeof onLinesChange === 'function') {
-          onLinesChange(updatedLines, editFormData, errors);
-        }
-      }
-    });
   };
 
   const getVisibleTasks = (lineId, jobNo) => {
@@ -299,24 +226,60 @@ export default function TimesheetLines({
   // ===============================
   // Render
   // ===============================
+  const handleInputChange = useCallback((lineId, event) => {
+    const { name, value } = event.target;
+
+    // Actualizar el estado local
+    onLinesChange(lineId, { [name]: value });
+  }, [onLinesChange]);
+
+  const handleInputFocus = (lineId, field, event) => {
+    if (inputRefs && inputRefs.current) {
+      inputRefs.current[lineId] = { ...inputRefs.current[lineId], [field]: event.target };
+    }
+  };
+
+    // handleKeyDown viene de useTimesheetEdit.jsx y maneja todas las teclas de navegación
+  // incluyendo ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Tab y Enter
+
+  const handleDateInputChange = (lineId, val) => {
+    onLinesChange(lineId, { date: val });
+  };
+
+  const handleDateInputBlur = (lineId, val) => {
+    const date = parseDate(val);
+    if (!date) {
+      setFieldError(lineId, "date", "Fecha inválida.");
+      const el = inputRefs?.current?.[lineId]?.["date"];
+      if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
+      return;
+    }
+    onLinesChange(lineId, { date: formatDate(date) });
+  };
+
+  const [calendarOpenFor, setCalendarOpenFor] = useState(null);
+
   return (
     <div className="ts-responsive">
       <table ref={tableRef} className="ts-table">
         <thead>
           <tr>
-            {TIMESHEET_FIELDS.map((field) => (
+            {TIMESHEET_FIELDS.map((key) => (
               <th
-                key={field}
-                style={{
-                  minWidth: COL_MIN_WIDTH[field],
-                  maxWidth: COL_MAX_WIDTH[field],
-                  width: COL_MIN_WIDTH[field],
-                }}
+                key={key}
+                data-col={key}
+                className="ts-th"
+                style={{ ...colStyles[key] }}
               >
-                {TIMESHEET_LABELS[field] || field}
+                {TIMESHEET_LABELS?.[key] || key}
+                <span
+                  className="ts-resizer"
+                  onMouseDown={(e) => onMouseDown(e, key)}
+                  onDoubleClick={() => handleAutoFit(key)}
+                  aria-hidden
+                />
               </th>
             ))}
-            <th style={{ width: 80 }}>Acciones</th>
           </tr>
         </thead>
 
@@ -340,8 +303,6 @@ export default function TimesheetLines({
                   handleKeyDown,
                   setFieldError,
                   clearFieldError,
-                  scheduleAutosave,
-                  saveLineNow,
                 }}
                 jobsState={{
                   jobsLoaded,
@@ -354,6 +315,17 @@ export default function TimesheetLines({
                   ensureTasksLoaded,
                   findJob,
                 }}
+              />
+
+              {/* ----- DESCRIPCIÓN DEL PROYECTO: NO editable ----- */}
+              <ProjectDescriptionCell
+                line={line}
+                lineIndex={lineIndex}
+                colStyle={colStyles.job_no_description}
+                align={getAlign("job_no_description")}
+                jobs={jobs}
+                findJob={findJob}
+                editFormData={editFormData[line.id]} // Pasar editFormData para detectar cambios
               />
 
               {/* ----- TAREA: combo dependiente ----- */}
@@ -373,8 +345,6 @@ export default function TimesheetLines({
                   handleKeyDown,
                   setFieldError,
                   clearFieldError,
-                  scheduleAutosave,
-                  saveLineNow,
                 }}
                 tasksState={{
                   tasksByJob,
@@ -429,7 +399,7 @@ export default function TimesheetLines({
                         if (!raw) return; // permitir vacío sin error
                         const found = findWorkType(raw);
                         if (!found) {
-                          setFieldError(line.id, "work_type", VALIDATION.INVALID_WORK_TYPE);
+                          setFieldError(line.id, "work_type", "Servicio inválido. Debe seleccionar uno de la lista.");
                           const el = inputRefs?.current?.[line.id]?.["work_type"];
                           if (el) setTimeout(() => { el.focus(); el.select(); }, 0);
                           return;
@@ -485,7 +455,7 @@ export default function TimesheetLines({
                           }
                           // Inválido → no avanzar, marcar error
                           e.preventDefault();
-                          setFieldError(line.id, "work_type", VALIDATION.INVALID_WORK_TYPE);
+                          setFieldError(line.id, "work_type", "Servicio inválido. Debe seleccionar uno de la lista.");
                           const el = inputRefs?.current?.[line.id]?.["work_type"];
                           if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
                           return;
@@ -493,21 +463,6 @@ export default function TimesheetLines({
                         // Alt + ArrowDown: abrir dropdown de servicios
                         if (e.altKey && e.key === "ArrowDown") {
                           setWtOpenFor((prev) => (prev === line.id ? null : line.id));
-                          setWtActiveIndex(0);
-                          e.preventDefault();
-                          return;
-                        }
-                        // Alt + ArrowUp: cerrar dropdown
-                        if (e.altKey && e.key === "ArrowUp") {
-                          setWtOpenFor(null);
-                          setWtActiveIndex(-1);
-                          e.preventDefault();
-                          return;
-                        }
-                        // Escape: cerrar dropdown
-                        if (e.key === "Escape") {
-                          setWtOpenFor(null);
-                          setWtActiveIndex(-1);
                           e.preventDefault();
                           return;
                         }
@@ -516,11 +471,6 @@ export default function TimesheetLines({
                       ref={hasRefs ? (el) => setSafeRef(line.id, "work_type", el) : null}
                       className={`ts-input ${localErrors[line.id]?.work_type ? 'has-error' : ''}`}
                       autoComplete="off"
-                      aria-expanded={wtOpenFor === line.id}
-                      aria-haspopup="listbox"
-                      aria-controls={`worktype-dropdown-${line.id}`}
-                      role="combobox"
-                      aria-autocomplete="list"
                     />
                     <FiChevronDown
                       onMouseDown={(e) => {
@@ -532,76 +482,18 @@ export default function TimesheetLines({
                   </div>
 
                   {wtOpenFor === line.id && (
-                    <div
-                      className="ts-dropdown"
-                      onMouseDown={(e) => e.preventDefault()}
-                      id={`worktype-dropdown-${line.id}`}
-                      role="listbox"
-                      aria-label="Lista de tipos de trabajo"
-                      onKeyDown={(e) => {
-                        const items = getVisibleWorkTypes(line.id) || [];
-                        if (items.length === 0) return;
-
-                        if (e.key === "Escape") {
-                          setWtOpenFor(null);
-                          setWtActiveIndex(-1);
-                          e.preventDefault();
-                          return;
-                        }
-
-                        // Navegación con flechas
-                        if (e.key === "ArrowDown") {
-                          const newIndex = Math.min(wtActiveIndex + 1, items.length - 1);
-                          setWtActiveIndex(newIndex);
-                          e.preventDefault();
-                          return;
-                        }
-                        if (e.key === "ArrowUp") {
-                          const newIndex = Math.max(wtActiveIndex - 1, 0);
-                          setWtActiveIndex(newIndex);
-                          e.preventDefault();
-                          return;
-                        }
-                        if (e.key === "Home") {
-                          setWtActiveIndex(0);
-                          e.preventDefault();
-                          return;
-                        }
-                        if (e.key === "End") {
-                          setWtActiveIndex(items.length - 1);
-                          e.preventDefault();
-                          return;
-                        }
-
-                        // Seleccionar con Enter
-                        if (e.key === "Enter" && wtActiveIndex >= 0 && wtActiveIndex < items.length) {
-                          const selected = items[wtActiveIndex];
-                          handleInputChange(line.id, { target: { name: "work_type", value: selected } });
-                          clearFieldError(line.id, "work_type");
-                          setWtFilter((prev) => ({ ...prev, [line.id]: selected }));
-                          setWtOpenFor(null);
-                          setWtActiveIndex(-1);
-                          if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                          else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                          e.preventDefault();
-                        }
-                      }}
-                    >
+                    <div className="ts-dropdown" onMouseDown={(e) => e.preventDefault()}>
                       <div className="ts-dropdown__header">
                         <FiSearch />
                         <input
                           value={wtFilter[line.id] || ""}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setWtFilter((prev) => ({ ...prev, [line.id]: val }));
-                            setWtOpenFor((prev) => (prev === line.id ? line.id : null));
-                          }}
-                          placeholder={PLACEHOLDERS.WORK_TYPE_SEARCH}
+                          onChange={(e) => setWtFilter((prev) => ({ ...prev, [line.id]: e.target.value }))}
+                          placeholder="Buscar servicio..."
                           style={{ width: "100%", border: "none", outline: "none" }}
                         />
                       </div>
 
-                      {(workTypesLoaded ? getVisibleWorkTypes(line.id) : []).map((wt, index) => (
+                      {(workTypesLoaded ? getVisibleWorkTypes(line.id) : []).map((wt) => (
                         <div
                           key={wt}
                           onMouseDown={() => {
@@ -609,24 +501,8 @@ export default function TimesheetLines({
                             clearFieldError(line.id, "work_type");
                             setWtFilter((prev) => ({ ...prev, [line.id]: wt }));
                             setWtOpenFor(null);
-                            setWtActiveIndex(index);
                           }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === "Tab") {
-                              handleInputChange(line.id, { target: { name: "work_type", value: wt } });
-                              clearFieldError(line.id, "work_type");
-                              setWtFilter((prev) => ({ ...prev, [line.id]: wt }));
-                              setWtOpenFor(null);
-                              setWtActiveIndex(index);
-                              e.preventDefault();
-                            }
-                          }}
-                          onMouseEnter={() => setWtActiveIndex(index)}
-                          onMouseLeave={() => setWtActiveIndex(-1)}
-                          aria-selected={wtActiveIndex === index}
-                          role="option"
-                          tabIndex={-1}
-                          className={`ts-dropdown__item ${wtActiveIndex === index ? 'ts-dropdown__item--active' : ''}`}
+                          title={wt}
                         >
                           {wt}
                         </div>
@@ -664,12 +540,6 @@ export default function TimesheetLines({
                   className={`ts-input pr-icon ${errors[line.id]?.date ? 'has-error' : ''}`}
                   inputId={`input-date-${line.id}`}
                 />
-                {savingByLine[line.id] ? (
-                  <div className="ts-inline-error" style={{ marginTop: 4, background: "transparent", border: "none", padding: 0 }}>
-                    <span className="ts-spinner" aria-label="Guardando…" />
-                    <span style={{ color: "#666" }}>Guardando…</span>
-                  </div>
-                ) : null}
               </EditableCell>
 
               {/* ----- Cantidad (derecha) ----- */}
@@ -722,96 +592,20 @@ export default function TimesheetLines({
                       step={0.01}
                       decimals={2}
                     />
-                    {savingByLine[line.id] ? (
-                      <div className="ts-inline-error" style={{ marginTop: 4, background: "transparent", border: "none", padding: 0 }}>
-                        <span className="ts-spinner" aria-label="Guardando…" />
-                        <span style={{ color: "#666" }}>Guardando…</span>
-                      </div>
-                    ) : null}
                 </div>
               </EditableCell>
 
-              {/* ----- Departamento ----- */}
-              <EditableCell
-                style={{ ...colStyles.department_code, textAlign: getAlign("department_code") }}
-              >
-                <input
-                  type="text"
-                  name="department_code"
-                  value={editFormData[line.id]?.department_code || ""}
-                  onChange={(e) => handleInputChange(line.id, e)}
-                  onFocus={(e) => handleInputFocus(line.id, "department_code", e)}
-                  onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("department_code"))}
-                  ref={hasRefs ? (el) => setSafeRef(line.id, "department_code", el) : null}
-                  className="ts-input"
-                />
-              </EditableCell>
-
-              {/* ----- Acciones ----- */}
-              <td style={{ width: 80, textAlign: "center", verticalAlign: "top", padding: "4px" }}>
-                <div style={{ display: "flex", gap: "4px", justifyContent: "center" }}>
-                  <button
-                    type="button"
-                    onClick={() => handleDuplicateLine(line.id)}
-                    title="Duplicar línea"
-                    className="ts-action-btn ts-action-btn--duplicate"
-                    style={{
-                      padding: "4px 6px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      background: "#fff",
-                      cursor: "pointer",
-                      fontSize: "12px",
-                      color: "#666"
-                    }}
-                  >
-                    📋
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteLine(line.id)}
-                    title="Eliminar línea"
-                    className="ts-action-btn ts-action-btn--delete"
-                    style={{
-                      padding: "4px 6px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      background: "#fff",
-                      cursor: "pointer",
-                      fontSize: "12px",
-                      color: "#dc3545"
-                    }}
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </td>
+              {/* ----- Departamento: NO editable ----- */}
+              <DepartmentCell
+                line={line}
+                lineIndex={lineIndex}
+                colStyle={colStyles.department_code}
+                align={getAlign("department_code")}
+              />
             </tr>
           ))}
         </tbody>
       </table>
-
-      {/* Modal de confirmación de eliminación */}
-      {deleteModal.show && (
-        <div className="ts-modal-overlay">
-          <div className="ts-modal">
-            <h3>¿Desea seguir adelante y eliminar?</h3>
-            <p>
-              <strong>Proyecto:</strong> {deleteModal.lineData?.job_no || 'N/A'}<br />
-              <strong>Tarea:</strong> {deleteModal.lineData?.job_task_no || 'N/A'}<br />
-              <strong>Fecha:</strong> {deleteModal.lineData?.date || 'N/A'}
-            </p>
-            <div className="ts-modal-actions">
-              <button onClick={confirmDeleteLine} className="ts-btn ts-btn--danger">
-                Sí
-              </button>
-              <button onClick={cancelDeleteLine} className="ts-btn ts-btn--secondary">
-                No
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

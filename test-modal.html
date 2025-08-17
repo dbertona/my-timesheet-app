@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test BcModal</title>
+    <link rel="stylesheet" href="src/styles/BcModal.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button.danger {
+            background: #dc3545;
+        }
+        .test-button.danger:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test del Modal BcModal</h1>
+        <p>Esta página prueba el modal reutilizable del estilo Business Central que acabamos de integrar.</p>
+
+        <h2>Botones de prueba:</h2>
+        <button class="test-button" onclick="showBasicModal()">Modal Básico</button>
+        <button class="test-button" onclick="showDangerModal()">Modal de Peligro</button>
+        <button class="test-button" onclick="showLargeModal()">Modal Grande</button>
+        <button class="test-button" onclick="showNoActionsModal()">Modal Sin Acciones</button>
+
+        <h2>Funcionalidades del Modal:</h2>
+        <ul>
+            <li>✅ Estilo exacto de Business Central</li>
+            <li>✅ Animación de entrada suave</li>
+            <li>✅ Tamaños configurables (small, medium, large)</li>
+            <li>✅ Botones personalizables (danger, primary, secondary)</li>
+            <li>✅ Overlay con fondo semi-transparente</li>
+            <li>✅ Icono de pregunta en el título</li>
+            <li>✅ Responsive y centrado</li>
+        </ul>
+    </div>
+
+    <!-- Modal básico -->
+    <div id="basicModal" class="ts-modal-overlay" style="display: none;">
+        <div class="ts-modal ts-modal--medium" onclick="event.stopPropagation()">
+            <h3>Modal de Prueba</h3>
+            <div class="ts-modal-content">
+                <p>Este es un modal básico del estilo Business Central.</p>
+                <p>Puedes hacer clic fuera del modal o en los botones para cerrarlo.</p>
+            </div>
+            <div class="ts-modal-actions">
+                <button class="ts-btn ts-btn--primary" onclick="hideModal('basicModal')">
+                    Aceptar
+                </button>
+                <button class="ts-btn ts-btn--secondary" onclick="hideModal('basicModal')">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de peligro -->
+    <div id="dangerModal" class="ts-modal-overlay" style="display: none;">
+        <div class="ts-modal ts-modal--medium" onclick="event.stopPropagation()">
+            <h3>Confirmar Acción</h3>
+            <div class="ts-modal-content">
+                <p><strong>¿Estás seguro de que quieres continuar?</strong></p>
+                <p>Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="ts-modal-actions">
+                <button class="ts-btn ts-btn--danger" onclick="hideModal('dangerModal')">
+                    Sí, continuar
+                </button>
+                <button class="ts-btn ts-btn--secondary" onclick="hideModal('dangerModal')">
+                    No, cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal grande -->
+    <div id="largeModal" class="ts-modal-overlay" style="display: none;">
+        <div class="ts-modal ts-modal--large" onclick="event.stopPropagation()">
+            <h3>Modal Grande</h3>
+            <div class="ts-modal-content">
+                <p>Este modal tiene un tamaño grande para mostrar más contenido.</p>
+                <p>Es útil para formularios complejos o información detallada.</p>
+                <p>El ancho máximo es de 600px en lugar de los 400px estándar.</p>
+            </div>
+            <div class="ts-modal-actions">
+                <button class="ts-btn ts-btn--primary" onclick="hideModal('largeModal')">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal sin acciones -->
+    <div id="noActionsModal" class="ts-modal-overlay" style="display: none;">
+        <div class="ts-modal ts-modal--small" onclick="event.stopPropagation()">
+            <h3>Información</h3>
+            <div class="ts-modal-content">
+                <p>Este modal no tiene botones de acción.</p>
+                <p>Haz clic fuera del modal para cerrarlo.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showBasicModal() {
+            document.getElementById('basicModal').style.display = 'flex';
+        }
+
+        function showDangerModal() {
+            document.getElementById('dangerModal').style.display = 'flex';
+        }
+
+        function showLargeModal() {
+            document.getElementById('largeModal').style.display = 'flex';
+        }
+
+        function showNoActionsModal() {
+            document.getElementById('noActionsModal').style.display = 'flex';
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Cerrar modales haciendo clic en el overlay
+        document.querySelectorAll('.ts-modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function() {
+                this.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>

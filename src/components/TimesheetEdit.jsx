@@ -1,24 +1,20 @@
 // src/components/TimesheetEdit.jsx
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useNavigate, useLocation, useBlocker } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabaseClient } from "../supabaseClient";
-import { fetchTimesheetLines, updateTimesheetLine, prepareRowForDb } from "../api/timesheet";
-import { toDisplayDate, toIsoFromInput } from "../utils/dateHelpers";
-import { buildHolidaySet, computeTotalsByIso } from "../utils/validation";
-import { fetchCalendarDays } from "../api/calendar";
 import useCalendarData from "../hooks/useCalendarData";
-import toast from "react-hot-toast";
-import "../styles/HomeDashboard.css";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { format } from "date-fns";
+import useTimesheetLines from "../hooks/useTimesheetLines";
+import useTimesheetEdit from "../hooks/useTimesheetEdit";
 import TimesheetHeader from "./TimesheetHeader";
 import TimesheetLines from "./TimesheetLines";
-import useTimesheetEdit from "../hooks/useTimesheetEdit";
-import BcCard from "./ui/BcCard";
-import useTimesheetLines from "../hooks/useTimesheetLines";
 import CalendarPanel from "./timesheet/CalendarPanel";
-import { TOAST, PLACEHOLDERS, VALIDATION, LABELS } from '../constants/i18n';
+import BcModal from "./ui/BcModal";
+import { TOAST, PLACEHOLDERS, VALIDATION, LABELS } from "../constants/i18n";
+import { format } from "date-fns";
+import { buildHolidaySet, computeTotalsByIso } from "../utils/validation";
+import "../styles/BcModal.css";
 
 // ✅ columnas existentes en la tabla 'timesheet'
 const SAFE_COLUMNS = [
@@ -71,10 +67,19 @@ function TimesheetEdit({ headerId }) {
     missingSum,
   } = useCalendarData(header, resolvedHeaderId, editFormData);
   const [hasDailyErrors, setHasDailyErrors] = useState(false);
-  const [lastSavedAt, setLastSavedAt] = useState(null);
   const serverSnapshotRef = useRef({}); // Último estado confirmado por servidor por línea
   const [savingByLine, setSavingByLine] = useState({}); // { [id]: boolean }
-  const savingMetaRef = useRef({}); // { [id]: { inFlight: boolean, queued: boolean } }
+
+  // Estado para el modal de confirmación de navegación
+  const [navigationModal, setNavigationModal] = useState({
+    show: false,
+    message: "",
+    onConfirm: null,
+    onCancel: null
+  });
+
+  // Bandera para evitar múltiples modales
+  const [isNavigating, setIsNavigating] = useState(false);
 
   function parseAllocationPeriod(ap) {
     const m = /^M(\d{2})-M(\d{2})$/.exec(ap || "");
@@ -166,147 +171,49 @@ function TimesheetEdit({ headerId }) {
 
 
   const prevLinesSigRef = useRef("");
-  const autosaveTimersRef = useRef({}); // { [lineId]: timeoutId }
 
-  // -- Carga inicial (por headerId o por allocation_period del mes actual)
-  // Right pad se actualiza desde CalendarPanel a través de estado compartido
+  // Estado para controlar cambios no guardados
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
+  // Debug: monitorear cambios en hasUnsavedChanges
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
+    // Logs eliminados para limpiar consola
+  }, [hasUnsavedChanges]);
 
-      // 0) Construir allocation_period desde query o por defecto (mes actual)
-      const params = new URLSearchParams(location.search);
-      let ap = params.get("allocation_period");
-      if (!ap) {
-        const now = new Date();
-        const yy = String(now.getFullYear()).slice(-2); // "25"
-        const mm = String(now.getMonth() + 1).padStart(2, "0"); // "08"
-        ap = `M${yy}-M${mm}`; // p.ej. M25-M08
+  // Función para marcar que hay cambios
+  const markAsChanged = useCallback(() => {
+    setHasUnsavedChanges(true);
+  }, []);
+
+  // ✅ Función para manejar cambios en las líneas desde TimesheetLines
+  const handleLinesChange = useCallback((lineId, changes) => {
+    // Actualizar solo el editFormData para la línea específica
+    setEditFormData(prev => ({
+      ...prev,
+      [lineId]: {
+        ...prev[lineId],
+        ...changes
       }
+    }));
 
-      // 1) Resolver header a cargar
-      let headerData = null;
-      let headerIdResolved = headerId || null;
+    // Marcar que hay cambios no guardados
+    markAsChanged();
+  }, [markAsChanged]);
 
-      if (headerIdResolved) {
-        const { data: h, error: headerErr } = await supabaseClient
-          .from("resource_timesheet_header")
-          .select("*")
-          .eq("id", headerIdResolved)
-          .single();
-        if (headerErr) {
-          console.error("Error cargando cabecera:", headerErr);
-          toast.error("Error cargando cabecera");
-        }
-        headerData = h || null;
-      } else {
-        // Buscar por allocation_period exacto
-        const { data: h, error: headerErr } = await supabaseClient
-          .from("resource_timesheet_header")
-          .select("*")
-          .eq("allocation_period", ap)
-          .order("id", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (headerErr) {
-          console.error("Error cargando cabecera por allocation_period:", headerErr);
-          toast.error("No se encontró cabecera para el período");
-        }
-        headerData = h || null;
-        headerIdResolved = headerData?.id || null;
-      }
-
-      setHeader(headerData);
-      setResolvedHeaderId(headerIdResolved);
-      setDebugInfo({ ap, headerIdProp: headerId ?? null, headerIdResolved });
-
-      // 2) Las líneas ahora se cargan vía React Query (ver linesQuery)
-      if (!headerIdResolved) {
-        // Si no encontramos cabecera, limpiamos líneas
-        setLines([]);
-      }
-
-      setLoading(false);
-    }
-
-    fetchData();
-  }, [headerId, location.search]);
-
-  // React Query: cargar líneas por header_id, con cache y estados
-  const effectiveKey = effectiveHeaderId;
-  const queryClient = useQueryClient();
-  const linesHook = useTimesheetLines(effectiveKey);
-  useEffect(() => {
-    if (linesHook.error) toast.error("Error cargando líneas");
-  }, [linesHook.error]);
-
-  // Cuando llegan las líneas, actualizar estado local y edición inicial con dos decimales
-  useEffect(() => {
-    if (!linesHook.data) return;
-    const sorted = (linesHook.data || []).sort((a, b) => new Date(a.date) - new Date(b.date));
-    const linesFormatted = sorted.map((line) => ({ ...line, date: toDisplayDate(line.date) }));
-    setLines(linesFormatted);
-    const initialEditData = {};
-    linesFormatted.forEach((line) => {
-      initialEditData[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
-    });
-    setEditFormData(initialEditData);
-
-    // Snapshot base para detectar cambios por campo (comparación en espacio DB)
-    const snap = {};
-    linesFormatted.forEach((line) => {
-      snap[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
-    });
-    serverSnapshotRef.current = snap;
-  }, [linesHook.data]);
-
-  // Construir patch solo con campos cambiados (comparando en forma normalizada para DB)
-  const USER_EDITABLE_KEYS = [
-    "job_no",
-    "job_task_no",
-    "description",
-    "work_type",
-    "quantity",
-    "date",
-    "department_code",
-  ];
-
-  const buildChangedDbPatch = (id) => {
-    const currentRow = editFormData[id] || {};
-    const baseRow = serverSnapshotRef.current[id] || {};
-    const currentDb = prepareRowForDb(currentRow);
-    const baseDb = prepareRowForDb(baseRow);
-
-    const patch = {};
-    for (const key of USER_EDITABLE_KEYS) {
-      const a = currentDb[key];
-      const b = baseDb[key];
-      // Comparación segura para números/strings/fechas ISO
-      if (Number.isFinite(a) || Number.isFinite(b)) {
-        if (Number(a) !== Number(b)) patch[key] = a;
-      } else if (a instanceof Date || b instanceof Date) {
-        if (String(a) !== String(b)) patch[key] = a;
-      } else if (JSON.stringify(a) !== JSON.stringify(b)) {
-        patch[key] = a;
-      }
-    }
-
-    // Mantener consistencia de campo derivado si cambian job_no o description
-    if ("job_no" in patch || "description" in patch) {
-      patch.job_no_and_description = currentDb.job_no_and_description;
-    }
-    return patch;
-  };
-
-  // --- Autosave per-line (debounced, diff-only, retry/backoff, cola por línea) ---
-  // ✅ MUTATION: Actualizar línea individual (autosave)
+  // ✅ MUTATION: Actualizar línea individual
   const updateLineMutation = useMutation({
-    mutationFn: async ({ id, patch }) => {
+    mutationFn: async ({ lineId, changes, silent = false }) => {
+      // Convertir fecha a formato ISO si está presente
+      const processedChanges = { ...changes };
+      if (processedChanges.date) {
+        processedChanges.date = toIsoFromInput(processedChanges.date);
+      }
+
       const { data, error } = await supabaseClient
         .from('timesheet')
-        .update(patch)
-        .eq('id', id)
+        .update(processedChanges)
+        .eq('id', lineId)
         .select()
         .single();
 
@@ -315,31 +222,26 @@ function TimesheetEdit({ headerId }) {
     },
     onSuccess: (data, variables) => {
       // ✅ Éxito: Actualizar cache local
-      setLines(prev => prev.map(l => l.id === variables.id ? { ...l, ...variables.patch } : l));
+      setLines(prev => prev.map(l => l.id === variables.lineId ? { ...l, ...variables.changes } : l));
 
-      // ✅ Mostrar toast de éxito
-      toast.success(TOAST.SUCCESS.SAVE_LINE);
+      // ✅ Mostrar toast de éxito solo si no es silencioso
+      if (!variables.silent) {
+        toast.success(TOAST.SUCCESS.SAVE_LINE);
+      }
 
       // ✅ Limpiar indicador de guardado
-      setSavingByLine(prev => ({ ...prev, [variables.id]: false }));
+      setSavingByLine(prev => ({ ...prev, [variables.lineId]: false }));
     },
     onError: (error, variables) => {
       console.error('Error updating line:', error);
 
-      // ✅ Mostrar toast de error
-      toast.error(TOAST.ERROR.SAVE_LINE);
+      // ✅ Mostrar toast de error solo si no es silencioso
+      if (!variables.silent) {
+        toast.error(TOAST.ERROR.SAVE_LINE);
+      }
 
       // ✅ Limpiar indicador de guardado
-      setSavingByLine(prev => ({ ...prev, [variables.id]: false }));
-
-      // ✅ Reintentar con backoff exponencial
-      const retryCount = savingMetaRef.current[variables.id]?.retryCount || 0;
-      if (retryCount < 3) {
-        const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
-        setTimeout(() => {
-          updateLineMutation.mutate(variables);
-        }, delay);
-      }
+      setSavingByLine(prev => ({ ...prev, [variables.lineId]: false }));
     }
   });
 
@@ -410,67 +312,220 @@ function TimesheetEdit({ headerId }) {
     }
   });
 
-  // ✅ Función para manejar cambios en las líneas desde TimesheetLines
-  const handleLinesChange = useCallback((updatedLines, updatedEditFormData, updatedErrors) => {
-    setLines(updatedLines);
-    if (updatedEditFormData) setEditFormData(updatedEditFormData);
-    if (updatedErrors) setErrors(updatedErrors);
-  }, []);
+  // Función para guardar toda la tabla
+  const saveAllChanges = useCallback(async () => {
+    if (!hasUnsavedChanges) return;
 
-  const scheduleAutosave = (id) => {
+    setIsSaving(true);
     try {
-      if (!id) return;
-      if (String(id).startsWith("tmp-")) return; // no actualizar filas aún no insertadas
-      // Evitar guardar si hay errores visibles en ESTA línea
-      const hasLineErrors = !!errors[id] && Object.values(errors[id]).some(Boolean);
-      if (hasLineErrors) return;
-      // Si ya hay un guardado en curso para esta línea, marcar en cola y salir
-      const meta = savingMetaRef.current[id] || {};
-      if (meta.inFlight) {
-        meta.queued = true;
-        savingMetaRef.current[id] = meta;
-        return;
-      }
-      // Construir patch de campos cambiados; si no hay cambios, no guardamos
-      const patch = buildChangedDbPatch(id);
-      if (!patch || Object.keys(patch).length === 0) return;
-      const prev = autosaveTimersRef.current[id];
-      if (prev) clearTimeout(prev);
-      autosaveTimersRef.current[id] = setTimeout(() => {
-        updateLineMutation.mutate({ id, patch });
-      }, 900);
-    } catch {}
-  };
+      // Obtener todas las líneas con cambios
+      const linesToSave = Object.keys(editFormData).filter(lineId => {
+        const line = editFormData[lineId];
+        const originalLine = lines.find(l => l.id === lineId);
+        return line && originalLine && JSON.stringify(line) !== JSON.stringify(originalLine);
+      });
 
-  const saveLineNow = (id) => {
-    try {
-      if (!id) return;
-      if (String(id).startsWith("tmp-")) return;
-      const hasLineErrors = !!errors[id] && Object.values(errors[id]).some(Boolean);
-      if (hasLineErrors) return;
-      const meta = savingMetaRef.current[id] || {};
-      if (meta.inFlight) {
-        meta.queued = true;
-        savingMetaRef.current[id] = meta;
-        return;
-      }
-      const prev = autosaveTimersRef.current[id];
-      if (prev) clearTimeout(prev);
-      const patch = buildChangedDbPatch(id);
-      if (!patch || Object.keys(patch).length === 0) return;
-      updateLineMutation.mutate({ id, patch });
-    } catch {}
-  };
+      // Guardar cada línea
+      for (const lineId of linesToSave) {
+        const lineData = editFormData[lineId];
+        const originalLine = lines.find(l => l.id === lineId);
 
-  // Re-render periódico para actualizar el mensaje "Guardado hace X"
+        if (lineData && originalLine) {
+          const changedFields = {};
+          Object.keys(lineData).forEach(key => {
+            if (lineData[key] !== originalLine[key]) {
+              // Convertir fecha a formato ISO antes de enviar a la base de datos
+              if (key === "date" && lineData[key]) {
+                changedFields[key] = toIsoFromInput(lineData[key]);
+              } else {
+                changedFields[key] = lineData[key];
+              }
+            }
+          });
+
+          if (Object.keys(changedFields).length > 0) {
+            await updateLineMutation.mutateAsync({
+              lineId,
+              changes: changedFields,
+              silent: true  // Modo silencioso para guardado masivo
+            });
+          }
+        }
+      }
+
+      setHasUnsavedChanges(false);
+      toast.success(TOAST.SUCCESS.SAVE_ALL);
+    } catch (error) {
+      console.error('Error saving all changes:', error);
+      toast.error(TOAST.ERROR.SAVE_ALL);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation]);
+
+  // NOTA: handleNavigateBack eliminado porque useBlocker maneja toda la navegación
+  // incluyendo navegación desde botones de la interfaz
+
+  // -- Carga inicial (por headerId o por allocation_period del mes actual)
+  // Right pad se actualiza desde CalendarPanel a través de estado compartido
+
   useEffect(() => {
-    const t = setInterval(() => {
-      if (lastSavedAt) setLastSavedAt((d) => (d ? new Date(d) : d));
-    }, 5000);
-    return () => clearInterval(t);
-  }, [lastSavedAt]);
+    // useEffect 1 - Carga inicial ejecutándose
 
-  // (El atajo global Ctrl/Cmd + Enter se elimina, ya que ahora el autosave es por campo)
+    // NO resetear hasUnsavedChanges si ya hay cambios pendientes
+    const shouldPreserveChanges = hasUnsavedChanges;
+
+    async function fetchData() {
+      setLoading(true);
+
+      // 0) Construir allocation_period desde query o por defecto (mes actual)
+      const params = new URLSearchParams(location.search);
+      let ap = params.get("allocation_period");
+      if (!ap) {
+        const now = new Date();
+        const yy = String(now.getFullYear()).slice(-2); // "25"
+        const mm = String(now.getMonth() + 1).padStart(2, "0"); // "08"
+        ap = `M${yy}-M${mm}`; // p.ej. M25-M08
+      }
+
+      // 1) Resolver header a cargar
+      let headerData = null;
+      let headerIdResolved = headerId || null;
+
+      if (headerIdResolved) {
+        const { data: h, error: headerErr } = await supabaseClient
+          .from("resource_timesheet_header")
+          .select("*")
+          .eq("id", headerIdResolved)
+          .single();
+        if (headerErr) {
+          console.error("Error cargando cabecera:", headerErr);
+          toast.error("Error cargando cabecera");
+        }
+        headerData = h || null;
+      } else {
+        // Buscar por allocation_period exacto
+        const { data: h, error: headerErr } = await supabaseClient
+          .from("resource_timesheet_header")
+          .select("*")
+          .eq("allocation_period", ap)
+          .order("id", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (headerErr) {
+          console.error("Error cargando cabecera por allocation_period:", headerErr);
+          toast.error("No se encontró cabecera para el período");
+        }
+        headerData = h || null;
+        headerIdResolved = headerData?.id || null;
+      }
+
+      setHeader(headerData);
+      setResolvedHeaderId(headerIdResolved);
+      setDebugInfo({ ap, headerIdProp: headerId ?? null, headerIdResolved });
+
+      // 2) Las líneas ahora se cargan vía React Query (ver linesQuery)
+      if (!headerIdResolved) {
+        // Si no encontramos cabecera, limpiamos líneas
+        setLines([]);
+      }
+
+      setLoading(false);
+    }
+
+    fetchData();
+
+    // Restaurar hasUnsavedChanges si había cambios pendientes
+    if (shouldPreserveChanges) {
+      // useEffect 1 - Preservando hasUnsavedChanges como true
+      setHasUnsavedChanges(true);
+    }
+  }, [headerId, location.search]);
+
+  // React Query: cargar líneas por header_id, con cache y estados
+  const effectiveKey = effectiveHeaderId;
+  const queryClient = useQueryClient();
+  const linesHook = useTimesheetLines(effectiveKey);
+  useEffect(() => {
+    if (linesHook.error) toast.error("Error cargando líneas");
+  }, [linesHook.error]);
+
+  // Cuando llegan las líneas, actualizar estado local y edición inicial con dos decimales
+  useEffect(() => {
+    // useEffect 3 - Líneas cargadas ejecutándose
+    if (!linesHook.data) return;
+
+    // NO resetear hasUnsavedChanges si ya hay cambios pendientes
+    const shouldPreserveChanges = hasUnsavedChanges;
+
+    const sorted = (linesHook.data || []).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const linesFormatted = sorted.map((line) => ({ ...line, date: toDisplayDate(line.date) }));
+    setLines(linesFormatted);
+    const initialEditData = {};
+    linesFormatted.forEach((line) => {
+      initialEditData[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
+    });
+    setEditFormData(initialEditData);
+
+    // Snapshot base para detectar cambios por campo (comparación en espacio DB)
+    const snap = {};
+    linesFormatted.forEach((line) => {
+      snap[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
+    });
+    serverSnapshotRef.current = snap;
+
+    // Restaurar hasUnsavedChanges si había cambios pendientes
+    if (shouldPreserveChanges) {
+      // useEffect 3 - Preservando hasUnsavedChanges como true
+      setHasUnsavedChanges(true);
+    }
+  }, [linesHook.data]);
+
+  // SOLUCIÓN DEFINITIVA: Usar useBlocker de React Router
+  // Esto reemplaza todo el sistema manual de navegación
+
+  // Bloquear navegación si hay cambios sin guardar
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) => {
+      // Solo bloquear si hay cambios sin guardar y la ubicación cambia
+      return hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname;
+    }
+  );
+
+  // Mostrar modal cuando se bloquea la navegación
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      setNavigationModal({
+        show: true,
+        message: 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?',
+        onConfirm: () => {
+          setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+          // Permitir la navegación bloqueada
+          blocker.proceed();
+        },
+        onCancel: () => {
+          setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+          // Cancelar la navegación bloqueada
+          blocker.reset();
+        }
+      });
+    }
+  }, [blocker.state, blocker.proceed, blocker.reset]);
+
+  // Control para beforeunload (cerrar pestaña, ventana, recargar)
+  // useBlocker NO puede manejar estos eventos del navegador
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // calendarHolidays seguirá disponible en este componente para validaciones
   useEffect(() => {
@@ -675,10 +730,11 @@ function TimesheetEdit({ headerId }) {
   // -- Hook de edición (modificado para interceptar cambios de fecha/cantidad)
   const {
     inputRefs,
+    setSafeRef,
+    hasRefs,
     calendarOpenFor,
     setCalendarOpenFor,
-    handleInputChange: origHandleInputChange,
-    handleDateInputChange: origHandleDateInputChange, // NO usado directamente
+    handleDateInputChange,
     handleDateInputBlur,
     handleInputFocus,
     handleKeyDown,
@@ -693,22 +749,28 @@ function TimesheetEdit({ headerId }) {
   });
 
   // -- Router de cambios por campo: deriva quantity/date a sus handlers y el resto al handler original
-  const handleInputChange = (id, eOrPatch) => {
-    const target = eOrPatch && eOrPatch.target ? eOrPatch.target : {};
-    const name = target.name;
-    const value = target.value;
+  const handleInputChange = useCallback((lineId, event) => {
+    const { name, value } = event.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [lineId]: {
+        ...prev[lineId],
+        [name]: value
+      }
+    }));
 
-    if (name === "quantity") {
-      handleQuantityChange(id, value);
-      return;
-    }
-    if (name === "date") {
-      handleDateChange(id, value);
-      return;
-    }
-    // Por defecto, usar el handler del hook para los demás campos
-    origHandleInputChange(id, eOrPatch);
-  };
+    // Marcar que hay cambios no guardados
+    markAsChanged();
+
+    // Limpiar errores del campo
+    setErrors(prev => ({
+      ...prev,
+      [lineId]: {
+        ...prev[lineId],
+        [name]: null
+      }
+    }));
+  }, [markAsChanged]);
 
   // -- Custom handleDateChange
   const handleDateChange = (id, value) => {
@@ -728,6 +790,7 @@ function TimesheetEdit({ headerId }) {
         ...prev,
         [id]: { ...(prev[id] || {}), date: VALIDATION.HOLIDAY_NO_HOURS },
       }));
+      markAsChanged();
       return;
     }
     // Si no es festivo, limpiar isHoliday y error.quantity
@@ -747,6 +810,7 @@ function TimesheetEdit({ headerId }) {
       else next[id] = e;
       return next;
     });
+    markAsChanged();
   };
 
   // -- Custom handleQuantityChange
@@ -766,26 +830,10 @@ function TimesheetEdit({ headerId }) {
         ...prev,
         [id]: { ...(prev[id] || {}), date: VALIDATION.HOLIDAY_NO_HOURS },
       }));
+      markAsChanged();
       return;
     }
-    // Validación de tope diario
-    // Sumar todas las quantities de la fecha (incluyendo la edición actual)
-    let total = 0;
-    for (const [lid, lrow] of Object.entries(editFormData)) {
-      if (lid === id) {
-        total += Number(value) || 0;
-      } else {
-        const liso = toIsoFromInput(lrow?.date);
-        if (liso === iso) total += Number(lrow?.quantity) || 0;
-      }
-    }
-    const required = dailyRequired?.[iso] ?? 0;
-    const EPS = 0.01;
-    if (required > 0 && total > required + EPS) {
-      setErrors((prev) => ({
-        ...prev,
-        [id]: { ...(prev[id] || {}), quantity: `Excede tope diario (${total.toFixed(2)} / ${required.toFixed(2)})` },
-      }));
+    // Si no es festivo, actualizar cantidad normalmente
       setEditFormData((prev) => ({
         ...prev,
         [id]: {
@@ -793,29 +841,7 @@ function TimesheetEdit({ headerId }) {
           quantity: value,
         },
       }));
-
-      // 👇 Mantener foco en la misma celda de Cantidad
-      const el = inputRefs?.current?.[id]?.["quantity"];
-      if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
-
-      return;
-    }
-    // Si todo ok, actualizar normalmente
-    setEditFormData((prev) => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        quantity: value,
-      },
-    }));
-    setErrors((prev) => {
-      const next = { ...prev };
-      const e = { ...(next[id] || {}) };
-      delete e.quantity;
-      if (Object.keys(e).length === 0) delete next[id];
-      else next[id] = e;
-      return next;
-    });
+    markAsChanged();
   };
 
   // -- Guardar cambios
@@ -946,15 +972,45 @@ function TimesheetEdit({ headerId }) {
             </div>
       {/* Sección de líneas debajo, ocupa todo el ancho disponible */}
       <div style={{ marginTop: 24 }}>
-        <h3>Líneas</h3>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <h3>Líneas del Timesheet</h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {hasUnsavedChanges && (
+                <span style={{ color: "#ff6b35", fontSize: 14, fontWeight: 500 }}>
+                  ⚠️ Cambios sin guardar
+                </span>
+              )}
+              <button
+                onClick={saveAllChanges}
+                disabled={!hasUnsavedChanges || isSaving}
+              style={{
+                  padding: "8px 16px",
+                  backgroundColor: hasUnsavedChanges ? "#007bff" : "#6c757d",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: hasUnsavedChanges && !isSaving ? "pointer" : "not-allowed",
+                  fontSize: "14px",
+                  fontWeight: "500"
+                }}
+              >
+                {isSaving ? "Guardando..." : "Guardar Cambios"}
+              </button>
+                    </div>
+                  </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-          <span style={{ color: "#666", fontSize: 12 }}>{formatTimeAgo(lastSavedAt)}</span>
+            <span style={{ color: "#666", fontSize: 12 }}>
+              {hasUnsavedChanges ? "Cambios pendientes de guardar" : "Sin cambios pendientes"}
+            </span>
         </div>
+
         <TimesheetLines
           lines={lines}
           editFormData={editFormData}
           errors={errors}
           inputRefs={inputRefs}
+          hasRefs={hasRefs}
+          setSafeRef={setSafeRef}
           calendarOpenFor={calendarOpenFor}
           setCalendarOpenFor={setCalendarOpenFor}
           handleInputChange={handleInputChange}
@@ -964,14 +1020,29 @@ function TimesheetEdit({ headerId }) {
           handleKeyDown={handleKeyDown}
           header={header}
           calendarHolidays={calendarHolidays}
-          scheduleAutosave={scheduleAutosave}
-          saveLineNow={saveLineNow}
+          scheduleAutosave={() => {}} // Eliminado
+          saveLineNow={() => {}} // Eliminado
           savingByLine={savingByLine}
           onLinesChange={handleLinesChange}
           deleteLineMutation={deleteLineMutation}
           insertLineMutation={insertLineMutation}
+          markAsChanged={markAsChanged}
         />
       </div>
+
+      {/* Modal de confirmación de navegación */}
+      <BcModal
+        isOpen={navigationModal.show}
+        onClose={() => setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null })}
+        title="Confirmar navegación"
+        confirmText="Sí, salir"
+        cancelText="No, cancelar"
+        onConfirm={navigationModal.onConfirm}
+        onCancel={navigationModal.onCancel}
+        confirmButtonType="danger"
+      >
+        <p>{navigationModal.message}</p>
+      </BcModal>
     </div>
   );
 }
