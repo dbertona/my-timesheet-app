@@ -33,7 +33,7 @@ export default function ProjectCell({
   const jobOpenFor = jobsFilter.openFor;
   const setJobOpenFor = jobsFilter.setOpenFor;
   const getVisibleJobs = (lineId) => jobsFilter.getVisible(lineId, jobs, (j) => `${j.no} ${j.description || ""}`);
-  
+
   // Estado para el status del proyecto seleccionado
   const [projectStatus, setProjectStatus] = useState(null);
 

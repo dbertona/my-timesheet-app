@@ -4,7 +4,6 @@ Marca de verificación [x] = aplicado, [ ] = pendiente, [~] = parcial.
 
 ## Implementado
 
-- [x] Reordenar columnas (Fecha antes que Cantidad) y consistencia de cabeceras/filas
 - [x] Alineación adaptativa calendario ↔ tabla (padding derecho dinámico)
 - [x] Autosave por línea (blur/Enter/Tab), UI tipo BC; eliminar botón “Guardar todos”
 - [x] Enter navega como Tab entre campos
