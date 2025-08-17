@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import "../styles/TimesheetHeaderList.css";
 
 function TimesheetHeaderList({ headers: propHeaders }) {
-  console.log("✅ Componente TimesheetHeaderList renderizado");
+  // Componente TimesheetHeaderList renderizado
   const { accounts } = useMsal();
   const [headers, setHeaders] = useState(propHeaders || []);
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ function TimesheetHeaderList({ headers: propHeaders }) {
 
     const fetchData = async () => {
       const email = accounts[0]?.username;
-      console.log("📧 Usuario logueado:", email);
+      // Usuario logueado
       if (!email) return;
 
       const { data, error } = await supabaseClient
@@ -27,7 +27,7 @@ function TimesheetHeaderList({ headers: propHeaders }) {
       if (error) {
         console.error("❌ Error al cargar cabeceras:", error.message);
       } else {
-        console.log("📦 Cabeceras recibidas:", data);
+        // Cabeceras recibidas
         setHeaders(data);
       }
     };
@@ -72,7 +72,7 @@ function TimesheetHeaderList({ headers: propHeaders }) {
                   <td>
                     <button
                       onClick={() => {
-                        console.log("Editar pulsado, id:", header.id);
+                        // Editar pulsado
                         navigate(`/edit/${header.id}`);
                       }}
                       disabled={header.synced_to_bc}

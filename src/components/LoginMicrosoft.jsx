@@ -14,7 +14,7 @@ export default function LoginMicrosoft({ onLogin }) {
       // Set active account for future silent calls
       instance.setActiveAccount(loginResponse.account);
 
-      console.log("✅ Logueado como:", email);
+      // Logueado como usuario
       onLogin(email);
     } catch (err) {
       console.error("❌ Error en login:", err);

@@ -165,23 +165,16 @@ function TimesheetEdit({ headerId }) {
 
   // Debug: monitorear cambios en hasUnsavedChanges
   useEffect(() => {
-    console.log('🟣 hasUnsavedChanges cambió a:', hasUnsavedChanges);
-    console.log('🟣 Stack trace:', new Error().stack);
+    // Logs eliminados para limpiar consola
   }, [hasUnsavedChanges]);
 
   // Función para marcar que hay cambios
   const markAsChanged = useCallback(() => {
-    console.log('🔴 markAsChanged llamado - marcando cambios');
-    console.log('🔴 Estado anterior hasUnsavedChanges:', hasUnsavedChanges);
     setHasUnsavedChanges(true);
-    console.log('🔴 hasUnsavedChanges marcado como true');
-  }, [hasUnsavedChanges]);
+  }, []);
 
   // ✅ Función para manejar cambios en las líneas desde TimesheetLines
   const handleLinesChange = useCallback((lineId, changes) => {
-    console.log('🟡 handleLinesChange llamado:', lineId, changes);
-    console.log('🟡 Estado actual hasUnsavedChanges:', hasUnsavedChanges);
-
     // Actualizar solo el editFormData para la línea específica
     setEditFormData(prev => ({
       ...prev,
@@ -192,14 +185,12 @@ function TimesheetEdit({ headerId }) {
     }));
 
     // Marcar que hay cambios no guardados
-    console.log('🟡 Llamando a markAsChanged...');
     markAsChanged();
-    console.log('🟡 markAsChanged ejecutado');
-  }, [markAsChanged, hasUnsavedChanges]);
+  }, [markAsChanged]);
 
   // ✅ MUTATION: Actualizar línea individual
   const updateLineMutation = useMutation({
-    mutationFn: async ({ lineId, changes }) => {
+    mutationFn: async ({ lineId, changes, silent = false }) => {
       const { data, error } = await supabaseClient
         .from('timesheet')
         .update(changes)
@@ -214,8 +205,10 @@ function TimesheetEdit({ headerId }) {
       // ✅ Éxito: Actualizar cache local
       setLines(prev => prev.map(l => l.id === variables.lineId ? { ...l, ...variables.changes } : l));
 
-      // ✅ Mostrar toast de éxito
-      toast.success(TOAST.SUCCESS.SAVE_LINE);
+      // ✅ Mostrar toast de éxito solo si no es silencioso
+      if (!variables.silent) {
+        toast.success(TOAST.SUCCESS.SAVE_LINE);
+      }
 
       // ✅ Limpiar indicador de guardado
       setSavingByLine(prev => ({ ...prev, [variables.lineId]: false }));
@@ -223,8 +216,10 @@ function TimesheetEdit({ headerId }) {
     onError: (error, variables) => {
       console.error('Error updating line:', error);
 
-      // ✅ Mostrar toast de error
-      toast.error(TOAST.ERROR.SAVE_LINE);
+      // ✅ Mostrar toast de error solo si no es silencioso
+      if (!variables.silent) {
+        toast.error(TOAST.ERROR.SAVE_LINE);
+      }
 
       // ✅ Limpiar indicador de guardado
       setSavingByLine(prev => ({ ...prev, [variables.lineId]: false }));
@@ -327,7 +322,8 @@ function TimesheetEdit({ headerId }) {
           if (Object.keys(changedFields).length > 0) {
             await updateLineMutation.mutateAsync({
               lineId,
-              changes: changedFields
+              changes: changedFields,
+              silent: true  // Modo silencioso para guardado masivo
             });
           }
         }
@@ -345,38 +341,23 @@ function TimesheetEdit({ headerId }) {
 
   // Función común para navegación hacia atrás con validación
   const handleNavigateBack = useCallback(() => {
-    console.log('🔄 ===== NAVEGACIÓN HACIA ATRÁS =====');
-    console.log('🔄 hasUnsavedChanges:', hasUnsavedChanges);
-    console.log('🔄 Tipo de hasUnsavedChanges:', typeof hasUnsavedChanges);
-    console.log('🔄 Valor booleano:', Boolean(hasUnsavedChanges));
-    console.log('🔄 Estado actual del componente:', {
-      lines: lines?.length || 0,
-      editFormData: Object.keys(editFormData || {}).length,
-      hasUnsavedChanges
-    });
-
     if (hasUnsavedChanges) {
-      console.log('🔄 ¡CONDICIÓN VERDADERA! Mostrando confirmación...');
       const confirmar = window.confirm(
         'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?'
       );
       if (confirmar) {
-        console.log('🔄 Usuario confirmó, navegando...');
         navigate("/");
-      } else {
-        console.log('🔄 Usuario canceló, no navegando');
       }
     } else {
-      console.log('🔄 ¡CONDICIÓN FALSA! No hay cambios, navegando sin confirmación...');
       navigate("/");
     }
-  }, [hasUnsavedChanges, lines, editFormData, navigate]);
+  }, [hasUnsavedChanges, navigate]);
 
   // -- Carga inicial (por headerId o por allocation_period del mes actual)
   // Right pad se actualiza desde CalendarPanel a través de estado compartido
 
   useEffect(() => {
-    console.log('🔵 useEffect 1 - Carga inicial ejecutándose');
+    // useEffect 1 - Carga inicial ejecutándose
 
     // NO resetear hasUnsavedChanges si ya hay cambios pendientes
     const shouldPreserveChanges = hasUnsavedChanges;
@@ -443,10 +424,10 @@ function TimesheetEdit({ headerId }) {
 
     // Restaurar hasUnsavedChanges si había cambios pendientes
     if (shouldPreserveChanges) {
-      console.log('🔵 useEffect 1 - Preservando hasUnsavedChanges como true');
+      // useEffect 1 - Preservando hasUnsavedChanges como true
       setHasUnsavedChanges(true);
     }
-  }, [headerId, location.search, hasUnsavedChanges]);
+  }, [headerId, location.search]);
 
   // React Query: cargar líneas por header_id, con cache y estados
   const effectiveKey = effectiveHeaderId;
@@ -458,7 +439,7 @@ function TimesheetEdit({ headerId }) {
 
   // Cuando llegan las líneas, actualizar estado local y edición inicial con dos decimales
   useEffect(() => {
-    console.log('🔵 useEffect 3 - Líneas cargadas ejecutándose');
+    // useEffect 3 - Líneas cargadas ejecutándose
     if (!linesHook.data) return;
 
     // NO resetear hasUnsavedChanges si ya hay cambios pendientes
@@ -482,10 +463,10 @@ function TimesheetEdit({ headerId }) {
 
     // Restaurar hasUnsavedChanges si había cambios pendientes
     if (shouldPreserveChanges) {
-      console.log('🔵 useEffect 3 - Preservando hasUnsavedChanges como true');
+      // useEffect 3 - Preservando hasUnsavedChanges como true
       setHasUnsavedChanges(true);
     }
-  }, [linesHook.data, hasUnsavedChanges]);
+  }, [linesHook.data]);
 
   // Control de navegación - prevenir salir sin guardar
   useEffect(() => {
