@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import useDropdownFilter from "../../utils/useDropdownFilter";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 import TIMESHEET_FIELDS from "../../constants/timesheetFields";
+import { fetchJobStatus } from "../../api/jobs";
 
 export default function ProjectCell({
   line,
@@ -32,6 +33,9 @@ export default function ProjectCell({
   const jobOpenFor = jobsFilter.openFor;
   const setJobOpenFor = jobsFilter.setOpenFor;
   const getVisibleJobs = (lineId) => jobsFilter.getVisible(lineId, jobs, (j) => `${j.no} ${j.description || ""}`);
+  
+  // Estado para el status del proyecto seleccionado
+  const [projectStatus, setProjectStatus] = useState(null);
 
   // Prefetch: cuando se abre el dropdown de proyectos o cambia el filtro,
   // pre-cargamos tareas de los primeros candidatos visibles (hasta 5) para
@@ -48,6 +52,18 @@ export default function ProjectCell({
     // a los cambios que hace el usuario al escribir.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobOpenFor, jobsLoaded, jobFilter?.[line.id]]);
+
+  // Verificar el status del proyecto cuando cambie
+  useEffect(() => {
+    const currentJobNo = editFormData[line.id]?.job_no;
+    if (currentJobNo) {
+      fetchJobStatus(currentJobNo)
+        .then(status => setProjectStatus(status))
+        .catch(() => setProjectStatus(null));
+    } else {
+      setProjectStatus(null);
+    }
+  }, [editFormData[line.id]?.job_no, line.id]);
 
   // Virtualización: hooks deben llamarse siempre, nunca condicionalmente
   const parentRef = useRef(null);
@@ -139,20 +155,14 @@ export default function ProjectCell({
         </div>
 
         {/* Aviso de proyecto completado o perdido */}
-        {editFormData[line.id]?.job_no && (() => {
-          const selectedJob = jobs.find(j => j.no === editFormData[line.id]?.job_no);
-          if (selectedJob && (selectedJob.status === 'Completed' || selectedJob.status === 'Lost')) {
-            return (
-              <div className="ts-project-status-warning">
-                <span className="ts-project-status-warning__icon">⚠️</span>
-                <span className="ts-project-status-warning__text">
-                  Proyecto {selectedJob.status === 'Completed' ? 'Completado' : 'Perdido'}
-                </span>
-              </div>
-            );
-          }
-          return null;
-        })()}
+        {editFormData[line.id]?.job_no && projectStatus && (projectStatus === 'Completed' || projectStatus === 'Lost') && (
+          <div className="ts-project-status-warning">
+            <span className="ts-project-status-warning__icon">⚠️</span>
+            <span className="ts-project-status-warning__text">
+              Proyecto {projectStatus === 'Completed' ? 'Completado' : 'Perdido'}
+            </span>
+          </div>
+        )}
 
         {jobOpenFor === line.id && (
           <div className="ts-dropdown" onMouseDown={(e) => e.preventDefault()}>
