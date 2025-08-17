@@ -543,43 +543,8 @@ function TimesheetEdit({ headerId }) {
     };
   }, [hasUnsavedChanges]);
 
-  // Solución alternativa: monitorear cambios en el historial
-  useEffect(() => {
-    let currentHistoryLength = window.history.length;
-
-    const checkHistoryChange = () => {
-      if (window.history.length < currentHistoryLength && hasUnsavedChanges && !isNavigating) {
-        setIsNavigating(true);
-        setNavigationModal({
-          show: true,
-          message: 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?',
-          onConfirm: () => {
-            // Si confirma, permitir la navegación
-            setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
-            // Usar timeout para evitar el bucle de popstate
-            setTimeout(() => {
-              setIsNavigating(false);
-              window.history.back();
-            }, 100);
-          },
-          onCancel: () => {
-            // Si no confirma, volver a la página actual
-            window.history.forward();
-            setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
-            setIsNavigating(false);
-          }
-        });
-        // Prevenir la navegación hasta que se confirme
-        return false;
-      }
-      currentHistoryLength = window.history.length;
-    };
-
-    // Verificar cada 100ms si cambió el historial
-    const interval = setInterval(checkHistoryChange, 100);
-
-    return () => clearInterval(interval);
-  }, [hasUnsavedChanges]);
+  // SOLUCIÓN DEFINITIVA: Solo usar popstate event listener
+  // El sistema de interval causaba múltiples modales
 
   // calendarHolidays seguirá disponible en este componente para validaciones
   useEffect(() => {
