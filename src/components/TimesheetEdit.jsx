@@ -363,19 +363,8 @@ function TimesheetEdit({ headerId }) {
     }
   }, [hasUnsavedChanges, editFormData, lines, updateLineMutation]);
 
-  // Función común para navegación hacia atrás con validación
-  const handleNavigateBack = useCallback(() => {
-    if (hasUnsavedChanges) {
-      setNavigationModal({
-        show: true,
-        message: 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?',
-        onConfirm: () => navigate("/"),
-        onCancel: () => setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null })
-      });
-    } else {
-      navigate("/");
-    }
-  }, [hasUnsavedChanges, navigate]);
+  // NOTA: handleNavigateBack eliminado porque useBlocker maneja toda la navegación
+  // incluyendo navegación desde botones de la interfaz
 
   // -- Carga inicial (por headerId o por allocation_period del mes actual)
   // Right pad se actualiza desde CalendarPanel a través de estado compartido
@@ -933,7 +922,7 @@ function TimesheetEdit({ headerId }) {
         {/* Etiqueta clickable con el mismo color del botón Editar, modificado a color negro */}
         <button
           type="button"
-          onClick={handleNavigateBack}
+          onClick={() => navigate("/")}
           aria-label="Ir a lista de parte de trabajo"
           style={{
             background: "transparent",
