@@ -48,6 +48,7 @@ function TimesheetEdit({ headerId }) {
   const [errors, setErrors] = useState({});
   const [calendarHolidays, setCalendarHolidays] = useState([]);
   const [rightPad, setRightPad] = useState(234);
+  const [editableHeader, setEditableHeader] = useState(null); // 🆕 Cabecera editable para nuevos partes
 
   // IDs de cabecera resueltos antes de usar hooks que dependen de ello
   const [debugInfo, setDebugInfo] = useState({ ap: null, headerIdProp: headerId ?? null, headerIdResolved: null });
@@ -392,34 +393,50 @@ function TimesheetEdit({ headerId }) {
           throw new Error("Usuario no autenticado");
         }
 
-        // Obtener información del recurso
-        const { data: resourceData, error: resourceError } = await supabaseClient
-          .from("resource")
-          .select("no, name, department_code, company")
-          .eq("email", user.email)
-          .single();
+        // 🆕 Usar información de la cabecera editable si está disponible
+        let headerData = editableHeader;
+        if (!headerData) {
+          // Fallback: obtener información del recurso
+          const { data: resourceData, error: resourceError } = await supabaseClient
+            .from("resource")
+            .select("no, name, department_code, company")
+            .eq("email", user.email)
+            .single();
 
-        if (resourceError || !resourceData) {
-          throw new Error("No se pudo obtener información del recurso");
-        }
+          if (resourceError || !resourceData) {
+            throw new Error("No se pudo obtener información del recurso");
+          }
 
-        // Construir allocation_period
-        const params = new URLSearchParams(location.search);
-        let ap = params.get("allocation_period");
-        if (!ap) {
-          const now = new Date();
-          const yy = String(now.getFullYear()).slice(-2);
-          const mm = String(now.getMonth() + 1).padStart(2, "0");
-          ap = `M${yy}-M${mm}`;
+          // Construir allocation_period
+          const params = new URLSearchParams(location.search);
+          let ap = params.get("allocation_period");
+          if (!ap) {
+            const now = new Date();
+            const yy = String(now.getFullYear()).slice(-2);
+            const mm = String(now.getMonth() + 1).padStart(2, "0");
+            ap = `M${yy}-M${mm}`;
+          }
+
+          headerData = {
+            resource_no: resourceData.no,
+            resource_name: resourceData.name,
+            department_code: resourceData.department_code,
+            company: resourceData.company,
+            allocation_period: ap,
+            posting_date: new Date().toISOString().split('T')[0],
+            posting_description: `Parte de trabajo ${ap}`
+          };
         }
 
         // Crear nuevo header
         const newHeader = {
-          resource_no: resourceData.no,
-          resource_name: resourceData.name,
-          department_code: resourceData.department_code,
-          company: resourceData.company,
-          allocation_period: ap,
+          resource_no: headerData.resource_no,
+          resource_name: headerData.resource_name,
+          department_code: headerData.department_code,
+          company: headerData.company,
+          allocation_period: headerData.allocation_period,
+          posting_date: headerData.posting_date,
+          posting_description: headerData.posting_description,
           status: "Draft",
           created_by: user.email,
           created_at: new Date().toISOString()
@@ -445,10 +462,10 @@ function TimesheetEdit({ headerId }) {
 
       // PASO 4.2: Guardar líneas existentes o crear nuevas
       const linesToProcess = Object.keys(editFormData);
-      
+
       for (const lineId of linesToProcess) {
         const lineData = editFormData[lineId];
-        
+
         if (lineId.startsWith('tmp-')) {
           // 🆕 Línea nueva - insertar
           if (lineData.job_no && lineData.quantity && parseFloat(lineData.quantity) > 0) {
@@ -458,7 +475,7 @@ function TimesheetEdit({ headerId }) {
               date: toIsoFromInput(lineData.date),
               quantity: parseFloat(lineData.quantity)
             };
-            
+
             const { data: createdLine, error: lineError } = await supabaseClient
               .from("timesheet")
               .insert(newLineData)
@@ -512,7 +529,7 @@ function TimesheetEdit({ headerId }) {
     } finally {
       setIsSaving(false);
     }
-  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, dailyRequired, calendarHolidays, effectiveHeaderId, location.search]);
+  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, dailyRequired, calendarHolidays, effectiveHeaderId, location.search, editableHeader]);
 
   // 🆕 Función para ejecutar guardado sin validación (cuando solo hay advertencias)
   const executeSaveWithoutValidation = useCallback(async () => {
@@ -589,7 +606,7 @@ function TimesheetEdit({ headerId }) {
 
       // 🆕 PASO 0.5: Verificar si estamos en modo "nuevo parte"
       const isNewParte = location.pathname === "/nuevo-parte";
-      
+
       // 1) Resolver header a cargar
       let headerData = null;
       let headerIdResolved = headerId || null;
@@ -662,8 +679,13 @@ function TimesheetEdit({ headerId }) {
   useEffect(() => {
     if (!effectiveHeaderId && !loading) {
       setLoading(false);
+
+      // 🆕 Crear línea vacía por defecto para nuevos partes
+      if (lines.length === 0) {
+        addEmptyLine();
+      }
     }
-  }, [effectiveHeaderId, loading]);
+  }, [effectiveHeaderId, loading, lines.length]);
 
   // Cuando llegan las líneas, actualizar estado local y edición inicial con dos decimales
   useEffect(() => {
@@ -848,7 +870,7 @@ function TimesheetEdit({ headerId }) {
   const addEmptyLine = () => {
     const newId = `tmp-${Date.now()}`;
     const nowIso = new Date().toISOString();
-    
+
     // Obtener información del usuario actual para la nueva línea
     const getResourceInfo = async () => {
       try {
@@ -859,7 +881,7 @@ function TimesheetEdit({ headerId }) {
             .select("no, department_code, company")
             .eq("email", user.email)
             .single();
-          
+
           if (resourceData) {
             return resourceData;
           }
@@ -1208,7 +1230,10 @@ function TimesheetEdit({ headerId }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
         {/* Header a la izquierda */}
         <div style={{ flex: 1 }}>
-          <TimesheetHeader header={header} />
+          <TimesheetHeader 
+            header={header} 
+            onHeaderChange={setEditableHeader}
+          />
         </div>
 
         {/* Panel derecho con resumen y calendario - fijo a la derecha */}
@@ -1279,25 +1304,6 @@ function TimesheetEdit({ headerId }) {
             <span style={{ color: "#666", fontSize: 12 }}>
               {hasUnsavedChanges ? "Cambios pendientes de guardar" : "Sin cambios pendientes"}
             </span>
-            
-            {/* 🆕 Botón Agregar Línea para nuevos partes */}
-            {!header && (
-              <button
-                onClick={addEmptyLine}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#28a745",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: "500"
-                }}
-              >
-                ➕ Agregar Línea
-              </button>
-            )}
         </div>
 
         <TimesheetLines

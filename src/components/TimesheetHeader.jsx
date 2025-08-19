@@ -2,9 +2,18 @@ import React, { useState, useEffect } from "react";
 import { supabaseClient } from "../supabaseClient";
 import "../styles/TimesheetHeader.css";
 
-function TimesheetHeader({ header }) {
+function TimesheetHeader({ header, onHeaderChange }) {
   const [resourceInfo, setResourceInfo] = useState(null);
   const [allocationPeriod, setAllocationPeriod] = useState("");
+  const [editableHeader, setEditableHeader] = useState({
+    resource_no: "",
+    resource_name: "",
+    department_code: "",
+    company: "",
+    allocation_period: "",
+    posting_date: "",
+    posting_description: ""
+  });
 
   useEffect(() => {
     // Si no hay header, obtener información del recurso actual
@@ -21,6 +30,29 @@ function TimesheetHeader({ header }) {
             
             if (resourceData) {
               setResourceInfo(resourceData);
+              
+              // Obtener allocation_period de la URL
+              const params = new URLSearchParams(window.location.search);
+              let ap = params.get("allocation_period");
+              if (!ap) {
+                const now = new Date();
+                const yy = String(now.getFullYear()).slice(-2);
+                const mm = String(now.getMonth() + 1).padStart(2, "0");
+                ap = `M${yy}-M${mm}`;
+              }
+              setAllocationPeriod(ap);
+              
+              // Establecer valores por defecto
+              const firstDayOfPeriod = getFirstDayOfPeriod(ap);
+              setEditableHeader({
+                resource_no: resourceData.no,
+                resource_name: resourceData.name,
+                department_code: resourceData.department_code,
+                company: resourceData.company,
+                allocation_period: ap,
+                posting_date: firstDayOfPeriod,
+                posting_description: `Parte de trabajo ${ap}`
+              });
             }
           }
         } catch (error) {
@@ -28,20 +60,33 @@ function TimesheetHeader({ header }) {
         }
       };
 
-      // Obtener allocation_period de la URL
-      const params = new URLSearchParams(window.location.search);
-      let ap = params.get("allocation_period");
-      if (!ap) {
-        const now = new Date();
-        const yy = String(now.getFullYear()).slice(-2);
-        const mm = String(now.getMonth() + 1).padStart(2, "0");
-        ap = `M${yy}-M${mm}`;
-      }
-      setAllocationPeriod(ap);
-
       getResourceInfo();
     }
   }, [header]);
+
+  // Función para obtener el primer día del período
+  const getFirstDayOfPeriod = (ap) => {
+    const m = /^M(\d{2})-M(\d{2})$/.exec(ap || "");
+    if (!m) return new Date().toISOString().split('T')[0];
+    
+    const yy = parseInt(m[1], 10);
+    const year = 2000 + yy;
+    const month = parseInt(m[2], 10);
+    
+    const firstDay = new Date(year, month - 1, 1);
+    return firstDay.toISOString().split('T')[0];
+  };
+
+  // Función para manejar cambios en los campos editables
+  const handleFieldChange = (field, value) => {
+    const newHeader = { ...editableHeader, [field]: value };
+    setEditableHeader(newHeader);
+    
+    // Notificar cambios al componente padre
+    if (onHeaderChange) {
+      onHeaderChange(newHeader);
+    }
+  };
 
   if (!header && !resourceInfo) {
     return (
@@ -52,32 +97,128 @@ function TimesheetHeader({ header }) {
   }
 
   if (!header) {
-    // Mostrar información para nuevo parte
+    // Mostrar cabecera editable para nuevo parte
     return (
       <div style={{ 
         padding: "20px", 
         border: "2px dashed #007bff", 
         borderRadius: "8px", 
-        backgroundColor: "#f8f9fa",
-        textAlign: "center"
+        backgroundColor: "#f8f9fa"
       }}>
-        <h3 style={{ color: "#007bff", marginBottom: "16px" }}>
+        <h3 style={{ color: "#007bff", marginBottom: "16px", textAlign: "center" }}>
           🆕 Nuevo Parte de Trabajo
         </h3>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", textAlign: "left" }}>
+        
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
           <div>
-            <strong>Período:</strong> {allocationPeriod}
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+              Nº Recurso:
+            </label>
+            <input
+              type="text"
+              value={editableHeader.resource_no}
+              onChange={(e) => handleFieldChange("resource_no", e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                fontSize: "14px"
+              }}
+            />
           </div>
+          
           <div>
-            <strong>Recurso:</strong> {resourceInfo?.no} - {resourceInfo?.name}
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+              Nombre Recurso:
+            </label>
+            <input
+              type="text"
+              value={editableHeader.resource_name}
+              onChange={(e) => handleFieldChange("resource_name", e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                fontSize: "14px"
+              }}
+            />
           </div>
+          
           <div>
-            <strong>Departamento:</strong> {resourceInfo?.department_code}
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+              Período:
+            </label>
+            <input
+              type="text"
+              value={editableHeader.allocation_period}
+              onChange={(e) => handleFieldChange("allocation_period", e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                fontSize: "14px"
+              }}
+            />
           </div>
+          
           <div>
-            <strong>Empresa:</strong> {resourceInfo?.company}
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+              Fecha Parte:
+            </label>
+            <input
+              type="date"
+              value={editableHeader.posting_date}
+              onChange={(e) => handleFieldChange("posting_date", e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                fontSize: "14px"
+              }}
+            />
+          </div>
+          
+          <div>
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+              Departamento:
+            </label>
+            <input
+              type="text"
+              value={editableHeader.department_code}
+              onChange={(e) => handleFieldChange("department_code", e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                fontSize: "14px"
+              }}
+            />
+          </div>
+          
+          <div>
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+              Empresa:
+            </label>
+            <input
+              type="text"
+              value={editableHeader.company}
+              onChange={(e) => handleFieldChange("company", e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                fontSize: "14px"
+              }}
+            />
           </div>
         </div>
+        
         <div style={{ 
           marginTop: "16px", 
           padding: "12px", 
@@ -86,7 +227,7 @@ function TimesheetHeader({ header }) {
           fontSize: "14px",
           color: "#0056b3"
         }}>
-          💡 Agrega líneas de trabajo usando el botón "Agregar Línea" y luego guarda el parte
+          💡 Completa la información de la cabecera y agrega líneas de trabajo
         </div>
       </div>
     );
