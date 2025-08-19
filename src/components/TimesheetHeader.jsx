@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useMsal } from "@azure/msal-react";
 import { supabaseClient } from "../supabaseClient";
 import "../styles/TimesheetHeader.css";
 
 function TimesheetHeader({ header, onHeaderChange }) {
+  const { instance, accounts } = useMsal();
   const [resourceInfo, setResourceInfo] = useState(null);
   const [allocationPeriod, setAllocationPeriod] = useState("");
   const [editableHeader, setEditableHeader] = useState({
@@ -21,14 +23,22 @@ function TimesheetHeader({ header, onHeaderChange }) {
       console.log("🆕 TimesheetHeader: Iniciando carga de información del recurso...");
       const getResourceInfo = async () => {
         try {
-          const { data: { user } } = await supabaseClient.auth.getUser();
-          console.log("🆕 TimesheetHeader: Usuario obtenido:", user?.email);
+          // 🆕 Usar useMsal para obtener el email del usuario
+          let userEmail = "";
+          try {
+            const acct = instance.getActiveAccount() || accounts[0];
+            userEmail = acct?.username || acct?.email || "";
+          } catch {
+            userEmail = "";
+          }
           
-          if (user) {
+          console.log("🆕 TimesheetHeader: Email del usuario obtenido:", userEmail);
+          
+          if (userEmail) {
             const { data: resourceData } = await supabaseClient
               .from("resource")
               .select("no, name, department_code, company")
-              .eq("email", user.email)
+              .eq("email", userEmail)
               .single();
             
             console.log("🆕 TimesheetHeader: Datos del recurso obtenidos:", resourceData);
@@ -70,6 +80,8 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 console.log("❌ TimesheetHeader: onHeaderChange no está disponible");
               }
             }
+          } else {
+            console.log("❌ TimesheetHeader: No se pudo obtener el email del usuario");
           }
         } catch (error) {
           console.error("❌ TimesheetHeader: Error obteniendo información del recurso:", error);
@@ -78,7 +90,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
 
       getResourceInfo();
     }
-  }, [header, onHeaderChange]);
+  }, [header, onHeaderChange, instance, accounts]);
 
   // Función para obtener el primer día del período
   const getFirstDayOfPeriod = (ap) => {

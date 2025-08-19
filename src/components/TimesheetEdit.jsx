@@ -1,6 +1,7 @@
 // src/components/TimesheetEdit.jsx
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation, useBlocker } from "react-router-dom";
+import { useMsal } from "@azure/msal-react";
 import { toast } from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabaseClient } from "../supabaseClient";
@@ -40,6 +41,7 @@ const SAFE_COLUMNS = [
 function TimesheetEdit({ headerId }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { instance, accounts } = useMsal();
 
   const [header, setHeader] = useState(null);
   const [lines, setLines] = useState([]);
@@ -387,10 +389,17 @@ function TimesheetEdit({ headerId }) {
       if (!currentHeaderId) {
         console.log("🆕 Creando nuevo header...");
         
-        // Obtener datos del usuario actual
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (!user) {
-          throw new Error("Usuario no autenticado");
+        // 🆕 Obtener email del usuario usando useMsal
+        let userEmail = "";
+        try {
+          const acct = instance.getActiveAccount() || accounts[0];
+          userEmail = acct?.username || acct?.email || "";
+        } catch {
+          userEmail = "";
+        }
+        
+        if (!userEmail) {
+          throw new Error("No se pudo obtener el email del usuario");
         }
 
         // 🆕 Usar información de la cabecera editable si está disponible
@@ -400,7 +409,7 @@ function TimesheetEdit({ headerId }) {
           const { data: resourceData, error: resourceError } = await supabaseClient
             .from("resource")
             .select("no, name, department_code, company")
-            .eq("email", user.email)
+            .eq("email", userEmail)
             .single();
 
           if (resourceError || !resourceData) {
@@ -438,7 +447,7 @@ function TimesheetEdit({ headerId }) {
           posting_date: headerData.posting_date,
           posting_description: headerData.posting_description,
           status: "Draft",
-          created_by: user.email,
+          created_by: userEmail,
           created_at: new Date().toISOString()
         };
 
@@ -455,7 +464,7 @@ function TimesheetEdit({ headerId }) {
         currentHeaderId = createdHeader.id;
         setHeader(createdHeader);
         setResolvedHeaderId(currentHeaderId);
-        
+
         console.log("✅ Header creado exitosamente:", createdHeader);
         toast.success("Nuevo parte de trabajo creado");
       }
@@ -529,7 +538,7 @@ function TimesheetEdit({ headerId }) {
     } finally {
       setIsSaving(false);
     }
-  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, dailyRequired, calendarHolidays, effectiveHeaderId, location.search, editableHeader]);
+  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, dailyRequired, calendarHolidays, effectiveHeaderId, location.search, editableHeader, instance, accounts]);
 
   // 🆕 Función para ejecutar guardado sin validación (cuando solo hay advertencias)
   const executeSaveWithoutValidation = useCallback(async () => {
@@ -685,7 +694,7 @@ function TimesheetEdit({ headerId }) {
   // 🆕 Crear línea vacía cuando la información del recurso esté disponible
   useEffect(() => {
     console.log("🆕 TimesheetEdit: useEffect para línea vacía - effectiveHeaderId:", effectiveHeaderId, "editableHeader:", editableHeader, "lines.length:", lines.length);
-    
+
     if (!effectiveHeaderId && editableHeader && lines.length === 0) {
       console.log("🆕 Creando línea vacía con información del recurso:", editableHeader);
       addEmptyLine();
@@ -879,14 +888,22 @@ function TimesheetEdit({ headerId }) {
     // Obtener información del usuario actual para la nueva línea
     const getResourceInfo = async () => {
       try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (user) {
+        // 🆕 Usar useMsal para obtener el email del usuario
+        let userEmail = "";
+        try {
+          const acct = instance.getActiveAccount() || accounts[0];
+          userEmail = acct?.username || acct?.email || "";
+        } catch {
+          userEmail = "";
+        }
+        
+        if (userEmail) {
           const { data: resourceData } = await supabaseClient
             .from("resource")
             .select("no, department_code, company")
-            .eq("email", user.email)
+            .eq("email", userEmail)
             .single();
-
+          
           if (resourceData) {
             return resourceData;
           }
@@ -1235,8 +1252,8 @@ function TimesheetEdit({ headerId }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
         {/* Header a la izquierda */}
         <div style={{ flex: 1 }}>
-          <TimesheetHeader 
-            header={header} 
+          <TimesheetHeader
+            header={header}
             onHeaderChange={setEditableHeader}
           />
         </div>
