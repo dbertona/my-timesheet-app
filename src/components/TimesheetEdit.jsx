@@ -438,11 +438,12 @@ function TimesheetEdit({ headerId }) {
           };
         }
 
-        // Crear nuevo header - SOLO columnas mínimas necesarias
+        // Crear nuevo header - columnas mínimas necesarias
         const newHeader = {
           id: crypto.randomUUID(), // Generar ID único manualmente
           description: headerData.resource_name, // Campo obligatorio 'description' - nombre del recurso
           resource_no: headerData.resource_no,
+          posting_date: headerData.posting_date || new Date().toISOString().split('T')[0], // Campo obligatorio 'posting_date'
           user_email: userEmail // Email del usuario actual
         };
 
