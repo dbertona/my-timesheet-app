@@ -539,7 +539,7 @@ function TimesheetEdit({ headerId }) {
           // 🆕 Línea nueva - insertar
           if (lineData.job_no && lineData.quantity && parseFloat(lineData.quantity) > 0) {
             const newLineData = {
-              // Remover campos que no deben ir a la base de datos
+              // Campos básicos de la línea
               job_no: lineData.job_no,
               job_task_no: lineData.job_task_no,
               description: lineData.description,
@@ -550,7 +550,15 @@ function TimesheetEdit({ headerId }) {
               // Campos del header
               header_id: currentHeaderId,
               resource_no: editableHeader?.resource_no || "",
-              company: editableHeader?.company || ""
+              company: editableHeader?.company || "",
+              // Campos obligatorios adicionales
+              job_responsible: "", // Se llenará automáticamente
+              job_responsible_approval: true, // Siempre true
+              resource_responsible: editableHeader?.resource_no || "",
+              job_no_and_description: lineData.job_no && lineData.description ? 
+                `${lineData.job_no} - ${lineData.description}` : 
+                `${lineData.job_no || ""}${lineData.description || ""}`,
+              creado: new Date().toISOString()
             };
 
             const { data: createdLine, error: lineError } = await supabaseClient
