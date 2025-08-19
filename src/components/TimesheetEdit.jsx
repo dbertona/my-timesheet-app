@@ -1175,6 +1175,8 @@ function TimesheetEdit({ headerId }) {
           };
           
           console.log("🎯 DEBUG: handleInputChange - Nuevos datos:", newData);
+          console.log("🎯 DEBUG: handleInputChange - department_code específico:", newData.department_code);
+          console.log("🎯 DEBUG: handleInputChange - jobInfo[value]:", jobInfo[value]);
           
           return {
             ...prev,
