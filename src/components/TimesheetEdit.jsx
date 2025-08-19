@@ -438,16 +438,12 @@ function TimesheetEdit({ headerId }) {
           };
         }
 
-        // Crear nuevo header - SOLO columnas que realmente existen en la tabla
+        // Crear nuevo header - SOLO columnas mínimas necesarias
         const newHeader = {
           id: crypto.randomUUID(), // Generar ID único manualmente
+          description: headerData.posting_description, // Campo obligatorio 'description'
           resource_no: headerData.resource_no,
-          department_code: headerData.department_code,
-          allocation_period: headerData.allocation_period,
-          posting_date: headerData.posting_date,
-          posting_description: headerData.posting_description,
-          user_email: userEmail, // Email del usuario actual
-          synced_to_bc: false // Default para nuevos headers
+          user_email: userEmail // Email del usuario actual
         };
 
         const { data: createdHeader, error: headerError } = await supabaseClient
