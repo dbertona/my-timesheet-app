@@ -658,6 +658,13 @@ function TimesheetEdit({ headerId }) {
     if (linesHook.error) toast.error("Error cargando líneas");
   }, [linesHook.error]);
 
+  // 🆕 Cuando no hay header (nuevo parte), marcar como no cargando
+  useEffect(() => {
+    if (!effectiveHeaderId && !loading) {
+      setLoading(false);
+    }
+  }, [effectiveHeaderId, loading]);
+
   // Cuando llegan las líneas, actualizar estado local y edición inicial con dos decimales
   useEffect(() => {
     // useEffect 3 - Líneas cargadas ejecutándose
@@ -1143,7 +1150,7 @@ function TimesheetEdit({ headerId }) {
     } catch {}
   };
 
-  if (loading) return <div>Cargando datos...</div>;
+  if (loading && effectiveHeaderId) return <div>Cargando datos...</div>;
 
   return (
     <div>
@@ -1272,6 +1279,25 @@ function TimesheetEdit({ headerId }) {
             <span style={{ color: "#666", fontSize: 12 }}>
               {hasUnsavedChanges ? "Cambios pendientes de guardar" : "Sin cambios pendientes"}
             </span>
+            
+            {/* 🆕 Botón Agregar Línea para nuevos partes */}
+            {!header && (
+              <button
+                onClick={addEmptyLine}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#28a745",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500"
+                }}
+              >
+                ➕ Agregar Línea
+              </button>
+            )}
         </div>
 
         <TimesheetLines
