@@ -35,20 +35,21 @@ function TimesheetHeader({ header, onHeaderChange }) {
           console.log("🆕 TimesheetHeader: Email del usuario obtenido:", userEmail);
           
           if (userEmail) {
-            // Usar la función RPC pending_hours que ya funciona
-            const { data: pendingData, error: pendingError } = await supabaseClient.rpc('pending_hours', { p_email: userEmail });
+            // Consultar la tabla resource usando el campo email
+            const { data: resourceData, error: resourceError } = await supabaseClient
+              .from("resource")
+              .select("code, name, department_code, company")
+              .eq("email", userEmail)
+              .single();
             
-            console.log("🆕 TimesheetHeader: Datos de pending_hours:", pendingData, "Error:", pendingError);
+            console.log("🆕 TimesheetHeader: Datos del recurso obtenidos:", resourceData, "Error:", resourceError);
             
-            if (pendingData && pendingData.length > 0) {
-              // Extraer información del recurso de la respuesta de pending_hours
-              const resourceInfo = pendingData[0];
-              
+            if (resourceData) {
               setResourceInfo({
                 user_email: userEmail,
-                name: resourceInfo.resource_name || userEmail,
-                department_code: resourceInfo.department_code || "DEFAULT",
-                company: resourceInfo.company || "POWERSOLUTION"
+                name: resourceData.name,
+                department_code: resourceData.department_code,
+                company: resourceData.company
               });
               
               // Obtener allocation_period de la URL
@@ -65,10 +66,10 @@ function TimesheetHeader({ header, onHeaderChange }) {
               // Establecer valores por defecto
               const firstDayOfPeriod = getFirstDayOfPeriod(ap);
               const newEditableHeader = {
-                resource_no: userEmail, // Usar email como resource_no
-                resource_name: resourceInfo.resource_name || userEmail,
-                department_code: resourceInfo.department_code || "DEFAULT",
-                company: resourceInfo.company || "POWERSOLUTION",
+                resource_no: resourceData.code, // Usar code del recurso
+                resource_name: resourceData.name,
+                department_code: resourceData.department_code,
+                company: resourceData.company,
                 allocation_period: ap,
                 posting_date: firstDayOfPeriod,
                 posting_description: `Parte de trabajo ${ap}`
@@ -84,8 +85,8 @@ function TimesheetHeader({ header, onHeaderChange }) {
               } else {
                 console.log("❌ TimesheetHeader: onHeaderChange no está disponible");
               }
-            } else if (pendingError) {
-              console.error("❌ TimesheetHeader: Error en pending_hours:", pendingError);
+            } else if (resourceError) {
+              console.error("❌ TimesheetHeader: Error en consulta:", resourceError);
               // Fallback: crear header con información básica
               const params = new URLSearchParams(window.location.search);
               let ap = params.get("allocation_period");
@@ -98,7 +99,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
               
               const firstDayOfPeriod = getFirstDayOfPeriod(ap);
               const fallbackHeader = {
-                resource_no: userEmail,
+                resource_no: userEmail, // Fallback al email si no se encuentra el recurso
                 resource_name: userEmail,
                 department_code: "DEFAULT",
                 company: "POWERSOLUTION",

@@ -405,15 +405,16 @@ function TimesheetEdit({ headerId }) {
         // 🆕 Usar información de la cabecera editable si está disponible
         let headerData = editableHeader;
         if (!headerData) {
-          // Fallback: obtener información del recurso usando pending_hours
-          const { data: pendingData, error: pendingError } = await supabaseClient.rpc('pending_hours', { p_email: userEmail });
+          // Fallback: obtener información del recurso de la tabla resource
+          const { data: resourceData, error: resourceError } = await supabaseClient
+            .from("resource")
+            .select("code, name, department_code, company")
+            .eq("email", userEmail)
+            .single();
 
-          if (pendingError || !pendingData || pendingData.length === 0) {
-            throw new Error(`No se pudo obtener información del recurso: ${pendingError?.message || 'Datos no encontrados'}`);
+          if (resourceError || !resourceData) {
+            throw new Error(`No se pudo obtener información del recurso: ${resourceError?.message || 'Datos no encontrados'}`);
           }
-
-          // Extraer información del recurso de la respuesta de pending_hours
-          const resourceInfo = pendingData[0];
 
           // Construir allocation_period
           const params = new URLSearchParams(location.search);
@@ -426,10 +427,10 @@ function TimesheetEdit({ headerId }) {
           }
 
           headerData = {
-            resource_no: userEmail, // Usar email como resource_no
-            resource_name: resourceInfo.resource_name || userEmail,
-            department_code: resourceInfo.department_code || "DEFAULT",
-            company: resourceInfo.company || "POWERSOLUTION",
+            resource_no: resourceData.code, // Usar code del recurso
+            resource_name: resourceData.name,
+            department_code: resourceData.department_code,
+            company: resourceData.company,
             allocation_period: ap,
             posting_date: new Date().toISOString().split('T')[0],
             posting_description: `Parte de trabajo ${ap}`
@@ -897,15 +898,18 @@ function TimesheetEdit({ headerId }) {
         }
 
         if (userEmail) {
-          // Usar pending_hours en lugar de consultar resource directamente
-          const { data: pendingData } = await supabaseClient.rpc('pending_hours', { p_email: userEmail });
+          // Consultar la tabla resource usando el campo email
+          const { data: resourceData } = await supabaseClient
+            .from("resource")
+            .select("code, department_code, company")
+            .eq("email", userEmail)
+            .single();
           
-          if (pendingData && pendingData.length > 0) {
-            const resourceInfo = pendingData[0];
+          if (resourceData) {
             return {
               user_email: userEmail,
-              department_code: resourceInfo.department_code || "DEFAULT",
-              company: resourceInfo.company || "POWERSOLUTION"
+              department_code: resourceData.department_code,
+              company: resourceData.company
             };
           }
         }
@@ -950,8 +954,8 @@ function TimesheetEdit({ headerId }) {
             ...prev[newId],
             department_code: resourceInfo.department_code,
             company: resourceInfo.company,
-            resource_no: resourceInfo.user_email,
-            resource_responsible: resourceInfo.user_email
+            resource_no: resourceInfo.code,
+            resource_responsible: resourceInfo.code
           }
         }));
       }
