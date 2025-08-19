@@ -35,13 +35,13 @@ function TimesheetHeader({ header, onHeaderChange }) {
           console.log("🆕 TimesheetHeader: Email del usuario obtenido:", userEmail);
           
           if (userEmail) {
-            const { data: resourceData } = await supabaseClient
+            const { data: resourceData, error: resourceError } = await supabaseClient
               .from("resource")
-              .select("no, name, department_code, company")
-              .eq("email", userEmail)
+              .select("user_email, name, department_code, company")
+              .eq("user_email", userEmail)
               .single();
             
-            console.log("🆕 TimesheetHeader: Datos del recurso obtenidos:", resourceData);
+            console.log("🆕 TimesheetHeader: Datos del recurso obtenidos:", resourceData, "Error:", resourceError);
             
             if (resourceData) {
               setResourceInfo(resourceData);
@@ -60,7 +60,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
               // Establecer valores por defecto
               const firstDayOfPeriod = getFirstDayOfPeriod(ap);
               const newEditableHeader = {
-                resource_no: resourceData.no,
+                resource_no: userEmail, // Usar email como resource_no
                 resource_name: resourceData.name,
                 department_code: resourceData.department_code,
                 company: resourceData.company,
@@ -79,6 +79,8 @@ function TimesheetHeader({ header, onHeaderChange }) {
               } else {
                 console.log("❌ TimesheetHeader: onHeaderChange no está disponible");
               }
+            } else if (resourceError) {
+              console.error("❌ TimesheetHeader: Error en consulta:", resourceError);
             }
           } else {
             console.log("❌ TimesheetHeader: No se pudo obtener el email del usuario");

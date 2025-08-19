@@ -408,12 +408,12 @@ function TimesheetEdit({ headerId }) {
           // Fallback: obtener información del recurso
           const { data: resourceData, error: resourceError } = await supabaseClient
             .from("resource")
-            .select("no, name, department_code, company")
-            .eq("email", userEmail)
+            .select("user_email, name, department_code, company")
+            .eq("user_email", userEmail)
             .single();
 
           if (resourceError || !resourceData) {
-            throw new Error("No se pudo obtener información del recurso");
+            throw new Error(`No se pudo obtener información del recurso: ${resourceError?.message || 'Datos no encontrados'}`);
           }
 
           // Construir allocation_period
@@ -427,7 +427,7 @@ function TimesheetEdit({ headerId }) {
           }
 
           headerData = {
-            resource_no: resourceData.no,
+            resource_no: userEmail, // Usar email como resource_no
             resource_name: resourceData.name,
             department_code: resourceData.department_code,
             company: resourceData.company,
@@ -900,8 +900,8 @@ function TimesheetEdit({ headerId }) {
         if (userEmail) {
           const { data: resourceData } = await supabaseClient
             .from("resource")
-            .select("no, department_code, company")
-            .eq("email", userEmail)
+            .select("user_email, department_code, company")
+            .eq("user_email", userEmail)
             .single();
           
           if (resourceData) {
@@ -949,8 +949,8 @@ function TimesheetEdit({ headerId }) {
             ...prev[newId],
             department_code: resourceInfo.department_code,
             company: resourceInfo.company,
-            resource_no: resourceInfo.no,
-            resource_responsible: resourceInfo.no
+            resource_no: resourceInfo.user_email,
+            resource_responsible: resourceInfo.user_email
           }
         }));
       }
