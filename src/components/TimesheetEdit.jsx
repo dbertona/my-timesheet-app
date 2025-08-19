@@ -1166,15 +1166,61 @@ function TimesheetEdit({ headerId }) {
   });
 
   // -- Router de cambios por campo: deriva quantity/date a sus handlers y el resto al handler original
-  const handleInputChange = useCallback((lineId, event) => {
+  const handleInputChange = useCallback(async (lineId, event) => {
     const { name, value } = event.target;
-    setEditFormData(prev => ({
-      ...prev,
-      [lineId]: {
-        ...prev[lineId],
-        [name]: value
+    
+    // ✅ Si se cambia el proyecto, obtener automáticamente el departamento
+    if (name === "job_no" && value) {
+      try {
+        console.log(`🎯 handleInputChange: Proyecto seleccionado: ${value}`);
+        
+        // Obtener información del proyecto (responsable y departamento)
+        const jobInfo = await fetchJobInfo([value]);
+        console.log(`🎯 handleInputChange: Info del proyecto obtenida:`, jobInfo);
+        
+        if (jobInfo[value] && jobInfo[value].department_code) {
+          console.log(`✅ handleInputChange: Estableciendo departamento: ${jobInfo[value].department_code}`);
+          
+          setEditFormData(prev => ({
+            ...prev,
+            [lineId]: {
+              ...prev[lineId],
+              [name]: value,
+              department_code: jobInfo[value].department_code, // ✅ Departamento automático
+              job_responsible: jobInfo[value].responsible || "" // ✅ Responsable automático
+            }
+          }));
+        } else {
+          console.log(`⚠️ handleInputChange: Proyecto sin departamento, usando valor del formulario`);
+          setEditFormData(prev => ({
+            ...prev,
+            [lineId]: {
+              ...prev[lineId],
+              [name]: value
+            }
+          }));
+        }
+      } catch (error) {
+        console.error(`❌ handleInputChange: Error obteniendo info del proyecto:`, error);
+        // En caso de error, usar valor normal
+        setEditFormData(prev => ({
+          ...prev,
+          [lineId]: {
+            ...prev[lineId],
+            [name]: value
+          }
+        }));
       }
-    }));
+    } else {
+      // Para otros campos, comportamiento normal
+      setEditFormData(prev => ({
+        ...prev,
+        [lineId]: {
+          ...prev[lineId],
+          [name]: value
+        }
+      }));
+    }
 
     // Marcar que hay cambios no guardados
     markAsChanged();
@@ -1187,7 +1233,7 @@ function TimesheetEdit({ headerId }) {
         [name]: null
       }
     }));
-  }, [markAsChanged]);
+  }, [markAsChanged, fetchJobInfo]);
 
   // -- Custom handleDateChange
   const handleDateChange = (id, value) => {
