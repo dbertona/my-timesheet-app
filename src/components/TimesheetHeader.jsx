@@ -18,15 +18,20 @@ function TimesheetHeader({ header, onHeaderChange }) {
   useEffect(() => {
     // Si no hay header, obtener información del recurso actual
     if (!header) {
+      console.log("🆕 TimesheetHeader: Iniciando carga de información del recurso...");
       const getResourceInfo = async () => {
         try {
           const { data: { user } } = await supabaseClient.auth.getUser();
+          console.log("🆕 TimesheetHeader: Usuario obtenido:", user?.email);
+          
           if (user) {
             const { data: resourceData } = await supabaseClient
               .from("resource")
               .select("no, name, department_code, company")
               .eq("email", user.email)
               .single();
+            
+            console.log("🆕 TimesheetHeader: Datos del recurso obtenidos:", resourceData);
             
             if (resourceData) {
               setResourceInfo(resourceData);
@@ -54,22 +59,26 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 posting_description: `Parte de trabajo ${ap}`
               };
               
+              console.log("🆕 TimesheetHeader: Estableciendo editableHeader:", newEditableHeader);
               setEditableHeader(newEditableHeader);
               
               // 🆕 Notificar inmediatamente al componente padre
               if (onHeaderChange) {
+                console.log("🆕 TimesheetHeader: Notificando al padre con:", newEditableHeader);
                 onHeaderChange(newEditableHeader);
+              } else {
+                console.log("❌ TimesheetHeader: onHeaderChange no está disponible");
               }
             }
           }
         } catch (error) {
-          console.error("Error obteniendo información del recurso:", error);
+          console.error("❌ TimesheetHeader: Error obteniendo información del recurso:", error);
         }
       };
 
       getResourceInfo();
     }
-  }, [header]);
+  }, [header, onHeaderChange]);
 
   // Función para obtener el primer día del período
   const getFirstDayOfPeriod = (ap) => {

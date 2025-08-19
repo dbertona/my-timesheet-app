@@ -684,6 +684,8 @@ function TimesheetEdit({ headerId }) {
 
   // 🆕 Crear línea vacía cuando la información del recurso esté disponible
   useEffect(() => {
+    console.log("🆕 TimesheetEdit: useEffect para línea vacía - effectiveHeaderId:", effectiveHeaderId, "editableHeader:", editableHeader, "lines.length:", lines.length);
+    
     if (!effectiveHeaderId && editableHeader && lines.length === 0) {
       console.log("🆕 Creando línea vacía con información del recurso:", editableHeader);
       addEmptyLine();
