@@ -233,12 +233,11 @@ export default function TimesheetLines({
   const handleInputChange = useCallback((lineId, event) => {
     const { name, value } = event.target;
 
-    // ✅ Si se cambia el proyecto, usar la función del padre para obtener departamento automático
-    if (name === "job_no" && parentHandleInputChange) {
-      console.log("🎯 TimesheetLines: Proyecto cambiado, usando función del padre");
-      parentHandleInputChange(lineId, event);
-      return;
-    }
+      // ✅ Si se cambia el proyecto, usar la función del padre para obtener departamento automático
+  if (name === "job_no" && parentHandleInputChange) {
+    parentHandleInputChange(lineId, event);
+    return;
+  }
 
     // Para otros campos, comportamiento normal
     onLinesChange(lineId, { [name]: value });

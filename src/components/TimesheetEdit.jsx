@@ -1052,8 +1052,6 @@ function TimesheetEdit({ headerId }) {
     const unique = Array.from(new Set(jobNos.filter(Boolean)));
     if (unique.length === 0) return {};
     
-    console.log("🔍 fetchJobInfo: Buscando proyectos:", unique);
-    
     const { data, error } = await supabaseClient
       .from("job")
       .select("no,responsible,department_code")
@@ -1064,18 +1062,14 @@ function TimesheetEdit({ headerId }) {
       return {};
     }
     
-    console.log("🔍 fetchJobInfo: Datos obtenidos:", data);
-    
     const map = {};
     for (const r of data) {
       map[r.no] = {
         responsible: r.responsible ?? "",
         department_code: r.department_code ?? ""
       };
-      console.log(`🔍 fetchJobInfo: Proyecto ${r.no}:`, map[r.no]);
     }
     
-    console.log("🔍 fetchJobInfo: Mapa final:", map);
     return map;
   };
 
@@ -1115,19 +1109,10 @@ function TimesheetEdit({ headerId }) {
         const jobNo = row.job_no || "";
         const jobInfo = jobResponsibleMap?.[jobNo];
         
-        console.log(`🔍 prepareRowForDb - department_code para proyecto ${jobNo}:`, {
-          jobInfo,
-          jobInfoType: typeof jobInfo,
-          hasDepartmentCode: jobInfo?.department_code,
-          fallback: row.department_code
-        });
-        
         if (jobInfo && typeof jobInfo === 'object' && jobInfo.department_code) {
           out.department_code = jobInfo.department_code;
-          console.log(`✅ prepareRowForDb - Usando departamento del proyecto: ${jobInfo.department_code}`);
         } else {
           out.department_code = row.department_code ?? "";
-          console.log(`⚠️ prepareRowForDb - Usando departamento fallback: ${out.department_code}`);
         }
       } else if (key === "quantity") {
         out.quantity = Number(row.quantity) || 0;
@@ -1172,15 +1157,10 @@ function TimesheetEdit({ headerId }) {
     // ✅ Si se cambia el proyecto, obtener automáticamente el departamento
     if (name === "job_no" && value) {
       try {
-        console.log(`🎯 handleInputChange: Proyecto seleccionado: ${value}`);
-        
         // Obtener información del proyecto (responsable y departamento)
         const jobInfo = await fetchJobInfo([value]);
-        console.log(`🎯 handleInputChange: Info del proyecto obtenida:`, jobInfo);
         
         if (jobInfo[value] && jobInfo[value].department_code) {
-          console.log(`✅ handleInputChange: Estableciendo departamento: ${jobInfo[value].department_code}`);
-          
           setEditFormData(prev => ({
             ...prev,
             [lineId]: {
@@ -1191,7 +1171,6 @@ function TimesheetEdit({ headerId }) {
             }
           }));
         } else {
-          console.log(`⚠️ handleInputChange: Proyecto sin departamento, usando valor del formulario`);
           setEditFormData(prev => ({
             ...prev,
             [lineId]: {
@@ -1201,7 +1180,7 @@ function TimesheetEdit({ headerId }) {
           }));
         }
       } catch (error) {
-        console.error(`❌ handleInputChange: Error obteniendo info del proyecto:`, error);
+        console.error(`Error obteniendo info del proyecto:`, error);
         // En caso de error, usar valor normal
         setEditFormData(prev => ({
           ...prev,
@@ -1218,9 +1197,9 @@ function TimesheetEdit({ headerId }) {
         [lineId]: {
           ...prev[lineId],
           [name]: value
-        }
-      }));
-    }
+          }
+        }));
+      }
 
     // Marcar que hay cambios no guardados
     markAsChanged();
