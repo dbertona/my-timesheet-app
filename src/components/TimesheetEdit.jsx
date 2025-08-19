@@ -329,6 +329,11 @@ function TimesheetEdit({ headerId }) {
     if (!hasUnsavedChanges) return;
 
     // 🆕 PASO 1: Validar todos los datos antes de guardar
+    console.log("🔍 ANTES DE VALIDAR:", { 
+      jobsCount: jobs.length, 
+      jobsSample: jobs.slice(0, 3),
+      editFormDataKeys: Object.keys(editFormData)
+    });
     const validation = await validateAllData(editFormData, dailyRequired, calendarHolidays, jobs);
     
     // 🆕 PASO 2: Si hay errores críticos, mostrar modal y bloquear guardado

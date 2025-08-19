@@ -25,6 +25,13 @@ export function isHolidayIso(iso, holidaySet) {
 
 // 🆕 NUEVA FUNCIÓN: Validación completa antes de guardar
 export async function validateAllData(editFormData = {}, dailyRequired = {}, calendarHolidays = [], jobs = []) {
+  console.log("🔍 DEBUG VALIDACIÓN:", { 
+    editFormDataKeys: Object.keys(editFormData),
+    jobsCount: jobs.length,
+    jobsSample: jobs.slice(0, 3),
+    dailyRequiredKeys: Object.keys(dailyRequired)
+  });
+
   const errors = {};
   const totals = computeTotalsByIso(editFormData);
   const holidaySet = buildHolidaySet(calendarHolidays);
@@ -35,6 +42,12 @@ export async function validateAllData(editFormData = {}, dailyRequired = {}, cal
   // Validar cada línea
   for (const [lineId, row] of Object.entries(editFormData)) {
     const lineErrors = {};
+    
+    console.log(`🔍 Validando línea ${lineId}:`, { 
+      job_no: row.job_no, 
+      quantity: row.quantity,
+      date: row.date 
+    });
     
     // 1. Validar fecha
     if (!row.date) {
@@ -61,10 +74,15 @@ export async function validateAllData(editFormData = {}, dailyRequired = {}, cal
       totalErrors++;
     } else {
       // 🆕 NUEVA VALIDACIÓN: Estado del proyecto
+      console.log(`🔍 Buscando proyecto ${row.job_no} en jobs:`, jobs);
       const project = jobs.find(j => j.no === row.job_no);
+      console.log(`🔍 Proyecto encontrado:`, project);
+      
       if (project && (project.status === 'Completed' || project.status === 'Lost')) {
-        lineErrors.job_no = `No se pueden imputar horas en proyecto ${project.status === 'Completed' ? 'Completado' : 'Perdido'}`;
+        const errorMsg = `No se pueden imputar horas en proyecto ${project.status === 'Completed' ? 'Completado' : 'Perdido'}`;
+        lineErrors.job_no = errorMsg;
         totalErrors++;
+        console.log(`❌ ERROR CRÍTICO: ${errorMsg}`);
       }
     }
     
@@ -101,6 +119,12 @@ export async function validateAllData(editFormData = {}, dailyRequired = {}, cal
       errors[lineId] = lineErrors;
     }
   }
+  
+  console.log("🔍 RESULTADO VALIDACIÓN:", { 
+    totalErrors, 
+    totalWarnings, 
+    errors: Object.keys(errors) 
+  });
   
   // Crear resumen de errores
   const summary = generateValidationSummary(errors, totalErrors, totalWarnings);
