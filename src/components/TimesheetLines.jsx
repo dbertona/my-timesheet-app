@@ -611,6 +611,7 @@ export default function TimesheetLines({
                 lineIndex={lineIndex}
                 colStyle={colStyles.department_code}
                 align={getAlign("department_code")}
+                editFormData={editFormData} // ✅ Pasar editFormData para mostrar valor actualizado
               />
             </tr>
           ))}

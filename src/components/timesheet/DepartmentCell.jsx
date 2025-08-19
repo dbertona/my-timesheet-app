@@ -6,7 +6,11 @@ export default function DepartmentCell({
   lineIndex,
   colStyle,
   align,
+  editFormData, // ✅ Recibir editFormData para mostrar valor actualizado
 }) {
+  // ✅ Usar editFormData si está disponible, sino usar line
+  const departmentCode = editFormData?.[line.id]?.department_code || line.department_code;
+  
   return (
     <td
       className="ts-td"
@@ -27,7 +31,7 @@ export default function DepartmentCell({
           fontWeight: "500",
         }}
       >
-        {line.department_code || (
+        {departmentCode || (
           <span style={{ fontStyle: "italic", color: "#adb5bd" }}>
             Sin departamento
           </span>
