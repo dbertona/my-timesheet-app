@@ -89,9 +89,19 @@ export default function TimesheetLines({
     header: header?.resource_no,
     editableHeader: editableHeader?.resource_no,
     resourceNo: (header || editableHeader)?.resource_no,
-    jobsQuery: jobsQuery,
+    jobsQuery: {
+      data: jobsQuery.data,
+      isLoading: jobsQuery.isLoading,
+      error: jobsQuery.error,
+      isSuccess: jobsQuery.isSuccess
+    },
     jobs: jobs,
-    workTypesQuery: workTypesQuery,
+    workTypesQuery: {
+      data: workTypesQuery.data,
+      isLoading: workTypesQuery.isLoading,
+      error: workTypesQuery.error,
+      isSuccess: workTypesQuery.isSuccess
+    },
     workTypes: workTypes
   });
 
