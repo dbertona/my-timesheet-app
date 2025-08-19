@@ -1166,19 +1166,21 @@ function TimesheetEdit({ headerId }) {
         console.log("🎯 DEBUG: handleInputChange - jobInfo obtenido:", jobInfo);
         
         // ✅ Establecer responsable del proyecto y departamento del recurso
-        const newData = {
-          ...prev[lineId],
-          [name]: value,
-          department_code: editableHeader?.department_code || "", // ✅ Departamento del recurso
-          job_responsible: jobInfo[value]?.responsible || "" // ✅ Responsable del proyecto
-        };
-        
-        console.log("🎯 DEBUG: handleInputChange - Nuevos datos:", newData);
-        
-        setEditFormData(prev => ({
-          ...prev,
-          [lineId]: newData
-        }));
+        setEditFormData(prev => {
+          const newData = {
+            ...prev[lineId],
+            [name]: value,
+            department_code: editableHeader?.department_code || "", // ✅ Departamento del recurso
+            job_responsible: jobInfo[value]?.responsible || "" // ✅ Responsable del proyecto
+          };
+          
+          console.log("🎯 DEBUG: handleInputChange - Nuevos datos:", newData);
+          
+          return {
+            ...prev,
+            [lineId]: newData
+          };
+        });
       } catch (error) {
         console.error(`Error obteniendo info del proyecto:`, error);
         // En caso de error, usar valor normal
