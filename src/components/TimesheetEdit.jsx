@@ -438,17 +438,15 @@ function TimesheetEdit({ headerId }) {
           };
         }
 
-        // Crear nuevo header
+        // Crear nuevo header - solo columnas que existen en la tabla
         const newHeader = {
           resource_no: headerData.resource_no,
           resource_name: headerData.resource_name,
           department_code: headerData.department_code,
-          company: headerData.company || "",
           allocation_period: headerData.allocation_period,
           posting_date: headerData.posting_date,
           posting_description: headerData.posting_description,
-          status: "Draft",
-          user_email: userEmail, // Usar user_email en lugar de created_by
+          user_email: userEmail, // Email del usuario actual
           synced_to_bc: false // Default para nuevos headers
         };
 
