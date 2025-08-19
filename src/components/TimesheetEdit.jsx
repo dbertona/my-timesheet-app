@@ -538,28 +538,11 @@ function TimesheetEdit({ headerId }) {
         if (lineId.startsWith('tmp-')) {
           // 🆕 Línea nueva - insertar
           if (lineData.job_no && lineData.quantity && parseFloat(lineData.quantity) > 0) {
-            const newLineData = {
-              // Campos básicos de la línea
-              job_no: lineData.job_no,
-              job_task_no: lineData.job_task_no,
-              description: lineData.description,
-              work_type: lineData.work_type,
-              quantity: parseFloat(lineData.quantity),
-              date: toIsoFromInput(lineData.date),
-              department_code: lineData.department_code,
-              // Campos del header
-              header_id: currentHeaderId,
-              resource_no: editableHeader?.resource_no || "",
-              company: editableHeader?.company || "",
-              // Campos obligatorios adicionales
-              job_responsible: "", // Se llenará automáticamente
-              job_responsible_approval: true, // Siempre true
-              resource_responsible: editableHeader?.resource_no || "",
-              job_no_and_description: lineData.job_no && lineData.description ? 
-                `${lineData.job_no} - ${lineData.description}` : 
-                `${lineData.job_no || ""}${lineData.description || ""}`,
-              creado: new Date().toISOString()
-            };
+            // ✅ REUTILIZAR: Usar prepareRowForDb como las líneas existentes
+            const newLineData = prepareRowForDb(lineData, {});
+            
+            // ✅ Asegurar que header_id sea el correcto para la nueva línea
+            newLineData.header_id = currentHeaderId;
 
             const { data: createdLine, error: lineError } = await supabaseClient
               .from("timesheet")
