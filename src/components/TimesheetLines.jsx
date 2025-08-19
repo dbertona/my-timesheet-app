@@ -28,6 +28,7 @@ export default function TimesheetLines({
   hasRefs,
   setSafeRef,
   header,
+  editableHeader,
   calendarHolidays,
   scheduleAutosave,
   saveLineNow,
