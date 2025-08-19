@@ -225,6 +225,38 @@ function TimesheetEdit({ headerId }) {
     setHasUnsavedChanges(true);
   }, []);
 
+  // Función para obtener el primer día del mes del período
+  const getFirstDayOfPeriod = (allocationPeriod) => {
+    if (!allocationPeriod) return new Date().toISOString().split('T')[0];
+    
+    // Parsear período M25-M08 (año-mes)
+    const match = allocationPeriod.match(/M(\d{2})-M(\d{2})/);
+    if (match) {
+      const year = 2000 + parseInt(match[1]); // 25 -> 2025
+      const month = parseInt(match[2]) - 1; // M08 -> 7 (agosto, 0-indexed)
+      const firstDay = new Date(year, month, 1);
+      return firstDay.toISOString().split('T')[0];
+    }
+    
+    return new Date().toISOString().split('T')[0];
+  };
+
+  // Función para obtener el último día del mes del período
+  const getLastDayOfPeriod = (allocationPeriod) => {
+    if (!allocationPeriod) return new Date().toISOString().split('T')[0];
+    
+    // Parsear período M25-M08 (año-mes)
+    const match = allocationPeriod.match(/M(\d{2})-M(\d{2})/);
+    if (match) {
+      const year = 2000 + parseInt(match[1]); // 25 -> 2025
+      const month = parseInt(match[2]); // M08 -> 8 (agosto, 1-indexed para next month)
+      const lastDay = new Date(year, month, 0); // Día 0 del mes siguiente = último día del mes actual
+      return lastDay.toISOString().split('T')[0];
+    }
+    
+    return new Date().toISOString().split('T')[0];
+  };
+
   // ✅ Función para manejar cambios en las líneas desde TimesheetLines
   const handleLinesChange = useCallback((lineId, changes) => {
     // Actualizar solo el editFormData para la línea específica
@@ -446,8 +478,8 @@ function TimesheetEdit({ headerId }) {
           posting_date: headerData.posting_date || new Date().toISOString().split('T')[0],
           description: headerData.resource_name, // Nombre del recurso
           posting_description: headerData.posting_description || `Parte de trabajo ${headerData.allocation_period}`,
-          from_date: headerData.posting_date || new Date().toISOString().split('T')[0], // Usar posting_date como from_date
-          to_date: headerData.posting_date || new Date().toISOString().split('T')[0], // Usar posting_date como to_date
+          from_date: getFirstDayOfPeriod(headerData.allocation_period), // Primer día del mes del período
+          to_date: getLastDayOfPeriod(headerData.allocation_period), // Último día del mes del período
           allocation_period: headerData.allocation_period,
           resource_calendar: headerData.calendar_type,
           user_email: userEmail,
