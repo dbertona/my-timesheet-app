@@ -441,7 +441,7 @@ function TimesheetEdit({ headerId }) {
         // Crear nuevo header - SOLO columnas mínimas necesarias
         const newHeader = {
           id: crypto.randomUUID(), // Generar ID único manualmente
-          description: headerData.posting_description, // Campo obligatorio 'description'
+          description: headerData.resource_name, // Campo obligatorio 'description' - nombre del recurso
           resource_no: headerData.resource_no,
           user_email: userEmail // Email del usuario actual
         };
