@@ -538,8 +538,11 @@ function TimesheetEdit({ headerId }) {
         if (lineId.startsWith('tmp-')) {
           // 🆕 Línea nueva - insertar
           if (lineData.job_no && lineData.quantity && parseFloat(lineData.quantity) > 0) {
+            // ✅ Obtener información del proyecto (responsable y departamento)
+            const jobInfo = await fetchJobInfo([lineData.job_no]);
+            
             // ✅ REUTILIZAR: Usar prepareRowForDb como las líneas existentes
-            const newLineData = prepareRowForDb(lineData, {});
+            const newLineData = prepareRowForDb(lineData, jobInfo);
             
             // ✅ Asegurar que header_id sea el correcto para la nueva línea
             newLineData.header_id = currentHeaderId;
@@ -1043,6 +1046,29 @@ function TimesheetEdit({ headerId }) {
     return map;
   };
 
+  // -- Buscar información del proyecto (responsable y departamento)
+  const fetchJobInfo = async (jobNos) => {
+    if (!jobNos || jobNos.length === 0) return {};
+    const unique = Array.from(new Set(jobNos.filter(Boolean)));
+    if (unique.length === 0) return {};
+    const { data, error } = await supabaseClient
+      .from("job")
+      .select("no,responsible,department_code")
+      .in("no", unique);
+    if (error) {
+      console.error("Error buscando información del job:", error);
+      return {};
+    }
+    const map = {};
+    for (const r of data) {
+      map[r.no] = {
+        responsible: r.responsible ?? "",
+        department_code: r.department_code ?? ""
+      };
+    }
+    return map;
+  };
+
   // -- Preparar datos para DB
   const prepareRowForDb = (row, jobResponsibleMap) => {
     const out = {};
@@ -1074,6 +1100,15 @@ function TimesheetEdit({ headerId }) {
         out.resource_no = row.resource_no ?? header?.resource_no ?? "";
       } else if (key === "resource_responsible") {
         out.resource_responsible = row.resource_responsible ?? header?.resource_no ?? "";
+      } else if (key === "department_code") {
+        // ✅ Obtener departamento del proyecto, no del recurso
+        const jobNo = row.job_no || "";
+        const jobInfo = jobResponsibleMap?.[jobNo];
+        if (jobInfo && typeof jobInfo === 'object' && jobInfo.department_code) {
+          out.department_code = jobInfo.department_code;
+        } else {
+          out.department_code = row.department_code ?? "";
+        }
       } else if (key === "quantity") {
         out.quantity = Number(row.quantity) || 0;
       } else {
@@ -1219,10 +1254,10 @@ function TimesheetEdit({ headerId }) {
 
     const allRowsToSave = [...toInsertIds, ...toUpdateIds].map((id) => editFormData[id] || {});
     const jobNosNeeded = allRowsToSave
-      .filter((r) => (r.job_responsible == null || r.job_responsible === "") && r.job_no)
+      .filter((r) => r.job_no) // ✅ Obtener info de TODOS los proyectos para departamento
       .map((r) => r.job_no);
 
-    const jobResponsibleMap = await fetchJobResponsibles(jobNosNeeded);
+    const jobResponsibleMap = await fetchJobInfo(jobNosNeeded);
 
     // INSERT
     if (toInsertIds.length > 0) {
