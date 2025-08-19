@@ -1203,82 +1203,90 @@ function TimesheetEdit({ headerId }) {
   if (loading && effectiveHeaderId) return <div>Cargando datos...</div>;
 
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-        {/* Botón circular solo con el icono */}
-        <button
-          type="button"
-          aria-label="Lista Parte Trabajo"
-          onClick={() => navigate("/")}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#D8EEF1"; // hover suave
-            e.currentTarget.style.borderColor = "#007E87";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#EAF7F9";
-            e.currentTarget.style.borderColor = "rgba(0,126,135,0.35)";
-          }}
-          style={{
-            width: 36,
-            height: 36,
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "9999px",
-            border: "1px solid rgba(0,126,135,0.35)",
-            background: "#EAF7F9",
-            padding: 0,
-            cursor: "pointer",
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 6L9 12L15 18" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-        {/* Etiqueta clickable con el mismo color del botón Editar, modificado a color negro */}
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          aria-label="Ir a lista de parte de trabajo"
-          style={{
-            background: "transparent",
-            border: "none",
-            color: "#000",
-            fontWeight: 700,
-            fontSize: "22px",
-            lineHeight: 1,
-            cursor: "pointer",
-            padding: 0,
-          }}
-        >
-          {header ? "Editar Parte de Trabajo" : "Nuevo Parte de Trabajo"}
-        </button>
-      </div>
-      {/* Header, resumen y calendario en la misma fila, alineados a la derecha */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-        {/* Header a la izquierda */}
-        <div style={{ flex: 1 }}>
-          <TimesheetHeader
-            header={header}
-            onHeaderChange={setEditableHeader}
-          />
+    <div className="ts-responsive">
+      <div className="timesheet-container">
+        {/* Header de navegación */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+          {/* Botón circular solo con el icono */}
+          <button
+            type="button"
+            aria-label="Lista Parte Trabajo"
+            onClick={() => navigate("/")}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#D8EEF1"; // hover suave
+              e.currentTarget.style.borderColor = "#007E87";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#EAF7F9";
+              e.currentTarget.style.borderColor = "rgba(0,126,135,0.35)";
+            }}
+            style={{
+              width: 36,
+              height: 36,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "9999px",
+              border: "1px solid rgba(0,126,135,0.35)",
+              background: "#EAF7F9",
+              padding: 0,
+              cursor: "pointer",
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 6L9 12L15 18" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          {/* Etiqueta clickable con el mismo color del botón Editar, modificado a color negro */}
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            aria-label="Ir a lista de parte de trabajo"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#000",
+              fontWeight: 700,
+              fontSize: "22px",
+              lineHeight: 1,
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            {header ? "Editar Parte de Trabajo" : "Nuevo Parte de Trabajo"}
+          </button>
         </div>
 
-        {/* Panel derecho con resumen y calendario - fijo a la derecha */}
-        <div style={{ marginLeft: 24, flexShrink: 0 }}>
-          <CalendarPanel
-            calRange={calRange}
-            firstOffset={firstOffset}
-            calendarDays={calendarDays}
-            requiredSum={requiredSum}
-            imputedSum={imputedSum}
-            missingSum={missingSum}
-            rightPadState={[rightPad, setRightPad]}
-          />
+        {/* Sección del header y calendario - altura fija */}
+        <div className="timesheet-header-section">
+          {/* Header, resumen y calendario en la misma fila, alineados a la derecha */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            {/* Header a la izquierda */}
+            <div style={{ flex: 1 }}>
+              <TimesheetHeader
+                header={header}
+                onHeaderChange={setEditableHeader}
+              />
             </div>
+
+            {/* Panel derecho con resumen y calendario - fijo a la derecha */}
+            <div style={{ marginLeft: 24, flexShrink: 0 }}>
+              <CalendarPanel
+                calRange={calRange}
+                firstOffset={firstOffset}
+                calendarDays={calendarDays}
+                requiredSum={requiredSum}
+                imputedSum={imputedSum}
+                missingSum={missingSum}
+                rightPadState={[rightPad, setRightPad]}
+              />
             </div>
-      {/* Sección de líneas debajo, ocupa todo el ancho disponible */}
-      <div style={{ marginTop: 24 }}>
+          </div>
+        </div>
+
+        {/* Sección de líneas - ocupa todo el espacio restante */}
+        <div className="timesheet-lines-section">
+          {/* Controles de líneas */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <h3>Líneas del Timesheet</h3>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -1306,7 +1314,7 @@ function TimesheetEdit({ headerId }) {
 
               {/* 🆕 Indicador de estado de validación */}
               {hasUnsavedChanges && (
-                                <div style={{
+                <div style={{
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
@@ -1326,39 +1334,44 @@ function TimesheetEdit({ headerId }) {
                   )}
                 </div>
               )}
-                    </div>
-                  </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
             <span style={{ color: "#666", fontSize: 12 }}>
               {hasUnsavedChanges ? "Cambios pendientes de guardar" : "Sin cambios pendientes"}
             </span>
-        </div>
+          </div>
 
-        <TimesheetLines
-          lines={lines}
-          editFormData={editFormData}
-          errors={errors}
-          inputRefs={inputRefs}
-          hasRefs={hasRefs}
-          setSafeRef={setSafeRef}
-          calendarOpenFor={calendarOpenFor}
-          setCalendarOpenFor={setCalendarOpenFor}
-          handleInputChange={handleInputChange}
-          handleDateInputChange={handleDateChange}
-          handleDateInputBlur={handleDateInputBlur}
-          handleInputFocus={handleInputFocus}
-          handleKeyDown={handleKeyDown}
-          header={header}
-          editableHeader={editableHeader}
-          calendarHolidays={calendarHolidays}
-          scheduleAutosave={() => {}} // Eliminado
-          saveLineNow={() => {}} // Eliminado
-          savingByLine={savingByLine}
-          onLinesChange={handleLinesChange}
-          deleteLineMutation={deleteLineMutation}
-          insertLineMutation={insertLineMutation}
-          markAsChanged={markAsChanged}
-        />
+          {/* Contenedor de la tabla - ocupa todo el espacio disponible */}
+          <div className="timesheet-table-container">
+            <TimesheetLines
+              lines={lines}
+              editFormData={editFormData}
+              errors={errors}
+              inputRefs={inputRefs}
+              hasRefs={hasRefs}
+              setSafeRef={setSafeRef}
+              calendarOpenFor={calendarOpenFor}
+              setCalendarOpenFor={setCalendarOpenFor}
+              handleInputChange={handleInputChange}
+              handleDateInputChange={handleDateChange}
+              handleDateInputBlur={handleDateInputBlur}
+              handleInputFocus={handleInputFocus}
+              handleKeyDown={handleKeyDown}
+              header={header}
+              editableHeader={editableHeader}
+              calendarHolidays={calendarHolidays}
+              scheduleAutosave={() => {}} // Eliminado
+              saveLineNow={() => {}} // Eliminado
+              savingByLine={savingByLine}
+              onLinesChange={handleLinesChange}
+              deleteLineMutation={deleteLineMutation}
+              insertLineMutation={insertLineMutation}
+              markAsChanged={markAsChanged}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Modal de confirmación de navegación */}
