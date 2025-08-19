@@ -72,8 +72,9 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 department_code: resourceData.department_code,
                 calendar_type: resourceData.calendar_type,
                 allocation_period: ap,
-                posting_date: firstDayOfPeriod,
-                posting_description: `Parte de trabajo ${ap}`
+                posting_date: new Date().toISOString().split('T')[0], // Fecha de hoy
+                posting_description: `Parte de trabajo ${ap}`,
+                calendar_period_days: "" // Se llenará cuando se seleccione la fecha
               };
               
               console.log("🆕 TimesheetHeader: Estableciendo editableHeader:", newEditableHeader);
@@ -105,7 +106,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 department_code: "DEFAULT",
                 calendar_type: "MAD INT",
                 allocation_period: ap,
-                posting_date: firstDayOfPeriod,
+                posting_date: new Date().toISOString().split('T')[0], // Fecha de hoy
                 posting_description: `Parte de trabajo ${ap}`,
                 calendar_period_days: ""
               };
@@ -221,17 +222,18 @@ function TimesheetHeader({ header, onHeaderChange }) {
             <input
               type="text"
               value={editableHeader.resource_no}
-              onChange={(e) => handleFieldChange("resource_no", e.target.value)}
+              readOnly
               style={{
                 width: "100%",
                 padding: "8px",
                 border: "1px solid #ddd",
                 borderRadius: "4px",
-                fontSize: "14px"
+                fontSize: "14px",
+                backgroundColor: "#f5f5f5",
+                color: "#666"
               }}
             />
           </div>
-          
           <div>
             <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
               Nombre Recurso:
@@ -239,17 +241,18 @@ function TimesheetHeader({ header, onHeaderChange }) {
             <input
               type="text"
               value={editableHeader.resource_name}
-              onChange={(e) => handleFieldChange("resource_name", e.target.value)}
+              readOnly
               style={{
                 width: "100%",
                 padding: "8px",
                 border: "1px solid #ddd",
                 borderRadius: "4px",
-                fontSize: "14px"
+                fontSize: "14px",
+                backgroundColor: "#f5f5f5",
+                color: "#666"
               }}
             />
           </div>
-          
           <div>
             <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
               Departamento:
@@ -291,13 +294,15 @@ function TimesheetHeader({ header, onHeaderChange }) {
             <input
               type="text"
               value={editableHeader.allocation_period}
-              onChange={(e) => handleFieldChange("allocation_period", e.target.value)}
+              readOnly
               style={{
                 width: "100%",
                 padding: "8px",
                 border: "1px solid #ddd",
                 borderRadius: "4px",
-                fontSize: "14px"
+                fontSize: "14px",
+                backgroundColor: "#f5f5f5",
+                color: "#666"
               }}
             />
           </div>
@@ -331,7 +336,9 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 padding: "8px",
                 border: "1px solid #ddd",
                 borderRadius: "4px",
-                fontSize: "14px"
+                fontSize: "14px",
+                backgroundColor: "#f5f5f5",
+                color: "#666"
               }}
             />
           </div>
