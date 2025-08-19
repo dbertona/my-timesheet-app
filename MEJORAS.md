@@ -106,6 +106,7 @@
 **Problema resuelto:** El sistema permitía guardar timesheets con proyectos en estado "Completed" o "Lost" con horas imputadas.
 
 **Solución implementada:**
+
 1. **Validación pre-guardado** que bloquea datos inválidos
 2. **Detección automática** de proyectos con estado inválido
 3. **Modal informativo** que explica los errores y permite corregirlos
@@ -113,6 +114,7 @@
 5. **Navegación automática** a las líneas con problemas
 
 **Componentes creados:**
+
 - `ValidationErrorsModal.jsx` - Modal de errores con opciones de acción
 - `useAllJobs` - Hook para traer todos los proyectos del recurso
 - `fetchAllJobsByResource` - API para proyectos sin filtrar por status
