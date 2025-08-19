@@ -1155,21 +1155,29 @@ function TimesheetEdit({ headerId }) {
   const handleInputChange = useCallback(async (lineId, event) => {
     const { name, value } = event.target;
     
-    // ✅ Si se cambia el proyecto, obtener automáticamente el departamento
+        // ✅ Si se cambia el proyecto, obtener automáticamente el departamento
     if (name === "job_no" && value) {
+      console.log("🎯 DEBUG: handleInputChange - Proyecto seleccionado:", value);
+      console.log("🎯 DEBUG: handleInputChange - editableHeader:", editableHeader);
+      
       try {
         // Obtener información del proyecto (responsable y departamento)
         const jobInfo = await fetchJobInfo([value]);
+        console.log("🎯 DEBUG: handleInputChange - jobInfo obtenido:", jobInfo);
         
         // ✅ Establecer responsable del proyecto y departamento del recurso
+        const newData = {
+          ...prev[lineId],
+          [name]: value,
+          department_code: editableHeader?.department_code || "", // ✅ Departamento del recurso
+          job_responsible: jobInfo[value]?.responsible || "" // ✅ Responsable del proyecto
+        };
+        
+        console.log("🎯 DEBUG: handleInputChange - Nuevos datos:", newData);
+        
         setEditFormData(prev => ({
           ...prev,
-          [lineId]: {
-            ...prev[lineId],
-            [name]: value,
-            department_code: editableHeader?.department_code || "", // ✅ Departamento del recurso
-            job_responsible: jobInfo[value]?.responsible || "" // ✅ Responsable del proyecto
-          }
+          [lineId]: newData
         }));
       } catch (error) {
         console.error(`Error obteniendo info del proyecto:`, error);
@@ -1189,9 +1197,9 @@ function TimesheetEdit({ headerId }) {
         [lineId]: {
           ...prev[lineId],
           [name]: value
-          }
-        }));
-      }
+        }
+      }));
+    }
 
     // Marcar que hay cambios no guardados
     markAsChanged();
