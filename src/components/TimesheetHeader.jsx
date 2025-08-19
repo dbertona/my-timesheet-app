@@ -226,16 +226,12 @@ function TimesheetHeader({ header, onHeaderChange }) {
   if (!header) {
     // Mostrar cabecera editable para nuevo parte
     return (
-      <div style={{ 
-        padding: "20px", 
-        border: "2px dashed #007bff", 
-        borderRadius: "8px", 
+      <div style={{
+        padding: "20px",
+        border: "2px dashed #007bff",
+        borderRadius: "8px",
         backgroundColor: "#f8f9fa"
       }}>
-        <h3 style={{ color: "#007bff", marginBottom: "16px", textAlign: "center" }}>
-          🆕 Nuevo Parte de Trabajo
-        </h3>
-        
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
           <div>
             <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
@@ -347,17 +343,6 @@ function TimesheetHeader({ header, onHeaderChange }) {
               }}
             />
           </div>
-        </div>
-        
-        <div style={{ 
-          marginTop: "16px", 
-          padding: "12px", 
-          backgroundColor: "#e7f3ff", 
-          borderRadius: "6px",
-          fontSize: "14px",
-          color: "#0056b3"
-        }}>
-          💡 Completa la información de la cabecera y agrega líneas de trabajo
         </div>
       </div>
     );
