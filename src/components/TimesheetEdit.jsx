@@ -1051,21 +1051,31 @@ function TimesheetEdit({ headerId }) {
     if (!jobNos || jobNos.length === 0) return {};
     const unique = Array.from(new Set(jobNos.filter(Boolean)));
     if (unique.length === 0) return {};
+    
+    console.log("🔍 fetchJobInfo: Buscando proyectos:", unique);
+    
     const { data, error } = await supabaseClient
       .from("job")
       .select("no,responsible,department_code")
       .in("no", unique);
+      
     if (error) {
       console.error("Error buscando información del job:", error);
       return {};
     }
+    
+    console.log("🔍 fetchJobInfo: Datos obtenidos:", data);
+    
     const map = {};
     for (const r of data) {
       map[r.no] = {
         responsible: r.responsible ?? "",
         department_code: r.department_code ?? ""
       };
+      console.log(`🔍 fetchJobInfo: Proyecto ${r.no}:`, map[r.no]);
     }
+    
+    console.log("🔍 fetchJobInfo: Mapa final:", map);
     return map;
   };
 
@@ -1104,10 +1114,20 @@ function TimesheetEdit({ headerId }) {
         // ✅ Obtener departamento del proyecto, no del recurso
         const jobNo = row.job_no || "";
         const jobInfo = jobResponsibleMap?.[jobNo];
+        
+        console.log(`🔍 prepareRowForDb - department_code para proyecto ${jobNo}:`, {
+          jobInfo,
+          jobInfoType: typeof jobInfo,
+          hasDepartmentCode: jobInfo?.department_code,
+          fallback: row.department_code
+        });
+        
         if (jobInfo && typeof jobInfo === 'object' && jobInfo.department_code) {
           out.department_code = jobInfo.department_code;
+          console.log(`✅ prepareRowForDb - Usando departamento del proyecto: ${jobInfo.department_code}`);
         } else {
           out.department_code = row.department_code ?? "";
+          console.log(`⚠️ prepareRowForDb - Usando departamento fallback: ${out.department_code}`);
         }
       } else if (key === "quantity") {
         out.quantity = Number(row.quantity) || 0;
