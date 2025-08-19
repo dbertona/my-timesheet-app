@@ -1052,10 +1052,10 @@ function TimesheetEdit({ headerId }) {
     const unique = Array.from(new Set(jobNos.filter(Boolean)));
     if (unique.length === 0) return {};
     
-    // ✅ Solo obtener columnas que existen en la tabla job
+    // ✅ Obtener columnas que existen en la tabla job (departamento, no department_code)
     const { data, error } = await supabaseClient
       .from("job")
-      .select("no,responsible")
+      .select("no,responsible,departamento")
       .in("no", unique);
       
     if (error) {
@@ -1067,7 +1067,7 @@ function TimesheetEdit({ headerId }) {
     for (const r of data) {
       map[r.no] = {
         responsible: r.responsible ?? "",
-        department_code: "" // ✅ Por ahora vacío, se puede obtener del recurso o header
+        department_code: r.departamento ?? "" // ✅ Usar departamento del proyecto
       };
     }
     
@@ -1170,7 +1170,7 @@ function TimesheetEdit({ headerId }) {
           const newData = {
             ...prev[lineId],
             [name]: value,
-            department_code: editableHeader?.department_code || "20", // ✅ Departamento del recurso o default
+            department_code: jobInfo[value]?.department_code || editableHeader?.department_code || "20", // ✅ Departamento del proyecto, recurso o default
             job_responsible: jobInfo[value]?.responsible || "" // ✅ Responsable del proyecto
           };
           
