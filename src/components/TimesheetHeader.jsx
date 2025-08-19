@@ -11,10 +11,11 @@ function TimesheetHeader({ header, onHeaderChange }) {
     resource_no: "",
     resource_name: "",
     department_code: "",
-    company: "",
+    calendar_type: "",
     allocation_period: "",
     posting_date: "",
-    posting_description: ""
+    posting_description: "",
+    calendar_period_days: "" // Nuevo campo
   });
 
   useEffect(() => {
@@ -105,7 +106,8 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 calendar_type: "MAD INT",
                 allocation_period: ap,
                 posting_date: firstDayOfPeriod,
-                posting_description: `Parte de trabajo ${ap}`
+                posting_description: `Parte de trabajo ${ap}`,
+                calendar_period_days: ""
               };
               
               setEditableHeader(fallbackHeader);
@@ -134,18 +136,59 @@ function TimesheetHeader({ header, onHeaderChange }) {
     const year = 2000 + yy;
     const month = parseInt(m[2], 10);
     
-    const firstDay = new Date(year, month - 1, 1);
-    return firstDay.toISOString().split('T')[0];
+    return new Date(year, month - 1, 1).toISOString().split('T')[0];
   };
 
-  // Función para manejar cambios en los campos editables
-  const handleFieldChange = (field, value) => {
+  // Función para obtener calendar_period_days del calendario del recurso
+  const getCalendarPeriodDays = async (postingDate, calendarType, allocationPeriod) => {
+    if (!postingDate || !calendarType || !allocationPeriod) return "";
+    
+    try {
+      const { data, error } = await supabaseClient
+        .from("calendar_period_days")
+        .select("day, hours_working, holiday")
+        .eq("allocation_period", allocationPeriod)
+        .eq("calendar_code", calendarType)
+        .eq("day", postingDate)
+        .single();
+      
+      if (error) {
+        console.error("❌ Error obteniendo calendar_period_days:", error);
+        return "";
+      }
+      
+      if (data) {
+        console.log("🆕 Calendar period days obtenido:", data);
+        return data.day; // Retornar el día que coincide
+      }
+      
+      return "";
+    } catch (error) {
+      console.error("❌ Error en getCalendarPeriodDays:", error);
+      return "";
+    }
+  };
+
+  // Manejar cambios en los campos editables
+  const handleFieldChange = async (field, value) => {
     const newHeader = { ...editableHeader, [field]: value };
     setEditableHeader(newHeader);
     
-    // Notificar cambios al componente padre
-    if (onHeaderChange) {
-      onHeaderChange(newHeader);
+    // Si se cambió la fecha del parte, actualizar calendar_period_days
+    if (field === "posting_date" && value && newHeader.calendar_type && newHeader.allocation_period) {
+      const calendarPeriodDays = await getCalendarPeriodDays(value, newHeader.calendar_type, newHeader.allocation_period);
+      newHeader.calendar_period_days = calendarPeriodDays;
+      setEditableHeader(newHeader);
+      
+      // Notificar al padre con la información actualizada
+      if (onHeaderChange) {
+        onHeaderChange(newHeader);
+      }
+    } else {
+      // Para otros campos, notificar inmediatamente
+      if (onHeaderChange) {
+        onHeaderChange(newHeader);
+      }
     }
   };
 
@@ -209,42 +252,6 @@ function TimesheetHeader({ header, onHeaderChange }) {
           
           <div>
             <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
-              Período:
-            </label>
-            <input
-              type="text"
-              value={editableHeader.allocation_period}
-              onChange={(e) => handleFieldChange("allocation_period", e.target.value)}
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px"
-              }}
-            />
-          </div>
-          
-          <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
-              Fecha Parte:
-            </label>
-            <input
-              type="date"
-              value={editableHeader.posting_date}
-              onChange={(e) => handleFieldChange("posting_date", e.target.value)}
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px"
-              }}
-            />
-          </div>
-          
-          <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
               Departamento:
             </label>
             <input
@@ -260,15 +267,65 @@ function TimesheetHeader({ header, onHeaderChange }) {
               }}
             />
           </div>
-          
           <div>
             <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
-              Empresa:
+              Tipo Calendario:
             </label>
             <input
               type="text"
-              value={editableHeader.company}
-              onChange={(e) => handleFieldChange("company", e.target.value)}
+              value={editableHeader.calendar_type}
+              onChange={(e) => handleFieldChange("calendar_type", e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                fontSize: "14px"
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+              Período:
+            </label>
+            <input
+              type="text"
+              value={editableHeader.allocation_period}
+              onChange={(e) => handleFieldChange("allocation_period", e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                fontSize: "14px"
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+              Fecha del Parte:
+            </label>
+            <input
+              type="date"
+              value={editableHeader.posting_date}
+              onChange={(e) => handleFieldChange("posting_date", e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                fontSize: "14px"
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+              Calendar Period Days:
+            </label>
+            <input
+              type="text"
+              value={editableHeader.calendar_period_days}
+              readOnly
               style={{
                 width: "100%",
                 padding: "8px",

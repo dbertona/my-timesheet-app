@@ -433,7 +433,8 @@ function TimesheetEdit({ headerId }) {
             calendar_type: resourceData.calendar_type,
             allocation_period: ap,
             posting_date: new Date().toISOString().split('T')[0],
-            posting_description: `Parte de trabajo ${ap}`
+            posting_description: `Parte de trabajo ${ap}`,
+            calendar_period_days: "" // Se llenará cuando se seleccione la fecha
           };
         }
 
