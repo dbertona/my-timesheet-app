@@ -78,24 +78,26 @@ export default function useCalendarData(header, resolvedHeaderId, editFormData) 
       });
       setDailyRequired(req);
 
-      // 2) Horas imputadas persistidas por día
-      const { data: tRows, error: tErr } = await supabaseClient
-        .from("timesheet")
-        .select("date,quantity")
-        .eq("header_id", resolvedHeaderId || header.id)
-        .gte("date", fromIso)
-        .lte("date", toIso);
-      if (tErr) {
-        // eslint-disable-next-line no-console
-        console.error("Error cargando imputaciones:", tErr);
-        return;
+      // 2) Horas imputadas persistidas por día (solo si hay header_id)
+      let imp = {};
+      if (resolvedHeaderId || header?.id) {
+        const { data: tRows, error: tErr } = await supabaseClient
+          .from("timesheet")
+          .select("date,quantity")
+          .eq("header_id", resolvedHeaderId || header.id)
+          .gte("date", fromIso)
+          .lte("date", toIso);
+        if (tErr) {
+          // eslint-disable-next-line no-console
+          console.error("Error cargando imputaciones:", tErr);
+        } else {
+          (tRows || []).forEach((r) => {
+            const iso = (r.date || "").slice(0, 10);
+            const q = Number(r.quantity) || 0;
+            imp[iso] = (imp[iso] || 0) + q;
+          });
+        }
       }
-      const imp = {};
-      (tRows || []).forEach((r) => {
-        const iso = (r.date || "").slice(0, 10);
-        const q = Number(r.quantity) || 0;
-        imp[iso] = (imp[iso] || 0) + q;
-      });
 
       // 3) Aplicar estados por día con festivos
       const EPS = 0.01;

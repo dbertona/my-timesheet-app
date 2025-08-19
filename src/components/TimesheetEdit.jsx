@@ -70,7 +70,7 @@ function TimesheetEdit({ headerId }) {
     requiredSum,
     imputedSum,
     missingSum,
-  } = useCalendarData(header, resolvedHeaderId, editFormData);
+  } = useCalendarData(header || editableHeader, resolvedHeaderId, editFormData);
 
   // 🆕 Obtener jobs para validación de estado (TODOS los proyectos del recurso)
   const jobsQuery = useAllJobs(header?.resource_no);
