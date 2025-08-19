@@ -38,7 +38,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
             // Consultar la tabla resource usando el campo email
             const { data: resourceData, error: resourceError } = await supabaseClient
               .from("resource")
-              .select("code, name, department_code, company")
+              .select("code, name, department_code, calendar_type")
               .eq("email", userEmail)
               .single();
             
@@ -49,7 +49,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 user_email: userEmail,
                 name: resourceData.name,
                 department_code: resourceData.department_code,
-                company: resourceData.company
+                calendar_type: resourceData.calendar_type
               });
               
               // Obtener allocation_period de la URL
@@ -69,7 +69,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 resource_no: resourceData.code, // Usar code del recurso
                 resource_name: resourceData.name,
                 department_code: resourceData.department_code,
-                company: resourceData.company,
+                calendar_type: resourceData.calendar_type,
                 allocation_period: ap,
                 posting_date: firstDayOfPeriod,
                 posting_description: `Parte de trabajo ${ap}`
@@ -102,7 +102,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 resource_no: userEmail, // Fallback al email si no se encuentra el recurso
                 resource_name: userEmail,
                 department_code: "DEFAULT",
-                company: "POWERSOLUTION",
+                calendar_type: "MAD INT",
                 allocation_period: ap,
                 posting_date: firstDayOfPeriod,
                 posting_description: `Parte de trabajo ${ap}`

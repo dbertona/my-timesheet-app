@@ -408,7 +408,7 @@ function TimesheetEdit({ headerId }) {
           // Fallback: obtener información del recurso de la tabla resource
           const { data: resourceData, error: resourceError } = await supabaseClient
             .from("resource")
-            .select("code, name, department_code, company")
+            .select("code, name, department_code, calendar_type")
             .eq("email", userEmail)
             .single();
 
@@ -430,7 +430,7 @@ function TimesheetEdit({ headerId }) {
             resource_no: resourceData.code, // Usar code del recurso
             resource_name: resourceData.name,
             department_code: resourceData.department_code,
-            company: resourceData.company,
+            calendar_type: resourceData.calendar_type,
             allocation_period: ap,
             posting_date: new Date().toISOString().split('T')[0],
             posting_description: `Parte de trabajo ${ap}`
@@ -901,7 +901,7 @@ function TimesheetEdit({ headerId }) {
           // Consultar la tabla resource usando el campo email
           const { data: resourceData } = await supabaseClient
             .from("resource")
-            .select("code, department_code, company")
+            .select("code, department_code, calendar_type")
             .eq("email", userEmail)
             .single();
           
@@ -909,7 +909,7 @@ function TimesheetEdit({ headerId }) {
             return {
               user_email: userEmail,
               department_code: resourceData.department_code,
-              company: resourceData.company
+              calendar_type: resourceData.calendar_type
             };
           }
         }
