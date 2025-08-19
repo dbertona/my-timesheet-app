@@ -104,10 +104,11 @@
 
 /* Variante compacta reutilizable para paneles laterales (p. ej. resumen al lado del calendario) */
 .bc-card--compact {
-  width: 180px;
+  width: 320px; /* Aumentado para mostrar todo el contenido del resumen */
   height: auto;
   padding: 12px;
   border-radius: 6px;
+  min-width: 320px; /* Forzar ancho mínimo */
 }
 
 .bc-card__title--small {
@@ -116,21 +117,99 @@
   margin-bottom: 6px;
 }
 
-/* Grid sencillo para pares etiqueta/valor en tarjetas compactas */
+/* Grid para resumen de 3 columnas (etiqueta: valor) */
 .summary-grid {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  row-gap: 6px;
-  column-gap: 12px;
-  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  width: 100%;
 }
 
-.bc-card__title {
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.1;
-  margin: 0 0 4px 0;
+/* Estilos para elementos del resumen */
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  backdrop-filter: none;
+  transition: none;
 }
+
+.summary-item:hover {
+  background: transparent;
+  border-color: transparent;
+  transform: none;
+}
+
+.summary-label-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.summary-icon {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.summary-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.1px;
+}
+
+.summary-value {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 12px;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: 0.2px;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-width: 50px;
+  text-align: center;
+}
+
+/* Barra de progreso del resumen */
+.summary-progress {
+  margin-top: 8px;
+  padding: 0;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease, background-color 0.3s ease;
+}
+
+.progress-text {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 10px;
+  font-weight: 500;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: 0.1px;
+}
+
+/* Estilos del título del resumen ahora están inline en el componente */
 
 .bc-card__value {
   font-size: 44px;

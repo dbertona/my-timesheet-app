@@ -75,11 +75,11 @@ function TimesheetEdit({ headerId }) {
   const [hasDailyErrors, setHasDailyErrors] = useState(false);
   // 🆕 Estado para errores de validación de proyecto (Completed/Lost)
   const [hasProjectValidationErrors, setHasProjectValidationErrors] = useState(false);
-  
+
   // 🆕 Función para verificar si hay errores de validación de proyecto
   const checkProjectValidationErrors = useCallback(() => {
     if (!jobs.length || !Object.keys(editFormData).length) return false;
-    
+
     for (const [lineId, row] of Object.entries(editFormData)) {
       if (row.job_no && row.quantity && parseFloat(row.quantity) > 0) {
         const project = jobs.find(j => j.no === row.job_no);
@@ -90,13 +90,13 @@ function TimesheetEdit({ headerId }) {
     }
     return false;
   }, [jobs, editFormData]);
-  
+
   // 🆕 useEffect para actualizar el estado de errores de validación de proyecto
   useEffect(() => {
     const hasErrors = checkProjectValidationErrors();
     setHasProjectValidationErrors(hasErrors);
   }, [checkProjectValidationErrors]);
-  
+
   const serverSnapshotRef = useRef({}); // Último estado confirmado por servidor por línea
   const [savingByLine, setSavingByLine] = useState({}); // { [id]: boolean }
 
@@ -353,13 +353,13 @@ function TimesheetEdit({ headerId }) {
     if (!hasUnsavedChanges) return;
 
     // 🆕 PASO 1: Validar todos los datos antes de guardar
-    console.log("🔍 ANTES DE VALIDAR:", { 
-      jobsCount: jobs.length, 
+    console.log("🔍 ANTES DE VALIDAR:", {
+      jobsCount: jobs.length,
       jobsSample: jobs.slice(0, 3),
       editFormDataKeys: Object.keys(editFormData)
     });
     const validation = await validateAllData(editFormData, dailyRequired, calendarHolidays, jobs);
-    
+
     // 🆕 PASO 2: Si hay errores críticos, mostrar modal y bloquear guardado
     if (!validation.isValid) {
       setValidationModal({
@@ -368,7 +368,7 @@ function TimesheetEdit({ headerId }) {
       });
       return;
     }
-    
+
     // 🆕 PASO 3: Si solo hay advertencias, preguntar al usuario
     if (validation.hasWarnings) {
       setValidationModal({
@@ -1107,12 +1107,12 @@ function TimesheetEdit({ headerId }) {
               >
                 {isSaving ? "Guardando..." : "Guardar Cambios"}
               </button>
-              
+
               {/* 🆕 Indicador de estado de validación */}
               {hasUnsavedChanges && (
                                 <div style={{
-                  display: "flex", 
-                  alignItems: "center", 
+                  display: "flex",
+                  alignItems: "center",
                   gap: "8px",
                   fontSize: "12px",
                   color: (hasDailyErrors || hasProjectValidationErrors) ? "#dc3545" : "#28a745"
@@ -1186,7 +1186,7 @@ function TimesheetEdit({ headerId }) {
         onGoToError={(lineId) => {
           // Cerrar modal y enfocar la línea con error
           setValidationModal({ show: false, validation: null });
-          
+
           // Encontrar y enfocar la línea con error
           setTimeout(() => {
             const firstErrorField = Object.keys(validationModal.validation?.errors[lineId] || {})[0];
@@ -1199,7 +1199,7 @@ function TimesheetEdit({ headerId }) {
         onContinueAnyway={() => {
           // Cerrar modal y continuar con el guardado (solo advertencias)
           setValidationModal({ show: false, validation: null });
-          
+
           // Ejecutar guardado sin validación (ya sabemos que solo hay advertencias)
           setIsSaving(true);
           executeSaveWithoutValidation();

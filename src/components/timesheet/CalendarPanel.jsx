@@ -1,8 +1,9 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import BcCard from "../ui/BcCard";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CALENDAR, LABELS } from '../../constants/i18n';
+import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 
 export default function CalendarPanel({
   calRange,
@@ -40,22 +41,52 @@ export default function CalendarPanel({
 
   return (
     <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-      <BcCard title="Resumen mes" compact>
+      <div style={{ width: 210, border: "1px solid #d9d9d9", borderRadius: 6, padding: 12, background: "var(--bc-teal)" }}>
+        <div style={{ fontWeight: 700, marginBottom: 8, textAlign: "center", color: "#ffffff", fontSize: 14 }}>
+          Resumen mes
+        </div>
         <div className="summary-grid">
           <div className="summary-item">
-            <span className="summary-label">{LABELS.REQUIRED_HOURS}:</span>
+            <div className="summary-label-wrapper">
+              <FiClock className="summary-icon" />
+              <span className="summary-label">{LABELS.REQUIRED_HOURS}:</span>
+            </div>
             <span className="summary-value">{requiredSum.toFixed(2)}</span>
           </div>
           <div className="summary-item">
-            <span className="summary-label">{LABELS.WORKED_HOURS}:</span>
+            <div className="summary-label-wrapper">
+              <FiCheckCircle className="summary-icon" />
+              <span className="summary-label">{LABELS.WORKED_HOURS}:</span>
+            </div>
             <span className="summary-value">{imputedSum.toFixed(2)}</span>
           </div>
           <div className="summary-item">
-            <span className="summary-label">{LABELS.REMAINING_HOURS}:</span>
+            <div className="summary-label-wrapper">
+              <FiAlertCircle className="summary-icon" />
+              <span className="summary-label">{LABELS.REMAINING_HOURS}:</span>
+            </div>
             <span className="summary-value">{missingSum.toFixed(2)}</span>
           </div>
+
+          {/* Barra de progreso visual */}
+          {requiredSum > 0 && (
+            <div className="summary-progress">
+              <div className="progress-bar">
+                <div
+                  className="progress-fill"
+                  style={{
+                    width: `${Math.min((imputedSum / requiredSum) * 100, 100)}%`,
+                    backgroundColor: imputedSum >= requiredSum ? '#4ade80' : '#fbbf24'
+                  }}
+                ></div>
+              </div>
+              <div className="progress-text">
+                {Math.round((imputedSum / requiredSum) * 100)}% completado
+              </div>
+            </div>
+          )}
         </div>
-      </BcCard>
+      </div>
 
       <div ref={calendarBoxRef} style={{ width: 210, border: "1px solid #d9d9d9", borderRadius: 6, padding: 12, background: "#fff" }}>
         <div style={{ fontWeight: 700, marginBottom: 8 }}>
