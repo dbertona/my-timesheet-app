@@ -44,7 +44,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
               
               // Establecer valores por defecto
               const firstDayOfPeriod = getFirstDayOfPeriod(ap);
-              setEditableHeader({
+              const newEditableHeader = {
                 resource_no: resourceData.no,
                 resource_name: resourceData.name,
                 department_code: resourceData.department_code,
@@ -52,7 +52,14 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 allocation_period: ap,
                 posting_date: firstDayOfPeriod,
                 posting_description: `Parte de trabajo ${ap}`
-              });
+              };
+              
+              setEditableHeader(newEditableHeader);
+              
+              // 🆕 Notificar inmediatamente al componente padre
+              if (onHeaderChange) {
+                onHeaderChange(newEditableHeader);
+              }
             }
           }
         } catch (error) {

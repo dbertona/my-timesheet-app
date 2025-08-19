@@ -679,13 +679,16 @@ function TimesheetEdit({ headerId }) {
   useEffect(() => {
     if (!effectiveHeaderId && !loading) {
       setLoading(false);
-      
-      // 🆕 Crear línea vacía por defecto para nuevos partes
-      if (lines.length === 0) {
-        addEmptyLine();
-      }
     }
-  }, [effectiveHeaderId, loading]); // 🆕 Removido lines.length del array de dependencias
+  }, [effectiveHeaderId, loading]);
+
+  // 🆕 Crear línea vacía cuando la información del recurso esté disponible
+  useEffect(() => {
+    if (!effectiveHeaderId && editableHeader && lines.length === 0) {
+      console.log("🆕 Creando línea vacía con información del recurso:", editableHeader);
+      addEmptyLine();
+    }
+  }, [effectiveHeaderId, editableHeader, lines.length]);
 
   // Cuando llegan las líneas, actualizar estado local y edición inicial con dos decimales
   useEffect(() => {
