@@ -539,10 +539,18 @@ function TimesheetEdit({ headerId }) {
           // 🆕 Línea nueva - insertar
           if (lineData.job_no && lineData.quantity && parseFloat(lineData.quantity) > 0) {
             const newLineData = {
-              ...lineData,
-              header_id: currentHeaderId,
+              // Remover campos que no deben ir a la base de datos
+              job_no: lineData.job_no,
+              job_task_no: lineData.job_task_no,
+              description: lineData.description,
+              work_type: lineData.work_type,
+              quantity: parseFloat(lineData.quantity),
               date: toIsoFromInput(lineData.date),
-              quantity: parseFloat(lineData.quantity)
+              department_code: lineData.department_code,
+              // Campos del header
+              header_id: currentHeaderId,
+              resource_no: headerData.resource_no,
+              company: headerData.company || ""
             };
 
             const { data: createdLine, error: lineError } = await supabaseClient
