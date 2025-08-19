@@ -438,10 +438,9 @@ function TimesheetEdit({ headerId }) {
           };
         }
 
-        // Crear nuevo header - solo columnas que existen en la tabla
+        // Crear nuevo header - SOLO columnas que realmente existen en la tabla
         const newHeader = {
           resource_no: headerData.resource_no,
-          resource_name: headerData.resource_name,
           department_code: headerData.department_code,
           allocation_period: headerData.allocation_period,
           posting_date: headerData.posting_date,
