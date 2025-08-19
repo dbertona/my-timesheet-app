@@ -388,7 +388,7 @@ function TimesheetEdit({ headerId }) {
       let currentHeaderId = effectiveHeaderId;
       if (!currentHeaderId) {
         console.log("🆕 Creando nuevo header...");
-        
+
         // 🆕 Obtener email del usuario usando useMsal
         let userEmail = "";
         try {
@@ -397,7 +397,7 @@ function TimesheetEdit({ headerId }) {
         } catch {
           userEmail = "";
         }
-        
+
         if (!userEmail) {
           throw new Error("No se pudo obtener el email del usuario");
         }
@@ -405,16 +405,15 @@ function TimesheetEdit({ headerId }) {
         // 🆕 Usar información de la cabecera editable si está disponible
         let headerData = editableHeader;
         if (!headerData) {
-          // Fallback: obtener información del recurso
-          const { data: resourceData, error: resourceError } = await supabaseClient
-            .from("resource")
-            .select("user_email, name, department_code, company")
-            .eq("user_email", userEmail)
-            .single();
+          // Fallback: obtener información del recurso usando pending_hours
+          const { data: pendingData, error: pendingError } = await supabaseClient.rpc('pending_hours', { p_email: userEmail });
 
-          if (resourceError || !resourceData) {
-            throw new Error(`No se pudo obtener información del recurso: ${resourceError?.message || 'Datos no encontrados'}`);
+          if (pendingError || !pendingData || pendingData.length === 0) {
+            throw new Error(`No se pudo obtener información del recurso: ${pendingError?.message || 'Datos no encontrados'}`);
           }
+
+          // Extraer información del recurso de la respuesta de pending_hours
+          const resourceInfo = pendingData[0];
 
           // Construir allocation_period
           const params = new URLSearchParams(location.search);
@@ -428,9 +427,9 @@ function TimesheetEdit({ headerId }) {
 
           headerData = {
             resource_no: userEmail, // Usar email como resource_no
-            resource_name: resourceData.name,
-            department_code: resourceData.department_code,
-            company: resourceData.company,
+            resource_name: resourceInfo.resource_name || userEmail,
+            department_code: resourceInfo.department_code || "DEFAULT",
+            company: resourceInfo.company || "POWERSOLUTION",
             allocation_period: ap,
             posting_date: new Date().toISOString().split('T')[0],
             posting_description: `Parte de trabajo ${ap}`
@@ -896,16 +895,18 @@ function TimesheetEdit({ headerId }) {
         } catch {
           userEmail = "";
         }
-        
+
         if (userEmail) {
-          const { data: resourceData } = await supabaseClient
-            .from("resource")
-            .select("user_email, department_code, company")
-            .eq("user_email", userEmail)
-            .single();
+          // Usar pending_hours en lugar de consultar resource directamente
+          const { data: pendingData } = await supabaseClient.rpc('pending_hours', { p_email: userEmail });
           
-          if (resourceData) {
-            return resourceData;
+          if (pendingData && pendingData.length > 0) {
+            const resourceInfo = pendingData[0];
+            return {
+              user_email: userEmail,
+              department_code: resourceInfo.department_code || "DEFAULT",
+              company: resourceInfo.company || "POWERSOLUTION"
+            };
           }
         }
       } catch (error) {
