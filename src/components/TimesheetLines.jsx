@@ -84,6 +84,17 @@ export default function TimesheetLines({
   const workTypes = Array.isArray(workTypesQuery.data) ? workTypesQuery.data : [];
   const workTypesLoaded = workTypesQuery.isSuccess;
 
+  // Debug logs
+  console.log("🆕 TimesheetLines Debug:", {
+    header: header?.resource_no,
+    editableHeader: editableHeader?.resource_no,
+    resourceNo: (header || editableHeader)?.resource_no,
+    jobsQuery: jobsQuery,
+    jobs: jobs,
+    workTypesQuery: workTypesQuery,
+    workTypes: workTypes
+  });
+
   // Tareas por job: usar React Query como caché programática
   const queryClient = useQueryClient();
   const ensureTasksLoaded = async (jobNo) => {
