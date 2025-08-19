@@ -24,7 +24,7 @@ export function isHolidayIso(iso, holidaySet) {
 }
 
 // 🆕 NUEVA FUNCIÓN: Validación completa antes de guardar
-export function validateAllData(editFormData = {}, dailyRequired = {}, calendarHolidays = []) {
+export async function validateAllData(editFormData = {}, dailyRequired = {}, calendarHolidays = [], jobs = []) {
   const errors = {};
   const totals = computeTotalsByIso(editFormData);
   const holidaySet = buildHolidaySet(calendarHolidays);
@@ -59,6 +59,13 @@ export function validateAllData(editFormData = {}, dailyRequired = {}, calendarH
     if (!row.job_no) {
       lineErrors.job_no = "Proyecto es requerido";
       totalErrors++;
+    } else {
+      // 🆕 NUEVA VALIDACIÓN: Estado del proyecto
+      const project = jobs.find(j => j.no === row.job_no);
+      if (project && (project.status === 'Completed' || project.status === 'Lost')) {
+        lineErrors.job_no = `No se pueden imputar horas en proyecto ${project.status === 'Completed' ? 'Completado' : 'Perdido'}`;
+        totalErrors++;
+      }
     }
     
     // 4. Validar tarea

@@ -7,6 +7,7 @@ import { supabaseClient } from "../supabaseClient";
 import useCalendarData from "../hooks/useCalendarData";
 import useTimesheetLines from "../hooks/useTimesheetLines";
 import useTimesheetEdit from "../hooks/useTimesheetEdit";
+import { useJobs } from "../hooks/useTimesheetQueries";
 import TimesheetHeader from "./TimesheetHeader";
 import TimesheetLines from "./TimesheetLines";
 import CalendarPanel from "./timesheet/CalendarPanel";
@@ -67,6 +68,10 @@ function TimesheetEdit({ headerId }) {
     imputedSum,
     missingSum,
   } = useCalendarData(header, resolvedHeaderId, editFormData);
+
+  // 🆕 Obtener jobs para validación de estado
+  const jobsQuery = useJobs(header?.resource_no);
+  const jobs = jobsQuery.data || [];
   const [hasDailyErrors, setHasDailyErrors] = useState(false);
   const serverSnapshotRef = useRef({}); // Último estado confirmado por servidor por línea
   const [savingByLine, setSavingByLine] = useState({}); // { [id]: boolean }
@@ -324,7 +329,7 @@ function TimesheetEdit({ headerId }) {
     if (!hasUnsavedChanges) return;
 
     // 🆕 PASO 1: Validar todos los datos antes de guardar
-    const validation = validateAllData(editFormData, dailyRequired, calendarHolidays);
+    const validation = await validateAllData(editFormData, dailyRequired, calendarHolidays, jobs);
     
     // 🆕 PASO 2: Si hay errores críticos, mostrar modal y bloquear guardado
     if (!validation.isValid) {
