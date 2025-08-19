@@ -440,6 +440,7 @@ function TimesheetEdit({ headerId }) {
 
         // Crear nuevo header - SOLO columnas que realmente existen en la tabla
         const newHeader = {
+          id: crypto.randomUUID(), // Generar ID único manualmente
           resource_no: headerData.resource_no,
           department_code: headerData.department_code,
           allocation_period: headerData.allocation_period,
