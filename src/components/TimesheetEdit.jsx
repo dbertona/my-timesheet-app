@@ -443,13 +443,13 @@ function TimesheetEdit({ headerId }) {
           resource_no: headerData.resource_no,
           resource_name: headerData.resource_name,
           department_code: headerData.department_code,
-          company: headerData.company,
+          company: headerData.company || "",
           allocation_period: headerData.allocation_period,
           posting_date: headerData.posting_date,
           posting_description: headerData.posting_description,
           status: "Draft",
-          created_by: userEmail,
-          created_at: new Date().toISOString()
+          user_email: userEmail, // Usar user_email en lugar de created_by
+          synced_to_bc: false // Default para nuevos headers
         };
 
         const { data: createdHeader, error: headerError } = await supabaseClient
