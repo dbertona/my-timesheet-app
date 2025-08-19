@@ -1170,7 +1170,7 @@ function TimesheetEdit({ headerId }) {
           const newData = {
             ...prev[lineId],
             [name]: value,
-            department_code: editableHeader?.department_code || "", // ✅ Departamento del recurso
+            department_code: editableHeader?.department_code || "20", // ✅ Departamento del recurso o default
             job_responsible: jobInfo[value]?.responsible || "" // ✅ Responsable del proyecto
           };
           
