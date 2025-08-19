@@ -470,7 +470,7 @@ function TimesheetEdit({ headerId }) {
           };
         }
 
-        // Crear nuevo header - TODOS los campos obligatorios según la estructura de la tabla
+        // Crear nuevo header - SOLO campos sin restricciones de clave foránea
         const now = new Date().toISOString();
         const newHeader = {
           id: crypto.randomUUID(), // Generar ID único manualmente
@@ -478,10 +478,6 @@ function TimesheetEdit({ headerId }) {
           posting_date: headerData.posting_date || new Date().toISOString().split('T')[0],
           description: headerData.resource_name, // Nombre del recurso
           posting_description: headerData.posting_description || `Parte de trabajo ${headerData.allocation_period}`,
-          from_date: getFirstDayOfPeriod(headerData.allocation_period), // Primer día del mes del período
-          to_date: getLastDayOfPeriod(headerData.allocation_period), // Último día del mes del período
-          allocation_period: headerData.allocation_period,
-          resource_calendar: headerData.calendar_type,
           user_email: userEmail,
           created_at: now,
           updated_at: now,
