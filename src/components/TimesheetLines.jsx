@@ -74,12 +74,12 @@ export default function TimesheetLines({
   const [wtOpenFor, setWtOpenFor] = useState(null); // lineId con dropdown abierto
 
   // React Query: Carga y cache de proyectos por recurso (hook reutilizable)
-  const jobsQuery = useJobs(header?.resource_no);
+  const jobsQuery = useJobs((header || editableHeader)?.resource_no);
   const jobs = jobsQuery.data || [];
   const jobsLoaded = !jobsQuery.isLoading;
 
   // React Query: Carga y cache de servicios por recurso
-  const workTypesQuery = useWorkTypes(header?.resource_no);
+  const workTypesQuery = useWorkTypes((header || editableHeader)?.resource_no);
   const workTypes = Array.isArray(workTypesQuery.data) ? workTypesQuery.data : [];
   const workTypesLoaded = workTypesQuery.isSuccess;
 

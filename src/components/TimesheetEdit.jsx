@@ -73,7 +73,7 @@ function TimesheetEdit({ headerId }) {
   } = useCalendarData(header || editableHeader, resolvedHeaderId, editFormData);
 
   // 🆕 Obtener jobs para validación de estado (TODOS los proyectos del recurso)
-  const jobsQuery = useAllJobs(header?.resource_no);
+  const jobsQuery = useAllJobs((header || editableHeader)?.resource_no);
   const jobs = jobsQuery.data || [];
   const [hasDailyErrors, setHasDailyErrors] = useState(false);
   // 🆕 Estado para errores de validación de proyecto (Completed/Lost)
@@ -1349,6 +1349,7 @@ function TimesheetEdit({ headerId }) {
           handleInputFocus={handleInputFocus}
           handleKeyDown={handleKeyDown}
           header={header}
+          editableHeader={editableHeader}
           calendarHolidays={calendarHolidays}
           scheduleAutosave={() => {}} // Eliminado
           saveLineNow={() => {}} // Eliminado
