@@ -587,11 +587,15 @@ function TimesheetEdit({ headerId }) {
         ap = `M${yy}-M${mm}`; // p.ej. M25-M08
       }
 
+      // 🆕 PASO 0.5: Verificar si estamos en modo "nuevo parte"
+      const isNewParte = location.pathname === "/nuevo-parte";
+      
       // 1) Resolver header a cargar
       let headerData = null;
       let headerIdResolved = headerId || null;
 
       if (headerIdResolved) {
+        // Si tenemos headerId específico, cargarlo
         const { data: h, error: headerErr } = await supabaseClient
           .from("resource_timesheet_header")
           .select("*")
@@ -602,8 +606,8 @@ function TimesheetEdit({ headerId }) {
           toast.error("Error cargando cabecera");
         }
         headerData = h || null;
-      } else {
-        // Buscar por allocation_period exacto
+      } else if (!isNewParte) {
+        // 🆕 Solo buscar por allocation_period si NO estamos en modo "nuevo parte"
         const { data: h, error: headerErr } = await supabaseClient
           .from("resource_timesheet_header")
           .select("*")
@@ -617,11 +621,16 @@ function TimesheetEdit({ headerId }) {
         }
         headerData = h || null;
         headerIdResolved = headerData?.id || null;
+      } else {
+        // 🆕 Modo "nuevo parte" - no buscar header existente
+        console.log("🆕 Modo nuevo parte - no se buscará header existente");
+        headerData = null;
+        headerIdResolved = null;
       }
 
       setHeader(headerData);
       setResolvedHeaderId(headerIdResolved);
-      setDebugInfo({ ap, headerIdProp: headerId ?? null, headerIdResolved });
+      setDebugInfo({ ap, headerIdProp: headerId ?? null, headerIdResolved, isNewParte });
 
       // 2) Las líneas ahora se cargan vía React Query (ver linesQuery)
       if (!headerIdResolved) {
@@ -639,7 +648,7 @@ function TimesheetEdit({ headerId }) {
       // useEffect 1 - Preservando hasUnsavedChanges como true
       setHasUnsavedChanges(true);
     }
-  }, [headerId, location.search]);
+  }, [headerId, location.search, location.pathname]);
 
   // React Query: cargar líneas por header_id, con cache y estados
   const effectiveKey = effectiveHeaderId;
