@@ -217,7 +217,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
           <div>
             <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
-              Nº Recurso:
+              Recurso:
             </label>
             <input
               type="text"
@@ -236,7 +236,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
           </div>
           <div>
             <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
-              Nombre Recurso:
+              Nombre:
             </label>
             <input
               type="text"
@@ -255,29 +255,31 @@ function TimesheetHeader({ header, onHeaderChange }) {
           </div>
           <div>
             <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
-              Departamento:
+              Calendario:
             </label>
             <input
               type="text"
-              value={editableHeader.department_code}
-              onChange={(e) => handleFieldChange("department_code", e.target.value)}
+              value={editableHeader.calendar_type}
+              readOnly
               style={{
                 width: "100%",
                 padding: "8px",
                 border: "1px solid #ddd",
                 borderRadius: "4px",
-                fontSize: "14px"
+                fontSize: "14px",
+                backgroundColor: "#f5f5f5",
+                color: "#666"
               }}
             />
           </div>
           <div>
             <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
-              Tipo Calendario:
+              Fecha:
             </label>
             <input
-              type="text"
-              value={editableHeader.calendar_type}
-              onChange={(e) => handleFieldChange("calendar_type", e.target.value)}
+              type="date"
+              value={editableHeader.posting_date}
+              onChange={(e) => handleFieldChange("posting_date", e.target.value)}
               style={{
                 width: "100%",
                 padding: "8px",
@@ -308,37 +310,18 @@ function TimesheetHeader({ header, onHeaderChange }) {
           </div>
           <div>
             <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
-              Fecha del Parte:
+              Descripción:
             </label>
             <input
-              type="date"
-              value={editableHeader.posting_date}
-              onChange={(e) => handleFieldChange("posting_date", e.target.value)}
+              type="text"
+              value={editableHeader.posting_description}
+              onChange={(e) => handleFieldChange("posting_description", e.target.value)}
               style={{
                 width: "100%",
                 padding: "8px",
                 border: "1px solid #ddd",
                 borderRadius: "4px",
                 fontSize: "14px"
-              }}
-            />
-          </div>
-          <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
-              Calendar Period Days:
-            </label>
-            <input
-              type="text"
-              value={editableHeader.calendar_period_days}
-              readOnly
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-                backgroundColor: "#f5f5f5",
-                color: "#666"
               }}
             />
           </div>
