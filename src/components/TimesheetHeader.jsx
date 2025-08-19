@@ -140,6 +140,25 @@ function TimesheetHeader({ header, onHeaderChange }) {
     return new Date(year, month - 1, 1).toISOString().split('T')[0];
   };
 
+  // Función para obtener el período correspondiente a una fecha
+  const getPeriodFromDate = (date) => {
+    if (!date) return "";
+    
+    try {
+      const dateObj = new Date(date);
+      const year = dateObj.getFullYear();
+      const month = dateObj.getMonth() + 1; // getMonth() devuelve 0-11
+      
+      const yy = String(year).slice(-2); // Últimos 2 dígitos del año
+      const mm = String(month).padStart(2, "0"); // Mes con 2 dígitos
+      
+      return `M${yy}-M${mm}`;
+    } catch (error) {
+      console.error("❌ Error calculando período:", error);
+      return "";
+    }
+  };
+
   // Función para obtener calendar_period_days del calendario del recurso
   const getCalendarPeriodDays = async (postingDate, calendarType, allocationPeriod) => {
     if (!postingDate || !calendarType || !allocationPeriod) return "";
@@ -173,23 +192,26 @@ function TimesheetHeader({ header, onHeaderChange }) {
   // Manejar cambios en los campos editables
   const handleFieldChange = async (field, value) => {
     const newHeader = { ...editableHeader, [field]: value };
+    
+    // Si se cambió la fecha del parte, actualizar período y calendar_period_days
+    if (field === "posting_date" && value) {
+      const newPeriod = getPeriodFromDate(value);
+      newHeader.allocation_period = newPeriod;
+      
+      // Si tenemos calendar_type, buscar calendar_period_days
+      if (newHeader.calendar_type) {
+        const calendarPeriodDays = await getCalendarPeriodDays(value, newHeader.calendar_type, newPeriod);
+        newHeader.calendar_period_days = calendarPeriodDays;
+      }
+      
+      console.log("🆕 Fecha cambiada:", value, "Nuevo período:", newPeriod);
+    }
+    
     setEditableHeader(newHeader);
     
-    // Si se cambió la fecha del parte, actualizar calendar_period_days
-    if (field === "posting_date" && value && newHeader.calendar_type && newHeader.allocation_period) {
-      const calendarPeriodDays = await getCalendarPeriodDays(value, newHeader.calendar_type, newHeader.allocation_period);
-      newHeader.calendar_period_days = calendarPeriodDays;
-      setEditableHeader(newHeader);
-      
-      // Notificar al padre con la información actualizada
-      if (onHeaderChange) {
-        onHeaderChange(newHeader);
-      }
-    } else {
-      // Para otros campos, notificar inmediatamente
-      if (onHeaderChange) {
-        onHeaderChange(newHeader);
-      }
+    // Notificar al padre con la información actualizada
+    if (onHeaderChange) {
+      onHeaderChange(newHeader);
     }
   };
 
