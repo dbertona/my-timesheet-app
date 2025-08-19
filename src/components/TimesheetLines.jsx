@@ -38,6 +38,7 @@ export default function TimesheetLines({
   onLineAdd,
   markAsChanged,
   handleKeyDown,
+  handleInputChange: parentHandleInputChange, // ✅ Recibir función del padre
 }) {
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
     TIMESHEET_FIELDS,
@@ -232,9 +233,16 @@ export default function TimesheetLines({
   const handleInputChange = useCallback((lineId, event) => {
     const { name, value } = event.target;
 
-    // Actualizar el estado local
+    // ✅ Si se cambia el proyecto, usar la función del padre para obtener departamento automático
+    if (name === "job_no" && parentHandleInputChange) {
+      console.log("🎯 TimesheetLines: Proyecto cambiado, usando función del padre");
+      parentHandleInputChange(lineId, event);
+      return;
+    }
+
+    // Para otros campos, comportamiento normal
     onLinesChange(lineId, { [name]: value });
-  }, [onLinesChange]);
+  }, [onLinesChange, parentHandleInputChange]);
 
   const handleInputFocus = (lineId, field, event) => {
     if (inputRefs && inputRefs.current) {
