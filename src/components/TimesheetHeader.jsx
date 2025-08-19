@@ -21,7 +21,6 @@ function TimesheetHeader({ header, onHeaderChange }) {
   useEffect(() => {
     // Si no hay header, obtener información del recurso actual
     if (!header) {
-      console.log("🆕 TimesheetHeader: Iniciando carga de información del recurso...");
       const getResourceInfo = async () => {
         try {
           // 🆕 Usar useMsal para obtener el email del usuario
@@ -33,8 +32,6 @@ function TimesheetHeader({ header, onHeaderChange }) {
             userEmail = "";
           }
           
-          console.log("🆕 TimesheetHeader: Email del usuario obtenido:", userEmail);
-          
           if (userEmail) {
             // Consultar la tabla resource usando el campo email
             const { data: resourceData, error: resourceError } = await supabaseClient
@@ -42,8 +39,6 @@ function TimesheetHeader({ header, onHeaderChange }) {
               .select("code, name, department_code, calendar_type")
               .eq("email", userEmail)
               .single();
-            
-            console.log("🆕 TimesheetHeader: Datos del recurso obtenidos:", resourceData, "Error:", resourceError);
             
             if (resourceData) {
               setResourceInfo({
@@ -77,18 +72,13 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 calendar_period_days: "" // Se llenará cuando se seleccione la fecha
               };
               
-              console.log("🆕 TimesheetHeader: Estableciendo editableHeader:", newEditableHeader);
               setEditableHeader(newEditableHeader);
               
               // 🆕 Notificar inmediatamente al componente padre
               if (onHeaderChange) {
-                console.log("🆕 TimesheetHeader: Notificando al padre con:", newEditableHeader);
                 onHeaderChange(newEditableHeader);
-              } else {
-                console.log("❌ TimesheetHeader: onHeaderChange no está disponible");
               }
             } else if (resourceError) {
-              console.error("❌ TimesheetHeader: Error en consulta:", resourceError);
               // Fallback: crear header con información básica
               const params = new URLSearchParams(window.location.search);
               let ap = params.get("allocation_period");
@@ -116,11 +106,9 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 onHeaderChange(fallbackHeader);
               }
             }
-          } else {
-            console.log("❌ TimesheetHeader: No se pudo obtener el email del usuario");
           }
         } catch (error) {
-          console.error("❌ TimesheetHeader: Error obteniendo información del recurso:", error);
+          // Error silencioso
         }
       };
 
@@ -173,18 +161,15 @@ function TimesheetHeader({ header, onHeaderChange }) {
         .single();
       
       if (error) {
-        console.error("❌ Error obteniendo calendar_period_days:", error);
         return "";
       }
       
       if (data) {
-        console.log("🆕 Calendar period days obtenido:", data);
         return data.day; // Retornar el día que coincide
       }
       
       return "";
     } catch (error) {
-      console.error("❌ Error en getCalendarPeriodDays:", error);
       return "";
     }
   };
@@ -204,7 +189,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
         newHeader.calendar_period_days = calendarPeriodDays;
       }
       
-      console.log("🆕 Fecha cambiada:", value, "Nuevo período:", newPeriod);
+
     }
     
     setEditableHeader(newHeader);

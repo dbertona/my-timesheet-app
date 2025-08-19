@@ -235,7 +235,6 @@ export default function TimesheetLines({
 
       // ✅ Si se cambia el proyecto, usar la función del padre para obtener departamento automático
   if (name === "job_no" && parentHandleInputChange) {
-    console.log("🎯 DEBUG: TimesheetLines - Proyecto cambiado, llamando función del padre");
     parentHandleInputChange(lineId, event);
     return;
   }

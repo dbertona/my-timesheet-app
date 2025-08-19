@@ -388,11 +388,7 @@ function TimesheetEdit({ headerId }) {
     if (!hasUnsavedChanges) return;
 
     // 🆕 PASO 1: Validar todos los datos antes de guardar
-    console.log("🔍 ANTES DE VALIDAR:", {
-      jobsCount: jobs.length,
-      jobsSample: jobs.slice(0, 3),
-      editFormDataKeys: Object.keys(editFormData)
-    });
+
     const validation = await validateAllData(editFormData, dailyRequired, calendarHolidays, jobs);
 
     // 🆕 PASO 2: Si hay errores críticos, mostrar modal y bloquear guardado
@@ -419,7 +415,7 @@ function TimesheetEdit({ headerId }) {
       // 🆕 PASO 4.1: Si no hay header, crear uno nuevo
       let currentHeaderId = effectiveHeaderId;
       if (!currentHeaderId) {
-        console.log("🆕 Creando nuevo header...");
+  
 
         // 🆕 Obtener email del usuario usando useMsal
         let userEmail = "";
@@ -479,7 +475,6 @@ function TimesheetEdit({ headerId }) {
           .limit(1);
         
         if (calendarQueryError) {
-          console.error("❌ Error consultando calendar_period_days:", calendarQueryError);
           throw new Error(`Error consultando calendar_period_days: ${calendarQueryError.message}`);
         }
         
@@ -489,7 +484,6 @@ function TimesheetEdit({ headerId }) {
         
         // Usar los valores exactos que existen en la base de datos
         const existingRecord = existingCalendarDays[0];
-        console.log("✅ Valores encontrados en calendar_period_days:", existingRecord);
 
         // PASO 2: Crear header con valores exactos que existen en calendar_period_days
         const now = new Date().toISOString();
@@ -525,7 +519,7 @@ function TimesheetEdit({ headerId }) {
         setHeader(createdHeader);
         setResolvedHeaderId(currentHeaderId);
 
-        console.log("✅ Header creado exitosamente:", createdHeader);
+
         toast.success("Nuevo parte de trabajo creado");
       }
 
@@ -711,7 +705,7 @@ function TimesheetEdit({ headerId }) {
         headerIdResolved = headerData?.id || null;
       } else {
         // 🆕 Modo "nuevo parte" - no buscar header existente
-        console.log("🆕 Modo nuevo parte - no se buscará header existente");
+  
         headerData = null;
         headerIdResolved = null;
       }
@@ -755,10 +749,10 @@ function TimesheetEdit({ headerId }) {
 
   // 🆕 Crear línea vacía cuando la información del recurso esté disponible
   useEffect(() => {
-    console.log("🆕 TimesheetEdit: useEffect para línea vacía - effectiveHeaderId:", effectiveHeaderId, "editableHeader:", editableHeader, "lines.length:", lines.length);
+    
 
     if (!effectiveHeaderId && editableHeader && lines.length === 0) {
-      console.log("🆕 Creando línea vacía con información del recurso:", editableHeader);
+      
       addEmptyLine();
     }
   }, [effectiveHeaderId, editableHeader, lines.length]);
@@ -1155,55 +1149,47 @@ function TimesheetEdit({ headerId }) {
   const handleInputChange = useCallback(async (lineId, event) => {
     const { name, value } = event.target;
     
-        // ✅ Si se cambia el proyecto, obtener automáticamente el departamento
-    if (name === "job_no" && value) {
-      console.log("🎯 DEBUG: handleInputChange - Proyecto seleccionado:", value);
-      console.log("🎯 DEBUG: handleInputChange - editableHeader:", editableHeader);
-      
-      try {
-        // Obtener información del proyecto (responsable y departamento)
-        const jobInfo = await fetchJobInfo([value]);
-        console.log("🎯 DEBUG: handleInputChange - jobInfo obtenido:", jobInfo);
-        
-        // ✅ Establecer responsable del proyecto y departamento del recurso
-        setEditFormData(prev => {
-          const newData = {
-            ...prev[lineId],
-            [name]: value,
-            department_code: jobInfo[value]?.department_code || editableHeader?.department_code || "20", // ✅ Departamento del proyecto, recurso o default
-            job_responsible: jobInfo[value]?.responsible || "" // ✅ Responsable del proyecto
-          };
-          
-          console.log("🎯 DEBUG: handleInputChange - Nuevos datos:", newData);
-          console.log("🎯 DEBUG: handleInputChange - department_code específico:", newData.department_code);
-          console.log("🎯 DEBUG: handleInputChange - jobInfo[value]:", jobInfo[value]);
-          
-          return {
-            ...prev,
-            [lineId]: newData
-          };
-        });
-      } catch (error) {
-        console.error(`Error obteniendo info del proyecto:`, error);
-        // En caso de error, usar valor normal
-        setEditFormData(prev => ({
-          ...prev,
-          [lineId]: {
-            ...prev[lineId],
-            [name]: value
+                // ✅ Si se cambia el proyecto, obtener automáticamente el departamento
+        if (name === "job_no" && value) {
+          try {
+            // Obtener información del proyecto (responsable y departamento)
+            const jobInfo = await fetchJobInfo([value]);
+            
+            // ✅ Establecer responsable del proyecto y departamento del recurso
+            setEditFormData(prev => {
+              const newData = {
+                ...prev[lineId],
+                [name]: value,
+                department_code: jobInfo[value]?.department_code || editableHeader?.department_code || "20", // ✅ Departamento del proyecto, recurso o default
+                job_responsible: jobInfo[value]?.responsible || "" // ✅ Responsable del proyecto
+              };
+              
+              return {
+                ...prev,
+                [lineId]: newData
+              };
+            });
+          } catch (error) {
+            console.error(`Error obteniendo info del proyecto:`, error);
+            // En caso de error, usar valor normal
+            setEditFormData(prev => ({
+              ...prev,
+              [lineId]: {
+                ...prev[lineId],
+                [name]: value
+              }
+            }));
           }
-        }));
-      }
-    } else {
-      // Para otros campos, comportamiento normal
-      setEditFormData(prev => ({
-        ...prev,
-        [lineId]: {
-          ...prev[lineId],
-          [name]: value
+        } else {
+          // Para otros campos, comportamiento normal
+          setEditFormData(prev => ({
+            ...prev,
+            [lineId]: {
+              ...prev[lineId],
+              [name]: value
+            }
+          }));
         }
-      }));
-    }
 
     // Marcar que hay cambios no guardados
     markAsChanged();
