@@ -679,18 +679,18 @@ function TimesheetEdit({ headerId }) {
   useEffect(() => {
     if (!effectiveHeaderId && !loading) {
       setLoading(false);
-
+      
       // 🆕 Crear línea vacía por defecto para nuevos partes
       if (lines.length === 0) {
         addEmptyLine();
       }
     }
-  }, [effectiveHeaderId, loading, lines.length]);
+  }, [effectiveHeaderId, loading]); // 🆕 Removido lines.length del array de dependencias
 
   // Cuando llegan las líneas, actualizar estado local y edición inicial con dos decimales
   useEffect(() => {
-    // useEffect 3 - Líneas cargadas ejecutándose
-    if (!linesHook.data) return;
+    // 🆕 Solo procesar líneas si hay header y datos del hook
+    if (!effectiveHeaderId || !linesHook.data) return;
 
     // NO resetear hasUnsavedChanges si ya hay cambios pendientes
     const shouldPreserveChanges = hasUnsavedChanges;
