@@ -470,7 +470,37 @@ function TimesheetEdit({ headerId }) {
           };
         }
 
-        // Crear nuevo header - SOLO campos sin restricciones de clave foránea
+        // PASO 1: Crear registros en calendar_period_days para cumplir la restricción de clave foránea
+        const fromDate = getFirstDayOfPeriod(headerData.allocation_period);
+        const toDate = getLastDayOfPeriod(headerData.allocation_period);
+        
+        // Crear registros para cada día del período
+        const calendarDaysToInsert = [];
+        const currentDate = new Date(fromDate);
+        const endDate = new Date(toDate);
+        
+        while (currentDate <= endDate) {
+          const dayIso = currentDate.toISOString().split('T')[0];
+          calendarDaysToInsert.push({
+            allocation_period: headerData.allocation_period,
+            calendar_code: headerData.calendar_type,
+            day: dayIso,
+            hours_working: 8.0, // Horas por defecto
+            is_working_day: true // Día laboral por defecto
+          });
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        // Insertar registros en calendar_period_days
+        const { error: calendarError } = await supabaseClient
+          .from("calendar_period_days")
+          .upsert(calendarDaysToInsert, { onConflict: 'allocation_period,calendar_code,day' });
+        
+        if (calendarError) {
+          console.warn("⚠️ Advertencia: No se pudieron crear registros en calendar_period_days:", calendarError);
+        }
+
+        // PASO 2: Crear header con TODOS los campos obligatorios
         const now = new Date().toISOString();
         const newHeader = {
           id: crypto.randomUUID(), // Generar ID único manualmente
@@ -478,6 +508,10 @@ function TimesheetEdit({ headerId }) {
           posting_date: headerData.posting_date || new Date().toISOString().split('T')[0],
           description: headerData.resource_name, // Nombre del recurso
           posting_description: headerData.posting_description || `Parte de trabajo ${headerData.allocation_period}`,
+          from_date: fromDate, // ✅ Ahora podemos enviarlo
+          to_date: toDate, // ✅ Ahora podemos enviarlo
+          allocation_period: headerData.allocation_period, // ✅ Ahora podemos enviarlo
+          resource_calendar: headerData.calendar_type, // ✅ Ahora podemos enviarlo
           user_email: userEmail,
           created_at: now,
           updated_at: now,
