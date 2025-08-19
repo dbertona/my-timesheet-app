@@ -438,13 +438,24 @@ function TimesheetEdit({ headerId }) {
           };
         }
 
-        // Crear nuevo header - columnas mínimas necesarias
+        // Crear nuevo header - TODOS los campos obligatorios según la estructura de la tabla
+        const now = new Date().toISOString();
         const newHeader = {
           id: crypto.randomUUID(), // Generar ID único manualmente
-          description: headerData.resource_name, // Campo obligatorio 'description' - nombre del recurso
           resource_no: headerData.resource_no,
-          posting_date: headerData.posting_date || new Date().toISOString().split('T')[0], // Campo obligatorio 'posting_date'
-          user_email: userEmail // Email del usuario actual
+          posting_date: headerData.posting_date || new Date().toISOString().split('T')[0],
+          description: headerData.resource_name, // Nombre del recurso
+          posting_description: headerData.posting_description || `Parte de trabajo ${headerData.allocation_period}`,
+          from_date: headerData.posting_date || new Date().toISOString().split('T')[0], // Usar posting_date como from_date
+          to_date: headerData.posting_date || new Date().toISOString().split('T')[0], // Usar posting_date como to_date
+          allocation_period: headerData.allocation_period,
+          resource_calendar: headerData.calendar_type,
+          user_email: userEmail,
+          created_at: now,
+          updated_at: now,
+          "Company": headerData.company || null, // Campo opcional con comillas
+          synced_to_bc: false, // Campo opcional
+          department_code: headerData.department_code || '20' // Campo opcional con default
         };
 
         const { data: createdHeader, error: headerError } = await supabaseClient
