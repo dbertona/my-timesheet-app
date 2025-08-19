@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchJobsByResource } from "../api/jobs";
+import { fetchJobsByResource, fetchAllJobsByResource } from "../api/jobs";
 import { fetchTasksByJob } from "../api/tasks";
 import { supabaseClient } from "../supabaseClient";
 
@@ -9,6 +9,16 @@ export function useJobs(resourceNo) {
     enabled: !!resourceNo,
     staleTime: 5 * 60 * 1000,
     queryFn: () => fetchJobsByResource(resourceNo),
+  });
+}
+
+// 🆕 NUEVO HOOK: Trae TODOS los proyectos del recurso (para validación)
+export function useAllJobs(resourceNo) {
+  return useQuery({
+    queryKey: ["allJobs", resourceNo],
+    enabled: !!resourceNo,
+    staleTime: 5 * 60 * 1000,
+    queryFn: () => fetchAllJobsByResource(resourceNo),
   });
 }
 

@@ -7,7 +7,7 @@ import { supabaseClient } from "../supabaseClient";
 import useCalendarData from "../hooks/useCalendarData";
 import useTimesheetLines from "../hooks/useTimesheetLines";
 import useTimesheetEdit from "../hooks/useTimesheetEdit";
-import { useJobs } from "../hooks/useTimesheetQueries";
+import { useJobs, useAllJobs } from "../hooks/useTimesheetQueries";
 import TimesheetHeader from "./TimesheetHeader";
 import TimesheetLines from "./TimesheetLines";
 import CalendarPanel from "./timesheet/CalendarPanel";
@@ -69,8 +69,8 @@ function TimesheetEdit({ headerId }) {
     missingSum,
   } = useCalendarData(header, resolvedHeaderId, editFormData);
 
-  // 🆕 Obtener jobs para validación de estado
-  const jobsQuery = useJobs(header?.resource_no);
+  // 🆕 Obtener jobs para validación de estado (TODOS los proyectos del recurso)
+  const jobsQuery = useAllJobs(header?.resource_no);
   const jobs = jobsQuery.data || [];
   const [hasDailyErrors, setHasDailyErrors] = useState(false);
   const serverSnapshotRef = useRef({}); // Último estado confirmado por servidor por línea
