@@ -73,6 +73,30 @@ function TimesheetEdit({ headerId }) {
   const jobsQuery = useAllJobs(header?.resource_no);
   const jobs = jobsQuery.data || [];
   const [hasDailyErrors, setHasDailyErrors] = useState(false);
+  // 🆕 Estado para errores de validación de proyecto (Completed/Lost)
+  const [hasProjectValidationErrors, setHasProjectValidationErrors] = useState(false);
+  
+  // 🆕 Función para verificar si hay errores de validación de proyecto
+  const checkProjectValidationErrors = useCallback(() => {
+    if (!jobs.length || !Object.keys(editFormData).length) return false;
+    
+    for (const [lineId, row] of Object.entries(editFormData)) {
+      if (row.job_no && row.quantity && parseFloat(row.quantity) > 0) {
+        const project = jobs.find(j => j.no === row.job_no);
+        if (project && (project.status === 'Completed' || project.status === 'Lost')) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }, [jobs, editFormData]);
+  
+  // 🆕 useEffect para actualizar el estado de errores de validación de proyecto
+  useEffect(() => {
+    const hasErrors = checkProjectValidationErrors();
+    setHasProjectValidationErrors(hasErrors);
+  }, [checkProjectValidationErrors]);
+  
   const serverSnapshotRef = useRef({}); // Último estado confirmado por servidor por línea
   const [savingByLine, setSavingByLine] = useState({}); // { [id]: boolean }
 
@@ -1086,14 +1110,14 @@ function TimesheetEdit({ headerId }) {
               
               {/* 🆕 Indicador de estado de validación */}
               {hasUnsavedChanges && (
-                <div style={{ 
+                                <div style={{
                   display: "flex", 
                   alignItems: "center", 
                   gap: "8px",
                   fontSize: "12px",
-                  color: hasDailyErrors ? "#dc3545" : "#28a745"
+                  color: (hasDailyErrors || hasProjectValidationErrors) ? "#dc3545" : "#28a745"
                 }}>
-                  {hasDailyErrors ? (
+                  {(hasDailyErrors || hasProjectValidationErrors) ? (
                     <>
                       <span>⚠️</span>
                       <span>Hay errores que impiden guardar</span>
