@@ -549,8 +549,8 @@ function TimesheetEdit({ headerId }) {
               department_code: lineData.department_code,
               // Campos del header
               header_id: currentHeaderId,
-              resource_no: headerData.resource_no,
-              company: headerData.company || ""
+              resource_no: editableHeader?.resource_no || "",
+              company: editableHeader?.company || ""
             };
 
             const { data: createdLine, error: lineError } = await supabaseClient
