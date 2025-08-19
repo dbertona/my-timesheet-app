@@ -1052,9 +1052,10 @@ function TimesheetEdit({ headerId }) {
     const unique = Array.from(new Set(jobNos.filter(Boolean)));
     if (unique.length === 0) return {};
     
+    // ✅ Solo obtener columnas que existen en la tabla job
     const { data, error } = await supabaseClient
       .from("job")
-      .select("no,responsible,department_code")
+      .select("no,responsible")
       .in("no", unique);
       
     if (error) {
@@ -1066,7 +1067,7 @@ function TimesheetEdit({ headerId }) {
     for (const r of data) {
       map[r.no] = {
         responsible: r.responsible ?? "",
-        department_code: r.department_code ?? ""
+        department_code: "" // ✅ Por ahora vacío, se puede obtener del recurso o header
       };
     }
     
@@ -1160,25 +1161,16 @@ function TimesheetEdit({ headerId }) {
         // Obtener información del proyecto (responsable y departamento)
         const jobInfo = await fetchJobInfo([value]);
         
-        if (jobInfo[value] && jobInfo[value].department_code) {
-          setEditFormData(prev => ({
-            ...prev,
-            [lineId]: {
-              ...prev[lineId],
-              [name]: value,
-              department_code: jobInfo[value].department_code, // ✅ Departamento automático
-              job_responsible: jobInfo[value].responsible || "" // ✅ Responsable automático
-            }
-          }));
-        } else {
-          setEditFormData(prev => ({
-            ...prev,
-            [lineId]: {
-              ...prev[lineId],
-              [name]: value
-            }
-          }));
-        }
+        // ✅ Establecer responsable del proyecto y departamento del recurso
+        setEditFormData(prev => ({
+          ...prev,
+          [lineId]: {
+            ...prev[lineId],
+            [name]: value,
+            department_code: editableHeader?.department_code || "", // ✅ Departamento del recurso
+            job_responsible: jobInfo[value]?.responsible || "" // ✅ Responsable del proyecto
+          }
+        }));
       } catch (error) {
         console.error(`Error obteniendo info del proyecto:`, error);
         // En caso de error, usar valor normal
