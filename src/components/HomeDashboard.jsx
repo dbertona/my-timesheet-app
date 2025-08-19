@@ -82,6 +82,9 @@ const HomeDashboard = () => {
   const goToEditParte = () => {
     navigate(`/editar-parte?allocation_period=${allocationPeriod}`);
   };
+  const goToNuevoParte = () => {
+    navigate(`/nuevo-parte?allocation_period=${allocationPeriod}`);
+  };
 
   return (
     <div className="dash">

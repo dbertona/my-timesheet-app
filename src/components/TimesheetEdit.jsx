@@ -381,37 +381,125 @@ function TimesheetEdit({ headerId }) {
     // ✅ PASO 4: Si todo es válido, proceder con el guardado
     setIsSaving(true);
     try {
-      // Obtener todas las líneas con cambios
-      const linesToSave = Object.keys(editFormData).filter(lineId => {
-        const line = editFormData[lineId];
-        const originalLine = lines.find(l => l.id === lineId);
-        return line && originalLine && JSON.stringify(line) !== JSON.stringify(originalLine);
-      });
+      // 🆕 PASO 4.1: Si no hay header, crear uno nuevo
+      let currentHeaderId = effectiveHeaderId;
+      if (!currentHeaderId) {
+        console.log("🆕 Creando nuevo header...");
+        
+        // Obtener datos del usuario actual
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) {
+          throw new Error("Usuario no autenticado");
+        }
 
-      // Guardar cada línea
-      for (const lineId of linesToSave) {
+        // Obtener información del recurso
+        const { data: resourceData, error: resourceError } = await supabaseClient
+          .from("resource")
+          .select("no, name, department_code, company")
+          .eq("email", user.email)
+          .single();
+
+        if (resourceError || !resourceData) {
+          throw new Error("No se pudo obtener información del recurso");
+        }
+
+        // Construir allocation_period
+        const params = new URLSearchParams(location.search);
+        let ap = params.get("allocation_period");
+        if (!ap) {
+          const now = new Date();
+          const yy = String(now.getFullYear()).slice(-2);
+          const mm = String(now.getMonth() + 1).padStart(2, "0");
+          ap = `M${yy}-M${mm}`;
+        }
+
+        // Crear nuevo header
+        const newHeader = {
+          resource_no: resourceData.no,
+          resource_name: resourceData.name,
+          department_code: resourceData.department_code,
+          company: resourceData.company,
+          allocation_period: ap,
+          status: "Draft",
+          created_by: user.email,
+          created_at: new Date().toISOString()
+        };
+
+        const { data: createdHeader, error: headerError } = await supabaseClient
+          .from("resource_timesheet_header")
+          .insert(newHeader)
+          .select()
+          .single();
+
+        if (headerError) {
+          throw new Error(`Error creando header: ${headerError.message}`);
+        }
+
+        currentHeaderId = createdHeader.id;
+        setHeader(createdHeader);
+        setResolvedHeaderId(currentHeaderId);
+        
+        console.log("✅ Header creado exitosamente:", createdHeader);
+        toast.success("Nuevo parte de trabajo creado");
+      }
+
+      // PASO 4.2: Guardar líneas existentes o crear nuevas
+      const linesToProcess = Object.keys(editFormData);
+      
+      for (const lineId of linesToProcess) {
         const lineData = editFormData[lineId];
-        const originalLine = lines.find(l => l.id === lineId);
+        
+        if (lineId.startsWith('tmp-')) {
+          // 🆕 Línea nueva - insertar
+          if (lineData.job_no && lineData.quantity && parseFloat(lineData.quantity) > 0) {
+            const newLineData = {
+              ...lineData,
+              header_id: currentHeaderId,
+              date: toIsoFromInput(lineData.date),
+              quantity: parseFloat(lineData.quantity)
+            };
+            
+            const { data: createdLine, error: lineError } = await supabaseClient
+              .from("timesheet")
+              .insert(newLineData)
+              .select()
+              .single();
 
-        if (lineData && originalLine) {
-          const changedFields = {};
-          Object.keys(lineData).forEach(key => {
-            if (lineData[key] !== originalLine[key]) {
-              // Convertir fecha a formato ISO antes de enviar a la base de datos
-              if (key === "date" && lineData[key]) {
-                changedFields[key] = toIsoFromInput(lineData[key]);
-              } else {
-                changedFields[key] = lineData[key];
-              }
+            if (lineError) {
+              throw new Error(`Error creando línea: ${lineError.message}`);
             }
-          });
 
-          if (Object.keys(changedFields).length > 0) {
-            await updateLineMutation.mutateAsync({
-              lineId,
-              changes: changedFields,
-              silent: true  // Modo silencioso para guardado masivo
+            // Actualizar el ID temporal por el real
+            setLines(prev => prev.map(l => l.id === lineId ? createdLine : l));
+            setEditFormData(prev => {
+              const newData = { ...prev };
+              delete newData[lineId];
+              newData[createdLine.id] = { ...createdLine, date: toDisplayDate(createdLine.date) };
+              return newData;
             });
+          }
+        } else {
+          // Línea existente - actualizar si hay cambios
+          const originalLine = lines.find(l => l.id === lineId);
+          if (lineData && originalLine) {
+            const changedFields = {};
+            Object.keys(lineData).forEach(key => {
+              if (lineData[key] !== originalLine[key]) {
+                if (key === "date" && lineData[key]) {
+                  changedFields[key] = toIsoFromInput(lineData[key]);
+                } else {
+                  changedFields[key] = lineData[key];
+                }
+              }
+            });
+
+            if (Object.keys(changedFields).length > 0) {
+              await updateLineMutation.mutateAsync({
+                lineId,
+                changes: changedFields,
+                silent: true
+              });
+            }
           }
         }
       }
@@ -420,11 +508,11 @@ function TimesheetEdit({ headerId }) {
       toast.success(TOAST.SUCCESS.SAVE_ALL);
     } catch (error) {
       console.error('Error saving all changes:', error);
-      toast.error(TOAST.ERROR.SAVE_ALL);
+      toast.error(`Error al guardar: ${error.message}`);
     } finally {
       setIsSaving(false);
     }
-  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, dailyRequired, calendarHolidays]);
+  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, dailyRequired, calendarHolidays, effectiveHeaderId, location.search]);
 
   // 🆕 Función para ejecutar guardado sin validación (cuando solo hay advertencias)
   const executeSaveWithoutValidation = useCallback(async () => {
@@ -744,9 +832,32 @@ function TimesheetEdit({ headerId }) {
   const addEmptyLine = () => {
     const newId = `tmp-${Date.now()}`;
     const nowIso = new Date().toISOString();
+    
+    // Obtener información del usuario actual para la nueva línea
+    const getResourceInfo = async () => {
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) {
+          const { data: resourceData } = await supabaseClient
+            .from("resource")
+            .select("no, department_code, company")
+            .eq("email", user.email)
+            .single();
+          
+          if (resourceData) {
+            return resourceData;
+          }
+        }
+      } catch (error) {
+        console.error("Error obteniendo información del recurso:", error);
+      }
+      return null;
+    };
+
+    // Crear línea con información disponible
     const newLine = {
       id: newId,
-      header_id: effectiveHeaderId,
+      header_id: effectiveHeaderId || null, // Puede ser null para nuevos partes
       job_no: "",
       job_task_no: "",
       description: "",
@@ -768,6 +879,22 @@ function TimesheetEdit({ headerId }) {
       ...prev,
       [newId]: { ...newLine },
     }));
+
+    // Obtener información del recurso en background y actualizar si es necesario
+    getResourceInfo().then(resourceInfo => {
+      if (resourceInfo) {
+        setEditFormData(prev => ({
+          ...prev,
+          [newId]: {
+            ...prev[newId],
+            department_code: resourceInfo.department_code,
+            company: resourceInfo.company,
+            resource_no: resourceInfo.no,
+            resource_responsible: resourceInfo.no
+          }
+        }));
+      }
+    });
 
     return newId;
   };
@@ -1058,7 +1185,7 @@ function TimesheetEdit({ headerId }) {
             padding: 0,
           }}
         >
-          Lista Parte Trabajo
+          {header ? "Editar Parte de Trabajo" : "Nuevo Parte de Trabajo"}
         </button>
       </div>
       {/* Header, resumen y calendario en la misma fila, alineados a la derecha */}

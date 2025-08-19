@@ -43,6 +43,10 @@ export const router = createBrowserRouter([
       {
         path: "editar-parte/:headerId",
         element: <TimesheetEditWrapper />
+      },
+      {
+        path: "nuevo-parte",
+        element: <TimesheetEdit />
       }
     ]
   }
