@@ -328,16 +328,15 @@ function TimesheetHeader({ header, onHeaderChange }) {
           <input
             type="date"
             value={effectiveHeader.posting_date}
-            readOnly={!isEditMode} // ✅ Solo editable en modo edición
-            onChange={isEditMode ? (e) => handleFieldChange("posting_date", e.target.value) : undefined}
+            readOnly // ✅ Fecha no editable ni en inserción ni en edición
             style={{
               width: "100%",
               padding: "8px",
-              border: headerErrors.posting_date ? "1px solid #dc3545" : "1px solid #ddd",
+              border: "1px solid #ddd",
               borderRadius: "4px",
               fontSize: "14px",
-              backgroundColor: isEditMode ? "#ffffff" : "#f5f5f5",
-              color: isEditMode ? "#000000" : "#666"
+              backgroundColor: "#f5f5f5", // 🎨 Estilo visual para campos no editables
+              color: "#666"
             }}
           />
           {/* ✅ Mostrar error de fecha ocupada solo en edición */}
