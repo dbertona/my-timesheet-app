@@ -88,7 +88,7 @@ body {
   min-height: 100%;
   max-width: 100%;
   table-layout: fixed; /* ✅ Ancho fijo para control total */
-  background-color: #fff; /* 🎨 Fondo blanco para toda la tabla */
+  background-color: #f8f9fa; /* 🎨 Fondo gris claro de BC */
 }
 
 /* 🆕 Columnas con anchos específicos que suman 100% */
