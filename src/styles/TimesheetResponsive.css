@@ -81,63 +81,57 @@ body {
   }
 }
 
-/* 🆕 Tabla 100% responsive que se ajusta al ancho de la pantalla */
+/* 🆕 Tabla con ancho fijo que se ajusta al contenedor */
 .ts-responsive .timesheet-table {
   width: 100%;
   height: 100%;
   min-height: 100%;
   max-width: 100%;
-  table-layout: auto; /* ✅ Columnas se ajustan automáticamente */
+  table-layout: fixed; /* ✅ Ancho fijo para control total */
 }
 
-/* 🆕 Columnas que se distribuyen proporcionalmente */
+/* 🆕 Columnas con anchos específicos que suman 100% */
 .ts-responsive th[data-col="job_no"],
 .ts-responsive td[data-col="job_no"] { 
-  width: 12%; /* ✅ Proporción del ancho total */
-  min-width: 80px; /* ✅ Ancho mínimo para legibilidad */
+  width: 120px; /* ✅ Ancho fijo específico */
 }
 
 .ts-responsive th[data-col="job_no_description"],
 .ts-responsive td[data-col="job_no_description"] { 
-  width: 20%; /* ✅ Proporción del ancho total */
-  min-width: 120px;
+  width: 200px; /* ✅ Ancho fijo específico */
 }
 
 .ts-responsive th[data-col="job_task_no"],
 .ts-responsive td[data-col="job_task_no"] { 
-  width: 10%; /* ✅ Proporción del ancho total */
-  min-width: 70px;
+  width: 100px; /* ✅ Ancho fijo específico */
 }
 
 .ts-responsive th[data-col="description"],
 .ts-responsive td[data-col="description"] { 
-  width: 25%; /* ✅ Proporción del ancho total */
-  min-width: 150px;
+  width: 250px; /* ✅ Ancho fijo específico */
 }
 
 .ts-responsive th[data-col="work_type"],
 .ts-responsive td[data-col="work_type"] { 
-  width: 12%; /* ✅ Proporción del ancho total */
-  min-width: 80px;
+  width: 120px; /* ✅ Ancho fijo específico */
 }
 
 .ts-responsive th[data-col="date"],
 .ts-responsive td[data-col="date"] { 
-  width: 10%; /* ✅ Proporción del ancho total */
-  min-width: 80px;
+  width: 100px; /* ✅ Ancho fijo específico */
 }
 
 .ts-responsive th[data-col="quantity"],
 .ts-responsive td[data-col="quantity"] { 
-  width: 8%; /* ✅ Proporción del ancho total */
-  min-width: 60px;
+  width: 80px; /* ✅ Ancho fijo específico */
 }
 
 .ts-responsive th[data-col="department_code"],
 .ts-responsive td[data-col="department_code"] { 
-  width: 13%; /* ✅ Proporción del ancho total */
-  min-width: 80px;
+  width: 100px; /* ✅ Ancho fijo específico */
 }
+
+/* 🆕 Total: 1070px - debe caber en pantallas ≥1200px */
 
 /* Dropdowns más contenidos en pantallas estrechas */
 @media (max-width: 1440px) {
