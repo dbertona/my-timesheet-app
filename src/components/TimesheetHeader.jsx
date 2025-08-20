@@ -282,13 +282,15 @@ function TimesheetHeader({ header, onHeaderChange }) {
             <input
               type="date"
               value={editableHeader.posting_date}
-              onChange={(e) => handleFieldChange("posting_date", e.target.value)}
+              readOnly // 🆕 Fecha del parte no editable - se calcula automáticamente
               style={{
                 width: "100%",
                 padding: "8px",
                 border: "1px solid #ddd",
                 borderRadius: "4px",
-                fontSize: "14px"
+                fontSize: "14px",
+                backgroundColor: "#f5f5f5", // 🎨 Estilo visual para campos no editables
+                color: "#666"
               }}
             />
           </div>
