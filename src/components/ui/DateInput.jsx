@@ -42,6 +42,14 @@ export default function DateInput({
     };
   }, [calendarOpen, setCalendarOpen]);
 
+  // 🆕 Re-renderizar cuando cambie el período para actualizar validación
+  useEffect(() => {
+    if (editableHeader?.allocation_period) {
+      // Forzar re-renderizado del calendario cuando cambie el período
+      setCurrentMonth(parseDate(value) || new Date());
+    }
+  }, [editableHeader?.allocation_period, value]);
+
   // Generar días del mes
   const generateDays = () => {
     const year = currentMonth.getFullYear();
