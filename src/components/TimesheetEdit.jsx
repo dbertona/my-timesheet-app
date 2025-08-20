@@ -96,49 +96,7 @@ function TimesheetEdit({ headerId }) {
     return false;
   }, [jobs, editFormData]);
 
-  // 🆕 Función para manejar cambios en la selección de líneas
-  const handleLineSelectionChange = useCallback((newSelection) => {
-    setSelectedLines(newSelection);
-  }, []);
 
-  // 🆕 Función para duplicar líneas seleccionadas
-  const handleDuplicateLines = useCallback((lineIds) => {
-    if (!lineIds.length) return;
-
-    const newLines = [];
-    lineIds.forEach(lineId => {
-      const originalLine = lines.find(line => line.id === lineId);
-      if (originalLine) {
-        const duplicatedLine = {
-          ...originalLine,
-          id: `tmp-${Date.now()}-${Math.random()}`,
-          quantity: 0, // Resetear cantidad para nueva línea
-          date: "", // Resetear fecha para nueva línea
-        };
-        newLines.push(duplicatedLine);
-      }
-    });
-
-    if (newLines.length) {
-      setLines(prev => [...prev, ...newLines]);
-      // Limpiar selección después de duplicar
-      setSelectedLines([]);
-      markAsChanged();
-    }
-  }, [lines, markAsChanged]);
-
-  // 🆕 Función para borrar líneas seleccionadas
-  const handleDeleteLines = useCallback((lineIds) => {
-    if (!lineIds.length) return;
-
-    // Confirmar antes de borrar
-    if (window.confirm(`¿Estás seguro de que quieres borrar ${lineIds.length} línea${lineIds.length !== 1 ? 's' : ''}?`)) {
-      setLines(prev => prev.filter(line => !lineIds.includes(line.id)));
-      // Limpiar selección después de borrar
-      setSelectedLines([]);
-      markAsChanged();
-    }
-  }, [markAsChanged]);
 
   // 🆕 useEffect para actualizar el estado de errores de validación de proyecto
   useEffect(() => {
@@ -270,6 +228,50 @@ function TimesheetEdit({ headerId }) {
   const markAsChanged = useCallback(() => {
     setHasUnsavedChanges(true);
   }, []);
+
+  // 🆕 Función para manejar cambios en la selección de líneas
+  const handleLineSelectionChange = useCallback((newSelection) => {
+    setSelectedLines(newSelection);
+  }, []);
+
+  // 🆕 Función para duplicar líneas seleccionadas
+  const handleDuplicateLines = useCallback((lineIds) => {
+    if (!lineIds.length) return;
+
+    const newLines = [];
+    lineIds.forEach(lineId => {
+      const originalLine = lines.find(line => line.id === lineId);
+      if (originalLine) {
+        const duplicatedLine = {
+          ...originalLine,
+          id: `tmp-${Date.now()}-${Math.random()}`,
+          quantity: 0, // Resetear cantidad para nueva línea
+          date: "", // Resetear fecha para nueva línea
+        };
+        newLines.push(duplicatedLine);
+      }
+    });
+
+    if (newLines.length) {
+      setLines(prev => [...prev, ...newLines]);
+      // Limpiar selección después de duplicar
+      setSelectedLines([]);
+      markAsChanged();
+    }
+  }, [lines, markAsChanged]);
+
+  // 🆕 Función para borrar líneas seleccionadas
+  const handleDeleteLines = useCallback((lineIds) => {
+    if (!lineIds.length) return;
+
+    // Confirmar antes de borrar
+    if (window.confirm(`¿Estás seguro de que quieres borrar ${lineIds.length} línea${lineIds.length !== 1 ? 's' : ''}?`)) {
+      setLines(prev => prev.filter(line => !lineIds.includes(line.id)));
+      // Limpiar selección después de borrar
+      setSelectedLines([]);
+      markAsChanged();
+    }
+  }, [markAsChanged]);
 
   // Función para obtener el primer día del mes del período
   const getFirstDayOfPeriod = (allocationPeriod) => {
