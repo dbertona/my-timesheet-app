@@ -61,13 +61,35 @@ function TimesheetHeader({ header, onHeaderChange }) {
               
               // Establecer valores por defecto
               const firstDayOfPeriod = getFirstDayOfPeriod(ap);
+              
+              // 🆕 Calcular fecha sugerida: último día del mes siguiente al último timesheet
+              let suggestedDate = new Date().toISOString().split('T')[0]; // Fallback a fecha actual
+              try {
+                const { data: lastHeader } = await supabaseClient
+                  .from("resource_timesheet_header")
+                  .select("to_date")
+                  .eq("resource_no", resourceData.code)
+                  .order("to_date", { ascending: false })
+                  .limit(1)
+                  .single();
+                
+                if (lastHeader?.to_date) {
+                  const lastDate = new Date(lastHeader.to_date);
+                  const nextMonth = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, 1);
+                  const lastDayOfNextMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0);
+                  suggestedDate = lastDayOfNextMonth.toISOString().split('T')[0];
+                }
+              } catch (error) {
+                // Si hay error, usar fecha actual como fallback
+              }
+              
               const newEditableHeader = {
                 resource_no: resourceData.code, // Usar code del recurso
                 resource_name: resourceData.name,
                 department_code: resourceData.department_code,
                 calendar_type: resourceData.calendar_type,
                 allocation_period: ap,
-                posting_date: new Date().toISOString().split('T')[0], // Fecha de hoy
+                posting_date: suggestedDate, // ✅ Usar fecha sugerida calculada
                 posting_description: `Parte de trabajo ${ap}`,
                 calendar_period_days: "" // Se llenará cuando se seleccione la fecha
               };
