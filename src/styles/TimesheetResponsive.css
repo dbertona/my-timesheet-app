@@ -88,7 +88,18 @@ body {
   min-height: 100%;
   max-width: 100%;
   table-layout: fixed; /* ✅ Ancho fijo para control total */
-  background-color: #f8f9fa; /* 🎨 Fondo gris claro de BC */
+  background-color: #f8f9fa !important; /* 🎨 Fondo gris claro de BC con !important */
+}
+
+/* 🆕 Asegurar que las celdas también tengan el fondo gris */
+.ts-responsive .timesheet-table th,
+.ts-responsive .timesheet-table td {
+  background-color: #f8f9fa !important; /* 🎨 Fondo gris claro de BC */
+}
+
+/* 🆕 Contenedor de la tabla también con fondo gris */
+.ts-responsive .timesheet-table-container {
+  background-color: #f8f9fa !important; /* 🎨 Fondo gris claro de BC */
 }
 
 /* 🆕 Columnas con anchos específicos que suman 100% */
