@@ -17,6 +17,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
     posting_description: "",
     calendar_period_days: "" // Nuevo campo
   });
+  const [headerErrors, setHeaderErrors] = useState({}); // 🆕 Errores de validación de la cabecera
 
   useEffect(() => {
     // Si no hay header, obtener información del recurso actual
