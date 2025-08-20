@@ -533,6 +533,7 @@ export default function TimesheetLines({
                 errorId={`input-date-${line.id}-err`}
               >
                 <DateInput
+                  key={`${line.id}-${editableHeader?.allocation_period || header?.allocation_period || 'default'}`} // 🆕 Key que cambia cuando cambia el período
                   name="date"
                   value={editFormData[line.id]?.date || ""}
                   onChange={(val) => handleDateInputChange(line.id, val)}
