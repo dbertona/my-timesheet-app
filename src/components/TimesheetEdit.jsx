@@ -1521,60 +1521,23 @@ function TimesheetEdit({ headerId }) {
         {/* Sección de líneas - ocupa todo el espacio restante */}
         <div className="timesheet-lines-section">
           {/* Controles de líneas */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <h3>Líneas del Timesheet</h3>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              {hasUnsavedChanges && (
-                <span style={{ color: "#ff6b35", fontSize: 14, fontWeight: 500 }}>
-                  ⚠️ Cambios sin guardar
-                </span>
-              )}
-              <button
-                onClick={saveAllChanges}
-                disabled={!hasUnsavedChanges || isSaving}
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: hasUnsavedChanges ? "#007bff" : "#6c757d",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: hasUnsavedChanges && !isSaving ? "pointer" : "not-allowed",
-                  fontSize: "14px",
-                  fontWeight: "500"
-                }}
-              >
-                {isSaving ? "Guardando..." : "Guardar Cambios"}
-              </button>
-
-              {/* 🆕 Indicador de estado de validación */}
-              {hasUnsavedChanges && (
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "12px",
-                  color: (hasDailyErrors || hasProjectValidationErrors) ? "#dc3545" : "#28a745"
-                }}>
-                  {(hasDailyErrors || hasProjectValidationErrors) ? (
-                    <>
-                      <span>⚠️</span>
-                      <span>Hay errores que impiden guardar</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>✅</span>
-                      <span>Datos válidos</span>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-            <span style={{ color: "#666", fontSize: 12 }}>
-              {hasUnsavedChanges ? "Cambios pendientes de guardar" : "Sin cambios pendientes"}
-            </span>
+          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: 16 }}>
+            <button
+              onClick={saveAllChanges}
+              disabled={!hasUnsavedChanges || isSaving}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: hasUnsavedChanges ? "#007bff" : "#6c757d",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: hasUnsavedChanges && !isSaving ? "pointer" : "not-allowed",
+                fontSize: "14px",
+                fontWeight: "500"
+              }}
+            >
+              {isSaving ? "Guardando..." : "Guardar Cambios"}
+            </button>
           </div>
 
           {/* Contenedor de la tabla - ocupa todo el espacio disponible */}

@@ -250,7 +250,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
       }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
           <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
               Recurso:
             </label>
             <input
@@ -269,7 +269,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
             />
           </div>
           <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
               Nombre:
             </label>
             <input
@@ -288,7 +288,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
             />
           </div>
           <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
               Calendario:
             </label>
             <input
@@ -307,7 +307,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
             />
           </div>
           <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
               Fecha:
             </label>
             <input
@@ -326,7 +326,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
             />
           </div>
           <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
               Período:
             </label>
             <input
@@ -345,7 +345,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
             />
           </div>
           <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px" }}>
+            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
               Descripción:
             </label>
             <input
