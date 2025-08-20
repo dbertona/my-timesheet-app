@@ -40,6 +40,10 @@ export default function TimesheetLines({
   markAsChanged,
   handleKeyDown,
   handleInputChange: parentHandleInputChange, // ✅ Recibir función del padre
+  onLineSelectionChange, // 🆕 Nueva función para manejar selección
+  selectedLines = [], // 🆕 Array de IDs de líneas seleccionadas
+  onDuplicateLines, // 🆕 Función para duplicar líneas seleccionadas
+  onDeleteLines, // 🆕 Función para borrar líneas seleccionadas
 }) {
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
     TIMESHEET_FIELDS,
@@ -270,11 +274,117 @@ export default function TimesheetLines({
 
   const [calendarOpenFor, setCalendarOpenFor] = useState(null);
 
+  // 🆕 Estado para selección de líneas
+  const [localSelectedLines, setLocalSelectedLines] = useState(selectedLines || []);
+
+  // 🆕 Sincronizar selección local con props
+  useEffect(() => {
+    setLocalSelectedLines(selectedLines || []);
+  }, [selectedLines]);
+
+  // 🆕 Función para manejar selección individual
+  const handleLineSelection = (lineId, isSelected) => {
+    const newSelection = isSelected
+      ? [...localSelectedLines, lineId]
+      : localSelectedLines.filter(id => id !== lineId);
+
+    setLocalSelectedLines(newSelection);
+    if (onLineSelectionChange) {
+      onLineSelectionChange(newSelection);
+    }
+  };
+
+  // 🆕 Función para seleccionar/deseleccionar todas las líneas
+  const handleSelectAll = (selectAll) => {
+    const newSelection = selectAll ? safeLines.map(line => line.id) : [];
+    setLocalSelectedLines(newSelection);
+    if (onLineSelectionChange) {
+      onLineSelectionChange(newSelection);
+    }
+  };
+
   return (
     <div className="ts-responsive">
+      {/* 🆕 Barra de acciones para líneas seleccionadas */}
+      {localSelectedLines.length > 0 && (
+        <div className="ts-actions-bar" style={{
+          padding: "8px 16px",
+          backgroundColor: "#f8f9fa",
+          borderBottom: "1px solid #dee2e6",
+          display: "flex",
+          alignItems: "center",
+          gap: "12px"
+        }}>
+          <span style={{ fontSize: "14px", color: "#495057" }}>
+            {localSelectedLines.length} línea{localSelectedLines.length !== 1 ? 's' : ''} seleccionada{localSelectedLines.length !== 1 ? 's' : ''}
+          </span>
+
+          <button
+            onClick={() => onDuplicateLines && onDuplicateLines(localSelectedLines)}
+            style={{
+              padding: "6px 12px",
+              backgroundColor: "#007bff",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              fontSize: "12px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = "#0056b3"}
+            onMouseLeave={(e) => e.target.style.backgroundColor = "#007bff"}
+          >
+            📋 Duplicar
+          </button>
+
+          <button
+            onClick={() => onDeleteLines && onDeleteLines(localSelectedLines)}
+            style={{
+              padding: "6px 12px",
+              backgroundColor: "#dc3545",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              fontSize: "12px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = "#c82333"}
+            onMouseLeave={(e) => e.target.style.backgroundColor = "#dc3545"}
+          >
+            🗑️ Borrar
+          </button>
+        </div>
+      )}
+
       <table ref={tableRef} className="ts-table">
         <thead>
           <tr>
+            {/* 🆕 Columna de selección */}
+            <th
+              className="ts-th"
+              style={{
+                width: "40px",
+                textAlign: "center",
+                padding: "8px 4px"
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={localSelectedLines.length === safeLines.length && safeLines.length > 0}
+                onChange={(e) => handleSelectAll(e.target.checked)}
+                style={{
+                  width: "16px",
+                  height: "16px",
+                  cursor: "pointer"
+                }}
+              />
+            </th>
+
             {TIMESHEET_FIELDS.map((key) => (
               <th
                 key={key}
@@ -297,6 +407,28 @@ export default function TimesheetLines({
         <tbody>
           {safeLines.map((line, lineIndex) => (
             <tr key={line.id}>
+              {/* 🆕 Columna de selección */}
+              <td
+                className="ts-td"
+                style={{
+                  width: "40px",
+                  textAlign: "center",
+                  padding: "8px 4px",
+                  verticalAlign: "middle"
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={localSelectedLines.includes(line.id)}
+                  onChange={(e) => handleLineSelection(line.id, e.target.checked)}
+                  style={{
+                    width: "16px",
+                    height: "16px",
+                    cursor: "pointer"
+                  }}
+                />
+              </td>
+
               {/* ----- PROYECTO: combo buscable ----- */}
               <ProjectCell
                 line={line}
