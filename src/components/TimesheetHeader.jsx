@@ -78,7 +78,12 @@ function TimesheetHeader({ header, onHeaderChange }) {
                   // ✅ Calcular correctamente: último día del mes siguiente
                   const nextMonth = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, 1);
                   const lastDayOfNextMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0);
-                  suggestedDate = lastDayOfNextMonth.toISOString().split('T')[0];
+                  
+                  // ✅ Corregir problema de zona horaria: usar fecha local en lugar de UTC
+                  const year = lastDayOfNextMonth.getFullYear();
+                  const month = String(lastDayOfNextMonth.getMonth() + 1).padStart(2, '0');
+                  const day = String(lastDayOfNextMonth.getDate()).padStart(2, '0');
+                  suggestedDate = `${year}-${month}-${day}`;
                 }
               } catch (error) {
                 // Si hay error, usar fecha actual como fallback
