@@ -1254,7 +1254,7 @@ function TimesheetEdit({ headerId }) {
     return { isValid: true, error: null };
   };
 
-  // -- Obtener fecha sugerida para nuevo parte (primer día del mes siguiente al último)
+  // -- Obtener fecha sugerida para nuevo parte (último día del mes siguiente al último)
   const getSuggestedPartDate = async (resourceNo) => {
     if (!resourceNo) return new Date().toISOString().split('T')[0];
     
@@ -1273,11 +1273,12 @@ function TimesheetEdit({ headerId }) {
         return new Date().toISOString().split('T')[0];
       }
       
-      // Obtener el primer día del mes siguiente al último timesheet
+      // ✅ Obtener el ÚLTIMO día del mes siguiente al último timesheet
       const lastDate = new Date(lastHeader.to_date);
       const nextMonth = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, 1);
+      const lastDayOfNextMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0);
       
-      return nextMonth.toISOString().split('T')[0];
+      return lastDayOfNextMonth.toISOString().split('T')[0];
     } catch (error) {
       console.error("Error obteniendo fecha sugerida:", error);
       return new Date().toISOString().split('T')[0];
