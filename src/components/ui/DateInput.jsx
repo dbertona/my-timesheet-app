@@ -52,8 +52,21 @@ export default function DateInput({
 
   // Generar días del mes
   const generateDays = () => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
+    // ✅ Para inserción: usar el período del editableHeader si no hay header
+    let targetMonth = currentMonth;
+    
+    if (!header && editableHeader?.allocation_period) {
+      const period = editableHeader.allocation_period;
+      const match = period.match(/M(\d{2})-M(\d{2})/);
+      if (match) {
+        const year = 2000 + parseInt(match[1]);
+        const month = parseInt(match[2]) - 1;
+        targetMonth = new Date(year, month, 1);
+      }
+    }
+    
+    const year = targetMonth.getFullYear();
+    const month = targetMonth.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startDate = new Date(firstDay);
