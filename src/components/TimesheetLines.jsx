@@ -546,6 +546,7 @@ export default function TimesheetLines({
                   calendarOpen={calendarOpenFor === line.id}
                   setCalendarOpen={(open) => setCalendarOpenFor(open ? line.id : null)}
                   header={header}
+                  editableHeader={editableHeader} // 🆕 Pasar editableHeader para validación en inserción
                   calendarHolidays={calendarHolidays}
                   className={`ts-input pr-icon ${errors[line.id]?.date ? 'has-error' : ''}`}
                   inputId={`input-date-${line.id}`}

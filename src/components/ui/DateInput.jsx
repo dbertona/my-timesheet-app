@@ -16,6 +16,7 @@ export default function DateInput({
   calendarOpen,
   setCalendarOpen,
   header,
+  editableHeader, // 🆕 Recibir editableHeader para validación en inserción
   calendarHolidays,
   className,
   inputId,
@@ -67,24 +68,42 @@ export default function DateInput({
       const newMonth = new Date(prev);
       newMonth.setMonth(newMonth.getMonth() + direction);
 
-            // Verificar si el nuevo mes está dentro del rango de la cabecera
-      if (header) {
-        const fromDate = parse(header.from_date, "yyyy-MM-dd", new Date());
-        const toDate = parse(header.to_date, "yyyy-MM-dd", new Date());
-
-        // Si vamos hacia atrás, verificar que no sea antes del mes de from_date
-        if (direction < 0) {
-          const fromMonth = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
-          if (newMonth < fromMonth) {
-            return prev; // No cambiar si está fuera del rango
+      // ✅ Verificar si el nuevo mes está dentro del rango (header o editableHeader)
+      const effectiveHeader = header || editableHeader;
+      if (effectiveHeader) {
+        let fromDate, toDate;
+        
+        if (header?.from_date && header?.to_date) {
+          // ✅ Para edición: usar fechas existentes
+          fromDate = parse(header.from_date, "yyyy-MM-dd", new Date());
+          toDate = parse(header.to_date, "yyyy-MM-dd", new Date());
+        } else if (editableHeader?.allocation_period) {
+          // ✅ Para inserción: calcular fechas del período
+          const period = editableHeader.allocation_period;
+          const match = period.match(/M(\d{2})-M(\d{2})/);
+          if (match) {
+            const year = 2000 + parseInt(match[1]);
+            const month = parseInt(match[2]) - 1;
+            fromDate = new Date(year, month, 1);
+            toDate = new Date(year, month + 1, 0);
           }
         }
 
-        // Si vamos hacia adelante, verificar que no sea después del mes de to_date
-        if (direction > 0) {
-          const toMonth = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
-          if (newMonth > toMonth) {
-            return prev; // No cambiar si está fuera del rango
+        if (fromDate && toDate) {
+          // Si vamos hacia atrás, verificar que no sea antes del mes de from_date
+          if (direction < 0) {
+            const fromMonth = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
+            if (newMonth < fromMonth) {
+              return prev; // No cambiar si está fuera del rango
+            }
+          }
+
+          // Si vamos hacia adelante, verificar que no sea después del mes de to_date
+          if (direction > 0) {
+            const toMonth = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
+            if (newMonth > toMonth) {
+              return prev; // No cambiar si está fuera del rango
+            }
           }
         }
       }
