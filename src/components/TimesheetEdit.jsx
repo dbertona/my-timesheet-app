@@ -1541,7 +1541,7 @@ function TimesheetEdit({ headerId }) {
           </div>
 
           {/* Contenedor de la tabla - ocupa todo el espacio disponible */}
-          <div className="timesheet-table-container">
+          <div className="timesheet-table-container" style={{ width: "100%" }}>
             <TimesheetLines
               lines={lines}
               editFormData={editFormData}

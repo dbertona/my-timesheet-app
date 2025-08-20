@@ -20,7 +20,7 @@ export const TIMESHEET_LABELS = {
   description: "Descripción",
   work_type: "Tipo trabajo",
   quantity: "Cantidad",
-  date: "Fecha día trabajo",
+  date: "Fecha",
   department_code: "Departamento",
 };
 

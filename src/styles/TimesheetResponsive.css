@@ -40,6 +40,7 @@
   flex: 1;
   overflow: auto;
   min-height: 0;
+  max-width: 100%; /* 🆕 Limitar al ancho máximo disponible */
 }
 
 /* Tabla de líneas - altura completa del contenedor */
@@ -47,6 +48,8 @@
   width: 100%;
   height: 100%;
   min-height: 100%;
+  max-width: 100%; /* 🆕 Limitar ancho máximo */
+  table-layout: auto; /* 🆕 Permitir que las columnas se ajusten */
 }
 
 /* Contenedor general responsivo */
@@ -80,13 +83,13 @@ body {
 
 /* Limitar anchos por columna cuando hay poco espacio */
 @media (max-width: 1440px) {
-  th[data-col="description"], td[data-col="description"] { min-width: 240px; max-width: 380px; }
-  th[data-col="job_no"], td[data-col="job_no"]           { min-width: 140px; max-width: 220px; }
-  th[data-col="job_task_no"], td[data-col="job_task_no"] { min-width: 120px; max-width: 200px; }
-  th[data-col="work_type"], td[data-col="work_type"]     { min-width: 120px; max-width: 180px; }
-  th[data-col="quantity"], td[data-col="quantity"]       { min-width: 90px;  max-width: 120px; }
-  th[data-col="date"], td[data-col="date"]               { min-width: 120px; max-width: 150px; }
-  th[data-col="department_code"], td[data-col="department_code"] { min-width: 120px; max-width: 160px; }
+  th[data-col="description"], td[data-col="description"] { min-width: 200px; max-width: 300px; }
+  th[data-col="job_no"], td[data-col="job_no"]           { min-width: 120px; max-width: 180px; }
+  th[data-col="job_task_no"], td[data-col="job_task_no"] { min-width: 100px; max-width: 160px; }
+  th[data-col="work_type"], td[data-col="work_type"]     { min-width: 100px; max-width: 150px; }
+  th[data-col="quantity"], td[data-col="quantity"]       { min-width: 80px;  max-width: 100px; }
+  th[data-col="date"], td[data-col="date"]               { min-width: 100px; max-width: 130px; }
+  th[data-col="department_code"], td[data-col="department_code"] { min-width: 100px; max-width: 140px; }
 }
 
 /* Portátiles pequeños (≤1280px) */
