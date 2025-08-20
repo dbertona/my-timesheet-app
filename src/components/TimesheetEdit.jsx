@@ -51,6 +51,7 @@ function TimesheetEdit({ headerId }) {
   const [calendarHolidays, setCalendarHolidays] = useState([]);
   const [rightPad, setRightPad] = useState(234);
   const [editableHeader, setEditableHeader] = useState(null); // 🆕 Cabecera editable para nuevos partes
+  const [periodChangeTrigger, setPeriodChangeTrigger] = useState(0); // 🆕 Trigger para forzar re-renderizado cuando cambie el período
 
   // IDs de cabecera resueltos antes de usar hooks que dependen de ello
   const [debugInfo, setDebugInfo] = useState({ ap: null, headerIdProp: headerId ?? null, headerIdResolved: null });
@@ -768,6 +769,13 @@ function TimesheetEdit({ headerId }) {
       });
     }
   }, [effectiveHeaderId, editableHeader?.resource_no, editableHeader?.posting_date]);
+
+  // 🆕 Incrementar trigger cuando cambie el período
+  useEffect(() => {
+    if (editableHeader?.allocation_period) {
+      setPeriodChangeTrigger(prev => prev + 1);
+    }
+  }, [editableHeader?.allocation_period]);
 
   // Cuando llegan las líneas, actualizar estado local y edición inicial con dos decimales
   useEffect(() => {
@@ -1586,6 +1594,7 @@ function TimesheetEdit({ headerId }) {
               handleKeyDown={handleKeyDown}
               header={header}
               editableHeader={editableHeader}
+              periodChangeTrigger={periodChangeTrigger} // 🆕 Pasar trigger para forzar re-renderizado
               calendarHolidays={calendarHolidays}
               scheduleAutosave={() => {}} // Eliminado
               saveLineNow={() => {}} // Eliminado

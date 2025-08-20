@@ -29,6 +29,7 @@ export default function TimesheetLines({
   setSafeRef,
   header,
   editableHeader,
+  periodChangeTrigger, // 🆕 Recibir trigger para forzar re-renderizado
   calendarHolidays,
   scheduleAutosave,
   saveLineNow,
@@ -533,7 +534,7 @@ export default function TimesheetLines({
                 errorId={`input-date-${line.id}-err`}
               >
                 <DateInput
-                  key={`${line.id}-${editableHeader?.allocation_period || header?.allocation_period || 'default'}`} // 🆕 Key que cambia cuando cambia el período
+                  key={`${line.id}-${editableHeader?.allocation_period || header?.allocation_period || 'default'}-${periodChangeTrigger}`} // 🆕 Key que cambia cuando cambia el período O el trigger
                   name="date"
                   value={editFormData[line.id]?.date || ""}
                   onChange={(val) => handleDateInputChange(line.id, val)}
