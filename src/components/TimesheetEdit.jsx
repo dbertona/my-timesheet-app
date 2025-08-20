@@ -1221,8 +1221,16 @@ function TimesheetEdit({ headerId }) {
     if (!headerData) return { isValid: true, error: null };
     
     const selectedDate = new Date(date);
-    const fromDate = headerData.from_date ? new Date(headerData.from_date) : null;
-    const toDate = headerData.to_date ? new Date(headerData.to_date) : null;
+    
+    // ✅ Para inserción: calcular fechas del período si no están definidas
+    let fromDate = headerData.from_date ? new Date(headerData.from_date) : null;
+    let toDate = headerData.to_date ? new Date(headerData.to_date) : null;
+    
+    // Si no hay fechas pero sí hay período, calcularlas
+    if ((!fromDate || !toDate) && headerData.allocation_period) {
+      fromDate = new Date(getFirstDayOfPeriod(headerData.allocation_period));
+      toDate = new Date(getLastDayOfPeriod(headerData.allocation_period));
+    }
     
     // Si no hay rango definido, permitir cualquier fecha
     if (!fromDate || !toDate) return { isValid: true, error: null };
