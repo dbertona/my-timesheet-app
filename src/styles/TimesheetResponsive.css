@@ -83,18 +83,24 @@ body {
 
 /* Limitar anchos por columna cuando hay poco espacio */
 @media (max-width: 1440px) {
-  th[data-col="description"], td[data-col="description"] { min-width: 200px; max-width: 300px; }
-  th[data-col="job_no"], td[data-col="job_no"]           { min-width: 120px; max-width: 180px; }
-  th[data-col="job_task_no"], td[data-col="job_task_no"] { min-width: 100px; max-width: 160px; }
-  th[data-col="work_type"], td[data-col="work_type"]     { min-width: 100px; max-width: 150px; }
-  th[data-col="quantity"], td[data-col="quantity"]       { min-width: 80px;  max-width: 100px; }
-  th[data-col="date"], td[data-col="date"]               { min-width: 100px; max-width: 130px; }
-  th[data-col="department_code"], td[data-col="department_code"] { min-width: 100px; max-width: 140px; }
+  th[data-col="description"], td[data-col="description"] { min-width: 150px; max-width: 200px; }
+  th[data-col="job_no"], td[data-col="job_no"]           { min-width: 100px; max-width: 140px; }
+  th[data-col="job_task_no"], td[data-col="job_task_no"] { min-width: 80px;  max-width: 120px; }
+  th[data-col="work_type"], td[data-col="work_type"]     { min-width: 80px;  max-width: 110px; }
+  th[data-col="quantity"], td[data-col="quantity"]       { min-width: 70px;  max-width: 90px; }
+  th[data-col="date"], td[data-col="date"]               { min-width: 80px;  max-width: 100px; }
+  th[data-col="department_code"], td[data-col="department_code"] { min-width: 80px;  max-width: 110px; }
 }
 
 /* Portátiles pequeños (≤1280px) */
 @media (max-width: 1280px) {
-  th[data-col="description"], td[data-col="description"] { min-width: 220px; max-width: 320px; }
+  th[data-col="description"], td[data-col="description"] { min-width: 120px; max-width: 180px; }
+  th[data-col="job_no"], td[data-col="job_no"]           { min-width: 80px;  max-width: 120px; }
+  th[data-col="job_task_no"], td[data-col="job_task_no"] { min-width: 70px;  max-width: 100px; }
+  th[data-col="work_type"], td[data-col="work_type"]     { min-width: 70px;  max-width: 90px; }
+  th[data-col="quantity"], td[data-col="quantity"]       { min-width: 60px;  max-width: 80px; }
+  th[data-col="date"], td[data-col="date"]               { min-width: 70px;  max-width: 90px; }
+  th[data-col="department_code"], td[data-col="department_code"] { min-width: 70px;  max-width: 90px; }
 }
 
 /* Dropdowns más contenidos en pantallas estrechas */
