@@ -45,10 +45,17 @@ export default function DateInput({
   // 🆕 Re-renderizar cuando cambie el período para actualizar validación
   useEffect(() => {
     if (editableHeader?.allocation_period) {
-      // Forzar re-renderizado del calendario cuando cambie el período
-      setCurrentMonth(parseDate(value) || new Date());
+      // ✅ Cuando cambie el período, centrar el calendario en ese mes
+      const period = editableHeader.allocation_period;
+      const match = period.match(/M(\d{2})-M(\d{2})/);
+      if (match) {
+        const year = 2000 + parseInt(match[1]);
+        const month = parseInt(match[2]) - 1;
+        const newMonth = new Date(year, month, 1);
+        setCurrentMonth(newMonth);
+      }
     }
-  }, [editableHeader?.allocation_period, value]);
+  }, [editableHeader?.allocation_period]);
 
   // Generar días del mes
   const generateDays = () => {
