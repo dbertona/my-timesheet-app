@@ -757,6 +757,18 @@ function TimesheetEdit({ headerId }) {
     }
   }, [effectiveHeaderId, editableHeader, lines.length]);
 
+  // 🆕 Inicializar fecha sugerida para nuevo parte
+  useEffect(() => {
+    if (!effectiveHeaderId && editableHeader?.resource_no && !editableHeader.posting_date) {
+      getSuggestedPartDate(editableHeader.resource_no).then(suggestedDate => {
+        setEditableHeader(prev => ({
+          ...prev,
+          posting_date: suggestedDate
+        }));
+      });
+    }
+  }, [effectiveHeaderId, editableHeader?.resource_no, editableHeader?.posting_date]);
+
   // Cuando llegan las líneas, actualizar estado local y edición inicial con dos decimales
   useEffect(() => {
     // 🆕 Solo procesar líneas si hay header y datos del hook
@@ -1204,10 +1216,85 @@ function TimesheetEdit({ headerId }) {
     }));
   }, [markAsChanged, fetchJobInfo]);
 
+  // -- Función unificada para validar rango de fechas
+  const validateDateRange = (date, headerData) => {
+    if (!headerData) return { isValid: true, error: null };
+    
+    const selectedDate = new Date(date);
+    const fromDate = headerData.from_date ? new Date(headerData.from_date) : null;
+    const toDate = headerData.to_date ? new Date(headerData.to_date) : null;
+    
+    // Si no hay rango definido, permitir cualquier fecha
+    if (!fromDate || !toDate) return { isValid: true, error: null };
+    
+    // Validar que la fecha esté dentro del rango
+    if (selectedDate < fromDate || selectedDate > toDate) {
+      return {
+        isValid: false,
+        error: `La fecha debe estar entre ${fromDate.toLocaleDateString()} y ${toDate.toLocaleDateString()}`
+      };
+    }
+    
+    return { isValid: true, error: null };
+  };
+
+  // -- Obtener fecha sugerida para nuevo parte (primer día del mes siguiente al último)
+  const getSuggestedPartDate = async (resourceNo) => {
+    if (!resourceNo) return new Date().toISOString().split('T')[0];
+    
+    try {
+      // Obtener el último timesheet del recurso
+      const { data: lastHeader, error } = await supabaseClient
+        .from("resource_timesheet_header")
+        .select("to_date")
+        .eq("resource_no", resourceNo)
+        .order("to_date", { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (error || !lastHeader?.to_date) {
+        // Si no hay timesheets previos, usar fecha actual
+        return new Date().toISOString().split('T')[0];
+      }
+      
+      // Obtener el primer día del mes siguiente al último timesheet
+      const lastDate = new Date(lastHeader.to_date);
+      const nextMonth = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, 1);
+      
+      return nextMonth.toISOString().split('T')[0];
+    } catch (error) {
+      console.error("Error obteniendo fecha sugerida:", error);
+      return new Date().toISOString().split('T')[0];
+    }
+  };
+
   // -- Custom handleDateChange
   const handleDateChange = (id, value) => {
     // value puede ser "dd/MM/yyyy" o similar
     const iso = toIsoFromInput(value);
+    
+    // ✅ Validar rango de fechas (funciona tanto para edición como inserción)
+    const headerForValidation = header || editableHeader;
+    const rangeValidation = validateDateRange(iso, headerForValidation);
+    
+    if (!rangeValidation.isValid) {
+      setEditFormData((prev) => ({
+        ...prev,
+        [id]: {
+          ...prev[id],
+          date: value,
+          quantity: 0,
+          isOutOfRange: true,
+        },
+      }));
+      setErrors((prev) => ({
+        ...prev,
+        [id]: { ...(prev[id] || {}), date: rangeValidation.error },
+      }));
+      markAsChanged();
+      return;
+    }
+    
     if (festivos.includes(iso)) {
       setEditFormData((prev) => ({
         ...prev,
@@ -1225,13 +1312,15 @@ function TimesheetEdit({ headerId }) {
       markAsChanged();
       return;
     }
-    // Si no es festivo, limpiar isHoliday y error.quantity
+    
+    // Si no es festivo ni está fuera de rango, limpiar flags y error
     setEditFormData((prev) => ({
       ...prev,
       [id]: {
         ...prev[id],
         date: value,
         isHoliday: false,
+        isOutOfRange: false,
       },
     }));
     setErrors((prev) => {
