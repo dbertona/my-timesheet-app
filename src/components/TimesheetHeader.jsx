@@ -239,132 +239,161 @@ function TimesheetHeader({ header, onHeaderChange }) {
     );
   }
 
-  if (!header) {
-    // Mostrar cabecera editable para nuevo parte
-    return (
-      <div style={{
-        padding: "20px",
-        border: "2px dashed #007bff",
-        borderRadius: "8px",
-        backgroundColor: "#f8f9fa"
+  // 🆕 Cabecera unificada para inserción y edición
+  const isEditMode = !!header;
+  const effectiveHeader = header || editableHeader;
+  
+  return (
+    <div style={{
+      padding: "20px",
+      border: isEditMode ? "1px solid #ddd" : "2px dashed #007bff",
+      borderRadius: "8px",
+      backgroundColor: isEditMode ? "#ffffff" : "#f8f9fa"
+    }}>
+      <div style={{ 
+        display: "grid", 
+        gridTemplateColumns: "1fr 1fr", 
+        gap: "16px",
+        fontSize: "14px"
       }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-          <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
-              Recurso:
-            </label>
-            <input
-              type="text"
-              value={editableHeader.resource_no}
-              readOnly
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-                backgroundColor: "#f5f5f5",
-                color: "#666"
-              }}
-            />
-          </div>
-          <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
-              Nombre:
-            </label>
-            <input
-              type="text"
-              value={editableHeader.resource_name}
-              readOnly
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-                backgroundColor: "#f5f5f5",
-                color: "#666"
-              }}
-            />
-          </div>
-          <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
-              Calendario:
-            </label>
-            <input
-              type="text"
-              value={editableHeader.calendar_type}
-              readOnly
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-                backgroundColor: "#f5f5f5",
-                color: "#666"
-              }}
-            />
-          </div>
-          <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
-              Fecha:
-            </label>
-            <input
-              type="date"
-              value={editableHeader.posting_date}
-              readOnly // 🆕 Fecha del parte no editable - se calcula automáticamente
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-                backgroundColor: "#f5f5f5", // 🎨 Estilo visual para campos no editables
-                color: "#666"
-              }}
-            />
-          </div>
-          <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
-              Período:
-            </label>
-            <input
-              type="text"
-              value={editableHeader.allocation_period}
-              readOnly
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-                backgroundColor: "#f5f5f5",
-                color: "#666"
-              }}
-            />
-          </div>
-          <div>
-            <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
-              Descripción:
-            </label>
-            <input
-              type="text"
-              value={editableHeader.posting_description}
-              onChange={(e) => handleFieldChange("posting_description", e.target.value)}
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px"
-              }}
-            />
-          </div>
+        {/* Recurso */}
+        <div>
+          <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
+            Recurso:
+          </label>
+          <input
+            type="text"
+            value={effectiveHeader.resource_no}
+            readOnly
+            style={{
+              width: "100%",
+              padding: "8px",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              fontSize: "14px",
+              backgroundColor: "#f5f5f5",
+              color: "#666"
+            }}
+          />
+        </div>
+        
+        {/* Nombre */}
+        <div>
+          <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
+            Nombre:
+          </label>
+          <input
+            type="text"
+            value={effectiveHeader.resource_name}
+            readOnly
+            style={{
+              width: "100%",
+              padding: "8px",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              fontSize: "14px",
+              backgroundColor: "#f5f5f5",
+              color: "#666"
+            }}
+          />
+        </div>
+        
+        {/* Calendario */}
+        <div>
+          <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
+            Calendario:
+          </label>
+          <input
+            type="text"
+            value={effectiveHeader.calendar_type}
+            readOnly
+            style={{
+              width: "100%",
+              padding: "8px",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              fontSize: "14px",
+              backgroundColor: "#f5f5f5",
+              color: "#666"
+            }}
+          />
+        </div>
+        
+        {/* Fecha */}
+        <div>
+          <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
+            Fecha:
+          </label>
+          <input
+            type="date"
+            value={effectiveHeader.posting_date}
+            readOnly={!isEditMode} // ✅ Solo editable en modo edición
+            onChange={isEditMode ? (e) => handleFieldChange("posting_date", e.target.value) : undefined}
+            style={{
+              width: "100%",
+              padding: "8px",
+              border: headerErrors.posting_date ? "1px solid #dc3545" : "1px solid #ddd",
+              borderRadius: "4px",
+              fontSize: "14px",
+              backgroundColor: isEditMode ? "#ffffff" : "#f5f5f5",
+              color: isEditMode ? "#000000" : "#666"
+            }}
+          />
+          {/* ✅ Mostrar error de fecha ocupada solo en edición */}
+          {isEditMode && headerErrors.posting_date && (
+            <div style={{
+              color: "#dc3545",
+              fontSize: "12px",
+              marginTop: "4px",
+              fontWeight: "500"
+            }}>
+              ⚠️ {headerErrors.posting_date}
+            </div>
+          )}
+        </div>
+        
+        {/* Período */}
+        <div>
+          <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
+            Período:
+          </label>
+          <input
+            type="text"
+            value={effectiveHeader.allocation_period}
+            readOnly
+            style={{
+              width: "100%",
+              padding: "8px",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              fontSize: "14px",
+              backgroundColor: "#f5f5f5",
+              color: "#666"
+            }}
+          />
+        </div>
+        
+        {/* Descripción */}
+        <div>
+          <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
+            Descripción:
+          </label>
+          <input
+            type="text"
+            value={effectiveHeader.posting_description}
+            onChange={(e) => handleFieldChange("posting_description", e.target.value)}
+            style={{
+              width: "100%",
+              padding: "8px",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              fontSize: "14px"
+            }}
+          />
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <table className="timesheet-header">
