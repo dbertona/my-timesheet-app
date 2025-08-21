@@ -252,24 +252,13 @@ function TimesheetEdit({ headerId }) {
         // Si la línea original tiene fecha, verificar el estado del día usando el calendario
         if (newDate && newDate !== "") {
           try {
-            // 🆕 Convertir formato español DD/MM/YYYY a YYYY-MM-DD
-            let processedDate = newDate;
-            if (typeof newDate === "string" && newDate.includes("/")) {
-              const parts = newDate.split("/");
-              if (parts.length === 3) {
-                const [day, month, year] = parts;
-                processedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-                console.log("🔄 Fecha convertida:", newDate, "→", processedDate);
-              }
-            }
-            
-            const originalDate = new Date(processedDate);
-            
-            // Verificar que la fecha sea válida
-            if (isNaN(originalDate.getTime())) {
+            // ✅ Usar la función existente toIsoFromInput para convertir fechas
+            const processedDate = toIsoFromInput(newDate);
+            if (!processedDate) {
               console.warn("⚠️ Fecha inválida en línea:", newDate);
               newDate = ""; // Resetear a fecha vacía si es inválida
             } else {
+              const originalDate = new Date(processedDate);
               const dayKey = originalDate.toISOString().split('T')[0];
               
               // Buscar el día en el calendario para obtener su estado real
