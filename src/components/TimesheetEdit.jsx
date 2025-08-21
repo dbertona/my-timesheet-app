@@ -469,8 +469,11 @@ function TimesheetEdit({ headerId }) {
       
       // Limpiar selección después de eliminar
       setSelectedLines([]);
+      
+      // ✅ Marcar que hay cambios pendientes para habilitar el botón "Guardar Cambios"
+      markAsChanged();
     }
-  }, [deleteLineMutation]);
+  }, [deleteLineMutation, markAsChanged]);
 
   // ✅ MUTATION: Insertar línea nueva
   const insertLineMutation = useMutation({
