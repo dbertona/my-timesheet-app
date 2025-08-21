@@ -1635,9 +1635,9 @@ function TimesheetEdit({ headerId }) {
                 onClick={() => {
                   console.log("🔄 Botón Duplicar clickeado");
                   console.log("📋 Líneas seleccionadas:", selectedLines);
-                  console.log("🔧 Función onDuplicateLines:", onDuplicateLines);
-                  if (onDuplicateLines && selectedLines.length > 0) {
-                    onDuplicateLines(selectedLines);
+                  console.log("🔧 Función handleDuplicateLines:", handleDuplicateLines);
+                  if (handleDuplicateLines && selectedLines.length > 0) {
+                    handleDuplicateLines(selectedLines);
                   }
                 }}
                 disabled={selectedLines.length === 0}
@@ -1671,9 +1671,9 @@ function TimesheetEdit({ headerId }) {
                 onClick={() => {
                   console.log("🗑️ Botón Borrar clickeado");
                   console.log("📋 Líneas seleccionadas:", selectedLines);
-                  console.log("🔧 Función onDeleteLines:", onDeleteLines);
-                  if (onDeleteLines && selectedLines.length > 0) {
-                    onDeleteLines(selectedLines);
+                  console.log("🔧 Función handleDeleteLines:", handleDeleteLines);
+                  if (handleDeleteLines && selectedLines.length > 0) {
+                    handleDeleteLines(selectedLines);
                   }
                 }}
                 disabled={selectedLines.length === 0}
