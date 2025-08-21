@@ -242,42 +242,47 @@ function TimesheetEdit({ headerId }) {
     lineIds.forEach(lineId => {
       const originalLine = lines.find(line => line.id === lineId);
       if (originalLine) {
-        // 🆕 Lógica inteligente para la fecha
+        // 🆕 Lógica inteligente para la fecha usando el calendario existente
         let newDate = originalLine.date || "";
         
-        // Si la línea original tiene fecha, verificar si ese día ya está completo
+        // Si la línea original tiene fecha, verificar el estado del día usando el calendario
         if (newDate) {
           const originalDate = new Date(newDate);
           const dayKey = originalDate.toISOString().split('T')[0];
           
-          // Calcular el total de horas para ese día
-          const dayTotal = lines.reduce((total, line) => {
-            if (line.date === dayKey && line.quantity) {
-              return total + parseFloat(line.quantity || 0);
-            }
-            return total;
-          }, 0);
+          // Buscar el día en el calendario para obtener su estado real
+          const calendarDay = calendarDays.find(day => day.iso === dayKey);
           
-          // Si el día ya está completo (8 horas), usar el día siguiente
-          if (dayTotal >= 8) {
-            const nextDate = new Date(originalDate);
-            nextDate.setDate(nextDate.getDate() + 1);
-            
-            // Verificar que el día siguiente esté dentro del período válido
-            const effectiveHeader = header || editableHeader;
-            if (effectiveHeader?.allocation_period) {
-              const period = effectiveHeader.allocation_period;
-              const match = period.match(/M(\d{2})-M(\d{2})/);
-              if (match) {
-                const year = 2000 + parseInt(match[1]);
-                const month = parseInt(match[2]) - 1;
-                const fromDate = new Date(year, month, 1);
-                const toDate = new Date(year, month + 1, 0);
-                
-                // Si el día siguiente está fuera del período, usar el día original
-                if (nextDate >= fromDate && nextDate <= toDate) {
-                  newDate = nextDate.toISOString().split('T')[0];
+          if (calendarDay) {
+            // Si el día está completo, buscar el siguiente día disponible
+            if (calendarDay.status === "completo") {
+              // Buscar el siguiente día con estado "parcial" o "cero"
+              const currentIndex = calendarDays.findIndex(day => day.iso === dayKey);
+              let nextAvailableDay = null;
+              
+              // Buscar hacia adelante en el calendario
+              for (let i = currentIndex + 1; i < calendarDays.length; i++) {
+                const day = calendarDays[i];
+                if (day.status === "parcial" || day.status === "cero") {
+                  nextAvailableDay = day.iso;
+                  break;
                 }
+              }
+              
+              // Si no hay día siguiente disponible, buscar hacia atrás
+              if (!nextAvailableDay) {
+                for (let i = currentIndex - 1; i >= 0; i--) {
+                  const day = calendarDays[i];
+                  if (day.status === "parcial" || day.status === "cero") {
+                    nextAvailableDay = day.iso;
+                    break;
+                  }
+                }
+              }
+              
+              // Usar el día disponible encontrado, o mantener el original si no hay ninguno
+              if (nextAvailableDay) {
+                newDate = nextAvailableDay;
               }
             }
           }
@@ -299,7 +304,7 @@ function TimesheetEdit({ headerId }) {
       setSelectedLines([]);
       markAsChanged();
     }
-  }, [lines, markAsChanged, header, editableHeader]);
+  }, [lines, markAsChanged, calendarDays]);
 
   // 🆕 Función para borrar líneas seleccionadas
   const handleDeleteLines = useCallback((lineIds) => {
