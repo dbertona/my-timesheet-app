@@ -242,11 +242,52 @@ function TimesheetEdit({ headerId }) {
     lineIds.forEach(lineId => {
       const originalLine = lines.find(line => line.id === lineId);
       if (originalLine) {
+        // 🆕 Lógica inteligente para la fecha
+        let newDate = originalLine.date || "";
+        
+        // Si la línea original tiene fecha, verificar si ese día ya está completo
+        if (newDate) {
+          const originalDate = new Date(newDate);
+          const dayKey = originalDate.toISOString().split('T')[0];
+          
+          // Calcular el total de horas para ese día
+          const dayTotal = lines.reduce((total, line) => {
+            if (line.date === dayKey && line.quantity) {
+              return total + parseFloat(line.quantity || 0);
+            }
+            return total;
+          }, 0);
+          
+          // Si el día ya está completo (8 horas), usar el día siguiente
+          if (dayTotal >= 8) {
+            const nextDate = new Date(originalDate);
+            nextDate.setDate(nextDate.getDate() + 1);
+            
+            // Verificar que el día siguiente esté dentro del período válido
+            const effectiveHeader = header || editableHeader;
+            if (effectiveHeader?.allocation_period) {
+              const period = effectiveHeader.allocation_period;
+              const match = period.match(/M(\d{2})-M(\d{2})/);
+              if (match) {
+                const year = 2000 + parseInt(match[1]);
+                const month = parseInt(match[2]) - 1;
+                const fromDate = new Date(year, month, 1);
+                const toDate = new Date(year, month + 1, 0);
+                
+                // Si el día siguiente está fuera del período, usar el día original
+                if (nextDate >= fromDate && nextDate <= toDate) {
+                  newDate = nextDate.toISOString().split('T')[0];
+                }
+              }
+            }
+          }
+        }
+
         const duplicatedLine = {
           ...originalLine,
           id: `tmp-${Date.now()}-${Math.random()}`,
           quantity: 0, // Resetear cantidad para nueva línea
-          date: "", // Resetear fecha para nueva línea
+          date: newDate, // 🆕 Usar fecha inteligente calculada
         };
         newLines.push(duplicatedLine);
       }
@@ -258,7 +299,7 @@ function TimesheetEdit({ headerId }) {
       setSelectedLines([]);
       markAsChanged();
     }
-  }, [lines, markAsChanged]);
+  }, [lines, markAsChanged, header, editableHeader]);
 
   // 🆕 Función para borrar líneas seleccionadas
   const handleDeleteLines = useCallback((lineIds) => {
