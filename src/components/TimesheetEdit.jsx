@@ -252,7 +252,18 @@ function TimesheetEdit({ headerId }) {
         // Si la línea original tiene fecha, verificar el estado del día usando el calendario
         if (newDate && newDate !== "") {
           try {
-            const originalDate = new Date(newDate);
+            // 🆕 Convertir formato español DD/MM/YYYY a YYYY-MM-DD
+            let processedDate = newDate;
+            if (typeof newDate === "string" && newDate.includes("/")) {
+              const parts = newDate.split("/");
+              if (parts.length === 3) {
+                const [day, month, year] = parts;
+                processedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                console.log("🔄 Fecha convertida:", newDate, "→", processedDate);
+              }
+            }
+            
+            const originalDate = new Date(processedDate);
             
             // Verificar que la fecha sea válida
             if (isNaN(originalDate.getTime())) {
