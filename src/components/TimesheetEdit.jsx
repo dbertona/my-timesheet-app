@@ -1614,19 +1614,99 @@ function TimesheetEdit({ headerId }) {
         {/* Sección de líneas - ocupa todo el espacio restante */}
         <div className="timesheet-lines-section">
           {/* Controles de líneas */}
-          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: 16 }}>
+          <div style={{ 
+            display: "flex", 
+            justifyContent: "space-between", 
+            alignItems: "center", 
+            marginBottom: 16,
+            gap: "12px"
+          }}>
+            {/* 🆕 Botones de acción para líneas seleccionadas */}
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                onClick={() => onDuplicateLines && onDuplicateLines(selectedLines)}
+                disabled={selectedLines.length === 0}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: selectedLines.length > 0 ? "#007bff" : "#e9ecef",
+                  color: selectedLines.length > 0 ? "white" : "#6c757d",
+                  border: "1px solid #dee2e6",
+                  borderRadius: "4px",
+                  cursor: selectedLines.length > 0 ? "pointer" : "not-allowed",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
+                  transition: "all 0.2s ease"
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedLines.length > 0) {
+                    e.target.style.backgroundColor = "#0056b3";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedLines.length > 0) {
+                    e.target.style.backgroundColor = "#007bff";
+                  }
+                }}
+              >
+                📋 Duplicar
+              </button>
+              
+              <button
+                onClick={() => onDeleteLines && onDeleteLines(selectedLines)}
+                disabled={selectedLines.length === 0}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: selectedLines.length > 0 ? "#dc3545" : "#e9ecef",
+                  color: selectedLines.length > 0 ? "white" : "#6c757d",
+                  border: "1px solid #dee2e6",
+                  borderRadius: "4px",
+                  cursor: selectedLines.length > 0 ? "pointer" : "not-allowed",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
+                  transition: "all 0.2s ease"
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedLines.length > 0) {
+                    e.target.style.backgroundColor = "#c82333";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedLines.length > 0) {
+                    e.target.style.backgroundColor = "#dc3545";
+                  }
+                }}
+              >
+                🗑️ Borrar
+              </button>
+            </div>
+
+            {/* 🆕 Botón Guardar Cambios con estilo BC */}
             <button
               onClick={saveAllChanges}
               disabled={!hasUnsavedChanges || isSaving}
               style={{
                 padding: "8px 16px",
-                backgroundColor: hasUnsavedChanges ? "#007bff" : "#6c757d",
-                color: "white",
-                border: "none",
+                backgroundColor: hasUnsavedChanges ? "#007bff" : "#e9ecef",
+                color: hasUnsavedChanges ? "white" : "#6c757d",
+                border: "1px solid #dee2e6",
                 borderRadius: "4px",
                 cursor: hasUnsavedChanges && !isSaving ? "pointer" : "not-allowed",
                 fontSize: "14px",
-                fontWeight: "500"
+                fontWeight: "500",
+                fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                if (hasUnsavedChanges && !isSaving) {
+                  e.target.style.backgroundColor = "#0056b3";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (hasUnsavedChanges && !isSaving) {
+                  e.target.style.backgroundColor = "#007bff";
+                }
               }}
             >
               {isSaving ? "Guardando..." : "Guardar Cambios"}

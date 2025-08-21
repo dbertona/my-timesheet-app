@@ -305,61 +305,7 @@ export default function TimesheetLines({
 
   return (
     <div className="ts-responsive">
-      {/* 🆕 Barra de acciones para líneas seleccionadas */}
-      {localSelectedLines.length > 0 && (
-        <div className="ts-actions-bar" style={{
-          padding: "8px 16px",
-          backgroundColor: "#f8f9fa",
-          borderBottom: "1px solid #dee2e6",
-          display: "flex",
-          alignItems: "center",
-          gap: "12px"
-        }}>
-          <span style={{ fontSize: "14px", color: "#495057" }}>
-            {localSelectedLines.length} línea{localSelectedLines.length !== 1 ? 's' : ''} seleccionada{localSelectedLines.length !== 1 ? 's' : ''}
-          </span>
-
-          <button
-            onClick={() => onDuplicateLines && onDuplicateLines(localSelectedLines)}
-            style={{
-              padding: "6px 12px",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "12px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px"
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = "#0056b3"}
-            onMouseLeave={(e) => e.target.style.backgroundColor = "#007bff"}
-          >
-            📋 Duplicar
-          </button>
-
-          <button
-            onClick={() => onDeleteLines && onDeleteLines(localSelectedLines)}
-            style={{
-              padding: "6px 12px",
-              backgroundColor: "#dc3545",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "12px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px"
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = "#c82333"}
-            onMouseLeave={(e) => e.target.style.backgroundColor = "#dc3545"}
-          >
-            🗑️ Borrar
-          </button>
-        </div>
-      )}
+      
 
       <table ref={tableRef} className="ts-table">
         <thead>
