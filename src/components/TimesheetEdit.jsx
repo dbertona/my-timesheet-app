@@ -323,25 +323,7 @@ function TimesheetEdit({ headerId }) {
     }
   }, [lines, markAsChanged, calendarDays]);
 
-  // 🆕 Función para eliminar líneas seleccionadas
-  const handleDeleteLines = useCallback((lineIds) => {
-    console.log("🗑️ handleDeleteLines ejecutándose");
-    console.log("📋 IDs de líneas a eliminar:", lineIds);
-    console.log("📊 Líneas actuales:", lines);
-    
-    if (!lineIds.length) return;
 
-    // Confirmar antes de eliminar
-    if (window.confirm(`¿Estás seguro de que quieres eliminar ${lineIds.length} línea${lineIds.length !== 1 ? 's' : ''}?`)) {
-      // ✅ Eliminar cada línea de la base de datos usando la mutación existente
-      lineIds.forEach(lineId => {
-        deleteLineMutation.mutate(lineId);
-      });
-      
-      // Limpiar selección después de eliminar
-      setSelectedLines([]);
-    }
-  }, [deleteLineMutation]);
 
   // Función para obtener el primer día del mes del período
   const getFirstDayOfPeriod = (allocationPeriod) => {
@@ -469,6 +451,26 @@ function TimesheetEdit({ headerId }) {
       toast.error(TOAST.ERROR.DELETE_LINE);
     }
   });
+
+  // 🆕 Función para eliminar líneas seleccionadas
+  const handleDeleteLines = useCallback((lineIds) => {
+    console.log("🗑️ handleDeleteLines ejecutándose");
+    console.log("📋 IDs de líneas a eliminar:", lineIds);
+    console.log("📊 Líneas actuales:", lines);
+    
+    if (!lineIds.length) return;
+
+    // Confirmar antes de eliminar
+    if (window.confirm(`¿Estás seguro de que quieres eliminar ${lineIds.length} línea${lineIds.length !== 1 ? 's' : ''}?`)) {
+      // ✅ Eliminar cada línea de la base de datos usando la mutación existente
+      lineIds.forEach(lineId => {
+        deleteLineMutation.mutate(lineId);
+      });
+      
+      // Limpiar selección después de eliminar
+      setSelectedLines([]);
+    }
+  }, [deleteLineMutation]);
 
   // ✅ MUTATION: Insertar línea nueva
   const insertLineMutation = useMutation({
