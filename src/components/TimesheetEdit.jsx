@@ -236,6 +236,10 @@ function TimesheetEdit({ headerId }) {
 
   // 🆕 Función para duplicar líneas seleccionadas
   const handleDuplicateLines = useCallback((lineIds) => {
+    console.log("🚀 handleDuplicateLines ejecutándose");
+    console.log("📋 IDs de líneas a duplicar:", lineIds);
+    console.log("📊 Líneas actuales:", lines);
+    
     if (!lineIds.length) return;
 
     const newLines = [];
@@ -308,6 +312,10 @@ function TimesheetEdit({ headerId }) {
 
   // 🆕 Función para borrar líneas seleccionadas
   const handleDeleteLines = useCallback((lineIds) => {
+    console.log("🗑️ handleDeleteLines ejecutándose");
+    console.log("📋 IDs de líneas a borrar:", lineIds);
+    console.log("📊 Líneas actuales:", lines);
+    
     if (!lineIds.length) return;
 
     // Confirmar antes de borrar
@@ -1624,7 +1632,14 @@ function TimesheetEdit({ headerId }) {
             {/* 🆕 Botones de acción para líneas seleccionadas */}
             <div style={{ display: "flex", gap: "8px" }}>
               <button
-                onClick={() => onDuplicateLines && onDuplicateLines(selectedLines)}
+                onClick={() => {
+                  console.log("🔄 Botón Duplicar clickeado");
+                  console.log("📋 Líneas seleccionadas:", selectedLines);
+                  console.log("🔧 Función onDuplicateLines:", onDuplicateLines);
+                  if (onDuplicateLines && selectedLines.length > 0) {
+                    onDuplicateLines(selectedLines);
+                  }
+                }}
                 disabled={selectedLines.length === 0}
                 style={{
                   padding: "8px 16px",
@@ -1653,7 +1668,14 @@ function TimesheetEdit({ headerId }) {
               </button>
               
               <button
-                onClick={() => onDeleteLines && onDeleteLines(selectedLines)}
+                onClick={() => {
+                  console.log("🗑️ Botón Borrar clickeado");
+                  console.log("📋 Líneas seleccionadas:", selectedLines);
+                  console.log("🔧 Función onDeleteLines:", onDeleteLines);
+                  if (onDeleteLines && selectedLines.length > 0) {
+                    onDeleteLines(selectedLines);
+                  }
+                }}
                 disabled={selectedLines.length === 0}
                 style={{
                   padding: "8px 16px",
