@@ -323,22 +323,25 @@ function TimesheetEdit({ headerId }) {
     }
   }, [lines, markAsChanged, calendarDays]);
 
-  // 🆕 Función para borrar líneas seleccionadas
+  // 🆕 Función para eliminar líneas seleccionadas
   const handleDeleteLines = useCallback((lineIds) => {
     console.log("🗑️ handleDeleteLines ejecutándose");
-    console.log("📋 IDs de líneas a borrar:", lineIds);
+    console.log("📋 IDs de líneas a eliminar:", lineIds);
     console.log("📊 Líneas actuales:", lines);
     
     if (!lineIds.length) return;
 
-    // Confirmar antes de borrar
-    if (window.confirm(`¿Estás seguro de que quieres borrar ${lineIds.length} línea${lineIds.length !== 1 ? 's' : ''}?`)) {
-      setLines(prev => prev.filter(line => !lineIds.includes(line.id)));
-      // Limpiar selección después de borrar
+    // Confirmar antes de eliminar
+    if (window.confirm(`¿Estás seguro de que quieres eliminar ${lineIds.length} línea${lineIds.length !== 1 ? 's' : ''}?`)) {
+      // ✅ Eliminar cada línea de la base de datos usando la mutación existente
+      lineIds.forEach(lineId => {
+        deleteLineMutation.mutate(lineId);
+      });
+      
+      // Limpiar selección después de eliminar
       setSelectedLines([]);
-      markAsChanged();
     }
-  }, [markAsChanged]);
+  }, [deleteLineMutation]);
 
   // Función para obtener el primer día del mes del período
   const getFirstDayOfPeriod = (allocationPeriod) => {
@@ -1682,7 +1685,7 @@ function TimesheetEdit({ headerId }) {
               
               <button
                 onClick={() => {
-                  console.log("🗑️ Botón Borrar clickeado");
+                  console.log("🗑️ Botón Eliminar clickeado");
                   console.log("📋 Líneas seleccionadas:", selectedLines);
                   console.log("🔧 Función handleDeleteLines:", handleDeleteLines);
                   if (handleDeleteLines && selectedLines.length > 0) {
@@ -1713,7 +1716,7 @@ function TimesheetEdit({ headerId }) {
                   }
                 }}
               >
-                🗑️ Borrar
+                🗑️ Eliminar
               </button>
             </div>
 
