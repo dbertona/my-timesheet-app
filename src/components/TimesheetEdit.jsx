@@ -452,28 +452,27 @@ function TimesheetEdit({ headerId }) {
     }
   });
 
-  // 🆕 Función para eliminar líneas seleccionadas
+    // 🆕 Función para eliminar líneas seleccionadas
   const handleDeleteLines = useCallback((lineIds) => {
     console.log("🗑️ handleDeleteLines ejecutándose");
     console.log("📋 IDs de líneas a eliminar:", lineIds);
     console.log("📊 Líneas actuales:", lines);
-
+    
     if (!lineIds.length) return;
 
     // Confirmar antes de eliminar
     if (window.confirm(`¿Estás seguro de que quieres eliminar ${lineIds.length} línea${lineIds.length !== 1 ? 's' : ''}?`)) {
-      // ✅ Eliminar cada línea de la base de datos usando la mutación existente
-      lineIds.forEach(lineId => {
-        deleteLineMutation.mutate(lineId);
-      });
-
+      // ✅ ELIMINACIÓN SOLO LOCAL: NO se elimina de la BD hasta guardar
+      const updatedLines = lines.filter(line => !lineIds.includes(line.id));
+      setLines(updatedLines);
+      
       // Limpiar selección después de eliminar
       setSelectedLines([]);
-
+      
       // ✅ Marcar que hay cambios pendientes para habilitar el botón "Guardar Cambios"
       markAsChanged();
     }
-  }, [deleteLineMutation, markAsChanged]);
+  }, [lines, markAsChanged]);
 
   // ✅ MUTATION: Insertar línea nueva
   const insertLineMutation = useMutation({
