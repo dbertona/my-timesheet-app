@@ -239,7 +239,7 @@ function TimesheetEdit({ headerId }) {
     console.log("🚀 handleDuplicateLines ejecutándose");
     console.log("📋 IDs de líneas a duplicar:", lineIds);
     console.log("📊 Líneas actuales:", lines);
-    
+
     if (!lineIds.length) return;
 
     const newLines = [];
@@ -248,7 +248,7 @@ function TimesheetEdit({ headerId }) {
       if (originalLine) {
         // 🆕 Lógica inteligente para la fecha usando el calendario existente
         let newDate = originalLine.date || "";
-        
+
         // Si la línea original tiene fecha, verificar el estado del día usando el calendario
         if (newDate && newDate !== "") {
           try {
@@ -260,17 +260,17 @@ function TimesheetEdit({ headerId }) {
             } else {
               const originalDate = new Date(processedDate);
               const dayKey = originalDate.toISOString().split('T')[0];
-              
+
               // Buscar el día en el calendario para obtener su estado real
               const calendarDay = calendarDays.find(day => day.iso === dayKey);
-              
+
               if (calendarDay) {
                 // Si el día está completo, buscar el siguiente día disponible
                 if (calendarDay.status === "completo") {
                   // Buscar el siguiente día con estado "parcial" o "cero"
                   const currentIndex = calendarDays.findIndex(day => day.iso === dayKey);
                   let nextAvailableDay = null;
-                  
+
                   // Buscar hacia adelante en el calendario
                   for (let i = currentIndex + 1; i < calendarDays.length; i++) {
                     const day = calendarDays[i];
@@ -279,7 +279,7 @@ function TimesheetEdit({ headerId }) {
                       break;
                     }
                   }
-                  
+
                   // Si no hay día siguiente disponible, buscar hacia atrás
                   if (!nextAvailableDay) {
                     for (let i = currentIndex - 1; i >= 0; i--) {
@@ -290,7 +290,7 @@ function TimesheetEdit({ headerId }) {
                       }
                     }
                   }
-                  
+
                   // Usar el día disponible encontrado, o mantener el original si no hay ninguno
                   if (nextAvailableDay) {
                     newDate = nextAvailableDay;
@@ -328,7 +328,7 @@ function TimesheetEdit({ headerId }) {
   // Función para obtener el primer día del mes del período
   const getFirstDayOfPeriod = (allocationPeriod) => {
     if (!allocationPeriod) return new Date().toISOString().split('T')[0];
-    
+
     // Parsear período M25-M08 (año-mes)
     const match = allocationPeriod.match(/M(\d{2})-M(\d{2})/);
     if (match) {
@@ -337,14 +337,14 @@ function TimesheetEdit({ headerId }) {
       const firstDay = new Date(year, month, 1);
       return firstDay.toISOString().split('T')[0];
     }
-    
+
     return new Date().toISOString().split('T')[0];
   };
 
   // Función para obtener el último día del mes del período
   const getLastDayOfPeriod = (allocationPeriod) => {
     if (!allocationPeriod) return new Date().toISOString().split('T')[0];
-    
+
     // Parsear período M25-M08 (año-mes)
     const match = allocationPeriod.match(/M(\d{2})-M(\d{2})/);
     if (match) {
@@ -353,7 +353,7 @@ function TimesheetEdit({ headerId }) {
       const lastDay = new Date(year, month, 0); // Día 0 del mes siguiente = último día del mes actual
       return lastDay.toISOString().split('T')[0];
     }
-    
+
     return new Date().toISOString().split('T')[0];
   };
 
@@ -457,7 +457,7 @@ function TimesheetEdit({ headerId }) {
     console.log("🗑️ handleDeleteLines ejecutándose");
     console.log("📋 IDs de líneas a eliminar:", lineIds);
     console.log("📊 Líneas actuales:", lines);
-    
+
     if (!lineIds.length) return;
 
     // Confirmar antes de eliminar
@@ -466,10 +466,10 @@ function TimesheetEdit({ headerId }) {
       lineIds.forEach(lineId => {
         deleteLineMutation.mutate(lineId);
       });
-      
+
       // Limpiar selección después de eliminar
       setSelectedLines([]);
-      
+
       // ✅ Marcar que hay cambios pendientes para habilitar el botón "Guardar Cambios"
       markAsChanged();
     }
@@ -538,7 +538,7 @@ function TimesheetEdit({ headerId }) {
       // 🆕 PASO 4.1: Si no hay header, crear uno nuevo
       let currentHeaderId = effectiveHeaderId;
       if (!currentHeaderId) {
-  
+
 
         // 🆕 Obtener email del usuario usando useMsal
         let userEmail = "";
@@ -596,15 +596,15 @@ function TimesheetEdit({ headerId }) {
           .eq("allocation_period", headerData.allocation_period)
           .eq("calendar_code", headerData.calendar_type)
           .limit(1);
-        
+
         if (calendarQueryError) {
           throw new Error(`Error consultando calendar_period_days: ${calendarQueryError.message}`);
         }
-        
+
         if (!existingCalendarDays || existingCalendarDays.length === 0) {
           throw new Error(`No existen registros en calendar_period_days para período ${headerData.allocation_period} y calendario ${headerData.calendar_type}`);
         }
-        
+
         // Usar los valores exactos que existen en la base de datos
         const existingRecord = existingCalendarDays[0];
 
@@ -657,10 +657,10 @@ function TimesheetEdit({ headerId }) {
           if (lineData.job_no && lineData.quantity && parseFloat(lineData.quantity) > 0) {
             // ✅ Obtener información del proyecto (responsable y departamento)
             const jobInfo = await fetchJobInfo([lineData.job_no]);
-            
+
             // ✅ REUTILIZAR: Usar prepareRowForDb como las líneas existentes
             const newLineData = prepareRowForDb(lineData, jobInfo);
-            
+
             // ✅ Asegurar que header_id sea el correcto para la nueva línea
             newLineData.header_id = currentHeaderId;
 
@@ -722,14 +722,29 @@ function TimesheetEdit({ headerId }) {
   // 🆕 Función para ejecutar guardado sin validación (cuando solo hay advertencias)
   const executeSaveWithoutValidation = useCallback(async () => {
     try {
-      // Obtener todas las líneas con cambios
+      // ✅ PASO 1: Detectar y eliminar líneas que ya no están en el estado local
+      // Esto significa que fueron eliminadas por el usuario
+      const currentLineIds = lines.map(l => l.id);
+      const originalLineIds = Object.keys(editFormData).filter(id => !id.startsWith('tmp-'));
+      
+      // Encontrar líneas que existían antes pero ya no están (fueron eliminadas)
+      const deletedLineIds = originalLineIds.filter(id => !currentLineIds.includes(id));
+      
+      if (deletedLineIds.length > 0) {
+        console.log("🗑️ Eliminando líneas de la BD:", deletedLineIds);
+        for (const lineId of deletedLineIds) {
+          await deleteLineMutation.mutateAsync(lineId);
+        }
+      }
+
+      // ✅ PASO 2: Obtener todas las líneas con cambios
       const linesToSave = Object.keys(editFormData).filter(lineId => {
         const line = editFormData[lineId];
         const originalLine = lines.find(l => l.id === lineId);
         return line && originalLine && JSON.stringify(line) !== JSON.stringify(originalLine);
       });
 
-      // Guardar cada línea
+      // ✅ PASO 3: Guardar cada línea
       for (const lineId of linesToSave) {
         const lineData = editFormData[lineId];
         const originalLine = lines.find(l => l.id === lineId);
@@ -765,7 +780,7 @@ function TimesheetEdit({ headerId }) {
     } finally {
       setIsSaving(false);
     }
-  }, [editFormData, lines, updateLineMutation]);
+  }, [editFormData, lines, updateLineMutation, deleteLineMutation]);
 
   // NOTA: handleNavigateBack eliminado porque useBlocker maneja toda la navegación
   // incluyendo navegación desde botones de la interfaz
@@ -828,7 +843,7 @@ function TimesheetEdit({ headerId }) {
         headerIdResolved = headerData?.id || null;
       } else {
         // 🆕 Modo "nuevo parte" - no buscar header existente
-  
+
         headerData = null;
         headerIdResolved = null;
       }
@@ -872,10 +887,10 @@ function TimesheetEdit({ headerId }) {
 
   // 🆕 Crear línea vacía cuando la información del recurso esté disponible
   useEffect(() => {
-    
+
 
     if (!effectiveHeaderId && editableHeader && lines.length === 0) {
-      
+
       addEmptyLine();
     }
   }, [effectiveHeaderId, editableHeader, lines.length]);
@@ -1102,7 +1117,7 @@ function TimesheetEdit({ headerId }) {
             .select("code, department_code, calendar_type")
             .eq("email", userEmail)
             .single();
-          
+
           if (resourceData) {
             return {
               user_email: userEmail,
@@ -1187,18 +1202,18 @@ function TimesheetEdit({ headerId }) {
     if (!jobNos || jobNos.length === 0) return {};
     const unique = Array.from(new Set(jobNos.filter(Boolean)));
     if (unique.length === 0) return {};
-    
+
     // ✅ Obtener columnas que existen en la tabla job (departamento, no department_code)
     const { data, error } = await supabaseClient
       .from("job")
       .select("no,responsible,departamento")
       .in("no", unique);
-      
+
     if (error) {
       console.error("Error buscando información del job:", error);
       return {};
     }
-    
+
     const map = {};
     for (const r of data) {
       map[r.no] = {
@@ -1206,7 +1221,7 @@ function TimesheetEdit({ headerId }) {
         department_code: r.departamento ?? "" // ✅ Usar departamento del proyecto
       };
     }
-    
+
     return map;
   };
 
@@ -1245,7 +1260,7 @@ function TimesheetEdit({ headerId }) {
         // ✅ Obtener departamento del proyecto, no del recurso
         const jobNo = row.job_no || "";
         const jobInfo = jobResponsibleMap?.[jobNo];
-        
+
         if (jobInfo && typeof jobInfo === 'object' && jobInfo.department_code) {
           out.department_code = jobInfo.department_code;
         } else {
@@ -1290,13 +1305,13 @@ function TimesheetEdit({ headerId }) {
   // -- Router de cambios por campo: deriva quantity/date a sus handlers y el resto al handler original
   const handleInputChange = useCallback(async (lineId, event) => {
     const { name, value } = event.target;
-    
+
                 // ✅ Si se cambia el proyecto, obtener automáticamente el departamento
         if (name === "job_no" && value) {
           try {
             // Obtener información del proyecto (responsable y departamento)
             const jobInfo = await fetchJobInfo([value]);
-            
+
             // ✅ Establecer responsable del proyecto y departamento del recurso
             setEditFormData(prev => {
               const newData = {
@@ -1305,7 +1320,7 @@ function TimesheetEdit({ headerId }) {
                 department_code: jobInfo[value]?.department_code || editableHeader?.department_code || "20", // ✅ Departamento del proyecto, recurso o default
                 job_responsible: jobInfo[value]?.responsible || "" // ✅ Responsable del proyecto
               };
-              
+
               return {
                 ...prev,
                 [lineId]: newData
@@ -1349,22 +1364,22 @@ function TimesheetEdit({ headerId }) {
   // -- Función unificada para validar rango de fechas
   const validateDateRange = (date, headerData) => {
     if (!headerData) return { isValid: true, error: null };
-    
+
     const selectedDate = new Date(date);
-    
+
     // ✅ Para inserción: calcular fechas del período si no están definidas
     let fromDate = headerData.from_date ? new Date(headerData.from_date) : null;
     let toDate = headerData.to_date ? new Date(headerData.to_date) : null;
-    
+
     // Si no hay fechas pero sí hay período, calcularlas
     if ((!fromDate || !toDate) && headerData.allocation_period) {
       fromDate = new Date(getFirstDayOfPeriod(headerData.allocation_period));
       toDate = new Date(getLastDayOfPeriod(headerData.allocation_period));
     }
-    
+
     // Si no hay rango definido, permitir cualquier fecha
     if (!fromDate || !toDate) return { isValid: true, error: null };
-    
+
     // Validar que la fecha esté dentro del rango
     if (selectedDate < fromDate || selectedDate > toDate) {
       return {
@@ -1372,14 +1387,14 @@ function TimesheetEdit({ headerId }) {
         error: `La fecha debe estar entre ${fromDate.toLocaleDateString()} y ${toDate.toLocaleDateString()}`
       };
     }
-    
+
     return { isValid: true, error: null };
   };
 
   // -- Obtener fecha sugerida para nuevo parte (último día del mes siguiente al último)
   const getSuggestedPartDate = async (resourceNo) => {
     if (!resourceNo) return new Date().toISOString().split('T')[0];
-    
+
     try {
       // Obtener el último timesheet del recurso
       const { data: lastHeader, error } = await supabaseClient
@@ -1389,17 +1404,17 @@ function TimesheetEdit({ headerId }) {
         .order("to_date", { ascending: false })
         .limit(1)
         .single();
-      
+
       if (error || !lastHeader?.to_date) {
         // Si no hay timesheets previos, usar fecha actual
         return new Date().toISOString().split('T')[0];
       }
-      
+
       // ✅ Obtener el ÚLTIMO día del mes siguiente al último timesheet
       const lastDate = new Date(lastHeader.to_date);
       const nextMonth = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, 1);
       const lastDayOfNextMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0);
-      
+
       return lastDayOfNextMonth.toISOString().split('T')[0];
     } catch (error) {
       console.error("Error obteniendo fecha sugerida:", error);
@@ -1411,11 +1426,11 @@ function TimesheetEdit({ headerId }) {
   const handleDateChange = (id, value) => {
     // value puede ser "dd/MM/yyyy" o similar
     const iso = toIsoFromInput(value);
-    
+
     // ✅ Validar rango de fechas (funciona tanto para edición como inserción)
     const headerForValidation = header || editableHeader;
     const rangeValidation = validateDateRange(iso, headerForValidation);
-    
+
     if (!rangeValidation.isValid) {
       setEditFormData((prev) => ({
         ...prev,
@@ -1433,7 +1448,7 @@ function TimesheetEdit({ headerId }) {
       markAsChanged();
       return;
     }
-    
+
     if (festivos.includes(iso)) {
       setEditFormData((prev) => ({
         ...prev,
@@ -1451,7 +1466,7 @@ function TimesheetEdit({ headerId }) {
       markAsChanged();
       return;
     }
-    
+
     // Si no es festivo ni está fuera de rango, limpiar flags y error
     setEditFormData((prev) => ({
       ...prev,
@@ -1643,10 +1658,10 @@ function TimesheetEdit({ headerId }) {
         {/* Sección de líneas - ocupa todo el espacio restante */}
         <div className="timesheet-lines-section">
           {/* Controles de líneas */}
-          <div style={{ 
-            display: "flex", 
-            justifyContent: "space-between", 
-            alignItems: "center", 
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
             marginBottom: 16,
             gap: "12px"
           }}>
@@ -1687,7 +1702,7 @@ function TimesheetEdit({ headerId }) {
               >
                 📋 Duplicar
               </button>
-              
+
               <button
                 onClick={() => {
                   console.log("🗑️ Botón Eliminar clickeado");
