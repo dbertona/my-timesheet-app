@@ -457,7 +457,7 @@ function TimesheetEdit({ headerId }) {
     console.log("🗑️ handleDeleteLines ejecutándose");
     console.log("📋 IDs de líneas a eliminar:", lineIds);
     console.log("📊 Líneas actuales:", lines);
-    
+
     if (!lineIds.length) return;
 
     // Confirmar antes de eliminar
@@ -465,10 +465,10 @@ function TimesheetEdit({ headerId }) {
       // ✅ ELIMINACIÓN SOLO LOCAL: NO se elimina de la BD hasta guardar
       const updatedLines = lines.filter(line => !lineIds.includes(line.id));
       setLines(updatedLines);
-      
+
       // Limpiar selección después de eliminar
       setSelectedLines([]);
-      
+
       // ✅ Marcar que hay cambios pendientes para habilitar el botón "Guardar Cambios"
       markAsChanged();
     }
@@ -531,9 +531,12 @@ function TimesheetEdit({ headerId }) {
       return;
     }
 
-    // ✅ PASO 4: Si todo es válido, proceder con el guardado
-    setIsSaving(true);
-    try {
+          // ✅ PASO 4: Si todo es válido, proceder con el guardado
+      setIsSaving(true);
+      try {
+        console.log("💾 saveAllChanges ejecutándose...");
+        console.log("🔍 Líneas actuales en estado local:", lines.map(l => l.id));
+        console.log("🔍 Líneas en editFormData:", Object.keys(editFormData).filter(id => !id.startsWith('tmp-')));
       // 🆕 PASO 4.1: Si no hay header, crear uno nuevo
       let currentHeaderId = effectiveHeaderId;
       if (!currentHeaderId) {
@@ -708,6 +711,22 @@ function TimesheetEdit({ headerId }) {
         }
       }
 
+      // ✅ PASO 4.3: Detectar y eliminar líneas que ya no están en el estado local
+      const currentLineIds = lines.map(l => l.id);
+      const originalLineIds = Object.keys(editFormData).filter(id => !id.startsWith('tmp-'));
+      const deletedLineIds = originalLineIds.filter(id => !currentLineIds.includes(id));
+
+      console.log("🔍 saveAllChanges - Líneas actuales:", currentLineIds);
+      console.log("🔍 saveAllChanges - Líneas originales en editFormData:", originalLineIds);
+      console.log("🗑️ saveAllChanges - Líneas a eliminar de la BD:", deletedLineIds);
+
+      if (deletedLineIds.length > 0) {
+        console.log("🗑️ saveAllChanges - Eliminando líneas de la BD:", deletedLineIds);
+        for (const lineId of deletedLineIds) {
+          await deleteLineMutation.mutateAsync(lineId);
+        }
+      }
+
       setHasUnsavedChanges(false);
       toast.success(TOAST.SUCCESS.SAVE_ALL);
     } catch (error) {
@@ -716,76 +735,9 @@ function TimesheetEdit({ headerId }) {
     } finally {
       setIsSaving(false);
     }
-  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, dailyRequired, calendarHolidays, effectiveHeaderId, location.search, editableHeader, instance, accounts]);
+  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, deleteLineMutation, dailyRequired, calendarHolidays, effectiveHeaderId, location.search, editableHeader, instance, accounts]);
 
-  // 🆕 Función para ejecutar guardado sin validación (cuando solo hay advertencias)
-  const executeSaveWithoutValidation = useCallback(async () => {
-    try {
-      // ✅ PASO 1: Detectar y eliminar líneas que ya no están en el estado local
-      // Comparar con las líneas originales que se cargaron desde la BD
-      const currentLineIds = lines.map(l => l.id);
-      
-      // Obtener todas las líneas que existían originalmente (no temporales)
-      const originalLineIds = Object.keys(editFormData).filter(id => !id.startsWith('tmp-'));
-      
-      // Encontrar líneas que existían antes pero ya no están (fueron eliminadas)
-      const deletedLineIds = originalLineIds.filter(id => !currentLineIds.includes(id));
-      
-      console.log("🔍 Líneas actuales:", currentLineIds);
-      console.log("🔍 Líneas originales en editFormData:", originalLineIds);
-      console.log("🗑️ Líneas a eliminar de la BD:", deletedLineIds);
-      
-      if (deletedLineIds.length > 0) {
-        console.log("🗑️ Eliminando líneas de la BD:", deletedLineIds);
-        for (const lineId of deletedLineIds) {
-          await deleteLineMutation.mutateAsync(lineId);
-        }
-      }
-
-      // ✅ PASO 2: Obtener todas las líneas con cambios
-      const linesToSave = Object.keys(editFormData).filter(lineId => {
-        const line = editFormData[lineId];
-        const originalLine = lines.find(l => l.id === lineId);
-        return line && originalLine && JSON.stringify(line) !== JSON.stringify(originalLine);
-      });
-
-      // ✅ PASO 3: Guardar cada línea
-      for (const lineId of linesToSave) {
-        const lineData = editFormData[lineId];
-        const originalLine = lines.find(l => l.id === lineId);
-
-        if (lineData && originalLine) {
-          const changedFields = {};
-          Object.keys(lineData).forEach(key => {
-            if (lineData[key] !== originalLine[key]) {
-              // Convertir fecha a formato ISO antes de enviar a la base de datos
-              if (key === "date" && lineData[key]) {
-                changedFields[key] = toIsoFromInput(lineData[key]);
-              } else {
-                changedFields[key] = lineData[key];
-              }
-            }
-          });
-
-          if (Object.keys(changedFields).length > 0) {
-            await updateLineMutation.mutateAsync({
-              lineId,
-              changes: changedFields,
-              silent: true  // Modo silencioso para guardado masivo
-            });
-          }
-        }
-      }
-
-      setHasUnsavedChanges(false);
-      toast.success(TOAST.SUCCESS.SAVE_ALL);
-    } catch (error) {
-      console.error('Error saving all changes:', error);
-      toast.error(TOAST.ERROR.SAVE_ALL);
-    } finally {
-      setIsSaving(false);
-    }
-  }, [editFormData, lines, updateLineMutation, deleteLineMutation]);
+  
 
   // NOTA: handleNavigateBack eliminado porque useBlocker maneja toda la navegación
   // incluyendo navegación desde botones de la interfaz
