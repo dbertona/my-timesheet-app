@@ -1648,9 +1648,9 @@ function TimesheetEdit({ headerId }) {
                 disabled={selectedLines.length === 0}
                 style={{
                   padding: "8px 16px",
-                  backgroundColor: selectedLines.length > 0 ? "#007bff" : "#e9ecef",
-                  color: selectedLines.length > 0 ? "white" : "#6c757d",
-                  border: "1px solid #dee2e6",
+                  backgroundColor: selectedLines.length > 0 ? "#EAF7F9" : "#f8f9fa",
+                  color: selectedLines.length > 0 ? "#007E87" : "#6c757d",
+                  border: selectedLines.length > 0 ? "1px solid rgba(0,126,135,0.35)" : "1px solid #dee2e6",
                   borderRadius: "4px",
                   cursor: selectedLines.length > 0 ? "pointer" : "not-allowed",
                   fontSize: "14px",
@@ -1660,12 +1660,14 @@ function TimesheetEdit({ headerId }) {
                 }}
                 onMouseEnter={(e) => {
                   if (selectedLines.length > 0) {
-                    e.target.style.backgroundColor = "#0056b3";
+                    e.target.style.backgroundColor = "#D8EEF1";
+                    e.target.style.borderColor = "#007E87";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (selectedLines.length > 0) {
-                    e.target.style.backgroundColor = "#007bff";
+                    e.target.style.backgroundColor = "#EAF7F9";
+                    e.target.style.borderColor = "rgba(0,126,135,0.35)";
                   }
                 }}
               >
@@ -1684,9 +1686,9 @@ function TimesheetEdit({ headerId }) {
                 disabled={selectedLines.length === 0}
                 style={{
                   padding: "8px 16px",
-                  backgroundColor: selectedLines.length > 0 ? "#dc3545" : "#e9ecef",
-                  color: selectedLines.length > 0 ? "white" : "#6c757d",
-                  border: "1px solid #dee2e6",
+                  backgroundColor: selectedLines.length > 0 ? "#EAF7F9" : "#f8f9fa",
+                  color: selectedLines.length > 0 ? "#007E87" : "#6c757d",
+                  border: selectedLines.length > 0 ? "1px solid rgba(0,126,135,0.35)" : "1px solid #dee2e6",
                   borderRadius: "4px",
                   cursor: selectedLines.length > 0 ? "pointer" : "not-allowed",
                   fontSize: "14px",
@@ -1696,12 +1698,14 @@ function TimesheetEdit({ headerId }) {
                 }}
                 onMouseEnter={(e) => {
                   if (selectedLines.length > 0) {
-                    e.target.style.backgroundColor = "#c82333";
+                    e.target.style.backgroundColor = "#D8EEF1";
+                    e.target.style.borderColor = "#007E87";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (selectedLines.length > 0) {
-                    e.target.style.backgroundColor = "#dc3545";
+                    e.target.style.backgroundColor = "#EAF7F9";
+                    e.target.style.borderColor = "rgba(0,126,135,0.35)";
                   }
                 }}
               >
