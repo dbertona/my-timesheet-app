@@ -324,26 +324,21 @@ function TimesheetEdit({ headerId }) {
     });
 
     if (newLines.length) {
-      // 🆕 Insertar líneas duplicadas justo debajo de las líneas seleccionadas
+      // 🆕 Insertar todas las líneas duplicadas debajo de la última línea seleccionada
       setLines(prev => {
         const newLinesArray = [...prev];
         
-        // Ordenar lineIds por su posición en el array para mantener el orden
-        const sortedLineIds = lineIds.sort((a, b) => {
-          const indexA = newLinesArray.findIndex(line => line.id === a);
-          const indexB = newLinesArray.findIndex(line => line.id === b);
-          return indexA - indexB;
-        });
+        // Encontrar la posición de la última línea seleccionada
+        const lastSelectedIndex = Math.max(
+          ...lineIds.map(lineId => 
+            newLinesArray.findIndex(line => line.id === lineId)
+          )
+        );
         
-        // Insertar cada línea duplicada justo después de su línea original
-        sortedLineIds.forEach((lineId, index) => {
-          const originalIndex = newLinesArray.findIndex(line => line.id === lineId);
-          if (originalIndex !== -1) {
-            // Insertar la línea duplicada después de la original
-            const duplicatedLine = newLines[index];
-            newLinesArray.splice(originalIndex + 1, 0, duplicatedLine);
-          }
-        });
+        if (lastSelectedIndex !== -1) {
+          // Insertar todas las líneas duplicadas después de la última línea seleccionada
+          newLinesArray.splice(lastSelectedIndex + 1, 0, ...newLines);
+        }
         
         return newLinesArray;
       });
