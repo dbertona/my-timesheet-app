@@ -39,6 +39,8 @@ const SAFE_COLUMNS = [
 ];
 
 function TimesheetEdit({ headerId }) {
+  console.log("🚀 TimesheetEdit renderizando con headerId:", headerId);
+
   const navigate = useNavigate();
   const location = useLocation();
   const { instance, accounts } = useMsal();
@@ -63,7 +65,16 @@ function TimesheetEdit({ headerId }) {
     [resolvedHeaderId, header?.id, headerId]
   );
 
-  // === Calendario (estado + helpers) ahora en hook dedicado
+    // === Calendario (estado + helpers) ahora en hook dedicado
+  console.log("🔍 Debug useCalendarData - header:", header);
+  console.log("🔍 Debug useCalendarData - editableHeader:", editableHeader);
+  console.log("🔍 Debug useCalendarData - resolvedHeaderId:", resolvedHeaderId);
+  console.log("🔍 Debug useCalendarData - editFormData:", editFormData);
+
+  // Para edición: usar siempre el header existente, no editableHeader
+  const headerForCalendar = header || editableHeader;
+  console.log("🔍 Header que se pasa al hook:", headerForCalendar);
+
   const {
     calRange,
     firstOffset,
@@ -73,7 +84,13 @@ function TimesheetEdit({ headerId }) {
     requiredSum,
     imputedSum,
     missingSum,
-  } = useCalendarData(header || editableHeader, resolvedHeaderId, editFormData);
+  } = useCalendarData(headerForCalendar, resolvedHeaderId, editFormData);
+
+  // Debug del resultado del hook
+  console.log("🔍 Hook resultado - calendarDays:", calendarDays);
+  console.log("🔍 Hook resultado - dailyRequired:", dailyRequired);
+  console.log("🔍 Hook resultado - calRange:", calRange);
+  console.log("🔍 Hook resultado - firstOffset:", firstOffset);
 
   // 🆕 Obtener jobs para validación de estado (TODOS los proyectos del recurso)
   const jobsQuery = useAllJobs((header || editableHeader)?.resource_no);
@@ -242,8 +259,188 @@ function TimesheetEdit({ headerId }) {
     setSelectedLines(newSelection);
   }, []);
 
-  // 🆕 Función para duplicar líneas seleccionadas
-  const handleDuplicateLines = useCallback((lineIds) => {
+  // 🆕 Función para importar vacaciones desde Factorial
+  const handleImportFactorial = useCallback(async () => {
+    try {
+      console.log("📅 Importando vacaciones desde Factorial...");
+
+      // Email fijo para pruebas
+      const userEmail = "jtorres@powersolution.es";
+
+                  // Declarar variables de fechas
+      let startDate, endDate;
+
+      // Usar directamente las fechas del calendario ya cargado
+      if (!calendarDays || calendarDays.length === 0) {
+        // Si no hay calendario, intentar usar el header existente
+        if (header && header.allocation_period) {
+          startDate = getFirstDayOfPeriod(header.allocation_period);
+          endDate = getLastDayOfPeriod(header.allocation_period);
+          console.log("📅 Usando fechas del header existente:", startDate, "a", endDate);
+        } else {
+          toast.error("No hay calendario disponible ni header con período");
+          return;
+        }
+      } else {
+        startDate = calendarDays[0].iso; // Primer día del calendario
+        endDate = calendarDays[calendarDays.length - 1].iso; // Último día del calendario
+        console.log("📅 Usando fechas del calendario cargado:", startDate, "a", endDate);
+      }
+
+      console.log("📅 Buscando vacaciones para:", userEmail);
+      console.log("📅 Desde:", startDate);
+      console.log("📅 Hasta:", endDate);
+
+      // Datos mock basados en el script de Factorial que ya funciona
+      const vacations = [
+        {
+          id: 16981894,
+          empleado: "Jesús Miguel Torres Gómez",
+          email: "jtorres@powersolution.es",
+          tipo: "Vacaciones",
+          desde: "2025-08-01",
+          hasta: "2025-08-05",
+          aprobado: true
+        }
+      ];
+      console.log("📅 Vacaciones obtenidas (mock):", vacations);
+
+                  // Debug del calendario
+      console.log("📅 Calendario disponible:", calendarDays);
+      console.log("📅 Horas requeridas por día:", dailyRequired);
+      console.log("📅 Total de días en calendario:", calendarDays?.length || 0);
+
+      // Debug de estructura del calendario
+      if (calendarDays && calendarDays.length > 0) {
+        console.log("📅 Primer día del calendario:", calendarDays[0]);
+        console.log("📅 Propiedades disponibles:", Object.keys(calendarDays[0]));
+        console.log("📅 Ejemplo de días:", calendarDays.slice(0, 3).map(d => ({ iso: d.iso, day: d.day, status: d.status, hours: d.hours })));
+      }
+
+      // Debug de dailyRequired
+      console.log("📅 Estructura de dailyRequired:", dailyRequired);
+      console.log("📅 Horas requeridas para 2025-08-01:", dailyRequired["2025-08-01"]);
+      console.log("📅 Horas requeridas para 2025-08-02:", dailyRequired["2025-08-02"]);
+      console.log("📅 Horas requeridas para 2025-08-03:", dailyRequired["2025-08-03"]);
+
+      // Debug del header y hook
+      console.log("📅 Header actual:", header);
+      console.log("📅 EditableHeader:", editableHeader);
+      console.log("📅 ResolvedHeaderId:", resolvedHeaderId);
+      console.log("📅 EditFormData:", editFormData);
+
+      // Debug del hook useCalendarData
+      console.log("📅 Hook - calendarDays:", calendarDays);
+      console.log("📅 Hook - dailyRequired:", dailyRequired);
+      console.log("📅 Hook - calRange:", calRange);
+      console.log("📅 Hook - firstOffset:", firstOffset);
+
+      if (!vacations || vacations.length === 0) {
+        toast("No se encontraron vacaciones para este período", { icon: "ℹ️" });
+        return;
+      }
+
+            // Crear líneas de timesheet para cada día de vacaciones
+      const newLines = [];
+
+              for (const vacation of vacations) {
+          const start = new Date(vacation.desde);
+          const end = new Date(vacation.hasta);
+
+          // Iterar por cada día de vacaciones
+          for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+            const dateStr = date.toISOString().split('T')[0];
+
+            // Verificar que la fecha esté dentro del período del timesheet
+            if (dateStr >= startDate && dateStr <= endDate) {
+              // Verificar si es día festivo
+              const isHoliday = calendarHolidays.some(holiday => holiday.day === dateStr);
+              if (isHoliday) {
+                console.log(`📅 Día ${dateStr}: Es festivo, no se crea línea de vacaciones`);
+                continue; // Saltar este día
+              }
+
+              // Buscar el día en el calendario para obtener las horas máximas permitidas
+              const calendarDay = calendarDays?.find(day => day.iso === dateStr);
+
+              if (calendarDay) {
+                // Calcular las horas disponibles para ese día usando el calendario
+                const maxHours = dailyRequired[dateStr] || 8; // Horas requeridas específicas para este día
+                const currentHours = parseFloat(calendarDay.hours || 0); // Horas ya registradas
+                const availableHours = Math.max(0, maxHours - currentHours);
+
+                if (availableHours > 0) {
+                  const newLine = {
+                    id: `tmp-${crypto.randomUUID()}`,
+                    header_id: effectiveHeaderId,
+                    job_no: '', // Se puede configurar un proyecto por defecto para vacaciones
+                    job_no_description: '',
+                    job_task_no: '',
+                    description: `Vacaciones - ${vacation.tipo}`,
+                    work_type: 'VACACIONES',
+                    date: toDisplayDate(dateStr),
+                    quantity: availableHours.toFixed(2), // Horas disponibles del calendario
+                    department_code: '20' // Departamento por defecto
+                  };
+
+                  newLines.push(newLine);
+                  console.log(`📅 Día ${dateStr}: ${availableHours}h disponibles de ${maxHours}h requeridas`);
+                } else {
+                  console.log(`📅 Día ${dateStr}: No hay horas disponibles (ya completo: ${currentHours}/${maxHours}h)`);
+                }
+              } else {
+                // Si no hay calendario disponible, usar 8 horas por defecto
+                const defaultHours = 8.00;
+                const newLine = {
+                  id: `tmp-${crypto.randomUUID()}`,
+                  header_id: effectiveHeaderId,
+                  job_no: '', // Se puede configurar un proyecto por defecto para vacaciones
+                  job_no_description: '',
+                  job_task_no: '',
+                  description: `Vacaciones - ${vacation.tipo}`,
+                  work_type: 'VACACIONES',
+                  date: toDisplayDate(dateStr),
+                  quantity: defaultHours.toFixed(2), // 8 horas por defecto
+                  department_code: '20' // Departamento por defecto
+                };
+
+                newLines.push(newLine);
+                console.log(`📅 Día ${dateStr}: ${defaultHours}h por defecto (calendario no disponible)`);
+              }
+            }
+          }
+        }
+
+      if (newLines.length > 0) {
+        // Agregar las nuevas líneas al estado
+        setLines(prev => [...prev, ...newLines]);
+
+        // Agregar al editFormData
+        setEditFormData(prev => {
+          const newData = { ...prev };
+          newLines.forEach(line => {
+            newData[line.id] = line;
+          });
+          return newData;
+        });
+
+        // Marcar como cambiado
+        markAsChanged();
+
+        toast.success(`Se importaron ${newLines.length} días de vacaciones`);
+        console.log("✅ Líneas de vacaciones agregadas:", newLines);
+      } else {
+        toast("No se pudieron crear líneas de vacaciones para este período", { icon: "ℹ️" });
+      }
+
+    } catch (error) {
+      console.error("❌ Error importando vacaciones:", error);
+      toast.error(`Error al importar vacaciones: ${error.message}`);
+    }
+  }, [effectiveHeaderId, markAsChanged, calendarDays, dailyRequired, header, calendarHolidays]);
+
+      // 🆕 Función para duplicar líneas seleccionadas
+      const handleDuplicateLines = useCallback((lineIds) => {
     console.log("🚀 handleDuplicateLines ejecutándose");
     console.log("📋 IDs de líneas a duplicar:", lineIds);
     console.log("📊 Líneas actuales:", lines);
@@ -838,6 +1035,18 @@ function TimesheetEdit({ headerId }) {
       setHeader(headerData);
       setResolvedHeaderId(headerIdResolved);
       setDebugInfo({ ap, headerIdProp: headerId ?? null, headerIdResolved, isNewParte });
+
+      // Debug del header cargado
+      console.log("🔍 Header cargado desde BD:", headerData);
+      console.log("🔍 HeaderId resuelto:", headerIdResolved);
+      console.log("🔍 Es nuevo parte:", isNewParte);
+
+      if (headerData) {
+        console.log("🔍 Campos del header:", Object.keys(headerData));
+        console.log("🔍 resource_calendar:", headerData.resource_calendar);
+        console.log("🔍 allocation_period:", headerData.allocation_period);
+        console.log("🔍 resource_no:", headerData.resource_no);
+      }
 
       // 2) Las líneas ahora se cargan vía React Query (ver linesQuery)
       if (!headerIdResolved) {
@@ -1654,6 +1863,36 @@ function TimesheetEdit({ headerId }) {
           }}>
             {/* 🆕 Botones de acción para líneas seleccionadas */}
             <div style={{ display: "flex", gap: "8px" }}>
+              {/* 🆕 Botón Importar Factorial */}
+              <button
+                onClick={() => {
+                  console.log("🔄 Botón Importar Factorial clickeado");
+                  handleImportFactorial();
+                }}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#ffffff",
+                  color: "#000",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
+                  transition: "all 0.2s ease"
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = "#D9F0F2";
+                  e.target.style.borderColor = "transparent";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = "#ffffff";
+                  e.target.style.borderColor = "transparent";
+                }}
+              >
+                📅 Importar Factorial
+              </button>
+
               <button
                 onClick={() => {
                   console.log("🔄 Botón Duplicar clickeado");

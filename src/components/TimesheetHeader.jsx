@@ -19,6 +19,9 @@ function TimesheetHeader({ header, onHeaderChange }) {
   });
   const [headerErrors, setHeaderErrors] = useState({}); // 🆕 Errores de validación de la cabecera
 
+  // 🆕 Estado para effectiveHeader (debe estar aquí para mantener orden de hooks)
+  const [effectiveHeader, setEffectiveHeader] = useState(header || editableHeader);
+
   useEffect(() => {
     // Si no hay header, obtener información del recurso actual
     if (!header) {
@@ -73,13 +76,13 @@ function TimesheetHeader({ header, onHeaderChange }) {
                   .order("to_date", { ascending: false })
                   .limit(1)
                   .single();
-                
+
                 if (lastHeader?.to_date) {
                   const lastDate = new Date(lastHeader.to_date);
                   // ✅ Calcular correctamente: último día del mes siguiente
                   const nextMonth = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, 1);
                   const lastDayOfNextMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0);
-                  
+
                   // ✅ Corregir problema de zona horaria: usar fecha local en lugar de UTC
                   const year = lastDayOfNextMonth.getFullYear();
                   const month = String(lastDayOfNextMonth.getMonth() + 1).padStart(2, '0');
@@ -89,10 +92,10 @@ function TimesheetHeader({ header, onHeaderChange }) {
               } catch (error) {
                 // Si hay error, usar fecha actual como fallback
               }
-              
+
               // ✅ Calcular el período correcto basado en la fecha sugerida
               const correctPeriod = getPeriodFromDate(suggestedDate);
-              
+
               const newEditableHeader = {
                 resource_no: resourceData.code, // Usar code del recurso
                 resource_name: resourceData.name,
@@ -147,6 +150,36 @@ function TimesheetHeader({ header, onHeaderChange }) {
       getResourceInfo();
     }
   }, [header, onHeaderChange, instance, accounts]);
+
+  // 🆕 Segundo useEffect para actualizar effectiveHeader (debe estar aquí para mantener orden)
+  useEffect(() => {
+    if (header && (!header.resource_name || !header.calendar_type)) {
+      // Consultar la tabla resource para obtener nombre y tipo de calendario
+      const getResourceDetails = async () => {
+        try {
+          const { data: resourceData, error } = await supabaseClient
+            .from("resource")
+            .select("name, calendar_type")
+            .eq("code", header.resource_no)
+            .single();
+          
+          if (resourceData && !error) {
+            setEffectiveHeader({
+              ...header,
+              resource_name: resourceData.name,
+              calendar_type: resourceData.calendar_type
+            });
+          }
+        } catch (error) {
+          console.error("❌ Error obteniendo detalles del recurso:", error);
+        }
+      };
+      
+      getResourceDetails();
+    } else {
+      setEffectiveHeader(header || editableHeader);
+    }
+  }, [header, editableHeader]);
 
   // Función para obtener el primer día del período
   const getFirstDayOfPeriod = (ap) => {
@@ -240,10 +273,9 @@ function TimesheetHeader({ header, onHeaderChange }) {
     );
   }
 
-  // 🆕 Cabecera unificada para inserción y edición
+      // 🆕 Cabecera unificada para inserción y edición
   const isEditMode = !!header;
-  const effectiveHeader = header || editableHeader;
-  
+
   return (
     <div style={{
       padding: "20px",
@@ -251,9 +283,9 @@ function TimesheetHeader({ header, onHeaderChange }) {
       borderRadius: "8px",
       backgroundColor: isEditMode ? "#ffffff" : "#f8f9fa"
     }}>
-      <div style={{ 
-        display: "grid", 
-        gridTemplateColumns: "1fr 1fr", 
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
         gap: "16px",
         fontSize: "14px"
       }}>
@@ -277,7 +309,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
             }}
           />
         </div>
-        
+
         {/* Nombre */}
         <div>
           <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
@@ -298,7 +330,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
             }}
           />
         </div>
-        
+
         {/* Calendario */}
         <div>
           <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
@@ -319,7 +351,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
             }}
           />
         </div>
-        
+
         {/* Fecha */}
         <div>
           <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
@@ -351,7 +383,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
             </div>
           )}
         </div>
-        
+
         {/* Período */}
         <div>
           <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
@@ -372,7 +404,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
             }}
           />
         </div>
-        
+
         {/* Descripción */}
         <div>
           <label style={{ display: "block", fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
