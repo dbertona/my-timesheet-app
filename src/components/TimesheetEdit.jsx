@@ -1711,50 +1711,50 @@ function TimesheetEdit({ headerId }) {
               >
                 🗑️ Eliminar
               </button>
-            </div>
 
-            {/* 🆕 Botón Guardar Cambios con estilo BC */}
-            <button
-              onClick={saveAllChanges}
-              disabled={!hasUnsavedChanges || isSaving}
-              style={{
-                padding: "8px 16px",
-                backgroundColor: "#ffffff",
-                color: hasUnsavedChanges ? "#000" : "#9ca3af",
-                border: "none",
-                borderRadius: "4px",
-                cursor: hasUnsavedChanges && !isSaving ? "pointer" : "not-allowed",
-                fontSize: "14px",
-                fontWeight: "500",
-                fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
-                transition: "all 0.2s ease",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8
-              }}
-              onMouseEnter={(e) => {
-                if (hasUnsavedChanges && !isSaving) {
-                  e.target.style.backgroundColor = "#D9F0F2";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (hasUnsavedChanges && !isSaving) {
-                  e.target.style.backgroundColor = "#ffffff";
-                }
-              }}
-            >
-              {isSaving ? "Guardando..." : (
-                <>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M17 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V7L17 3Z" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M17 3V7H21" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M7 13H17" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M7 17H13" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Guardar
-                    </>
-                  )}
-            </button>
+              {/* 🆕 Botón Guardar Cambios con estilo BC */}
+              <button
+                onClick={saveAllChanges}
+                disabled={!hasUnsavedChanges || isSaving}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#ffffff",
+                  color: hasUnsavedChanges ? "#000" : "#9ca3af",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: hasUnsavedChanges && !isSaving ? "pointer" : "not-allowed",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
+                  transition: "all 0.2s ease",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8
+                }}
+                onMouseEnter={(e) => {
+                  if (hasUnsavedChanges && !isSaving) {
+                    e.target.style.backgroundColor = "#D9F0F2";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (hasUnsavedChanges && !isSaving) {
+                    e.target.style.backgroundColor = "#ffffff";
+                  }
+                }}
+              >
+                {isSaving ? "Guardando..." : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M17 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V7L17 3Z" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M17 3V7H21" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M7 13H17" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M7 17H13" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Guardar
+                  </>
+                )}
+              </button>
+            </div>
         </div>
 
           {/* Contenedor de la tabla - ocupa todo el espacio disponible */}
