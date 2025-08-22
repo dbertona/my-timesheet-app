@@ -327,22 +327,22 @@ function TimesheetEdit({ headerId }) {
       // 🆕 Insertar todas las líneas duplicadas debajo de la última línea seleccionada
       setLines(prev => {
         const newLinesArray = [...prev];
-        
+
         // Encontrar la posición de la última línea seleccionada
         const lastSelectedIndex = Math.max(
-          ...lineIds.map(lineId => 
+          ...lineIds.map(lineId =>
             newLinesArray.findIndex(line => line.id === lineId)
           )
         );
-        
+
         if (lastSelectedIndex !== -1) {
           // Insertar todas las líneas duplicadas después de la última línea seleccionada
           newLinesArray.splice(lastSelectedIndex + 1, 0, ...newLines);
         }
-        
+
         return newLinesArray;
       });
-      
+
       // Limpiar selección después de duplicar
       setSelectedLines([]);
       markAsChanged();
@@ -691,8 +691,8 @@ function TimesheetEdit({ headerId }) {
         const lineData = editFormData[lineId];
 
         if (lineId.startsWith('tmp-')) {
-          // 🆕 Línea nueva - insertar
-          if (lineData.job_no && lineData.quantity && parseFloat(lineData.quantity) > 0) {
+          // 🆕 Línea nueva - insertar (incluyendo duplicadas con cantidad 0)
+          if (lineData.job_no) { // Solo verificar que tenga proyecto asignado
             // ✅ Obtener información del proyecto (responsable y departamento)
             const jobInfo = await fetchJobInfo([lineData.job_no]);
 
