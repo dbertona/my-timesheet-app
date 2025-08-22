@@ -53,6 +53,7 @@ function TimesheetEdit({ headerId }) {
   const [editableHeader, setEditableHeader] = useState(null); // 🆕 Cabecera editable para nuevos partes
   const [periodChangeTrigger, setPeriodChangeTrigger] = useState(0); // 🆕 Trigger para forzar re-renderizado cuando cambie el período
   const [selectedLines, setSelectedLines] = useState([]); // 🆕 Líneas seleccionadas para acciones múltiples
+  const [deletedLineIds, setDeletedLineIds] = useState([]); // 🆕 IDs de líneas eliminadas pendientes de borrar en BD
 
   // IDs de cabecera resueltos antes de usar hooks que dependen de ello
   const [debugInfo, setDebugInfo] = useState({ ap: null, headerIdProp: headerId ?? null, headerIdResolved: null });
@@ -462,13 +463,16 @@ function TimesheetEdit({ headerId }) {
 
     // Confirmar antes de eliminar
     if (window.confirm(`¿Estás seguro de que quieres eliminar ${lineIds.length} línea${lineIds.length !== 1 ? 's' : ''}?`)) {
-      // ✅ ELIMINACIÓN SOLO LOCAL: NO se elimina de la BD hasta guardar
+            // ✅ ELIMINACIÓN SOLO LOCAL: NO se elimina de la BD hasta guardar
       const updatedLines = lines.filter(line => !lineIds.includes(line.id));
       setLines(updatedLines);
-
+      
+      // ✅ Agregar IDs a la lista de líneas a eliminar de la BD
+      setDeletedLineIds(prev => [...prev, ...lineIds.filter(id => !id.startsWith('tmp-'))]);
+      
       // Limpiar selección después de eliminar
       setSelectedLines([]);
-
+      
       // ✅ Marcar que hay cambios pendientes para habilitar el botón "Guardar Cambios"
       markAsChanged();
     }
@@ -711,20 +715,14 @@ function TimesheetEdit({ headerId }) {
         }
       }
 
-      // ✅ PASO 4.3: Detectar y eliminar líneas que ya no están en el estado local
-      const currentLineIds = lines.map(l => l.id);
-      const originalLineIds = Object.keys(editFormData).filter(id => !id.startsWith('tmp-'));
-      const deletedLineIds = originalLineIds.filter(id => !currentLineIds.includes(id));
-
-      console.log("🔍 saveAllChanges - Líneas actuales:", currentLineIds);
-      console.log("🔍 saveAllChanges - Líneas originales en editFormData:", originalLineIds);
-      console.log("🗑️ saveAllChanges - Líneas a eliminar de la BD:", deletedLineIds);
-
+            // ✅ PASO 4.3: Eliminar líneas que fueron marcadas para eliminación
       if (deletedLineIds.length > 0) {
-        console.log("🗑️ saveAllChanges - Eliminando líneas de la BD:", deletedLineIds);
+        console.log("🗑️ saveAllChanges - Eliminando líneas marcadas de la BD:", deletedLineIds);
         for (const lineId of deletedLineIds) {
           await deleteLineMutation.mutateAsync(lineId);
         }
+        // Limpiar la lista de líneas eliminadas después de procesarlas
+        setDeletedLineIds([]);
       }
 
       setHasUnsavedChanges(false);
@@ -735,7 +733,7 @@ function TimesheetEdit({ headerId }) {
     } finally {
       setIsSaving(false);
     }
-  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, deleteLineMutation, dailyRequired, calendarHolidays, effectiveHeaderId, location.search, editableHeader, instance, accounts]);
+  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, deleteLineMutation, deletedLineIds, setDeletedLineIds, dailyRequired, calendarHolidays, effectiveHeaderId, location.search, editableHeader, instance, accounts]);
 
   
 
