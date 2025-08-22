@@ -722,12 +722,18 @@ function TimesheetEdit({ headerId }) {
   const executeSaveWithoutValidation = useCallback(async () => {
     try {
       // ✅ PASO 1: Detectar y eliminar líneas que ya no están en el estado local
-      // Esto significa que fueron eliminadas por el usuario
+      // Comparar con las líneas originales que se cargaron desde la BD
       const currentLineIds = lines.map(l => l.id);
+      
+      // Obtener todas las líneas que existían originalmente (no temporales)
       const originalLineIds = Object.keys(editFormData).filter(id => !id.startsWith('tmp-'));
       
       // Encontrar líneas que existían antes pero ya no están (fueron eliminadas)
       const deletedLineIds = originalLineIds.filter(id => !currentLineIds.includes(id));
+      
+      console.log("🔍 Líneas actuales:", currentLineIds);
+      console.log("🔍 Líneas originales en editFormData:", originalLineIds);
+      console.log("🗑️ Líneas a eliminar de la BD:", deletedLineIds);
       
       if (deletedLineIds.length > 0) {
         console.log("🗑️ Eliminando líneas de la BD:", deletedLineIds);
