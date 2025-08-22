@@ -1650,7 +1650,7 @@ function TimesheetEdit({ headerId }) {
                   padding: "8px 16px",
                   backgroundColor: selectedLines.length > 0 ? "#ffffff" : "#f8f9fa",
                   color: selectedLines.length > 0 ? "#007E87" : "#6c757d",
-                  border: selectedLines.length > 0 ? "1px solid rgba(0,126,135,0.35)" : "1px solid #dee2e6",
+                  border: "none",
                   borderRadius: "4px",
                   cursor: selectedLines.length > 0 ? "pointer" : "not-allowed",
                   fontSize: "14px",
@@ -1660,14 +1660,14 @@ function TimesheetEdit({ headerId }) {
                 }}
                 onMouseEnter={(e) => {
                   if (selectedLines.length > 0) {
-                    e.target.style.backgroundColor = "#D8EEF1";
-                    e.target.style.borderColor = "#007E87";
+                    e.target.style.backgroundColor = "#D9F0F2";
+                    e.target.style.borderColor = "transparent";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (selectedLines.length > 0) {
                     e.target.style.backgroundColor = "#ffffff";
-                    e.target.style.borderColor = "rgba(0,126,135,0.35)";
+                    e.target.style.borderColor = "transparent";
                   }
                 }}
               >
@@ -1688,7 +1688,7 @@ function TimesheetEdit({ headerId }) {
                   padding: "8px 16px",
                   backgroundColor: selectedLines.length > 0 ? "#ffffff" : "#f8f9fa",
                   color: selectedLines.length > 0 ? "#007E87" : "#6c757d",
-                  border: selectedLines.length > 0 ? "1px solid rgba(0,126,135,0.35)" : "1px solid #dee2e6",
+                  border: "none",
                   borderRadius: "4px",
                   cursor: selectedLines.length > 0 ? "pointer" : "not-allowed",
                   fontSize: "14px",
@@ -1698,14 +1698,14 @@ function TimesheetEdit({ headerId }) {
                 }}
                 onMouseEnter={(e) => {
                   if (selectedLines.length > 0) {
-                    e.target.style.backgroundColor = "#D8EEF1";
-                    e.target.style.borderColor = "#007E87";
+                    e.target.style.backgroundColor = "#D9F0F2";
+                    e.target.style.borderColor = "transparent";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (selectedLines.length > 0) {
                     e.target.style.backgroundColor = "#ffffff";
-                    e.target.style.borderColor = "rgba(0,126,135,0.35)";
+                    e.target.style.borderColor = "transparent";
                   }
                 }}
               >
@@ -1719,28 +1719,41 @@ function TimesheetEdit({ headerId }) {
               disabled={!hasUnsavedChanges || isSaving}
               style={{
                 padding: "8px 16px",
-                backgroundColor: hasUnsavedChanges ? "#007bff" : "#e9ecef",
-                color: hasUnsavedChanges ? "white" : "#6c757d",
-                border: "1px solid #dee2e6",
+                backgroundColor: hasUnsavedChanges ? "#ffffff" : "#f8f9fa",
+                color: hasUnsavedChanges ? "#007E87" : "#6c757d",
+                border: "none",
                 borderRadius: "4px",
                 cursor: hasUnsavedChanges && !isSaving ? "pointer" : "not-allowed",
                 fontSize: "14px",
                 fontWeight: "500",
                 fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
-                transition: "all 0.2s ease"
+                transition: "all 0.2s ease",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8
               }}
               onMouseEnter={(e) => {
                 if (hasUnsavedChanges && !isSaving) {
-                  e.target.style.backgroundColor = "#0056b3";
+                  e.target.style.backgroundColor = "#D9F0F2";
                 }
               }}
               onMouseLeave={(e) => {
                 if (hasUnsavedChanges && !isSaving) {
-                  e.target.style.backgroundColor = "#007bff";
+                  e.target.style.backgroundColor = "#ffffff";
                 }
               }}
             >
-              {isSaving ? "Guardando..." : "Guardar Cambios"}
+              {isSaving ? "Guardando..." : (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V7L17 3Z" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M17 3V7H21" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M7 13H17" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M7 17H13" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Guardar
+                </>
+              )}
             </button>
           </div>
 
