@@ -121,7 +121,7 @@ function TimesheetEdit({ headerId }) {
     show: false,
     validation: null
   });
-  
+
   // 🆕 Estado para el modal de confirmación de eliminación
   const [deleteConfirmModal, setDeleteConfirmModal] = useState({
     show: false,
@@ -476,16 +476,16 @@ function TimesheetEdit({ headerId }) {
         // ✅ ELIMINACIÓN SOLO LOCAL: NO se elimina de la BD hasta guardar
         const updatedLines = lines.filter(line => !lineIds.includes(line.id));
         setLines(updatedLines);
-        
+
         // ✅ Agregar IDs a la lista de líneas a eliminar de la BD
         setDeletedLineIds(prev => [...prev, ...lineIds.filter(id => !id.startsWith('tmp-'))]);
-        
+
         // Limpiar selección después de eliminar
         setSelectedLines([]);
-        
+
         // ✅ Marcar que hay cambios pendientes para habilitar el botón "Guardar Cambios"
         markAsChanged();
-        
+
         // Cerrar el modal
         setDeleteConfirmModal({ show: false, lineIds: [], onConfirm: null });
       }
@@ -549,9 +549,9 @@ function TimesheetEdit({ headerId }) {
       return;
     }
 
-          // ✅ PASO 4: Si todo es válido, proceder con el guardado
-      setIsSaving(true);
-      try {
+    // ✅ PASO 4: Si todo es válido, proceder con el guardado
+    setIsSaving(true);
+    try {
         console.log("💾 saveAllChanges ejecutándose...");
         console.log("🔍 Líneas actuales en estado local:", lines.map(l => l.id));
         console.log("🔍 Líneas en editFormData:", Object.keys(editFormData).filter(id => !id.startsWith('tmp-')));
@@ -706,22 +706,22 @@ function TimesheetEdit({ headerId }) {
         } else {
           // Línea existente - actualizar si hay cambios
           const originalLine = lines.find(l => l.id === lineId);
-          if (lineData && originalLine) {
-            const changedFields = {};
-            Object.keys(lineData).forEach(key => {
-              if (lineData[key] !== originalLine[key]) {
-                if (key === "date" && lineData[key]) {
-                  changedFields[key] = toIsoFromInput(lineData[key]);
-                } else {
-                  changedFields[key] = lineData[key];
-                }
+        if (lineData && originalLine) {
+          const changedFields = {};
+          Object.keys(lineData).forEach(key => {
+            if (lineData[key] !== originalLine[key]) {
+              if (key === "date" && lineData[key]) {
+                changedFields[key] = toIsoFromInput(lineData[key]);
+              } else {
+                changedFields[key] = lineData[key];
               }
-            });
+            }
+          });
 
-            if (Object.keys(changedFields).length > 0) {
-              await updateLineMutation.mutateAsync({
-                lineId,
-                changes: changedFields,
+          if (Object.keys(changedFields).length > 0) {
+            await updateLineMutation.mutateAsync({
+              lineId,
+              changes: changedFields,
                 silent: true
               });
             }
@@ -749,7 +749,7 @@ function TimesheetEdit({ headerId }) {
     }
   }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, deleteLineMutation, deletedLineIds, setDeletedLineIds, dailyRequired, calendarHolidays, effectiveHeaderId, location.search, editableHeader, instance, accounts]);
 
-  
+
 
   // NOTA: handleNavigateBack eliminado porque useBlocker maneja toda la navegación
   // incluyendo navegación desde botones de la interfaz
@@ -1298,13 +1298,13 @@ function TimesheetEdit({ headerId }) {
           } catch (error) {
             console.error(`Error obteniendo info del proyecto:`, error);
             // En caso de error, usar valor normal
-            setEditFormData(prev => ({
-              ...prev,
-              [lineId]: {
-                ...prev[lineId],
-                [name]: value
-              }
-            }));
+    setEditFormData(prev => ({
+      ...prev,
+      [lineId]: {
+        ...prev[lineId],
+        [name]: value
+      }
+    }));
           }
         } else {
           // Para otros campos, comportamiento normal
@@ -1546,82 +1546,82 @@ function TimesheetEdit({ headerId }) {
     <div className="ts-responsive">
       <div className="timesheet-container">
         {/* Header de navegación */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-          {/* Botón circular solo con el icono */}
-          <button
-            type="button"
-            aria-label="Lista Parte Trabajo"
-            onClick={() => navigate("/")}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#D8EEF1"; // hover suave
-              e.currentTarget.style.borderColor = "#007E87";
-            }}
-            onMouseLeave={(e) => {
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        {/* Botón circular solo con el icono */}
+        <button
+          type="button"
+          aria-label="Lista Parte Trabajo"
+          onClick={() => navigate("/")}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "#D8EEF1"; // hover suave
+            e.currentTarget.style.borderColor = "#007E87";
+          }}
+          onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = "#ffffff";
-              e.currentTarget.style.borderColor = "rgba(0,126,135,0.35)";
-            }}
-            style={{
-              width: 36,
-              height: 36,
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: "9999px",
-              border: "1px solid rgba(0,126,135,0.35)",
-              background: "#EAF7F9",
-              padding: 0,
-              cursor: "pointer",
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M15 6L9 12L15 18" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          {/* Etiqueta clickable con el mismo color del botón Editar, modificado a color negro */}
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            aria-label="Ir a lista de parte de trabajo"
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#000",
-              fontWeight: 700,
-              fontSize: "22px",
-              lineHeight: 1,
-              cursor: "pointer",
-              padding: 0,
-            }}
-          >
+            e.currentTarget.style.borderColor = "rgba(0,126,135,0.35)";
+          }}
+          style={{
+            width: 36,
+            height: 36,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: "9999px",
+            border: "1px solid rgba(0,126,135,0.35)",
+            background: "#EAF7F9",
+            padding: 0,
+            cursor: "pointer",
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 6L9 12L15 18" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        {/* Etiqueta clickable con el mismo color del botón Editar, modificado a color negro */}
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          aria-label="Ir a lista de parte de trabajo"
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "#000",
+            fontWeight: 700,
+            fontSize: "22px",
+            lineHeight: 1,
+            cursor: "pointer",
+            padding: 0,
+          }}
+        >
             {header ? "Editar Parte de Trabajo" : "Nuevo Parte de Trabajo"}
-          </button>
-        </div>
+        </button>
+      </div>
 
         {/* Sección del header y calendario - altura fija */}
         <div className="timesheet-header-section">
-          {/* Header, resumen y calendario en la misma fila, alineados a la derecha */}
+      {/* Header, resumen y calendario en la misma fila, alineados a la derecha */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            {/* Header a la izquierda */}
-            <div style={{ flex: 1 }}>
+        {/* Header a la izquierda */}
+        <div style={{ flex: 1 }}>
               <TimesheetHeader
                 header={header}
                 onHeaderChange={setEditableHeader}
               />
-            </div>
+        </div>
 
-            {/* Panel derecho con resumen y calendario - fijo a la derecha */}
-            <div style={{ marginLeft: 24, flexShrink: 0 }}>
-              <CalendarPanel
-                calRange={calRange}
-                firstOffset={firstOffset}
-                calendarDays={calendarDays}
-                requiredSum={requiredSum}
-                imputedSum={imputedSum}
-                missingSum={missingSum}
-                rightPadState={[rightPad, setRightPad]}
-              />
+        {/* Panel derecho con resumen y calendario - fijo a la derecha */}
+        <div style={{ marginLeft: 24, flexShrink: 0 }}>
+          <CalendarPanel
+            calRange={calRange}
+            firstOffset={firstOffset}
+            calendarDays={calendarDays}
+            requiredSum={requiredSum}
+            imputedSum={imputedSum}
+            missingSum={missingSum}
+            rightPadState={[rightPad, setRightPad]}
+          />
             </div>
-          </div>
+            </div>
         </div>
 
         {/* Sección de líneas - ocupa todo el espacio restante */}
@@ -1649,7 +1649,7 @@ function TimesheetEdit({ headerId }) {
                 style={{
                   padding: "8px 16px",
                   backgroundColor: selectedLines.length > 0 ? "#ffffff" : "#f8f9fa",
-                  color: selectedLines.length > 0 ? "#007E87" : "#6c757d",
+                  color: selectedLines.length > 0 ? "#000" : "#6c757d",
                   border: "none",
                   borderRadius: "4px",
                   cursor: selectedLines.length > 0 ? "pointer" : "not-allowed",
@@ -1687,7 +1687,7 @@ function TimesheetEdit({ headerId }) {
                 style={{
                   padding: "8px 16px",
                   backgroundColor: selectedLines.length > 0 ? "#ffffff" : "#f8f9fa",
-                  color: selectedLines.length > 0 ? "#007E87" : "#6c757d",
+                  color: selectedLines.length > 0 ? "#000" : "#6c757d",
                   border: "none",
                   borderRadius: "4px",
                   cursor: selectedLines.length > 0 ? "pointer" : "not-allowed",
@@ -1720,7 +1720,7 @@ function TimesheetEdit({ headerId }) {
               style={{
                 padding: "8px 16px",
                 backgroundColor: hasUnsavedChanges ? "#ffffff" : "#f8f9fa",
-                color: hasUnsavedChanges ? "#007E87" : "#6c757d",
+                color: hasUnsavedChanges ? "#000" : "#6c757d",
                 border: "none",
                 borderRadius: "4px",
                 cursor: hasUnsavedChanges && !isSaving ? "pointer" : "not-allowed",
@@ -1729,7 +1729,7 @@ function TimesheetEdit({ headerId }) {
                 fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
                 transition: "all 0.2s ease",
                 display: "inline-flex",
-                alignItems: "center",
+                  alignItems: "center",
                 gap: 8
               }}
               onMouseEnter={(e) => {
@@ -1752,44 +1752,44 @@ function TimesheetEdit({ headerId }) {
                     <path d="M7 17H13" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                   Guardar
-                </>
-              )}
+                    </>
+                  )}
             </button>
-          </div>
+        </div>
 
           {/* Contenedor de la tabla - ocupa todo el espacio disponible */}
           <div className="timesheet-table-container" style={{ width: "100%" }}>
-            <TimesheetLines
-              lines={lines}
-              editFormData={editFormData}
-              errors={errors}
-              inputRefs={inputRefs}
-              hasRefs={hasRefs}
-              setSafeRef={setSafeRef}
-              calendarOpenFor={calendarOpenFor}
-              setCalendarOpenFor={setCalendarOpenFor}
-              handleInputChange={handleInputChange}
-              handleDateInputChange={handleDateChange}
-              handleDateInputBlur={handleDateInputBlur}
-              handleInputFocus={handleInputFocus}
-              handleKeyDown={handleKeyDown}
-              header={header}
+        <TimesheetLines
+          lines={lines}
+          editFormData={editFormData}
+          errors={errors}
+          inputRefs={inputRefs}
+          hasRefs={hasRefs}
+          setSafeRef={setSafeRef}
+          calendarOpenFor={calendarOpenFor}
+          setCalendarOpenFor={setCalendarOpenFor}
+          handleInputChange={handleInputChange}
+          handleDateInputChange={handleDateChange}
+          handleDateInputBlur={handleDateInputBlur}
+          handleInputFocus={handleInputFocus}
+          handleKeyDown={handleKeyDown}
+          header={header}
               editableHeader={editableHeader}
               periodChangeTrigger={periodChangeTrigger} // 🆕 Pasar trigger para forzar re-renderizado
-              calendarHolidays={calendarHolidays}
-              scheduleAutosave={() => {}} // Eliminado
-              saveLineNow={() => {}} // Eliminado
-              savingByLine={savingByLine}
-              onLinesChange={handleLinesChange}
-              deleteLineMutation={deleteLineMutation}
-              insertLineMutation={insertLineMutation}
-              markAsChanged={markAsChanged}
+          calendarHolidays={calendarHolidays}
+          scheduleAutosave={() => {}} // Eliminado
+          saveLineNow={() => {}} // Eliminado
+          savingByLine={savingByLine}
+          onLinesChange={handleLinesChange}
+          deleteLineMutation={deleteLineMutation}
+          insertLineMutation={insertLineMutation}
+          markAsChanged={markAsChanged}
               // 🆕 Nuevas props para selección de líneas
               onLineSelectionChange={handleLineSelectionChange}
               selectedLines={selectedLines}
               onDuplicateLines={handleDuplicateLines}
               onDeleteLines={handleDeleteLines}
-            />
+        />
           </div>
         </div>
       </div>
@@ -1835,7 +1835,7 @@ function TimesheetEdit({ headerId }) {
           executeSaveWithoutValidation();
         }}
       />
-      
+
       {/* 🆕 Modal de confirmación de eliminación */}
       <BcModal
         isOpen={deleteConfirmModal.show}
