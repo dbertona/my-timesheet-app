@@ -1557,7 +1557,7 @@ function TimesheetEdit({ headerId }) {
               e.currentTarget.style.borderColor = "#007E87";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#EAF7F9";
+              e.currentTarget.style.backgroundColor = "#ffffff";
               e.currentTarget.style.borderColor = "rgba(0,126,135,0.35)";
             }}
             style={{
@@ -1648,7 +1648,7 @@ function TimesheetEdit({ headerId }) {
                 disabled={selectedLines.length === 0}
                 style={{
                   padding: "8px 16px",
-                  backgroundColor: selectedLines.length > 0 ? "#EAF7F9" : "#f8f9fa",
+                  backgroundColor: selectedLines.length > 0 ? "#ffffff" : "#f8f9fa",
                   color: selectedLines.length > 0 ? "#007E87" : "#6c757d",
                   border: selectedLines.length > 0 ? "1px solid rgba(0,126,135,0.35)" : "1px solid #dee2e6",
                   borderRadius: "4px",
@@ -1666,7 +1666,7 @@ function TimesheetEdit({ headerId }) {
                 }}
                 onMouseLeave={(e) => {
                   if (selectedLines.length > 0) {
-                    e.target.style.backgroundColor = "#EAF7F9";
+                    e.target.style.backgroundColor = "#ffffff";
                     e.target.style.borderColor = "rgba(0,126,135,0.35)";
                   }
                 }}
@@ -1686,7 +1686,7 @@ function TimesheetEdit({ headerId }) {
                 disabled={selectedLines.length === 0}
                 style={{
                   padding: "8px 16px",
-                  backgroundColor: selectedLines.length > 0 ? "#EAF7F9" : "#f8f9fa",
+                  backgroundColor: selectedLines.length > 0 ? "#ffffff" : "#f8f9fa",
                   color: selectedLines.length > 0 ? "#007E87" : "#6c757d",
                   border: selectedLines.length > 0 ? "1px solid rgba(0,126,135,0.35)" : "1px solid #dee2e6",
                   borderRadius: "4px",
@@ -1704,7 +1704,7 @@ function TimesheetEdit({ headerId }) {
                 }}
                 onMouseLeave={(e) => {
                   if (selectedLines.length > 0) {
-                    e.target.style.backgroundColor = "#EAF7F9";
+                    e.target.style.backgroundColor = "#ffffff";
                     e.target.style.borderColor = "rgba(0,126,135,0.35)";
                   }
                 }}
