@@ -1648,8 +1648,8 @@ function TimesheetEdit({ headerId }) {
                 disabled={selectedLines.length === 0}
                 style={{
                   padding: "8px 16px",
-                  backgroundColor: selectedLines.length > 0 ? "#ffffff" : "#f8f9fa",
-                  color: selectedLines.length > 0 ? "#000" : "#6c757d",
+                  backgroundColor: "#ffffff",
+                  color: selectedLines.length > 0 ? "#000" : "#9ca3af",
                   border: "none",
                   borderRadius: "4px",
                   cursor: selectedLines.length > 0 ? "pointer" : "not-allowed",
@@ -1686,8 +1686,8 @@ function TimesheetEdit({ headerId }) {
                 disabled={selectedLines.length === 0}
                 style={{
                   padding: "8px 16px",
-                  backgroundColor: selectedLines.length > 0 ? "#ffffff" : "#f8f9fa",
-                  color: selectedLines.length > 0 ? "#000" : "#6c757d",
+                  backgroundColor: "#ffffff",
+                  color: selectedLines.length > 0 ? "#000" : "#9ca3af",
                   border: "none",
                   borderRadius: "4px",
                   cursor: selectedLines.length > 0 ? "pointer" : "not-allowed",
@@ -1719,8 +1719,8 @@ function TimesheetEdit({ headerId }) {
               disabled={!hasUnsavedChanges || isSaving}
               style={{
                 padding: "8px 16px",
-                backgroundColor: hasUnsavedChanges ? "#ffffff" : "#f8f9fa",
-                color: hasUnsavedChanges ? "#000" : "#6c757d",
+                backgroundColor: "#ffffff",
+                color: hasUnsavedChanges ? "#000" : "#9ca3af",
                 border: "none",
                 borderRadius: "4px",
                 cursor: hasUnsavedChanges && !isSaving ? "pointer" : "not-allowed",
@@ -1729,7 +1729,7 @@ function TimesheetEdit({ headerId }) {
                 fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
                 transition: "all 0.2s ease",
                 display: "inline-flex",
-                  alignItems: "center",
+                alignItems: "center",
                 gap: 8
               }}
               onMouseEnter={(e) => {
