@@ -121,6 +121,13 @@ function TimesheetEdit({ headerId }) {
     show: false,
     validation: null
   });
+  
+  // 🆕 Estado para el modal de confirmación de eliminación
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState({
+    show: false,
+    lineIds: [],
+    onConfirm: null
+  });
 
   // Bandera para evitar múltiples modales
   const [isNavigating, setIsNavigating] = useState(false);
@@ -461,21 +468,28 @@ function TimesheetEdit({ headerId }) {
 
     if (!lineIds.length) return;
 
-    // Confirmar antes de eliminar
-    if (window.confirm(`¿Estás seguro de que quieres eliminar ${lineIds.length} línea${lineIds.length !== 1 ? 's' : ''}?`)) {
-            // ✅ ELIMINACIÓN SOLO LOCAL: NO se elimina de la BD hasta guardar
-      const updatedLines = lines.filter(line => !lineIds.includes(line.id));
-      setLines(updatedLines);
-      
-      // ✅ Agregar IDs a la lista de líneas a eliminar de la BD
-      setDeletedLineIds(prev => [...prev, ...lineIds.filter(id => !id.startsWith('tmp-'))]);
-      
-      // Limpiar selección después de eliminar
-      setSelectedLines([]);
-      
-      // ✅ Marcar que hay cambios pendientes para habilitar el botón "Guardar Cambios"
-      markAsChanged();
-    }
+        // ✅ Mostrar modal de confirmación en lugar de window.confirm
+    setDeleteConfirmModal({
+      show: true,
+      lineIds: lineIds,
+      onConfirm: () => {
+        // ✅ ELIMINACIÓN SOLO LOCAL: NO se elimina de la BD hasta guardar
+        const updatedLines = lines.filter(line => !lineIds.includes(line.id));
+        setLines(updatedLines);
+        
+        // ✅ Agregar IDs a la lista de líneas a eliminar de la BD
+        setDeletedLineIds(prev => [...prev, ...lineIds.filter(id => !id.startsWith('tmp-'))]);
+        
+        // Limpiar selección después de eliminar
+        setSelectedLines([]);
+        
+        // ✅ Marcar que hay cambios pendientes para habilitar el botón "Guardar Cambios"
+        markAsChanged();
+        
+        // Cerrar el modal
+        setDeleteConfirmModal({ show: false, lineIds: [], onConfirm: null });
+      }
+    });
   }, [lines, markAsChanged]);
 
   // ✅ MUTATION: Insertar línea nueva
@@ -1804,6 +1818,20 @@ function TimesheetEdit({ headerId }) {
           executeSaveWithoutValidation();
         }}
       />
+      
+      {/* 🆕 Modal de confirmación de eliminación */}
+      <BcModal
+        isOpen={deleteConfirmModal.show}
+        onClose={() => setDeleteConfirmModal({ show: false, lineIds: [], onConfirm: null })}
+        title="Confirmar eliminación"
+        confirmText="Sí, eliminar"
+        onConfirm={deleteConfirmModal.onConfirm}
+        onCancel={() => setDeleteConfirmModal({ show: false, lineIds: [], onConfirm: null })}
+        confirmButtonType="danger"
+      >
+        <p>¿Estás seguro de que quieres eliminar {deleteConfirmModal.lineIds.length} línea{deleteConfirmModal.lineIds.length !== 1 ? 's' : ''}?</p>
+        <p className="text-muted">Esta acción no se puede deshacer.</p>
+      </BcModal>
     </div>
   );
 }
