@@ -44,12 +44,7 @@ export default function DateInput({
 
     // 🆕 Re-renderizar cuando cambie el período para actualizar validación
   useEffect(() => {
-    // 🆕 DEBUG: Ver qué períodos están recibiendo
-    console.log('🔍 DEBUG DateInput useEffect:', {
-      headerAllocationPeriod: header?.allocation_period,
-      editableHeaderAllocationPeriod: editableHeader?.allocation_period,
-      currentMonth: currentMonth.toISOString()
-    });
+
 
     // ✅ Usar header.allocation_period en lugar de editableHeader.allocation_period
     const effectivePeriod = header?.allocation_period || editableHeader?.allocation_period;
@@ -63,14 +58,7 @@ export default function DateInput({
         const month = parseInt(match[2]) - 1;
         const newMonth = new Date(year, month, 1);
 
-        // 🆕 DEBUG: Ver qué mes se está configurando
-        console.log('🔍 DEBUG DateInput setCurrentMonth:', {
-          period,
-          year,
-          month,
-          newMonth: newMonth.toISOString(),
-          monthName: newMonth.toLocaleDateString('es-ES', { month: 'long' })
-        });
+
 
         setCurrentMonth(newMonth);
       }

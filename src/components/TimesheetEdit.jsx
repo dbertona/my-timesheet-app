@@ -876,13 +876,7 @@ function TimesheetEdit({ headerId }) {
             // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
             const mm = String(now.getMonth() + 1).padStart(2, "0");
             ap = `M${yy}-M${mm}`;
-            console.log('🔍 DEBUG FECHAS:', {
-              now: now.toISOString(),
-              getMonth: now.getMonth(),
-              getMonthPlus1: now.getMonth() + 1,
-              mm,
-              ap
-            });
+
           }
 
           headerData = {
@@ -1103,13 +1097,7 @@ function TimesheetEdit({ headerId }) {
         // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
         const mm = String(now.getMonth() + 1).padStart(2, "0"); // "08"
         ap = `M${yy}-M${mm}`; // p.ej. M25-M08
-        console.log('🔍 DEBUG FECHAS fetchData:', {
-          now: now.toISOString(),
-          getMonth: now.getMonth(),
-          getMonthPlus1: now.getMonth() + 1,
-          mm,
-          ap
-        });
+
       }
 
       // 🆕 PASO 0.5: Verificar si estamos en modo "nuevo parte"

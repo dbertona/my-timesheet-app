@@ -61,13 +61,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
                 const mm = String(now.getMonth() + 1).padStart(2, "0");
                 ap = `M${yy}-M${mm}`;
-                console.log('🔍 DEBUG FECHAS TimesheetHeader 1:', {
-                  now: now.toISOString(),
-                  getMonth: now.getMonth(),
-                  getMonthPlus1: now.getMonth() + 1,
-                  mm,
-                  ap
-                });
+
               }
               setAllocationPeriod(ap);
 
@@ -131,13 +125,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
                 const mm = String(now.getMonth() + 1).padStart(2, "0");
                 ap = `M${yy}-M${mm}`;
-                console.log('🔍 DEBUG FECHAS TimesheetHeader 2:', {
-                  now: now.toISOString(),
-                  getMonth: now.getMonth(),
-                  getMonthPlus1: now.getMonth() + 1,
-                  mm,
-                  ap
-                });
+
               }
 
               const firstDayOfPeriod = getFirstDayOfPeriod(ap);

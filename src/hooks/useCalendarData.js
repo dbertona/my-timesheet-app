@@ -162,12 +162,7 @@ export default function useCalendarData(header, resolvedHeaderId, editFormData) 
       arr.push({ d, iso, need, got, status });
     }
 
-    // 🆕 DEBUG: Ver qué días se están generando
-    console.log('🔍 DEBUG días generados en vivo:', {
-      primerDia: arr[0]?.iso,
-      ultimoDia: arr[arr.length - 1]?.iso,
-      totalDias: arr.length
-    });
+
 
     setCalendarDays(arr);
   }, [editFormData, dailyRequired, calRange, calendarHolidays]);
