@@ -11,6 +11,7 @@ export default function useTimesheetEdit({
   setErrors,
   calendarHolidays,
   addEmptyLine,       // función sincrónica del padre: crea línea local y devuelve id
+  markAsChanged,      // función para marcar cambios no guardados
 }) {
   const inputRefs = useRef({});
   const selectionRef = useRef({ lineId: null, field: null, start: 0, end: 0 });
@@ -223,10 +224,27 @@ export default function useTimesheetEdit({
         const prevLineId = lines[lineIndex - 1].id;
         const field = TIMESHEET_FIELDS[fieldIndex];
         const valueAbove = editFormData?.[prevLineId]?.[field] ?? "";
+
+        console.log('🔍 F8 DEBUG:', {
+          lineIndex,
+          fieldIndex,
+          field,
+          currentLineId,
+          prevLineId,
+          valueAbove,
+          currentValue: editFormData?.[currentLineId]?.[field]
+        });
+
         setEditFormData((prev) => ({
           ...prev,
           [currentLineId]: { ...prev[currentLineId], [field]: valueAbove },
         }));
+
+        // Marcar como cambiado
+        if (typeof markAsChanged === 'function') {
+          markAsChanged();
+        }
+
         setTimeout(() => {
           const input = inputRefs.current?.[currentLineId]?.[field];
           if (input) {

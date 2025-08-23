@@ -808,6 +808,9 @@ function TimesheetEdit({ headerId }) {
     }
   });
 
+  // 🆕 Obtener queryClient para invalidar cache
+  const queryClient = useQueryClient();
+
   // 🆕 Función para guardar toda la tabla CON VALIDACIÓN
   const saveAllChanges = useCallback(async () => {
     if (!hasUnsavedChanges) return;
@@ -816,8 +819,8 @@ function TimesheetEdit({ headerId }) {
 
     const validation = await validateAllData(editFormData, dailyRequired, calendarHolidays, jobs);
 
-    // 🆕 PASO 2: Si hay errores críticos, mostrar modal y bloquear guardado
-    if (!validation.isValid) {
+    // 🆕 PASO 2: Solo bloquear guardado si hay errores críticos (no campos requeridos)
+    if (validation.totalErrors > 0) {
       setValidationModal({
         show: true,
         validation
@@ -825,14 +828,8 @@ function TimesheetEdit({ headerId }) {
       return;
     }
 
-    // 🆕 PASO 3: Si solo hay advertencias, preguntar al usuario
-    if (validation.hasWarnings) {
-      setValidationModal({
-        show: true,
-        validation
-      });
-      return;
-    }
+    // 🆕 PASO 3: Si solo hay advertencias (campos requeridos), continuar con el guardado
+    // Las líneas con campos requeridos incompletos se filtrarán automáticamente
 
     // ✅ PASO 4: Si todo es válido, proceder con el guardado
     setIsSaving(true);
@@ -876,8 +873,16 @@ function TimesheetEdit({ headerId }) {
           if (!ap) {
             const now = new Date();
             const yy = String(now.getFullYear()).slice(-2);
+            // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
             const mm = String(now.getMonth() + 1).padStart(2, "0");
             ap = `M${yy}-M${mm}`;
+            console.log('🔍 DEBUG FECHAS:', {
+              now: now.toISOString(),
+              getMonth: now.getMonth(),
+              getMonthPlus1: now.getMonth() + 1,
+              mm,
+              ap
+            });
           }
 
           headerData = {
@@ -952,12 +957,31 @@ function TimesheetEdit({ headerId }) {
       // PASO 4.2: Guardar líneas existentes o crear nuevas
       const linesToProcess = Object.keys(editFormData);
 
-      for (const lineId of linesToProcess) {
+      // 🆕 FILTRAR: Solo procesar líneas que tengan TODOS los campos requeridos
+      const validLinesToProcess = linesToProcess.filter(lineId => {
+        const lineData = editFormData[lineId];
+
+        // Verificar que la línea tenga todos los campos requeridos
+        const hasRequiredFields = lineData &&
+          lineData.date && lineData.date.trim() !== '' &&           // Fecha obligatoria
+          lineData.job_no && lineData.job_no.trim() !== '' &&      // Proyecto obligatorio
+          lineData.job_task_no && lineData.job_task_no.trim() !== '' && // Tarea obligatoria
+          lineData.quantity && parseFloat(lineData.quantity) > 0;  // Horas > 0 obligatorias
+
+        return hasRequiredFields;
+      });
+
+      console.log(`📝 Procesando ${validLinesToProcess.length} de ${linesToProcess.length} líneas (filtradas por campos requeridos completos)`);
+
+      for (const lineId of validLinesToProcess) {
         const lineData = editFormData[lineId];
 
         if (lineId.startsWith('tmp-')) {
           // 🆕 Línea nueva - insertar (incluyendo duplicadas con cantidad 0)
-          if (lineData.job_no) { // Solo verificar que tenga proyecto asignado
+          if (lineData.job_no && lineData.job_no.trim() !== '' &&
+              lineData.date && lineData.date.trim() !== '' &&
+              lineData.job_task_no && lineData.job_task_no.trim() !== '' &&
+              lineData.quantity && parseFloat(lineData.quantity) > 0) { // Verificar TODOS los campos requeridos
             // ✅ Obtener información del proyecto (responsable y departamento)
             const jobInfo = await fetchJobInfo([lineData.job_no]);
 
@@ -989,7 +1013,11 @@ function TimesheetEdit({ headerId }) {
         } else {
           // Línea existente - actualizar si hay cambios
           const originalLine = lines.find(l => l.id === lineId);
-        if (lineData && originalLine) {
+        if (lineData && originalLine &&
+            lineData.date && lineData.date.trim() !== '' &&
+            lineData.job_no && lineData.job_no.trim() !== '' &&
+            lineData.job_task_no && lineData.job_task_no.trim() !== '' &&
+            lineData.quantity && parseFloat(lineData.quantity) > 0) {
           const changedFields = {};
           Object.keys(lineData).forEach(key => {
             if (lineData[key] !== originalLine[key]) {
@@ -1023,14 +1051,31 @@ function TimesheetEdit({ headerId }) {
       }
 
       setHasUnsavedChanges(false);
-      toast.success(TOAST.SUCCESS.SAVE_ALL);
+
+      // 🆕 Informar sobre líneas filtradas por campos requeridos incompletos
+      const filteredLines = linesToProcess.length - validLinesToProcess.length;
+      if (filteredLines > 0) {
+        toast.success(`${TOAST.SUCCESS.SAVE_ALL} (${filteredLines} líneas con campos requeridos incompletos omitidas)`);
+      } else {
+        toast.success(TOAST.SUCCESS.SAVE_ALL);
+      }
+
+      // 🆕 CRÍTICO: Invalidar el cache de React Query para que se recarguen las líneas
+      if (currentHeaderId) {
+        try {
+          await queryClient.invalidateQueries({ queryKey: ["lines", currentHeaderId] });
+          console.log('🔄 Cache invalidado para header:', currentHeaderId);
+        } catch (error) {
+          console.error('❌ Error invalidando cache:', error);
+        }
+      }
     } catch (error) {
       console.error('Error saving all changes:', error);
       toast.error(`Error al guardar: ${error.message}`);
     } finally {
       setIsSaving(false);
     }
-  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, deleteLineMutation, deletedLineIds, setDeletedLineIds, dailyRequired, calendarHolidays, effectiveHeaderId, location.search, editableHeader, instance, accounts]);
+  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, deleteLineMutation, deletedLineIds, setDeletedLineIds, dailyRequired, calendarHolidays, effectiveHeaderId, location.search, editableHeader, instance, accounts, queryClient]);
 
 
 
@@ -1055,8 +1100,16 @@ function TimesheetEdit({ headerId }) {
       if (!ap) {
         const now = new Date();
         const yy = String(now.getFullYear()).slice(-2); // "25"
+        // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
         const mm = String(now.getMonth() + 1).padStart(2, "0"); // "08"
         ap = `M${yy}-M${mm}`; // p.ej. M25-M08
+        console.log('🔍 DEBUG FECHAS fetchData:', {
+          now: now.toISOString(),
+          getMonth: now.getMonth(),
+          getMonthPlus1: now.getMonth() + 1,
+          mm,
+          ap
+        });
       }
 
       // 🆕 PASO 0.5: Verificar si estamos en modo "nuevo parte"
@@ -1126,7 +1179,6 @@ function TimesheetEdit({ headerId }) {
 
   // React Query: cargar líneas por header_id, con cache y estados
   const effectiveKey = effectiveHeaderId;
-  const queryClient = useQueryClient();
   const linesHook = useTimesheetLines(effectiveKey);
   useEffect(() => {
     if (linesHook.error) toast.error("Error cargando líneas");
@@ -1554,6 +1606,7 @@ function TimesheetEdit({ headerId }) {
     setErrors,
     calendarHolidays,
     addEmptyLine,
+    markAsChanged,
   });
 
   // -- Router de cambios por campo: deriva quantity/date a sus handlers y el resto al handler original

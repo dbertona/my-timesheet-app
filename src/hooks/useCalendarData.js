@@ -50,12 +50,14 @@ export default function useCalendarData(header, resolvedHeaderId, editFormData) 
   useEffect(() => {
     async function buildCalendar() {
       if (!header) return;
+
       const apInfo = parseAllocationPeriod(header.allocation_period);
       if (!apInfo) return;
       const { year, month } = apInfo;
+
       setCalRange({ year, month });
 
-      const first = new Date(year, month - 1, 1);
+            const first = new Date(year, month - 1, 1);
       const js = first.getDay(); // 0=Dom .. 6=Sáb
       const offset = (js + 6) % 7; // Lunes=0 .. Domingo=6
       setFirstOffset(offset);
@@ -135,6 +137,8 @@ export default function useCalendarData(header, resolvedHeaderId, editFormData) 
   useEffect(() => {
     if (!calRange?.year || !calRange?.month) return;
 
+
+
     const EPS = 0.01;
     const holidaySet = buildHolidaySet(calendarHolidays);
     const liveImp = computeTotalsByIso(editFormData);
@@ -157,6 +161,13 @@ export default function useCalendarData(header, resolvedHeaderId, editFormData) 
 
       arr.push({ d, iso, need, got, status });
     }
+
+    // 🆕 DEBUG: Ver qué días se están generando
+    console.log('🔍 DEBUG días generados en vivo:', {
+      primerDia: arr[0]?.iso,
+      ultimoDia: arr[arr.length - 1]?.iso,
+      totalDias: arr.length
+    });
 
     setCalendarDays(arr);
   }, [editFormData, dailyRequired, calRange, calendarHolidays]);

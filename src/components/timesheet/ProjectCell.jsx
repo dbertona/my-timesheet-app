@@ -133,6 +133,12 @@ export default function ProjectCell({
                 e.preventDefault();
                 return;
               }
+              // 🆕 F8: copiar desde celda superior (debe ir ANTES de la navegación)
+              if (e.key === "F8") {
+                e.preventDefault();
+                handleKeyDown(e, lineIndex, 0);
+                return;
+              }
               // TODAS las teclas de navegación usan la misma función
               if (e.key === "Tab" || e.key === "Enter" || e.key.startsWith("Arrow")) {
                 e.preventDefault(); // Prevenir comportamiento por defecto

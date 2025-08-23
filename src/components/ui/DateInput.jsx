@@ -42,26 +42,46 @@ export default function DateInput({
     };
   }, [calendarOpen, setCalendarOpen]);
 
-  // 🆕 Re-renderizar cuando cambie el período para actualizar validación
+    // 🆕 Re-renderizar cuando cambie el período para actualizar validación
   useEffect(() => {
-    if (editableHeader?.allocation_period) {
+    // 🆕 DEBUG: Ver qué períodos están recibiendo
+    console.log('🔍 DEBUG DateInput useEffect:', {
+      headerAllocationPeriod: header?.allocation_period,
+      editableHeaderAllocationPeriod: editableHeader?.allocation_period,
+      currentMonth: currentMonth.toISOString()
+    });
+
+    // ✅ Usar header.allocation_period en lugar de editableHeader.allocation_period
+    const effectivePeriod = header?.allocation_period || editableHeader?.allocation_period;
+
+    if (effectivePeriod) {
       // ✅ Cuando cambie el período, centrar el calendario en ese mes
-      const period = editableHeader.allocation_period;
+      const period = effectivePeriod;
       const match = period.match(/M(\d{2})-M(\d{2})/);
       if (match) {
         const year = 2000 + parseInt(match[1]);
         const month = parseInt(match[2]) - 1;
         const newMonth = new Date(year, month, 1);
+
+        // 🆕 DEBUG: Ver qué mes se está configurando
+        console.log('🔍 DEBUG DateInput setCurrentMonth:', {
+          period,
+          year,
+          month,
+          newMonth: newMonth.toISOString(),
+          monthName: newMonth.toLocaleDateString('es-ES', { month: 'long' })
+        });
+
         setCurrentMonth(newMonth);
       }
     }
-  }, [editableHeader?.allocation_period]);
+  }, [header?.allocation_period, editableHeader?.allocation_period]);
 
   // Generar días del mes
   const generateDays = () => {
     // ✅ Para inserción: usar el período del editableHeader si no hay header
     let targetMonth = currentMonth;
-    
+
     if (!header && editableHeader?.allocation_period) {
       const period = editableHeader.allocation_period;
       const match = period.match(/M(\d{2})-M(\d{2})/);
@@ -71,7 +91,7 @@ export default function DateInput({
         targetMonth = new Date(year, month, 1);
       }
     }
-    
+
     const year = targetMonth.getFullYear();
     const month = targetMonth.getMonth();
     const firstDay = new Date(year, month, 1);
@@ -100,7 +120,7 @@ export default function DateInput({
       const effectiveHeader = header || editableHeader;
       if (effectiveHeader) {
         let fromDate, toDate;
-        
+
         if (header?.from_date && header?.to_date) {
           // ✅ Para edición: usar fechas existentes
           fromDate = parse(header.from_date, "yyyy-MM-dd", new Date());

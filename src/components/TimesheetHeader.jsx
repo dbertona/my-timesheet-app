@@ -58,8 +58,16 @@ function TimesheetHeader({ header, onHeaderChange }) {
               if (!ap) {
                 const now = new Date();
                 const yy = String(now.getFullYear()).slice(-2);
+                // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
                 const mm = String(now.getMonth() + 1).padStart(2, "0");
                 ap = `M${yy}-M${mm}`;
+                console.log('🔍 DEBUG FECHAS TimesheetHeader 1:', {
+                  now: now.toISOString(),
+                  getMonth: now.getMonth(),
+                  getMonthPlus1: now.getMonth() + 1,
+                  mm,
+                  ap
+                });
               }
               setAllocationPeriod(ap);
 
@@ -120,8 +128,16 @@ function TimesheetHeader({ header, onHeaderChange }) {
               if (!ap) {
                 const now = new Date();
                 const yy = String(now.getFullYear()).slice(-2);
+                // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
                 const mm = String(now.getMonth() + 1).padStart(2, "0");
                 ap = `M${yy}-M${mm}`;
+                console.log('🔍 DEBUG FECHAS TimesheetHeader 2:', {
+                  now: now.toISOString(),
+                  getMonth: now.getMonth(),
+                  getMonthPlus1: now.getMonth() + 1,
+                  mm,
+                  ap
+                });
               }
 
               const firstDayOfPeriod = getFirstDayOfPeriod(ap);
@@ -162,7 +178,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
             .select("name, calendar_type")
             .eq("code", header.resource_no)
             .single();
-          
+
           if (resourceData && !error) {
             setEffectiveHeader({
               ...header,
@@ -174,7 +190,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
           console.error("❌ Error obteniendo detalles del recurso:", error);
         }
       };
-      
+
       getResourceDetails();
     } else {
       setEffectiveHeader(header || editableHeader);
