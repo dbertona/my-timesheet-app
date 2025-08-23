@@ -13,9 +13,14 @@ export default function ProjectDescriptionCell({
   // Usar editFormData.job_no si está disponible, sino usar line.job_no
   const currentJobNo = editFormData?.job_no || line.job_no;
 
-  // Buscar el proyecto para obtener su descripción
-  const project = findJob ? findJob(currentJobNo) : null;
-  const projectDescription = project?.description || "";
+  // Priorizar job_no_description de editFormData o line, luego buscar en jobs
+  let projectDescription = editFormData?.job_no_description || line.job_no_description;
+
+  // Si no hay descripción directa, buscar el proyecto para obtener su descripción
+  if (!projectDescription) {
+    const project = findJob ? findJob(currentJobNo) : null;
+    projectDescription = project?.description || "";
+  }
 
   return (
     <td

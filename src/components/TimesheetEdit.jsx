@@ -39,7 +39,6 @@ const SAFE_COLUMNS = [
 ];
 
 function TimesheetEdit({ headerId }) {
-  console.log("🚀 TimesheetEdit renderizando con headerId:", headerId);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -66,14 +65,9 @@ function TimesheetEdit({ headerId }) {
   );
 
     // === Calendario (estado + helpers) ahora en hook dedicado
-  console.log("🔍 Debug useCalendarData - header:", header);
-  console.log("🔍 Debug useCalendarData - editableHeader:", editableHeader);
-  console.log("🔍 Debug useCalendarData - resolvedHeaderId:", resolvedHeaderId);
-  console.log("🔍 Debug useCalendarData - editFormData:", editFormData);
 
   // Para edición: usar siempre el header existente, no editableHeader
   const headerForCalendar = header || editableHeader;
-  console.log("🔍 Header que se pasa al hook:", headerForCalendar);
 
   const {
     calRange,
@@ -86,11 +80,7 @@ function TimesheetEdit({ headerId }) {
     missingSum,
   } = useCalendarData(headerForCalendar, resolvedHeaderId, editFormData);
 
-  // Debug del resultado del hook
-  console.log("🔍 Hook resultado - calendarDays:", calendarDays);
-  console.log("🔍 Hook resultado - dailyRequired:", dailyRequired);
-  console.log("🔍 Hook resultado - calRange:", calRange);
-  console.log("🔍 Hook resultado - firstOffset:", firstOffset);
+
 
   // 🆕 Obtener jobs para validación de estado (TODOS los proyectos del recurso)
   const jobsQuery = useAllJobs((header || editableHeader)?.resource_no);
@@ -262,7 +252,54 @@ function TimesheetEdit({ headerId }) {
   // 🆕 Función para importar vacaciones desde Factorial
   const handleImportFactorial = useCallback(async () => {
     try {
-      console.log("📅 Importando vacaciones desde Factorial...");
+
+      // 🆕 Buscar el proyecto de vacaciones del recurso
+      let vacationProject = null;
+
+              // Obtener el department_code del recurso actual
+        // Priorizar editableHeader sobre header para obtener el departamento correcto
+        const currentResource = editableHeader || header;
+        const resourceDepartment = currentResource?.department_code || '1-01'; // Fallback a '1-01'
+
+        try {
+
+          // Buscar en la tabla job por departamento y nombre -VAC
+
+
+
+
+
+        const { data: jobData, error: jobError } = await supabaseClient
+          .from("job")
+          .select("no, description, departamento, status")
+          .eq("departamento", resourceDepartment)
+          .ilike("no", "%-VAC%")
+          .eq("status", "Open")
+          .limit(1);
+
+        if (jobData && jobData.length > 0 && !jobError) {
+          vacationProject = jobData[0]; // Tomar el primer elemento del array
+        } else {
+
+          // Intentar buscar proyecto genérico de vacaciones
+          const { data: genericJob, error: genericError } = await supabaseClient
+            .from("job")
+            .select("no, description, departamento, status")
+            .ilike("no", "%-VAC%")
+            .eq("status", "Open")
+            .limit(1);
+
+          console.log("🔍 Resultado consulta genérica - data:", genericJob, "error:", genericError);
+
+          if (genericJob && genericJob.length > 0 && !genericError) {
+            vacationProject = genericJob[0]; // Tomar el primer elemento del array
+            console.log("✅ Proyecto genérico de vacaciones encontrado:", vacationProject);
+            console.log("🔍 DEBUG - Estructura del proyecto genérico:", JSON.stringify(vacationProject, null, 2));
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error buscando proyecto de vacaciones:", error);
+      }
 
       // Email fijo para pruebas
       const userEmail = "jtorres@powersolution.es";
@@ -284,12 +321,7 @@ function TimesheetEdit({ headerId }) {
       } else {
         startDate = calendarDays[0].iso; // Primer día del calendario
         endDate = calendarDays[calendarDays.length - 1].iso; // Último día del calendario
-        console.log("📅 Usando fechas del calendario cargado:", startDate, "a", endDate);
       }
-
-      console.log("📅 Buscando vacaciones para:", userEmail);
-      console.log("📅 Desde:", startDate);
-      console.log("📅 Hasta:", endDate);
 
       // Datos mock basados en el script de Factorial que ya funciona
       const vacations = [
@@ -303,47 +335,43 @@ function TimesheetEdit({ headerId }) {
           aprobado: true
         }
       ];
-      console.log("📅 Vacaciones obtenidas (mock):", vacations);
-
-                  // Debug del calendario
-      console.log("📅 Calendario disponible:", calendarDays);
-      console.log("📅 Horas requeridas por día:", dailyRequired);
-      console.log("📅 Total de días en calendario:", calendarDays?.length || 0);
-
-      // Debug de estructura del calendario
-      if (calendarDays && calendarDays.length > 0) {
-        console.log("📅 Primer día del calendario:", calendarDays[0]);
-        console.log("📅 Propiedades disponibles:", Object.keys(calendarDays[0]));
-        console.log("📅 Ejemplo de días:", calendarDays.slice(0, 3).map(d => ({ iso: d.iso, day: d.day, status: d.status, hours: d.hours })));
-      }
-
-      // Debug de dailyRequired
-      console.log("📅 Estructura de dailyRequired:", dailyRequired);
-      console.log("📅 Horas requeridas para 2025-08-01:", dailyRequired["2025-08-01"]);
-      console.log("📅 Horas requeridas para 2025-08-02:", dailyRequired["2025-08-02"]);
-      console.log("📅 Horas requeridas para 2025-08-03:", dailyRequired["2025-08-03"]);
-
-      // Debug del header y hook
-      console.log("📅 Header actual:", header);
-      console.log("📅 EditableHeader:", editableHeader);
-      console.log("📅 ResolvedHeaderId:", resolvedHeaderId);
-      console.log("📅 EditFormData:", editFormData);
-
-      // Debug del hook useCalendarData
-      console.log("📅 Hook - calendarDays:", calendarDays);
-      console.log("📅 Hook - dailyRequired:", dailyRequired);
-      console.log("📅 Hook - calRange:", calRange);
-      console.log("📅 Hook - firstOffset:", firstOffset);
 
       if (!vacations || vacations.length === 0) {
         toast("No se encontraron vacaciones para este período", { icon: "ℹ️" });
         return;
       }
 
-            // Crear líneas de timesheet para cada día de vacaciones
-      const newLines = [];
+                            // 🆕 VALIDACIÓN PREVIA: Verificar si ya hay líneas de ausencias en el período
+        const existingAbsencesInPeriod = lines.filter(line =>
+          ['VACACIONES', 'BAJAS', 'PERMISOS'].includes(line.work_type) &&
+          line.date >= toDisplayDate(startDate) &&
+          line.date <= toDisplayDate(endDate)
+        );
 
-              for (const vacation of vacations) {
+
+
+        // 🆕 MAPEO INTELIGENTE: Convertir tipo de Factorial a tarea del sistema
+        const getTaskFromFactorialType = (tipo) => {
+          const taskMapping = {
+            'Vacaciones': 'VACACIONES',
+            'Enfermedad': 'BAJAS',
+            'Asuntos personales (1,5 días por año trabajado)': 'PERMISOS',
+            'Día de cumpleaños': 'PERMISOS',
+            'Maternidad / Paternidad': 'BAJAS',
+            'Otro': 'PERMISOS',
+            'Permiso de mudanza': 'PERMISOS',
+            'Permiso por accidente, enfermedad grave u hospitalización de un familiar (PAS)': 'PERMISOS',
+            'Permiso por matrimonio': 'PERMISOS'
+          };
+
+          const task = taskMapping[tipo] || 'PERMISOS'; // Default a PERMISOS si no hay mapeo
+          return task;
+        };
+
+        // Crear líneas de timesheet para cada día de vacaciones
+        const newLines = [];
+
+        for (const vacation of vacations) {
           const start = new Date(vacation.desde);
           const end = new Date(vacation.hasta);
 
@@ -356,7 +384,26 @@ function TimesheetEdit({ headerId }) {
               // Verificar si es día festivo
               const isHoliday = calendarHolidays.some(holiday => holiday.day === dateStr);
               if (isHoliday) {
-                console.log(`📅 Día ${dateStr}: Es festivo, no se crea línea de vacaciones`);
+                continue; // Saltar este día
+              }
+
+                            // 🆕 VALIDACIÓN: Verificar si ya existe una línea de ausencias para esta fecha
+              const existingAbsenceLine = lines.find(line =>
+                line.date === toDisplayDate(dateStr) &&
+                ['VACACIONES', 'BAJAS', 'PERMISOS'].includes(line.work_type)
+              );
+
+              if (existingAbsenceLine) {
+                continue; // Saltar este día
+              }
+
+              // 🆕 VALIDACIÓN: Verificar si ya existe en Supabase (líneas del servidor)
+              const existingServerLine = linesHook.data?.find(line =>
+                line.date === dateStr &&
+                ['VACACIONES', 'BAJAS', 'PERMISOS'].includes(line.work_type)
+              );
+
+              if (existingServerLine) {
                 continue; // Saltar este día
               }
 
@@ -369,69 +416,86 @@ function TimesheetEdit({ headerId }) {
                 const currentHours = parseFloat(calendarDay.hours || 0); // Horas ya registradas
                 const availableHours = Math.max(0, maxHours - currentHours);
 
-                if (availableHours > 0) {
-                  const newLine = {
+                                              if (availableHours > 0) {
+                  const taskType = getTaskFromFactorialType(vacation.tipo);
+
+                                  const newLine = {
                     id: `tmp-${crypto.randomUUID()}`,
                     header_id: effectiveHeaderId,
-                    job_no: '', // Se puede configurar un proyecto por defecto para vacaciones
-                    job_no_description: '',
-                    job_task_no: '',
-                    description: `Vacaciones - ${vacation.tipo}`,
-                    work_type: 'VACACIONES',
+                    job_no: vacationProject?.no || '', // Asignar el proyecto de vacaciones encontrado
+                    job_no_description: vacationProject?.description || '', // Asignar la descripción del proyecto
+                    job_task_no: taskType, // 🆕 Usar la tarea mapeada en lugar de 'GASTO' fijo
+                    description: `${taskType} - ${vacation.tipo}`,
+                    work_type: taskType, // Usar la tarea mapeada en lugar de 'VACACIONES' fijo
                     date: toDisplayDate(dateStr),
                     quantity: availableHours.toFixed(2), // Horas disponibles del calendario
-                    department_code: '20' // Departamento por defecto
+                    department_code: resourceDepartment // Usar el departamento del recurso actual
                   };
 
                   newLines.push(newLine);
-                  console.log(`📅 Día ${dateStr}: ${availableHours}h disponibles de ${maxHours}h requeridas`);
                 } else {
-                  console.log(`📅 Día ${dateStr}: No hay horas disponibles (ya completo: ${currentHours}/${maxHours}h)`);
+                  // No hay horas disponibles para este día
                 }
               } else {
                 // Si no hay calendario disponible, usar 8 horas por defecto
                 const defaultHours = 8.00;
+                const taskType = getTaskFromFactorialType(vacation.tipo);
+
                 const newLine = {
                   id: `tmp-${crypto.randomUUID()}`,
                   header_id: effectiveHeaderId,
-                  job_no: '', // Se puede configurar un proyecto por defecto para vacaciones
-                  job_no_description: '',
-                  job_task_no: '',
-                  description: `Vacaciones - ${vacation.tipo}`,
-                  work_type: 'VACACIONES',
+                  job_no: vacationProject?.no || '', // Asignar el proyecto de vacaciones encontrado
+                  job_no_description: vacationProject?.description || '', // Asignar la descripción del proyecto
+                  job_task_no: taskType, // 🆕 Usar la tarea mapeada en lugar de 'GASTO' fijo
+                  description: `${taskType} - ${vacation.tipo}`,
+                  work_type: taskType, // Usar la tarea mapeada en lugar de 'VACACIONES' fijo
                   date: toDisplayDate(dateStr),
                   quantity: defaultHours.toFixed(2), // 8 horas por defecto
-                  department_code: '20' // Departamento por defecto
+                  department_code: resourceDepartment // Usar el departamento del recurso actual
                 };
 
                 newLines.push(newLine);
-                console.log(`📅 Día ${dateStr}: ${defaultHours}h por defecto (calendario no disponible)`);
               }
             }
           }
         }
 
-      if (newLines.length > 0) {
-        // Agregar las nuevas líneas al estado
-        setLines(prev => [...prev, ...newLines]);
+              if (newLines.length > 0) {
+          // Agregar las nuevas líneas al estado
+          setLines(prev => [...prev, ...newLines]);
 
-        // Agregar al editFormData
-        setEditFormData(prev => {
-          const newData = { ...prev };
-          newLines.forEach(line => {
-            newData[line.id] = line;
+          // Agregar al editFormData
+          setEditFormData(prev => {
+            const newData = { ...prev };
+            newLines.forEach(line => {
+              newData[line.id] = line;
+            });
+            return newData;
           });
-          return newData;
-        });
 
-        // Marcar como cambiado
-        markAsChanged();
+          // Marcar como cambiado
+          markAsChanged();
 
-        toast.success(`Se importaron ${newLines.length} días de vacaciones`);
-        console.log("✅ Líneas de vacaciones agregadas:", newLines);
-      } else {
-        toast("No se pudieron crear líneas de vacaciones para este período", { icon: "ℹ️" });
-      }
+          // 🆕 Resumen de la importación
+          const totalDaysInVacations = vacations.reduce((total, vac) => {
+            const start = new Date(vac.desde);
+            const end = new Date(vac.hasta);
+            const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            return total + days;
+          }, 0);
+
+          const skippedDays = totalDaysInVacations - newLines.length;
+
+                    if (skippedDays > 0) {
+            toast.success(`Se importaron ${newLines.length} días de ausencias (${skippedDays} días omitidos por duplicados/festivos)`);
+          } else {
+            toast.success(`Se importaron ${newLines.length} días de ausencias`);
+          }
+
+
+        } else {
+          toast("No se pudieron crear líneas de vacaciones para este período", { icon: "ℹ️" });
+        }
 
     } catch (error) {
       console.error("❌ Error importando vacaciones:", error);
@@ -439,11 +503,8 @@ function TimesheetEdit({ headerId }) {
     }
   }, [effectiveHeaderId, markAsChanged, calendarDays, dailyRequired, header, calendarHolidays]);
 
-      // 🆕 Función para duplicar líneas seleccionadas
+            // 🆕 Función para duplicar líneas seleccionadas
       const handleDuplicateLines = useCallback((lineIds) => {
-    console.log("🚀 handleDuplicateLines ejecutándose");
-    console.log("📋 IDs de líneas a duplicar:", lineIds);
-    console.log("📊 Líneas actuales:", lines);
 
     if (!lineIds.length) return;
 
@@ -675,11 +736,8 @@ function TimesheetEdit({ headerId }) {
     }
   });
 
-    // 🆕 Función para eliminar líneas seleccionadas
-  const handleDeleteLines = useCallback((lineIds) => {
-    console.log("🗑️ handleDeleteLines ejecutándose");
-    console.log("📋 IDs de líneas a eliminar:", lineIds);
-    console.log("📊 Líneas actuales:", lines);
+          // 🆕 Función para eliminar líneas seleccionadas
+      const handleDeleteLines = useCallback((lineIds) => {
 
     if (!lineIds.length) return;
 
@@ -767,9 +825,7 @@ function TimesheetEdit({ headerId }) {
     // ✅ PASO 4: Si todo es válido, proceder con el guardado
     setIsSaving(true);
     try {
-        console.log("💾 saveAllChanges ejecutándose...");
-        console.log("🔍 Líneas actuales en estado local:", lines.map(l => l.id));
-        console.log("🔍 Líneas en editFormData:", Object.keys(editFormData).filter(id => !id.startsWith('tmp-')));
+
       // 🆕 PASO 4.1: Si no hay header, crear uno nuevo
       let currentHeaderId = effectiveHeaderId;
       if (!currentHeaderId) {
@@ -946,7 +1002,7 @@ function TimesheetEdit({ headerId }) {
 
             // ✅ PASO 4.3: Eliminar líneas que fueron marcadas para eliminación
       if (deletedLineIds.length > 0) {
-        console.log("🗑️ saveAllChanges - Eliminando líneas marcadas de la BD:", deletedLineIds);
+
         for (const lineId of deletedLineIds) {
           await deleteLineMutation.mutateAsync(lineId);
         }
@@ -1036,17 +1092,7 @@ function TimesheetEdit({ headerId }) {
       setResolvedHeaderId(headerIdResolved);
       setDebugInfo({ ap, headerIdProp: headerId ?? null, headerIdResolved, isNewParte });
 
-      // Debug del header cargado
-      console.log("🔍 Header cargado desde BD:", headerData);
-      console.log("🔍 HeaderId resuelto:", headerIdResolved);
-      console.log("🔍 Es nuevo parte:", isNewParte);
 
-      if (headerData) {
-        console.log("🔍 Campos del header:", Object.keys(headerData));
-        console.log("🔍 resource_calendar:", headerData.resource_calendar);
-        console.log("🔍 allocation_period:", headerData.allocation_period);
-        console.log("🔍 resource_no:", headerData.resource_no);
-      }
 
       // 2) Las líneas ahora se cargan vía React Query (ver linesQuery)
       if (!headerIdResolved) {
@@ -1865,10 +1911,7 @@ function TimesheetEdit({ headerId }) {
             <div style={{ display: "flex", gap: "8px" }}>
               {/* 🆕 Botón Importar Factorial */}
               <button
-                onClick={() => {
-                  console.log("🔄 Botón Importar Factorial clickeado");
-                  handleImportFactorial();
-                }}
+                        onClick={handleImportFactorial}
                 style={{
                   padding: "8px 16px",
                   backgroundColor: "#ffffff",
@@ -1895,9 +1938,6 @@ function TimesheetEdit({ headerId }) {
 
               <button
                 onClick={() => {
-                  console.log("🔄 Botón Duplicar clickeado");
-                  console.log("📋 Líneas seleccionadas:", selectedLines);
-                  console.log("🔧 Función handleDuplicateLines:", handleDuplicateLines);
                   if (handleDuplicateLines && selectedLines.length > 0) {
                     handleDuplicateLines(selectedLines);
                   }
@@ -1933,9 +1973,6 @@ function TimesheetEdit({ headerId }) {
 
               <button
                 onClick={() => {
-                  console.log("🗑️ Botón Eliminar clickeado");
-                  console.log("📋 Líneas seleccionadas:", selectedLines);
-                  console.log("🔧 Función handleDeleteLines:", handleDeleteLines);
                   if (handleDeleteLines && selectedLines.length > 0) {
                     handleDeleteLines(selectedLines);
                   }
