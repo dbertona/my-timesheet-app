@@ -239,6 +239,17 @@ function TimesheetEdit({ headerId }) {
     // Logs eliminados para limpiar consola
   }, [hasUnsavedChanges]);
 
+  // 🆕 Resetear estilo del botón cuando cambie isSaving
+  useEffect(() => {
+    if (!isSaving) {
+      // Resetear el estilo del botón cuando termine de guardar
+      const saveButton = document.querySelector('button[onclick*="saveAllChanges"]');
+      if (saveButton) {
+        saveButton.style.backgroundColor = "#ffffff";
+      }
+    }
+  }, [isSaving]);
+
   // Función para marcar que hay cambios
   const markAsChanged = useCallback(() => {
     setHasUnsavedChanges(true);
@@ -2065,7 +2076,7 @@ function TimesheetEdit({ headerId }) {
                 disabled={!hasUnsavedChanges || isSaving}
                 style={{
                   padding: "8px 16px",
-                  backgroundColor: "#ffffff",
+                  backgroundColor: isSaving ? "#D9F0F2" : "#ffffff",
                   color: hasUnsavedChanges ? "#000" : "#9ca3af",
                   border: "none",
                   borderRadius: "4px",
