@@ -19,7 +19,7 @@ ReactDOM.createRoot(root).render(
     <MsalProvider instance={msalInstance}>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
-        <Toaster position="top-right" gutter={8} />
+        <Toaster position="top-center" gutter={8} />
         {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" /> : null}
       </QueryClientProvider>
     </MsalProvider>
