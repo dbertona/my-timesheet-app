@@ -302,6 +302,11 @@ export default function TimesheetLines({
     }
   };
 
+  // 🆕 Función helper para verificar si una línea es editable
+  const isLineEditable = (line) => {
+    return !line.isFactorialLine; // Las líneas de Factorial no son editables
+  };
+
   return (
     <div className="ts-responsive">
 
@@ -385,6 +390,7 @@ export default function TimesheetLines({
                 hasRefs={hasRefs}
                 setSafeRef={setSafeRef}
                 error={localErrors[line.id]?.job_no}
+                isEditable={isLineEditable(line)} // 🆕 Pasar si es editable
                 handlers={{
                   handleInputChange,
                   handleInputFocus,
@@ -427,6 +433,7 @@ export default function TimesheetLines({
                 hasRefs={hasRefs}
                 setSafeRef={setSafeRef}
                 error={localErrors[line.id]?.job_task_no}
+                isEditable={isLineEditable(line)} // 🆕 Pasar si es editable
                 handlers={{
                   handleInputChange,
                   handleInputFocus,
@@ -450,20 +457,26 @@ export default function TimesheetLines({
               <EditableCell
                 style={{ ...colStyles.description, textAlign: getAlign("description") }}
               >
-                <input
-                  type="text"
-                  name="description"
-                  value={editFormData[line.id]?.description || ""}
-                  onChange={(e) => handleInputChange(line.id, e)}
-                  onBlur={() => {
-                    if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                    else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                  }}
-                  onFocus={(e) => handleInputFocus(line.id, "description", e)}
-                  onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("description"))}
-                  ref={hasRefs ? (el) => setSafeRef(line.id, "description", el) : null}
-                  className="ts-input"
-                />
+                {isLineEditable(line) ? (
+                  <input
+                    type="text"
+                    name="description"
+                    value={editFormData[line.id]?.description || ""}
+                    onChange={(e) => handleInputChange(line.id, e)}
+                    onBlur={() => {
+                      if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                      else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                    }}
+                    onFocus={(e) => handleInputFocus(line.id, "description", e)}
+                    onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("description"))}
+                    ref={hasRefs ? (el) => setSafeRef(line.id, "description", el) : null}
+                    className="ts-input"
+                  />
+                ) : (
+                  <div style={{ padding: "4px 8px", color: "#666", fontStyle: "italic" }}>
+                    {editFormData[line.id]?.description || ""}
+                  </div>
+                )}
               </EditableCell>
 
               {/* ----- Servicio (work_type): combo por recurso ----- */}
@@ -471,137 +484,143 @@ export default function TimesheetLines({
                 style={{ ...colStyles.work_type, textAlign: getAlign("work_type") }}
                 error={localErrors[line.id]?.work_type}
               >
-                <div className="ts-cell">
+                {isLineEditable(line) ? (
                   <div className="ts-cell">
-                    <input
-                      type="text"
-                      name="work_type"
-                      value={editFormData[line.id]?.work_type || ""}
-                      onChange={(e) => {
-                        handleInputChange(line.id, e);
-                        clearFieldError(line.id, "work_type");
-                        setWtFilter((prev) => ({ ...prev, [line.id]: e.target.value }));
-                      }}
-                      onBlur={() => {
-                        const raw = (editFormData[line.id]?.work_type || "").trim();
-                        if (!raw) return; // permitir vacío sin error
-                        const found = findWorkType(raw);
-                        if (!found) {
-                          setFieldError(line.id, "work_type", "Servicio inválido. Debe seleccionar uno de la lista.");
-                          const el = inputRefs?.current?.[line.id]?.["work_type"];
-                          if (el) setTimeout(() => { el.focus(); el.select(); }, 0);
-                          return;
-                        }
-                        if (found !== raw) {
-                          handleInputChange(line.id, { target: { name: "work_type", value: found } });
-                        }
-                        clearFieldError(line.id, "work_type");
-                        if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                        else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                      }}
-                      onFocus={(e) => {
-                        handleInputFocus(line.id, "work_type", e);
-                      }}
-                      onKeyDown={(e) => {
-                        const isAdvance = e.key === "Enter" || e.key === "Tab";
-                        if (isAdvance) {
+                    <div className="ts-cell">
+                      <input
+                        type="text"
+                        name="work_type"
+                        value={editFormData[line.id]?.work_type || ""}
+                        onChange={(e) => {
+                          handleInputChange(line.id, e);
+                          clearFieldError(line.id, "work_type");
+                          setWtFilter((prev) => ({ ...prev, [line.id]: e.target.value }));
+                        }}
+                        onBlur={() => {
                           const raw = (editFormData[line.id]?.work_type || "").trim();
-                          // Permitir vacío
-                          if (!raw) {
-                            clearFieldError(line.id, "work_type");
-                            if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                            else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                            handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
+                          if (!raw) return; // permitir vacío sin error
+                          const found = findWorkType(raw);
+                          if (!found) {
+                            setFieldError(line.id, "work_type", "Servicio inválido. Debe seleccionar uno de la lista.");
+                            const el = inputRefs?.current?.[line.id]?.["work_type"];
+                            if (el) setTimeout(() => { el.focus(); el.select(); }, 0);
                             return;
                           }
-                          // Si coincide exacto con un servicio válido
-                          const exact = findWorkType(raw);
-                          if (exact) {
-                            if (exact !== raw) {
-                              handleInputChange(line.id, { target: { name: "work_type", value: exact } });
+                          if (found !== raw) {
+                            handleInputChange(line.id, { target: { name: "work_type", value: found } });
+                          }
+                          clearFieldError(line.id, "work_type");
+                          if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                          else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                        }}
+                        onFocus={(e) => {
+                          handleInputFocus(line.id, "work_type", e);
+                        }}
+                        onKeyDown={(e) => {
+                          const isAdvance = e.key === "Enter" || e.key === "Tab";
+                          if (isAdvance) {
+                            const raw = (editFormData[line.id]?.work_type || "").trim();
+                            // Permitir vacío
+                            if (!raw) {
+                              clearFieldError(line.id, "work_type");
+                              if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                              else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                              handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
+                              return;
                             }
-                            clearFieldError(line.id, "work_type");
-                            if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                            else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                            // Si coincide exacto con un servicio válido
+                            const exact = findWorkType(raw);
+                            if (exact) {
+                              if (exact !== raw) {
+                                handleInputChange(line.id, { target: { name: "work_type", value: exact } });
+                              }
+                              clearFieldError(line.id, "work_type");
+                              if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                              else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                              e.preventDefault();
+                              handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
+                              return;
+                            }
+                            // Si hay una única coincidencia visible, seleccionarla
+                            const list = getVisibleWorkTypes(line.id);
+                            if (list.length === 1) {
+                              const val = list[0];
+                              handleInputChange(line.id, { target: { name: "work_type", value: val } });
+                              clearFieldError(line.id, "work_type");
+                              setWtFilter((prev) => ({ ...prev, [line.id]: val }));
+                              setWtOpenFor(null);
+                              if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                              else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                              e.preventDefault();
+                              handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
+                              return;
+                            }
+                            // Inválido → no avanzar, marcar error
                             e.preventDefault();
-                            handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
+                            setFieldError(line.id, "work_type", "Servicio inválido. Debe seleccionar uno de la lista.");
+                            const el = inputRefs?.current?.[line.id]?.["work_type"];
+                            if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
                             return;
                           }
-                          // Si hay una única coincidencia visible, seleccionarla
-                          const list = getVisibleWorkTypes(line.id);
-                          if (list.length === 1) {
-                            const val = list[0];
-                            handleInputChange(line.id, { target: { name: "work_type", value: val } });
-                            clearFieldError(line.id, "work_type");
-                            setWtFilter((prev) => ({ ...prev, [line.id]: val }));
-                            setWtOpenFor(null);
-                            if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                            else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                          // Alt + ArrowDown: abrir dropdown de servicios
+                          if (e.altKey && e.key === "ArrowDown") {
+                            setWtOpenFor((prev) => (prev === line.id ? null : line.id));
                             e.preventDefault();
-                            handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
                             return;
                           }
-                          // Inválido → no avanzar, marcar error
+                          handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
+                        }}
+                        ref={hasRefs ? (el) => setSafeRef(line.id, "work_type", el) : null}
+                        className={`ts-input ${localErrors[line.id]?.work_type ? 'has-error' : ''}`}
+                        autoComplete="off"
+                      />
+                      <FiChevronDown
+                        onMouseDown={(e) => {
                           e.preventDefault();
-                          setFieldError(line.id, "work_type", "Servicio inválido. Debe seleccionar uno de la lista.");
-                          const el = inputRefs?.current?.[line.id]?.["work_type"];
-                          if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
-                          return;
-                        }
-                        // Alt + ArrowDown: abrir dropdown de servicios
-                        if (e.altKey && e.key === "ArrowDown") {
                           setWtOpenFor((prev) => (prev === line.id ? null : line.id));
-                          e.preventDefault();
-                          return;
-                        }
-                        handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
-                      }}
-                      ref={hasRefs ? (el) => setSafeRef(line.id, "work_type", el) : null}
-                      className={`ts-input ${localErrors[line.id]?.work_type ? 'has-error' : ''}`}
-                      autoComplete="off"
-                    />
-                    <FiChevronDown
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        setWtOpenFor((prev) => (prev === line.id ? null : line.id));
-                      }}
-                      className="ts-icon ts-icon--chevron"
-                    />
-                  </div>
-
-                  {wtOpenFor === line.id && (
-                    <div className="ts-dropdown" onMouseDown={(e) => e.preventDefault()}>
-                      <div className="ts-dropdown__header">
-                        <FiSearch />
-                        <input
-                          value={wtFilter[line.id] || ""}
-                          onChange={(e) => setWtFilter((prev) => ({ ...prev, [line.id]: e.target.value }))}
-                          placeholder="Buscar servicio..."
-                          style={{ width: "100%", border: "none", outline: "none" }}
-                        />
-                      </div>
-
-                      {(workTypesLoaded ? getVisibleWorkTypes(line.id) : []).map((wt) => (
-                        <div
-                          key={wt}
-                          onMouseDown={() => {
-                            handleInputChange(line.id, { target: { name: "work_type", value: wt } });
-                            clearFieldError(line.id, "work_type");
-                            setWtFilter((prev) => ({ ...prev, [line.id]: wt }));
-                            setWtOpenFor(null);
-                          }}
-                          title={wt}
-                        >
-                          {wt}
-                        </div>
-                      ))}
-
-                      {workTypesLoaded && getVisibleWorkTypes(line.id).length === 0 && (
-                        <div style={{ padding: "8px", color: "#999" }}>Sin resultados…</div>
-                      )}
+                        }}
+                        className="ts-icon ts-icon--chevron"
+                      />
                     </div>
-                  )}
-                </div>
+
+                    {wtOpenFor === line.id && (
+                      <div className="ts-dropdown" onMouseDown={(e) => e.preventDefault()}>
+                        <div className="ts-dropdown__header">
+                          <FiSearch />
+                          <input
+                            value={wtFilter[line.id] || ""}
+                            onChange={(e) => setWtFilter((prev) => ({ ...prev, [line.id]: e.target.value }))}
+                            placeholder="Buscar servicio..."
+                            style={{ width: "100%", border: "none", outline: "none" }}
+                          />
+                        </div>
+
+                        {(workTypesLoaded ? getVisibleWorkTypes(line.id) : []).map((wt) => (
+                          <div
+                            key={wt}
+                            onMouseDown={() => {
+                              handleInputChange(line.id, { target: { name: "work_type", value: wt } });
+                              clearFieldError(line.id, "work_type");
+                              setWtFilter((prev) => ({ ...prev, [line.id]: wt }));
+                              setWtOpenFor(null);
+                            }}
+                            title={wt}
+                          >
+                            {wt}
+                          </div>
+                        ))}
+
+                        {workTypesLoaded && getVisibleWorkTypes(line.id).length === 0 && (
+                          <div style={{ padding: "8px", color: "#999" }}>Sin resultados…</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ padding: "4px 8px", color: "#666", fontStyle: "italic" }}>
+                    {editFormData[line.id]?.work_type || ""}
+                  </div>
+                )}
               </EditableCell>
 
               {/* ----- Fecha (derecha) ----- */}
@@ -610,26 +629,32 @@ export default function TimesheetLines({
                 error={errors[line.id]?.date}
                 errorId={`input-date-${line.id}-err`}
               >
-                <DateInput
-                  key={`${line.id}-${editableHeader?.allocation_period || header?.allocation_period || 'default'}-${periodChangeTrigger}`} // 🆕 Key que cambia cuando cambia el período O el trigger
-                  name="date"
-                  value={editFormData[line.id]?.date || ""}
-                  onChange={(val) => handleDateInputChange(line.id, val)}
-                  onBlur={(val) => {
-                    handleDateInputBlur(line.id, val);
-                    if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                  }}
-                  onFocus={(e) => handleInputFocus(line.id, "date", e)}
-                  onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("date"))}
-                  inputRef={hasRefs ? (el) => setSafeRef(line.id, "date", el) : null}
-                  calendarOpen={calendarOpenFor === line.id}
-                  setCalendarOpen={(open) => setCalendarOpenFor(open ? line.id : null)}
-                  header={header}
-                  editableHeader={editableHeader} // 🆕 Pasar editableHeader para validación en inserción
-                  calendarHolidays={calendarHolidays}
-                  className={`ts-input pr-icon ${errors[line.id]?.date ? 'has-error' : ''}`}
-                  inputId={`input-date-${line.id}`}
-                />
+                {isLineEditable(line) ? (
+                  <DateInput
+                    key={`${line.id}-${editableHeader?.allocation_period || header?.allocation_period || 'default'}-${periodChangeTrigger}`} // 🆕 Key que cambia cuando cambia el período O el trigger
+                    name="date"
+                    value={editFormData[line.id]?.date || ""}
+                    onChange={(val) => handleDateInputChange(line.id, val)}
+                    onBlur={(val) => {
+                      handleDateInputBlur(line.id, val);
+                      if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                    }}
+                    onFocus={(e) => handleInputFocus(line.id, "date", e)}
+                    onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("date"))}
+                    inputRef={hasRefs ? (el) => setSafeRef(line.id, "date", el) : null}
+                    calendarOpen={calendarOpenFor === line.id}
+                    setCalendarOpen={(open) => setCalendarOpenFor(open ? line.id : null)}
+                    header={header}
+                    editableHeader={editableHeader} // 🆕 Pasar editableHeader para validación en inserción
+                    calendarHolidays={calendarHolidays}
+                    className={`ts-input pr-icon ${errors[line.id]?.date ? 'has-error' : ''}`}
+                    inputId={`input-date-${line.id}`}
+                  />
+                ) : (
+                  <div style={{ padding: "4px 8px", color: "#666", fontStyle: "italic" }}>
+                    {editFormData[line.id]?.date || ""}
+                  </div>
+                )}
               </EditableCell>
 
               {/* ----- Cantidad (derecha) ----- */}
@@ -637,52 +662,58 @@ export default function TimesheetLines({
                 style={{ ...colStyles.quantity, textAlign: getAlign("quantity"), verticalAlign: "top" }}
                 error={errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id])}
               >
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                    <DecimalInput
-                      name="quantity"
-                      value={(() => {
-                        const q = editFormData[line.id]?.quantity;
-                        if (typeof q === "number" || typeof q === "string") return q;
-                        if (q && typeof q === "object" && "value" in q) return q.value;
-                        return "";
-                      })()}
-                      onChange={({ target: { name, value } }) => handleInputChange(line.id, { target: { name, value } })}
-                      onFocus={(e) => handleInputFocus(line.id, "quantity", e)}
-                      onBlur={({ target: { name, value } }) => {
-                        const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
-                        if (hasError) {
-                          const el = inputRefs?.current?.[line.id]?.["quantity"];
-                          if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
-                        }
-                        handleInputChange(line.id, { target: { name, value } });
-                        if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                        else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                      }}
-                      onKeyDown={(e) => {
-                        const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
-                        if ((e.key === "Enter" || e.key === "Tab") && hasError) {
-                          e.preventDefault();
-                          const el = inputRefs?.current?.[line.id]?.["quantity"];
-                          if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
-                          return;
-                        }
-                        if (e.key === "Enter" || e.key === "Tab") {
+                {isLineEditable(line) ? (
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                      <DecimalInput
+                        name="quantity"
+                        value={(() => {
+                          const q = editFormData[line.id]?.quantity;
+                          if (typeof q === "number" || typeof q === "string") return q;
+                          if (q && typeof q === "object" && "value" in q) return q.value;
+                          return "";
+                        })()}
+                        onChange={({ target: { name, value } }) => handleInputChange(line.id, { target: { name, value } })}
+                        onFocus={(e) => handleInputFocus(line.id, "quantity", e)}
+                        onBlur={({ target: { name, value } }) => {
+                          const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
+                          if (hasError) {
+                            const el = inputRefs?.current?.[line.id]?.["quantity"];
+                            if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
+                          }
+                          handleInputChange(line.id, { target: { name, value } });
                           if (typeof saveLineNow === 'function') saveLineNow(line.id);
                           else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                        }
-                        handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("quantity"));
-                      }}
-                      inputRef={hasRefs ? (el) => setSafeRef(line.id, "quantity", el) : null}
-                      className={`ts-input ${
-                        errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id])
-                          ? "has-error"
-                          : ""
-                      }`}
-                      min={0}
-                      step={0.01}
-                      decimals={2}
-                    />
-                </div>
+                        }}
+                        onKeyDown={(e) => {
+                          const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
+                          if ((e.key === "Enter" || e.key === "Tab") && hasError) {
+                            e.preventDefault();
+                            const el = inputRefs?.current?.[line.id]?.["quantity"];
+                            if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
+                            return;
+                          }
+                          if (e.key === "Enter" || e.key === "Tab") {
+                            if (typeof saveLineNow === 'function') saveLineNow(line.id);
+                            else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                          }
+                          handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("quantity"));
+                        }}
+                        inputRef={hasRefs ? (el) => setSafeRef(line.id, "quantity", el) : null}
+                        className={`ts-input ${
+                          errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id])
+                            ? "has-error"
+                            : ""
+                        }`}
+                        min={0}
+                        step={0.01}
+                        decimals={2}
+                      />
+                  </div>
+                ) : (
+                  <div style={{ padding: "4px 8px", color: "#666", fontStyle: "italic" }}>
+                    {editFormData[line.id]?.quantity || ""}
+                  </div>
+                )}
               </EditableCell>
 
               {/* ----- Departamento: NO editable ----- */}

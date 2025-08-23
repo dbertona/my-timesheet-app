@@ -442,18 +442,19 @@ function TimesheetEdit({ headerId }) {
                                               if (availableHours > 0) {
                   const taskType = getTaskFromFactorialType(vacation.tipo);
 
-                                  const newLine = {
-                    id: `tmp-${crypto.randomUUID()}`,
-                    header_id: effectiveHeaderId,
-                    job_no: vacationProject?.no || '', // Asignar el proyecto de vacaciones encontrado
-                    job_no_description: vacationProject?.description || '', // Asignar la descripción del proyecto
-                    job_task_no: taskType, // 🆕 Usar la tarea mapeada en lugar de 'GASTO' fijo
-                    description: `${taskType} - ${vacation.tipo}`,
-                    work_type: taskType, // Usar la tarea mapeada en lugar de 'VACACIONES' fijo
-                    date: toDisplayDate(dateStr),
-                    quantity: availableHours.toFixed(2), // Horas disponibles del calendario
-                    department_code: resourceDepartment // Usar el departamento del recurso actual
-                  };
+                                                  const newLine = {
+                  id: `tmp-${crypto.randomUUID()}`,
+                  header_id: effectiveHeaderId,
+                  job_no: vacationProject?.no || '', // Asignar el proyecto de vacaciones encontrado
+                  job_no_description: vacationProject?.description || '', // Asignar la descripción del proyecto
+                  job_task_no: taskType, // 🆕 Usar la tarea mapeada en lugar de 'GASTO' fijo
+                  description: `${taskType} - ${vacation.tipo}`,
+                  work_type: taskType, // Usar la tarea mapeada en lugar de 'VACACIONES' fijo
+                  date: toDisplayDate(dateStr),
+                  quantity: availableHours.toFixed(2), // Horas disponibles del calendario
+                  department_code: resourceDepartment, // Usar el departamento del recurso actual
+                  isFactorialLine: true // 🆕 Marcar como línea de Factorial (no editable)
+                };
 
                   newLines.push(newLine);
                 } else {
@@ -474,7 +475,8 @@ function TimesheetEdit({ headerId }) {
                   work_type: taskType, // Usar la tarea mapeada en lugar de 'VACACIONES' fijo
                   date: toDisplayDate(dateStr),
                   quantity: defaultHours.toFixed(2), // 8 horas por defecto
-                  department_code: resourceDepartment // Usar el departamento del recurso actual
+                  department_code: resourceDepartment, // Usar el departamento del recurso actual
+                  isFactorialLine: true // 🆕 Marcar como línea de Factorial (no editable)
                 };
 
                 newLines.push(newLine);
