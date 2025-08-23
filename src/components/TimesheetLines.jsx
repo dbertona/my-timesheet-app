@@ -37,6 +37,7 @@ export default function TimesheetLines({
   onLineDelete,
   onLineAdd,
   markAsChanged,
+  addEmptyLine, // 🆕 Función para agregar línea vacía
   handleKeyDown,
   handleInputChange: parentHandleInputChange, // ✅ Recibir función del padre
   onLineSelectionChange, // 🆕 Nueva función para manejar selección
@@ -307,34 +308,18 @@ export default function TimesheetLines({
     return !line.isFactorialLine; // Las líneas de Factorial no son editables
   };
 
-  // 🆕 Función para crear una nueva línea real desde la línea vacía
-  const createNewLineFromEmpty = useCallback(() => {
-    const newLine = {
-      id: `tmp-${crypto.randomUUID()}`,
-      header_id: header?.id || editableHeader?.id,
-      job_no: "",
-      job_no_description: "",
-      job_task_no: "",
-      description: "",
-      work_type: "",
-      date: "",
-      quantity: 0,
-      department_code: header?.department_code || editableHeader?.department_code || "",
-      isFactorialLine: false
-    };
-
-    // Agregar la nueva línea al estado
-    if (onLinesChange) {
-      onLinesChange(newLine.id, newLine);
+  // 🆕 Asegurar que siempre haya una línea vacía al final
+  useEffect(() => {
+    if (addEmptyLine && safeLines.length > 0) {
+      const lastLine = safeLines[safeLines.length - 1];
+      // Si la última línea no está vacía, agregar una línea vacía
+      if (lastLine && (lastLine.job_no || lastLine.description || lastLine.work_type || lastLine.date || lastLine.quantity > 0)) {
+        addEmptyLine();
+      }
     }
+  }, [safeLines, addEmptyLine]);
 
-    // Marcar como cambiado si existe la función
-    if (markAsChanged) {
-      markAsChanged();
-    }
 
-    return newLine;
-  }, [header, editableHeader, onLinesChange, markAsChanged]);
 
   return (
     <div className="ts-responsive">
@@ -756,240 +741,6 @@ export default function TimesheetLines({
               />
             </tr>
           ))}
-          
-          {/* 🆕 Línea vacía permanente al final para agregar datos manualmente */}
-          <tr key="empty-line" className="ts-empty-line">
-            {/* Columna de selección */}
-            <td
-              className="ts-td"
-              style={{
-                width: "40px",
-                textAlign: "center",
-                padding: "8px 4px",
-                verticalAlign: "middle"
-              }}
-            >
-              <input
-                type="checkbox"
-                disabled
-                style={{
-                  width: "16px",
-                  height: "16px",
-                  cursor: "not-allowed",
-                  opacity: 0.5
-                }}
-              />
-            </td>
-
-            {/* ----- PROYECTO: combo buscable ----- */}
-            <ProjectCell
-              line={{ id: "empty-line" }}
-              lineIndex={safeLines.length}
-              colStyle={colStyles.job_no}
-              align={getAlign("job_no")}
-              editFormData={{}}
-              inputRefs={inputRefs}
-              hasRefs={hasRefs}
-              setSafeRef={setSafeRef}
-              error={null}
-              isEditable={true}
-              handlers={{
-                handleInputChange: () => {}, // No hacer nada por defecto
-                handleInputFocus,
-                handleKeyDown,
-                setFieldError: () => {},
-                clearFieldError: () => {},
-              }}
-              jobsState={{
-                jobsLoaded,
-                jobs,
-                jobFilter,
-                setJobFilter,
-                jobOpenFor,
-                setJobOpenFor,
-                getVisibleJobs,
-                ensureTasksLoaded,
-                findJob,
-              }}
-            />
-
-            {/* ----- DESCRIPCIÓN DEL PROYECTO: NO editable ----- */}
-            <ProjectDescriptionCell
-              line={{ id: "empty-line" }}
-              lineIndex={safeLines.length}
-              colStyle={colStyles.job_no_description}
-              align={getAlign("job_no_description")}
-              jobs={jobs}
-              findJob={findJob}
-              editFormData={{}}
-            />
-
-            {/* ----- TAREA: combo dependiente ----- */}
-            <TaskCell
-              line={{ id: "empty-line" }}
-              lineIndex={safeLines.length}
-              colStyle={colStyles.job_task_no}
-              align={getAlign("job_task_no")}
-              editFormData={{}}
-              inputRefs={inputRefs}
-              hasRefs={hasRefs}
-              setSafeRef={setSafeRef}
-              error={null}
-              isEditable={true}
-              handlers={{
-                handleInputChange: () => {}, // No hacer nada por defecto
-                handleInputFocus,
-                handleKeyDown,
-                setFieldError: () => {},
-                clearFieldError: () => {},
-              }}
-              tasksState={{
-                tasksByJob,
-                taskFilter,
-                setTaskFilter,
-                taskOpenFor,
-                setTaskOpenFor,
-                getVisibleTasks,
-                ensureTasksLoaded,
-                findTask,
-              }}
-            />
-
-            {/* ----- Descripción ----- */}
-            <EditableCell
-              style={{ ...colStyles.description, textAlign: getAlign("description") }}
-            >
-              <input
-                type="text"
-                name="description"
-                value=""
-                onChange={(e) => {
-                  if (e.target.value.trim()) {
-                    const newLine = createNewLineFromEmpty();
-                    // Actualizar el valor en la nueva línea
-                    if (onLinesChange) {
-                      onLinesChange(newLine.id, { ...newLine, description: e.target.value });
-                    }
-                  }
-                }}
-                onFocus={(e) => {
-                  e.target.select();
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === "Tab") {
-                    if (e.target.value.trim()) {
-                      const newLine = createNewLineFromEmpty();
-                      // Actualizar el valor en la nueva línea
-                      if (onLinesChange) {
-                        onLinesChange(newLine.id, { ...newLine, description: e.target.value });
-                      }
-                    }
-                  }
-                }}
-                className="ts-input"
-                placeholder="Agregar descripción..."
-              />
-            </EditableCell>
-
-            {/* ----- Servicio (work_type): combo por recurso ----- */}
-            <EditableCell
-              style={{ ...colStyles.work_type, textAlign: getAlign("work_type") }}
-            >
-              <input
-                type="text"
-                name="work_type"
-                value=""
-                onChange={(e) => {
-                  if (e.target.value.trim()) {
-                    const newLine = createNewLineFromEmpty();
-                    // Actualizar el valor en la nueva línea
-                    if (onLinesChange) {
-                      onLinesChange(newLine.id, { ...newLine, work_type: e.target.value });
-                    }
-                  }
-                }}
-                onFocus={(e) => {
-                  e.target.select();
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === "Tab") {
-                    if (e.target.value.trim()) {
-                      const newLine = createNewLineFromEmpty();
-                      // Actualizar el valor en la nueva línea
-                      if (onLinesChange) {
-                        onLinesChange(newLine.id, { ...newLine, work_type: e.target.value });
-                      }
-                    }
-                  }
-                }}
-                className="ts-input"
-                placeholder="Agregar servicio..."
-              />
-            </EditableCell>
-
-            {/* ----- Fecha (derecha) ----- */}
-            <EditableCell
-              style={{ ...colStyles.date, textAlign: getAlign("date") }}
-            >
-              <input
-                type="text"
-                name="date"
-                value=""
-                onChange={(e) => {
-                  if (e.target.value.trim()) {
-                    const newLine = createNewLineFromEmpty();
-                    // Actualizar el valor en la nueva línea
-                    if (onLinesChange) {
-                      onLinesChange(newLine.id, { ...newLine, date: e.target.value });
-                    }
-                  }
-                }}
-                onFocus={(e) => {
-                  e.target.select();
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === "Tab") {
-                    if (e.target.value.trim()) {
-                      const newLine = createNewLineFromEmpty();
-                      // Actualizar el valor en la nueva línea
-                      if (onLinesChange) {
-                        onLinesChange(newLine.id, { ...newLine, date: e.target.value });
-                      }
-                    }
-                  }
-                }}
-                className="ts-input"
-                placeholder="DD/MM/YYYY"
-              />
-            </EditableCell>
-
-            {/* ----- Cantidad (derecha) ----- */}
-            <EditableCell
-              style={{ ...colStyles.quantity, textAlign: getAlign("quantity"), verticalAlign: "top" }}
-            >
-              <input
-                type="number"
-                name="quantity"
-                value=""
-                onChange={() => {}} // No hacer nada por defecto
-                onFocus={() => {}} // No hacer nada por defecto
-                onKeyDown={() => {}} // No hacer nada por defecto
-                className="ts-input"
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-              />
-            </EditableCell>
-
-            {/* ----- Departamento: NO editable ----- */}
-            <DepartmentCell
-              line={{ id: "empty-line" }}
-              lineIndex={safeLines.length}
-              colStyle={colStyles.department_code}
-              align={getAlign("department_code")}
-              editFormData={{}}
-            />
-          </tr>
         </tbody>
       </table>
     </div>

@@ -395,7 +395,4 @@
   text-overflow: ellipsis;
 }
 
-/* 🆕 Estilos para la línea vacía permanente */
-.ts-empty-line {
-  /* Sin estilos especiales - se ve igual que las líneas normales */
-}
+
