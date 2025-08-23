@@ -289,12 +289,8 @@ function TimesheetEdit({ headerId }) {
             .eq("status", "Open")
             .limit(1);
 
-          console.log("🔍 Resultado consulta genérica - data:", genericJob, "error:", genericError);
-
           if (genericJob && genericJob.length > 0 && !genericError) {
             vacationProject = genericJob[0]; // Tomar el primer elemento del array
-            console.log("✅ Proyecto genérico de vacaciones encontrado:", vacationProject);
-            console.log("🔍 DEBUG - Estructura del proyecto genérico:", JSON.stringify(vacationProject, null, 2));
           }
         }
       } catch (error) {
@@ -313,7 +309,6 @@ function TimesheetEdit({ headerId }) {
         if (header && header.allocation_period) {
           startDate = getFirstDayOfPeriod(header.allocation_period);
           endDate = getLastDayOfPeriod(header.allocation_period);
-          console.log("📅 Usando fechas del header existente:", startDate, "a", endDate);
         } else {
           toast.error("No hay calendario disponible ni header con período");
           return;
@@ -323,18 +318,36 @@ function TimesheetEdit({ headerId }) {
         endDate = calendarDays[calendarDays.length - 1].iso; // Último día del calendario
       }
 
-      // Datos mock basados en el script de Factorial que ya funciona
-      const vacations = [
-        {
-          id: 16981894,
-          empleado: "Jesús Miguel Torres Gómez",
-          email: "jtorres@powersolution.es",
-          tipo: "Vacaciones",
-          desde: "2025-08-01",
-          hasta: "2025-08-05",
-          aprobado: true
+      // 🆕 Función para obtener vacaciones reales desde Factorial vía tu servidor
+      const getFactorialVacations = async (userEmail, startDate, endDate) => {
+        try {
+          const response = await fetch('/api/factorial/vacations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userEmail, startDate, endDate })
+          });
+
+          if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+          }
+
+          return response.json();
+        } catch (error) {
+          console.error('Error obteniendo vacaciones de Factorial:', error);
+          throw error;
         }
-      ];
+      };
+
+      // Obtener vacaciones reales desde Factorial
+      let vacations = [];
+      try {
+        vacations = await getFactorialVacations(userEmail, startDate, endDate);
+
+      } catch (error) {
+        // Si falla, no crear líneas - dejar array vacío
+        vacations = [];
+        console.error('❌ Error obteniendo vacaciones:', error);
+      }
 
       if (!vacations || vacations.length === 0) {
         toast("No se encontraron vacaciones para este período", { icon: "ℹ️" });
@@ -370,7 +383,6 @@ function TimesheetEdit({ headerId }) {
 
         // Crear líneas de timesheet para cada día de vacaciones
         const newLines = [];
-
         for (const vacation of vacations) {
           const start = new Date(vacation.desde);
           const end = new Date(vacation.hasta);

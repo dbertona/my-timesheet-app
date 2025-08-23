@@ -2,9 +2,9 @@
 
 ## 📋 ESTADO ACTUAL DEL PROYECTO
 
-**✅ VERSIÓN ESTABLE:** `v1.1.0-estetica-mejorada`
-**📅 FECHA:** Enero 2025
-**🎯 STATUS:** **100% FUNCIONAL Y ESTABLE - INTERFAZ ESTÉTICAMENTE MEJORADA**
+**✅ VERSIÓN ESTABLE:** `v1.2.0-factorial-integration`
+**📅 FECHA:** Agosto 2025
+**🎯 STATUS:** **100% FUNCIONAL Y ESTABLE - INTEGRACIÓN COMPLETA CON FACTORIAL**
 
 ---
 
@@ -13,7 +13,7 @@
 ### **Ramas del Proyecto:**
 
 - **`main`** ← **RAMA PRINCIPAL** (integra versión estable actual)
-- **`stable/v1.1.0-estetica-mejorada`** ← **VERSIÓN ESTABLE ACTUAL** ✅
+- **`stable/v1.2.0-factorial-integration`** ← **VERSIÓN ESTABLE ACTUAL** ✅
 - **`stable/complete-project-warnings`** ← Sistema de validación completo
 - **`stable/complete-navigation-system`** ← Sistema de navegación completo
 - **`stable/navigation-improvements`** ← Mejoras de navegación por teclado
@@ -73,6 +73,17 @@
 - [x] **Protección de rutas** basada en autenticación
 - [x] **Logout seguro** con limpieza de estado
 
+### **✅ Integración Completa con Factorial HR:**
+
+- [x] **API de Factorial** integrada vía servidor Node.js
+- [x] **Búsqueda automática** de proyectos de vacaciones por departamento
+- [x] **Importación automática** de ausencias aprobadas
+- [x] **Mapeo inteligente** de tipos de ausencia (Vacaciones → VACACIONES, Enfermedad → BAJAS, etc.)
+- [x] **Validación anti-duplicación** (local y servidor)
+- [x] **Respeto a festivos** (no crea líneas en días no laborables)
+- [x] **Asignación automática** de proyectos y tareas correctas
+- [x] **Proxy inteligente** para desarrollo (Vite → Node.js)
+
 ### **✅ Gestión de Datos:**
 
 - [x] **CRUD completo** para timesheets
@@ -121,6 +132,8 @@
 - **PostgreSQL** como base de datos principal
 - **Row Level Security (RLS)** para seguridad de datos
 - **Funciones RPC** para lógica de negocio compleja
+- **Node.js/Express** para integración con APIs externas
+- **Proxy inteligente** para desarrollo y producción
 
 ### **Herramientas:**
 
@@ -140,6 +153,7 @@
 - **Persistencia**: 100% ✅
 - **Autenticación**: 100% ✅
 - **Estética**: 100% ✅
+- **Integración Factorial**: 100% ✅
 
 ### **Performance:**
 
@@ -179,6 +193,7 @@
 
 ### **Cambios Recientes:**
 
+- **v1.2.0**: Integración completa con Factorial HR (API, importación automática, mapeo inteligente)
 - **v1.1.0**: Rediseño estético completo del resumen del mes
 - **v1.0.0**: Sistema de validación completo implementado
 - **v0.9.0**: Navegación por teclado mejorada
@@ -195,6 +210,14 @@
 
 ## 🎉 CONCLUSIÓN
 
-**My Timesheet App** ha evolucionado de una aplicación básica a una solución empresarial completa y profesional. La versión **v1.1.0-estetica-mejorada** representa un hito importante en la experiencia del usuario, combinando funcionalidad robusta con una interfaz visualmente atractiva y moderna.
+**My Timesheet App** ha evolucionado de una aplicación básica a una solución empresarial completa y profesional. La versión **v1.2.0-factorial-integration** representa un hito importante en la integración de sistemas, combinando funcionalidad robusta con integración automática de datos de recursos humanos.
 
-La aplicación está lista para uso en producción y puede escalar para satisfacer las necesidades de equipos de cualquier tamaño.
+La aplicación ahora incluye:
+
+- **Integración completa con Factorial HR** para gestión automática de ausencias
+- **Importación inteligente** de vacaciones, bajas y permisos
+- **Mapeo automático** de tipos de ausencia a tareas del sistema
+- **Validación anti-duplicación** para evitar entradas duplicadas
+- **Respeto a festivos** y días no laborables
+
+La aplicación está lista para uso en producción y puede escalar para satisfacer las necesidades de equipos de cualquier tamaño, con integración completa de sistemas de recursos humanos.
