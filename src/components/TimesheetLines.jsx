@@ -6,7 +6,6 @@ import { parseDate, formatDate } from "../utils/dateHelpers";
 import useColumnResize from "../hooks/useColumnResize";
 import { supabaseClient } from "../supabaseClient";
 import { useJobs, useWorkTypes, useTasks } from "../hooks/useTimesheetQueries";
-import "../styles/TimesheetResponsive.css";
 import "../styles/TimesheetLines.css";
 import TIMESHEET_FIELDS, { TIMESHEET_LABELS, TIMESHEET_ALIGN, COL_MIN_WIDTH, COL_MAX_WIDTH, DEFAULT_COL_WIDTH } from "../constants/timesheetFields";
 import ProjectCell from "./timesheet/ProjectCell";
@@ -305,7 +304,7 @@ export default function TimesheetLines({
 
   return (
     <div className="ts-responsive">
-      
+
 
       <table ref={tableRef} className="ts-table">
         <thead>

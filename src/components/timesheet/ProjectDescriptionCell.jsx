@@ -28,8 +28,8 @@ export default function ProjectDescriptionCell({
       style={{
         ...colStyle,
         textAlign: align,
-        backgroundColor: "#f8f9fa", // Color de fondo para indicar que no es editable
-        color: "#6c757d", // Color de texto más suave
+        backgroundColor: "#ffffff", // Color de fondo blanco
+        color: "#000000", // Color de texto negro
         cursor: "default", // Cursor normal (no pointer)
       }}
       data-col="job_no_description"
@@ -37,9 +37,9 @@ export default function ProjectDescriptionCell({
       <div
         className="ts-cell-content"
         style={{
-          padding: "8px 12px",
-          fontSize: "14px",
-          lineHeight: "1.4",
+          padding: "0px 1px",
+          fontSize: "10px",
+          lineHeight: "1",
           whiteSpace: "normal", // Permitir saltos de línea
           wordWrap: "break-word", // Romper palabras largas
         }}

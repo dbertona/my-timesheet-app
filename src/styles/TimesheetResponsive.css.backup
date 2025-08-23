@@ -1,0 +1,342 @@
+:root {
+  --ts-font-size: 12px;
+}
+
+/* Layout principal del timesheet - usa todo el alto disponible */
+.ts-responsive {
+  overflow-x: auto;
+  max-width: 100vw;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  font-size: var(--ts-font-size) !important;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Contenedor principal del timesheet - flexbox vertical */
+.ts-responsive .timesheet-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 100vh;
+}
+
+/* Header y panel derecho - altura fija */
+.ts-responsive .timesheet-header-section {
+  flex-shrink: 0;
+  margin-bottom: 24px;
+}
+
+/* Sección de líneas - ocupa todo el espacio restante */
+.ts-responsive .timesheet-lines-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Importante para que flex: 1 funcione correctamente */
+}
+
+/* Contenedor de la tabla - ocupa todo el espacio disponible */
+.ts-responsive .timesheet-table-container {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  max-width: 100%; /* 🆕 Limitar al ancho máximo disponible */
+}
+
+/* 🆕 Scroll horizontal suave para pantallas pequeñas */
+.ts-responsive .timesheet-table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.ts-responsive .timesheet-table-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.ts-responsive .timesheet-table-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.ts-responsive .timesheet-table-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Tabla de líneas - altura completa del contenedor */
+.ts-responsive .timesheet-table {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  max-width: 100%; /* 🆕 Limitar ancho máximo */
+  table-layout: auto; /* 🆕 Permitir que las columnas se ajusten */
+}
+
+/* Contenedor general responsivo */
+.ts-responsive {
+  overflow-x: auto;
+  max-width: 100vw;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  font-size: var(--ts-font-size) !important;
+}
+
+/* Fuente global para toda la aplicación */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  font-size: var(--ts-font-size) !important;
+}
+
+/* Compactar paddings y fuentes en pantallas más estrechas */
+@media (max-width: 1440px) {
+  .ts-responsive th,
+  .ts-responsive td {
+    padding: 6px !important;
+  }
+  .ts-responsive input {
+    padding: 3px 6px !important;
+    font-size: inherit !important;
+  }
+  .ts-responsive .react-datepicker {
+    font-size: inherit !important;
+  }
+}
+
+/* 🆕 Tabla responsive que se adapta al ancho de pantalla */
+.ts-responsive .ts-table {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  max-width: 100% !important;
+  table-layout: auto !important; /* ✅ Ancho automático para adaptarse */
+  background-color: #f8f9fa !important; /* 🎨 Fondo gris claro de BC con !important */
+}
+
+/* 🆕 FORZAR responsive en pantallas medianas y pequeñas con control de columnas */
+.ts-responsive .ts-table {
+  table-layout: fixed !important; /* ✅ Mantener control de columnas */
+  width: 100% !important; /* ✅ Usar todo el ancho disponible */
+  max-width: 100% !important; /* ✅ No exceder el contenedor */
+}
+
+/* 🆕 Asegurar que las celdas también tengan el fondo gris */
+.ts-responsive .ts-table th,
+.ts-responsive .ts-table td {
+  background-color: #f8f9fa !important; /* 🎨 Fondo gris claro de BC */
+}
+
+/* 🆕 Controlar la altura de las líneas - ESTILOS MUY ESPECÍFICOS */
+.ts-responsive .ts-table th,
+.ts-responsive .ts-table td {
+  height: 28px !important; /* ✅ Altura más compacta para líneas */
+  max-height: 28px !important;
+  padding: 3px 4px !important; /* ✅ Padding más compacto */
+  vertical-align: middle !important; /* ✅ Centrar contenido verticalmente */
+  line-height: 1.2 !important; /* ✅ Line-height compacto */
+  box-sizing: border-box !important; /* ✅ Box-sizing consistente */
+}
+
+/* 🆕 Pantallas medianas - líneas aún más compactas */
+@media (max-width: 1439px) and (min-width: 1200px) {
+  .ts-responsive .ts-table th,
+  .ts-responsive .ts-table td {
+    height: 24px !important; /* ✅ Altura muy compacta para pantallas medianas */
+    max-height: 24px !important;
+    padding: 1px 2px !important; /* ✅ Padding mínimo */
+    line-height: 1.1 !important; /* ✅ Line-height muy compacto */
+  }
+
+  .ts-responsive .ts-input {
+    padding: 0px 1px !important; /* ✅ Inputs muy compactos */
+    font-size: 10px !important; /* ✅ Fuente más pequeña */
+    height: 20px !important; /* ✅ Altura fija para inputs */
+    line-height: 1 !important; /* ✅ Line-height mínimo */
+  }
+
+  /* 🆕 SOBRESCRIBIR cualquier otro estilo que pueda estar interfiriendo */
+  .ts-responsive .ts-table * {
+    height: auto !important; /* ✅ Permitir que solo las celdas tengan altura fija */
+  }
+}
+
+/* 🆕 Contenedor de la tabla también con fondo gris */
+.ts-responsive .timesheet-table-container {
+  background-color: #f8f9fa !important; /* 🎨 Fondo gris claro de BC */
+}
+
+/* 🆕 Columnas con anchos específicos que suman 100% */
+.ts-responsive th[data-col="job_no"],
+.ts-responsive td[data-col="job_no"] {
+  width: 120px; /* ✅ Ancho fijo específico */
+}
+
+.ts-responsive th[data-col="job_no_description"],
+.ts-responsive td[data-col="job_no_description"] {
+  width: 200px; /* ✅ Ancho fijo específico */
+}
+
+.ts-responsive th[data-col="job_task_no"],
+.ts-responsive td[data-col="job_task_no"] {
+  width: 100px; /* ✅ Ancho fijo específico */
+}
+
+.ts-responsive th[data-col="description"],
+.ts-responsive td[data-col="description"] {
+  width: 250px; /* ✅ Ancho fijo específico */
+}
+
+.ts-responsive th[data-col="work_type"],
+.ts-responsive td[data-col="work_type"] {
+  width: 120px; /* ✅ Ancho fijo específico */
+}
+
+.ts-responsive th[data-col="date"],
+.ts-responsive td[data-col="date"] {
+  width: 100px; /* ✅ Ancho fijo específico */
+}
+
+.ts-responsive th[data-col="quantity"],
+.ts-responsive td[data-col="quantity"] {
+  width: 80px; /* ✅ Ancho fijo específico */
+}
+
+.ts-responsive th[data-col="department_code"],
+.ts-responsive td[data-col="department_code"] {
+  width: 100px; /* ✅ Ancho fijo específico */
+}
+
+/* 🆕 Media queries para diferentes tamaños de pantalla */
+
+/* Pantallas grandes (≥1440px) - usar anchos fijos */
+@media (min-width: 1440px) {
+  .ts-responsive .ts-table {
+    table-layout: fixed !important;
+  }
+
+  .ts-responsive th[data-col="job_no"],
+  .ts-responsive td[data-col="job_no"] {
+    width: 120px;
+  }
+
+  .ts-responsive th[data-col="job_no_description"],
+  .ts-responsive td[data-col="job_no_description"] {
+    width: 200px;
+  }
+
+  .ts-responsive th[data-col="job_task_no"],
+  .ts-responsive td[data-col="job_task_no"] {
+    width: 100px;
+  }
+
+  .ts-responsive th[data-col="description"],
+  .ts-responsive td[data-col="description"] {
+    width: 250px;
+  }
+
+  .ts-responsive th[data-col="work_type"],
+  .ts-responsive td[data-col="work_type"] {
+    width: 120px;
+  }
+
+  .ts-responsive th[data-col="date"],
+  .ts-responsive td[data-col="date"] {
+    width: 100px;
+  }
+
+  .ts-responsive th[data-col="quantity"],
+  .ts-responsive td[data-col="quantity"] {
+    width: 80px;
+  }
+
+  .ts-responsive th[data-col="department_code"],
+  .ts-responsive td[data-col="department_code"] {
+    width: 100px;
+  }
+}
+
+/* Pantallas medianas (1200px - 1439px) - tabla que usa todo el ancho disponible */
+@media (max-width: 1439px) and (min-width: 1200px) {
+  .ts-responsive .ts-table {
+    table-layout: fixed !important; /* ✅ Mantener control de columnas */
+    width: 100% !important; /* ✅ Usar todo el ancho disponible */
+    max-width: 100% !important;
+  }
+
+  /* Anchos proporcionales para pantallas medianas */
+  .ts-responsive th[data-col="job_no"],
+  .ts-responsive td[data-col="job_no"] {
+    width: 12% !important; /* ✅ Proporción del ancho total */
+  }
+
+  .ts-responsive th[data-col="job_no_description"],
+  .ts-responsive td[data-col="job_no_description"] {
+    width: 20% !important; /* ✅ Proporción del ancho total */
+  }
+
+  .ts-responsive th[data-col="job_task_no"],
+  .ts-responsive td[data-col="job_task_no"] {
+    width: 10% !important; /* ✅ Proporción del ancho total */
+  }
+
+  .ts-responsive th[data-col="description"],
+  .ts-responsive td[data-col="description"] {
+    width: 25% !important; /* ✅ Proporción del ancho total */
+  }
+
+  .ts-responsive th[data-col="work_type"],
+  .ts-responsive td[data-col="work_type"] {
+    width: 12% !important; /* ✅ Proporción del ancho total */
+  }
+
+  .ts-responsive th[data-col="date"],
+  .ts-responsive td[data-col="date"] {
+    width: 10% !important; /* ✅ Proporción del ancho total */
+  }
+
+  .ts-responsive th[data-col="quantity"],
+  .ts-responsive td[data-col="quantity"] {
+    width: 8% !important; /* ✅ Proporción del ancho total */
+  }
+
+  .ts-responsive th[data-col="department_code"],
+  .ts-responsive td[data-col="department_code"] {
+    width: 3% !important; /* ✅ Proporción del ancho total */
+  }
+}
+
+/* Pantallas pequeñas (<1200px) - tabla completamente responsive */
+@media (max-width: 1199px) {
+  .ts-responsive .ts-table {
+    table-layout: auto !important;
+    min-width: 800px; /* Ancho mínimo para evitar que se comprima demasiado */
+  }
+
+  /* Ocultar columnas menos importantes en pantallas muy pequeñas */
+  @media (max-width: 768px) {
+    .ts-responsive th[data-col="department_code"],
+    .ts-responsive td[data-col="department_code"],
+    .ts-responsive th[data-col="work_type"],
+    .ts-responsive td[data-col="work_type"] {
+      display: none;
+    }
+  }
+}
+
+/* Dropdowns más contenidos en pantallas estrechas */
+@media (max-width: 1440px) {
+  .ts-responsive .ts-dropdown {
+    max-height: 180px !important;
+    font-size: inherit !important;
+  }
+}
+
+/* Reset tipográfico fuerte dentro del timesheet */
+.ts-responsive,
+.ts-responsive table,
+.ts-responsive th,
+.ts-responsive td,
+.ts-responsive input,
+.ts-responsive button,
+.ts-responsive select,
+.ts-responsive textarea {
+  font: inherit !important;  /* hereda familia, tamaño, peso y line-height */
+  font-size: inherit !important;
+}
