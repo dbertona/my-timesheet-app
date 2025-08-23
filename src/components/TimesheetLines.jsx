@@ -314,7 +314,13 @@ export default function TimesheetLines({
       const lastLine = safeLines[safeLines.length - 1];
       // Si la última línea no está vacía, agregar una línea vacía
       if (lastLine && (lastLine.job_no || lastLine.description || lastLine.work_type || lastLine.date || lastLine.quantity > 0)) {
-        addEmptyLine();
+        // Solo agregar si no hay una línea vacía ya
+        const hasEmptyLine = safeLines.some(line => 
+          !line.job_no && !line.description && !line.work_type && !line.date && line.quantity === 0
+        );
+        if (!hasEmptyLine) {
+          addEmptyLine();
+        }
       }
     }
   }, [safeLines, addEmptyLine]);
