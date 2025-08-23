@@ -36,6 +36,7 @@ const SAFE_COLUMNS = [
   "job_responsible_approval", // siempre true
   "resource_no",              // NUEVO
   "resource_responsible",     // NUEVO
+  "isFactorialLine",          // 🆕 Marca para líneas de Factorial (no editables)
 ];
 
 function TimesheetEdit({ headerId }) {

@@ -18,6 +18,7 @@ const SAFE_COLUMNS = [
   "job_responsible_approval",
   "resource_no",
   "resource_responsible",
+  "isFactorialLine",          // 🆕 Marca para líneas de Factorial (no editables)
 ];
 
 export function prepareRowForDb(row, { header, jobResponsibleMap } = {}) {
