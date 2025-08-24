@@ -174,6 +174,52 @@ export default function DateCell({
     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
   ];
 
+  // ==========================
+  // Normalización de entrada
+  // ==========================
+  const getEffectiveMonthYear = () => {
+    // 1) Si hay header (edición), usar el mes de from_date
+    if (header?.from_date) {
+      const d = parse(header.from_date, "yyyy-MM-dd", new Date());
+      return { year: d.getFullYear(), month: d.getMonth() };
+    }
+    // 2) Si hay editableHeader (inserción), usar allocation_period
+    if (editableHeader?.allocation_period) {
+      const match = editableHeader.allocation_period.match(/M(\d{2})-M(\d{2})/);
+      if (match) {
+        const year = 2000 + parseInt(match[1]);
+        const month = parseInt(match[2]) - 1;
+        return { year, month };
+      }
+    }
+    // 3) Fallback: usar mes del calendario actual
+    return { year: currentMonth.getFullYear(), month: currentMonth.getMonth() };
+  };
+
+  const normalizeDisplayDate = (raw) => {
+    if (!raw) return null;
+    const trimmed = String(raw).trim();
+    // Solo día → completar con mes/año efectivos
+    if (/^\d{1,2}$/.test(trimmed)) {
+      const { year, month } = getEffectiveMonthYear();
+      let day = Math.max(1, Math.min(31, parseInt(trimmed, 10)));
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      if (day > lastDay) day = lastDay;
+      const d = new Date(year, month, day);
+      return formatDate(d);
+    }
+    // dd/MM o dd/M → completar año
+    if (/^\d{1,2}\/\d{1,2}$/.test(trimmed)) {
+      const [dd, mm] = trimmed.split("/");
+      const { year } = getEffectiveMonthYear();
+      const d = new Date(year, parseInt(mm, 10) - 1, parseInt(dd, 10));
+      return formatDate(d);
+    }
+    // Si ya viene dd/MM/yyyy, devolver tal cual
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) return trimmed;
+    return null;
+  };
+
   return (
     <td className="ts-td ts-cell" style={{ textAlign: align }}>
       <div className="ts-cell">
@@ -183,9 +229,23 @@ export default function DateCell({
             name="date"
             value={editFormData[line.id]?.date || ""}
             onChange={(e) => !disabled && handleInputChange(line.id, { target: { name: 'date', value: e.target.value } })}
-            onBlur={(e) => !disabled && handleInputChange(line.id, { target: { name: 'date', value: e.target.value } })}
+            onBlur={(e) => {
+              if (disabled) return;
+              const normalized = normalizeDisplayDate(e.target.value) || e.target.value;
+              handleInputChange(line.id, { target: { name: 'date', value: normalized } });
+            }}
             onFocus={(e) => !disabled && handleInputFocus && handleInputFocus(line.id, "date", e)}
-            onKeyDown={(e) => !disabled && handleKeyDown && handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("date"))}
+            onKeyDown={(e) => {
+              if (disabled) return;
+              if (e.key === "Enter" || e.key === "Tab") {
+                const normalized = normalizeDisplayDate(e.currentTarget.value);
+                if (normalized) {
+                  e.preventDefault();
+                  handleInputChange(line.id, { target: { name: 'date', value: normalized } });
+                }
+              }
+              handleKeyDown && handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("date"));
+            }}
             ref={hasRefs ? (el) => setSafeRef(line.id, "date", el) : null}
             className={`ts-input pr-icon ${disabled ? 'ts-input-factorial' : ''}`}
             autoComplete="off"
