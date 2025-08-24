@@ -50,6 +50,10 @@ export default function DecimalInput({
       disabled={disabled}
       placeholder={placeholder}
       autoComplete="off"
+      style={{
+        textAlign: "inherit", // 🆕 Heredar alineación del padre
+        ...rest.style          // 🆕 Permitir estilos personalizados
+      }}
       {...rest}
     />
   );
