@@ -150,7 +150,7 @@ export default function ProjectCell({
                 }
               }}
               ref={hasRefs ? (el) => setSafeRef(line.id, "job_no", el) : null}
-              className={`ts-input`}
+              className={`ts-input pr-icon`}
               autoComplete="off"
             />
             <FiChevronDown
@@ -239,7 +239,7 @@ export default function ProjectCell({
               onFocus={() => {}} // No hacer nada en líneas de Factorial
               onKeyDown={() => {}} // No hacer nada en líneas de Factorial
               disabled={true} // 🆕 Deshabilitar para líneas de Factorial
-              className="ts-input-factorial" // 🆕 Clase especial para líneas de Factorial
+              className="ts-input ts-input-factorial pr-icon" // 🆕 Usar base + padding icono
               autoComplete="off"
               style={{
                 textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
