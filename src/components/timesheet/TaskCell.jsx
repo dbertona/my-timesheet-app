@@ -182,8 +182,27 @@ const TaskCell = ({
         </div>
       ) : (
         // 🆕 Caso cuando no es editable (línea de Factorial)
-        <div style={{ padding: "4px 8px", color: "#666", fontStyle: "italic" }}>
-          {editFormData[line.id]?.job_task_no || ""}
+        <div className="ts-cell">
+          <div className="ts-cell">
+            <input
+              type="text"
+              name="job_task_no"
+              value={editFormData[line.id]?.job_task_no || ""}
+              onChange={() => {}} // No hacer nada en líneas de Factorial
+              onFocus={() => {}} // No hacer nada en líneas de Factorial
+              onKeyDown={() => {}} // No hacer nada en líneas de Factorial
+              disabled={true} // 🆕 Deshabilitar para líneas de Factorial
+              className="ts-input-factorial" // 🆕 Clase especial para líneas de Factorial
+              autoComplete="off"
+              style={{
+                textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
+              }}
+            />
+            <FiChevronDown
+              className="ts-icon ts-icon--chevron"
+              style={{ opacity: 0.5, cursor: "not-allowed" }} // 🆕 Icono deshabilitado
+            />
+          </div>
         </div>
       )}
       {error && (
