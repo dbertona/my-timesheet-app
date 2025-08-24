@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { FiCalendar } from "react-icons/fi";
 import { parse, format } from "date-fns";
 import { parseDate, formatDate } from "../../utils/dateHelpers";
-import EditableCell from "../ui/EditableCell";
+import TIMESHEET_FIELDS from "../../constants/timesheetFields";
 import "../../styles/DateInput.css";
 
 export default function DateCell({
@@ -158,7 +158,7 @@ export default function DateCell({
             onFocus={(e) => !disabled && handleInputFocus && handleInputFocus(line.id, "date", e)}
             onKeyDown={(e) => !disabled && handleKeyDown && handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("date"))}
             ref={hasRefs ? (el) => setSafeRef(line.id, "date", el) : null}
-            className={`ts-input ${disabled ? 'ts-input-factorial' : ''}`}
+            className={`ts-input pr-icon ${disabled ? 'ts-input-factorial' : ''}`}
             autoComplete="off"
             disabled={disabled}
             style={{
