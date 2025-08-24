@@ -1,0 +1,256 @@
+import React, { useState, useRef, useEffect } from "react";
+import { FiCalendar } from "react-icons/fi";
+import { parse, format } from "date-fns";
+import { parseDate, formatDate } from "../../utils/dateHelpers";
+import EditableCell from "./EditableCell";
+import "../../styles/DateInput.css";
+
+export default function DateCell({
+  line,
+  lineIndex,
+  editFormData,
+  handleInputChange,
+  hasRefs,
+  setSafeRef,
+  error,
+  header,
+  editableHeader,
+  calendarHolidays,
+  disabled = false,
+  align = "inherit", // 🆕 Prop para alineación
+}) {
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(parseDate(editFormData[line.id]?.date) || new Date());
+  const [currentMonth, setCurrentMonth] = useState(parseDate(editFormData[line.id]?.date) || new Date());
+  const calendarRef = useRef(null);
+
+  // Cerrar calendario al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+        setCalendarOpen(false);
+      }
+    };
+
+    if (calendarOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [calendarOpen]);
+
+  // Re-renderizar cuando cambie el período para actualizar validación
+  useEffect(() => {
+    const effectivePeriod = header?.allocation_period || editableHeader?.allocation_period;
+
+    if (effectivePeriod) {
+      const period = effectivePeriod;
+      const match = period.match(/M(\d{2})-M(\d{2})/);
+      if (match) {
+        const year = 2000 + parseInt(match[1]);
+        const month = parseInt(match[2]) - 1;
+        const newMonth = new Date(year, month, 1);
+        setCurrentMonth(newMonth);
+      }
+    }
+  }, [header?.allocation_period, editableHeader?.allocation_period]);
+
+  // Generar días del mes
+  const generateDays = () => {
+    let targetMonth = currentMonth;
+
+    if (!header && editableHeader?.allocation_period) {
+      const period = editableHeader.allocation_period;
+      const match = period.match(/M(\d{2})-M(\d{2})/);
+      if (match) {
+        const year = 2000 + parseInt(match[1]);
+        const month = parseInt(match[2]) - 1;
+        targetMonth = new Date(year, month, 1);
+      }
+    }
+
+    const year = targetMonth.getFullYear();
+    const month = targetMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay() + 1); // Lunes
+
+    const days = [];
+    const currentDate = new Date(startDate);
+
+    while (currentDate <= lastDay || days.length < 42) {
+      days.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return days;
+  };
+
+  // Verificar si una fecha es feriado
+  const isHoliday = (date) => {
+    if (!calendarHolidays) return false;
+    const dateStr = format(date, "yyyy-MM-dd");
+    return calendarHolidays.some(holiday => holiday.date === dateStr);
+  };
+
+  // Verificar si una fecha está en el rango permitido
+  const isInRange = (date) => {
+    if (!header) return true;
+    const fromDate = parse(header.from_date, "yyyy-MM-dd", new Date());
+    const toDate = parse(header.to_date, "yyyy-MM-dd", new Date());
+    return date >= fromDate && date <= toDate;
+  };
+
+  // Cambiar mes del calendario
+  const changeMonth = (delta) => {
+    setCurrentMonth(prev => {
+      const newMonth = new Date(prev);
+      newMonth.setMonth(newMonth.getMonth() + delta);
+      return newMonth;
+    });
+  };
+
+  // Seleccionar fecha
+  const handleDateSelect = (date) => {
+    const formattedDate = formatDate(date);
+    handleInputChange(line.id, { target: { name: 'date', value: formattedDate } });
+    setSelectedDate(date);
+    setCalendarOpen(false);
+  };
+
+  // Verificar si se puede navegar hacia atrás
+  const canGoBack = () => {
+    if (!header) return true;
+    const fromDate = parse(header.from_date, "yyyy-MM-dd", new Date());
+    const fromMonth = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
+    return currentMonth > fromMonth;
+  };
+
+  // Verificar si se puede navegar hacia adelante
+  const canGoForward = () => {
+    if (!header) return true;
+    const toDate = parse(header.to_date, "yyyy-MM-dd", new Date());
+    const toMonth = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
+    return currentMonth < toMonth;
+  };
+
+  const days = generateDays();
+  const monthNames = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+
+  return (
+    <EditableCell
+      line={line}
+      lineIndex={lineIndex}
+      fieldName="date"
+      editFormData={editFormData}
+      handleInputChange={handleInputChange}
+      hasRefs={hasRefs}
+      setSafeRef={setSafeRef}
+      error={error}
+      disabled={disabled}
+      align={align}
+      renderInput={({ inputProps, inputRef }) => (
+        <div className="ts-cell" style={{ width: "100%", display: "flex", alignItems: "center" }}>
+          <input
+            {...inputProps}
+            ref={inputRef}
+            className="ts-input"
+            autoComplete="off"
+            style={{
+              textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
+            }}
+          />
+          <FiCalendar
+            onClick={() => !disabled && setCalendarOpen(!calendarOpen)}
+            className="ts-icon ts-icon--calendar"
+            tabIndex={-1}
+            aria-label="Abrir calendario"
+            style={{
+              opacity: disabled ? 0.5 : 1,
+              cursor: disabled ? "not-allowed" : "pointer",
+            }}
+          />
+
+          {calendarOpen && !disabled && (
+            <div className="ts-datepop" ref={calendarRef}>
+              <div className="ts-calendar">
+                {/* Header del calendario */}
+                <div className="ts-calendar-header">
+                  <button
+                    type="button"
+                    onClick={() => changeMonth(-1)}
+                    className="ts-calendar-nav"
+                    disabled={!canGoBack()}
+                  >
+                    ‹
+                  </button>
+                  <span className="ts-calendar-month">
+                    {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => changeMonth(1)}
+                    className="ts-calendar-nav"
+                    disabled={!canGoForward()}
+                  >
+                    ›
+                  </button>
+                </div>
+
+                {/* Días de la semana */}
+                <div className="ts-calendar-weekdays">
+                  <div>Lu</div>
+                  <div>Ma</div>
+                  <div>Mi</div>
+                  <div>Ju</div>
+                  <div>Vi</div>
+                  <div>Sá</div>
+                  <div>Do</div>
+                </div>
+
+                {/* Días del mes */}
+                <div className="ts-calendar-days">
+                  {days.map((date, index) => {
+                    const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
+                    const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
+                    const isToday = date.toDateString() === new Date().toDateString();
+                    const isHolidayDate = isHoliday(date);
+                    const inRange = isInRange(date);
+
+                    return (
+                      <button
+                        key={index}
+                        type="button"
+                        className={`ts-calendar-day ${
+                          !isCurrentMonth ? 'ts-calendar-day--outside' : ''
+                        } ${
+                          isSelected ? 'ts-calendar-day--selected' : ''
+                        } ${
+                          isToday ? 'ts-calendar-day--today' : ''
+                        } ${
+                          isHolidayDate ? 'ts-calendar-day--holiday' : ''
+                        } ${
+                          !inRange ? 'ts-calendar-day--disabled' : ''
+                        }`}
+                        onClick={() => inRange && handleDateSelect(date)}
+                        disabled={!inRange}
+                      >
+                        {date.getDate()}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    />
+  );
+}

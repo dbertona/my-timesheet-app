@@ -65,7 +65,7 @@ function TimesheetEdit({ headerId }) {
     [resolvedHeaderId, header?.id, headerId]
   );
 
-    // === Calendario (estado + helpers) ahora en hook dedicado
+  // === Calendario (estado + helpers) ahora en hook dedicado
 
   // Para edición: usar siempre el header existente, no editableHeader
   const headerForCalendar = header || editableHeader;
@@ -1065,7 +1065,7 @@ function TimesheetEdit({ headerId }) {
       if (filteredLines > 0) {
         toast.success(`${TOAST.SUCCESS.SAVE_ALL} (${filteredLines} líneas con campos requeridos incompletos omitidas)`);
       } else {
-        toast.success(TOAST.SUCCESS.SAVE_ALL);
+      toast.success(TOAST.SUCCESS.SAVE_ALL);
       }
 
       // 🆕 CRÍTICO: Invalidar el cache de React Query para que se recarguen las líneas
@@ -2112,10 +2112,10 @@ function TimesheetEdit({ headerId }) {
                       <path d="M7 17H13" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     Guardar
-                  </>
-                )}
+                    </>
+                  )}
               </button>
-            </div>
+                </div>
         </div>
 
           {/* Contenedor de la tabla - ocupa todo el espacio disponible */}

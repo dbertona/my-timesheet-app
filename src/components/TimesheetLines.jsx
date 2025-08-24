@@ -15,7 +15,7 @@ import DepartmentCell from "./timesheet/DepartmentCell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import InlineError from "./ui/InlineError";
 import DecimalInput from "./ui/DecimalInput";
-import DateInput from "./ui/DateInput";
+import DateCell from "./timesheet/DateCell";
 import EditableCell from "./ui/EditableCell";
 
 
@@ -687,53 +687,21 @@ export default function TimesheetLines({
               </EditableCell>
 
               {/* ----- Fecha (derecha) ----- */}
-              <EditableCell
-                style={{ ...colStyles.date }}
-                align={getAlign("date")} // 🆕 Pasar alineación correcta
+              <DateCell
+                key={`${line.id}-${editableHeader?.allocation_period || header?.allocation_period || 'default'}-${periodChangeTrigger}`} // 🆕 Key que cambia cuando cambia el período O el trigger
+                line={line}
+                lineIndex={lineIndex}
+                editFormData={editFormData}
+                handleInputChange={handleInputChange}
+                hasRefs={hasRefs}
+                setSafeRef={setSafeRef}
                 error={errors[line.id]?.date}
-                errorId={`input-date-${line.id}-err`}
-              >
-                {isLineEditable(line) ? (
-                  <DateInput
-                    key={`${line.id}-${editableHeader?.allocation_period || header?.allocation_period || 'default'}-${periodChangeTrigger}`} // 🆕 Key que cambia cuando cambia el período O el trigger
-                    name="date"
-                    value={editFormData[line.id]?.date || ""}
-                    onChange={(val) => handleDateInputChange(line.id, val)}
-                    onBlur={(val) => {
-                      handleDateInputBlur(line.id, val);
-                      if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                    }}
-                    onFocus={(e) => handleInputFocus(line.id, "date", e)}
-                    onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("date"))}
-                    inputRef={hasRefs ? (el) => setSafeRef(line.id, "date", el) : null}
-                    calendarOpen={calendarOpenFor === line.id}
-                    setCalendarOpen={(open) => setCalendarOpenFor(open ? line.id : null)}
-                    header={header}
-                    editableHeader={editableHeader} // 🆕 Pasar editableHeader para validación en inserción
-                    calendarHolidays={calendarHolidays}
-                    className={`ts-input pr-icon ${errors[line.id]?.date ? 'has-error' : ''}`}
-                    inputId={`input-date-${line.id}`}
-                  />
-                ) : (
-                  <DateInput
-                    key={`${line.id}-${editableHeader?.allocation_period || header?.allocation_period || 'default'}-${periodChangeTrigger}`}
-                    name="date"
-                    value={editFormData[line.id]?.date || ""}
-                    onChange={() => {}} // No hacer nada en líneas de Factorial
-                    onBlur={() => {}} // No hacer nada en líneas de Factorial
-                    onFocus={() => {}} // No hacer nada en líneas de Factorial
-                    onKeyDown={() => {}} // No hacer nada en líneas de Factorial
-                    calendarOpen={false} // 🆕 No abrir calendario en líneas de Factorial
-                    setCalendarOpen={() => {}} // 🆕 No hacer nada
-                    header={header}
-                    editableHeader={editableHeader}
-                    calendarHolidays={calendarHolidays}
-                    className="ts-input-factorial" // 🆕 Clase especial para líneas de Factorial
-                    inputId={`input-date-factorial-${line.id}`}
-                    disabled={true} // 🆕 Deshabilitar para líneas de Factorial
-                  />
-                )}
-              </EditableCell>
+                header={header}
+                editableHeader={editableHeader} // 🆕 Pasar editableHeader para validación en inserción
+                calendarHolidays={calendarHolidays}
+                disabled={!isLineEditable(line)} // 🆕 Deshabilitar para líneas de Factorial
+                align={getAlign("date")} // 🆕 Pasar alineación correcta
+              />
 
               {/* ----- Cantidad (derecha) ----- */}
               <EditableCell
