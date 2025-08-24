@@ -687,21 +687,23 @@ export default function TimesheetLines({
               </EditableCell>
 
               {/* ----- Fecha (derecha) ----- */}
-              <DateCell
-                key={`${line.id}-${editableHeader?.allocation_period || header?.allocation_period || 'default'}-${periodChangeTrigger}`} // 🆕 Key que cambia cuando cambia el período O el trigger
-                line={line}
-                lineIndex={lineIndex}
-                editFormData={editFormData}
-                handleInputChange={handleInputChange}
-                hasRefs={hasRefs}
-                setSafeRef={setSafeRef}
-                error={errors[line.id]?.date}
-                header={header}
-                editableHeader={editableHeader} // 🆕 Pasar editableHeader para validación en inserción
-                calendarHolidays={calendarHolidays}
-                disabled={!isLineEditable(line)} // 🆕 Deshabilitar para líneas de Factorial
-                align={getAlign("date")} // 🆕 Pasar alineación correcta
-              />
+                              <DateCell
+                  key={`${line.id}-${editableHeader?.allocation_period || header?.allocation_period || 'default'}-${periodChangeTrigger}`} // 🆕 Key que cambia cuando cambia el período O el trigger
+                  line={line}
+                  lineIndex={lineIndex}
+                  editFormData={editFormData}
+                  handleInputChange={handleInputChange}
+                  hasRefs={hasRefs}
+                  setSafeRef={setSafeRef}
+                  error={errors[line.id]?.date}
+                  header={header}
+                  editableHeader={editableHeader} // 🆕 Pasar editableHeader para validación en inserción
+                  calendarHolidays={calendarHolidays}
+                  disabled={!isLineEditable(line)} // 🆕 Deshabilitar para líneas de Factorial
+                  align={getAlign("date")} // 🆕 Pasar alineación correcta
+                  handleInputFocus={handleInputFocus}
+                  handleKeyDown={handleKeyDown}
+                />
 
               {/* ----- Cantidad (derecha) ----- */}
               <EditableCell

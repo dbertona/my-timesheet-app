@@ -18,6 +18,8 @@ export default function DateCell({
   calendarHolidays,
   disabled = false,
   align = "inherit", // 🆕 Prop para alineación
+  handleInputFocus,
+  handleKeyDown,
 }) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(parseDate(editFormData[line.id]?.date) || new Date());
@@ -144,24 +146,21 @@ export default function DateCell({
   ];
 
   return (
-    <EditableCell
-      line={line}
-      lineIndex={lineIndex}
-      fieldName="date"
-      editFormData={editFormData}
-      handleInputChange={handleInputChange}
-      hasRefs={hasRefs}
-      setSafeRef={setSafeRef}
-      error={error}
-      disabled={disabled}
-      align={align}
-      renderInput={({ inputProps, inputRef }) => (
+    <td className="ts-td ts-cell" style={{ textAlign: align }}>
+      <div className="ts-cell">
         <div className="ts-cell" style={{ width: "100%", display: "flex", alignItems: "center" }}>
           <input
-            {...inputProps}
-            ref={inputRef}
-            className="ts-input"
+            type="text"
+            name="date"
+            value={editFormData[line.id]?.date || ""}
+            onChange={(e) => !disabled && handleInputChange(line.id, { target: { name: 'date', value: e.target.value } })}
+            onBlur={(e) => !disabled && handleInputChange(line.id, { target: { name: 'date', value: e.target.value } })}
+            onFocus={(e) => !disabled && handleInputFocus && handleInputFocus(line.id, "date", e)}
+            onKeyDown={(e) => !disabled && handleKeyDown && handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("date"))}
+            ref={hasRefs ? (el) => setSafeRef(line.id, "date", el) : null}
+            className={`ts-input ${disabled ? 'ts-input-factorial' : ''}`}
             autoComplete="off"
+            disabled={disabled}
             style={{
               textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
             }}
@@ -250,7 +249,15 @@ export default function DateCell({
             </div>
           )}
         </div>
+      </div>
+      {error && (
+        <div style={{ position: "static", marginTop: 4 }}>
+          <span className="ts-inline-error" role="alert" aria-live="polite">
+            <span className="ts-inline-error__dot" />
+            {error}
+          </span>
+        </div>
       )}
-    />
+    </td>
   );
 }
