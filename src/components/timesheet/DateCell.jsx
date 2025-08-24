@@ -148,7 +148,7 @@ export default function DateCell({
   return (
     <td className="ts-td ts-cell" style={{ textAlign: align }}>
       <div className="ts-cell">
-        <div className="ts-cell" style={{ width: "100%", display: "flex", alignItems: "center" }}>
+        <div className="ts-cell">
           <input
             type="text"
             name="date"
