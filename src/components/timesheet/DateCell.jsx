@@ -91,11 +91,40 @@ export default function DateCell({
     return days;
   };
 
-  // Verificar si una fecha es feriado
+  // Verificar si una fecha es feriado (robusto, igual a DateInput)
   const isHoliday = (date) => {
-    if (!calendarHolidays) return false;
-    const dateStr = format(date, "yyyy-MM-dd");
-    return calendarHolidays.some(holiday => holiday.date === dateStr);
+    if (!calendarHolidays || calendarHolidays.length === 0) return false;
+
+    const dateYear = date.getFullYear();
+    const dateMonth = date.getMonth();
+    const dateDay = date.getDate();
+
+    return calendarHolidays.some((h) => {
+      let holidayDate = null;
+
+      // Soportar múltiples formatos: { day: string|Date, holiday: bool } o { date: string }
+      if (h && typeof h === "object") {
+        if (h.day instanceof Date) {
+          holidayDate = h.day;
+        } else if (typeof h.day === "string") {
+          holidayDate = new Date(h.day);
+        } else if (typeof h.date === "string") {
+          holidayDate = new Date(h.date);
+        }
+      } else if (typeof h === "string") {
+        holidayDate = new Date(h);
+      }
+
+      if (!holidayDate || isNaN(holidayDate.getTime())) return false;
+
+      const matches =
+        holidayDate.getFullYear() === dateYear &&
+        holidayDate.getMonth() === dateMonth &&
+        holidayDate.getDate() === dateDay;
+
+      // Si existe bandera holiday, respétala; si no, considerar el match como feriado
+      return matches && (h.holiday === undefined || h.holiday === true);
+    });
   };
 
   // Verificar si una fecha está en el rango permitido
