@@ -368,6 +368,33 @@ export default function useTimesheetEdit({
     }
   };
 
+  // Listener global para F8 por si algún input no reenvía onKeyDown
+  useEffect(() => {
+    const onGlobalKey = (e) => {
+      if (e.key !== "F8") return;
+      e.preventDefault();
+      const current = selectionRef.current;
+      if (!current?.lineId || !current?.field) return;
+      const idx = lines.findIndex((l) => l.id === current.lineId);
+      if (idx <= 0) return; // no hay fila superior
+      const prevId = lines[idx - 1].id;
+      const valueAbove = editFormData?.[prevId]?.[current.field] ?? "";
+      setEditFormData((prev) => ({
+        ...prev,
+        [current.lineId]: { ...prev[current.lineId], [current.field]: valueAbove },
+      }));
+      // marcar cambios
+      if (typeof markAsChanged === 'function') {
+        markAsChanged();
+      }
+      // re-enfocar la celda activa si existe
+      const input = inputRefs.current?.[current.lineId]?.[current.field];
+      if (input) setTimeout(() => { try { input.focus(); input.select(); } catch {} }, 0);
+    };
+    window.addEventListener('keydown', onGlobalKey);
+    return () => window.removeEventListener('keydown', onGlobalKey);
+  }, [lines, editFormData, markAsChanged]);
+
   return {
     inputRefs,
     setSafeRef,
