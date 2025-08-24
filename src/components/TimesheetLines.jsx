@@ -688,7 +688,8 @@ export default function TimesheetLines({
 
               {/* ----- Fecha (derecha) ----- */}
               <EditableCell
-                style={{ ...colStyles.date, textAlign: getAlign("date") }}
+                style={{ ...colStyles.date }}
+                align={getAlign("date")} // 🆕 Pasar alineación correcta
                 error={errors[line.id]?.date}
                 errorId={`input-date-${line.id}-err`}
               >
@@ -736,7 +737,8 @@ export default function TimesheetLines({
 
               {/* ----- Cantidad (derecha) ----- */}
               <EditableCell
-                style={{ ...colStyles.quantity, textAlign: getAlign("quantity"), verticalAlign: "top" }}
+                style={{ ...colStyles.quantity, verticalAlign: "top" }}
+                align={getAlign("quantity")} // 🆕 Pasar alineación correcta
                 error={errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id])}
               >
                 {isLineEditable(line) ? (
