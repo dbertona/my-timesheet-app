@@ -11,9 +11,10 @@ export default function EditableCell({
   onKeyDown,
   style,
   errorId,
+  align, // 🆕 Prop para alineación específica
 }) {
   return (
-    <td className={`ts-td ts-cell ${className || ""}`} style={style}>
+    <td className={`ts-td ts-cell ${className || ""}`} style={{ ...style, textAlign: align }}>
       <div className="ts-cell">
         {children}
       </div>
