@@ -231,6 +231,9 @@ export default function DateInput({
         id={inputId}
         aria-invalid={!!error}
         aria-describedby={error ? `${inputId}-err` : undefined}
+        style={{
+          textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
+        }}
       />
       <FiCalendar
         onClick={() => setCalendarOpen?.(!calendarOpen)}

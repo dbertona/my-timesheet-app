@@ -325,7 +325,7 @@ export default function TimesheetLines({
 
   // 🆕 Combinar líneas existentes con la línea vacía
   const allLines = useMemo(() => {
-    const hasEmptyLine = safeLines.some(line => 
+    const hasEmptyLine = safeLines.some(line =>
       !line.job_no && !line.description && !line.work_type && !line.date && line.quantity === 0
     );
     return hasEmptyLine ? safeLines : [...safeLines, emptyLine];
@@ -498,11 +498,24 @@ export default function TimesheetLines({
                     onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("description"))}
                     ref={hasRefs ? (el) => setSafeRef(line.id, "description", el) : null}
                     className="ts-input"
+                    style={{
+                      textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
+                    }}
                   />
                 ) : (
-                  <div style={{ padding: "4px 8px", color: "#666", fontStyle: "italic" }}>
-                    {editFormData[line.id]?.description || ""}
-                  </div>
+                  <input
+                    type="text"
+                    name="description"
+                    value={editFormData[line.id]?.description || ""}
+                    onChange={() => {}} // No hacer nada en líneas de Factorial
+                    onFocus={() => {}} // No hacer nada en líneas de Factorial
+                    onKeyDown={() => {}} // No hacer nada en líneas de Factorial
+                    disabled={true} // 🆕 Deshabilitar para líneas de Factorial
+                    className="ts-input-factorial" // 🆕 Clase especial para líneas de Factorial
+                    style={{
+                      textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
+                    }}
+                  />
                 )}
               </EditableCell>
 
@@ -600,6 +613,9 @@ export default function TimesheetLines({
                         ref={hasRefs ? (el) => setSafeRef(line.id, "work_type", el) : null}
                         className={`ts-input ${localErrors[line.id]?.work_type ? 'has-error' : ''}`}
                         autoComplete="off"
+                        style={{
+                          textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
+                        }}
                       />
                       <FiChevronDown
                         onMouseDown={(e) => {
@@ -644,8 +660,28 @@ export default function TimesheetLines({
                     )}
                   </div>
                 ) : (
-                  <div style={{ padding: "4px 8px", color: "#666", fontStyle: "italic" }}>
-                    {editFormData[line.id]?.work_type || ""}
+                  <div className="ts-cell">
+                    <div className="ts-cell">
+                      <input
+                        type="text"
+                        name="work_type"
+                        value={editFormData[line.id]?.work_type || ""}
+                        onChange={() => {}} // No hacer nada en líneas de Factorial
+                        onBlur={() => {}} // No hacer nada en líneas de Factorial
+                        onFocus={() => {}} // No hacer nada en líneas de Factorial
+                        onKeyDown={() => {}} // No hacer nada en líneas de Factorial
+                        disabled={true} // 🆕 Deshabilitar para líneas de Factorial
+                        className="ts-input-factorial" // 🆕 Clase especial para líneas de Factorial
+                        autoComplete="off"
+                        style={{
+                          textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
+                        }}
+                      />
+                      <FiChevronDown
+                        className="ts-icon ts-icon--chevron"
+                        style={{ opacity: 0.5, cursor: "not-allowed" }} // 🆕 Icono deshabilitado
+                      />
+                    </div>
                   </div>
                 )}
               </EditableCell>
@@ -678,9 +714,21 @@ export default function TimesheetLines({
                     inputId={`input-date-${line.id}`}
                   />
                 ) : (
-                  <div style={{ padding: "4px 8px", color: "#666", fontStyle: "italic" }}>
-                    {editFormData[line.id]?.date || ""}
-                  </div>
+                  <DateInput
+                    name="date"
+                    value={editFormData[line.id]?.date || ""}
+                    onChange={() => {}} // No hacer nada en líneas de Factorial
+                    onBlur={() => {}} // No hacer nada en líneas de Factorial
+                    onFocus={() => {}} // No hacer nada en líneas de Factorial
+                    onKeyDown={() => {}} // No hacer nada en líneas de Factorial
+                    calendarOpen={false} // 🆕 No abrir calendario en líneas de Factorial
+                    setCalendarOpen={() => {}} // 🆕 No hacer nada
+                    header={header}
+                    editableHeader={editableHeader}
+                    calendarHolidays={calendarHolidays}
+                    className="ts-input-factorial" // 🆕 Clase especial para líneas de Factorial
+                    inputId={`input-date-factorial-${line.id}`}
+                  />
                 )}
               </EditableCell>
 
@@ -726,7 +774,7 @@ export default function TimesheetLines({
                         }}
                         onBlur={({ target: { name, value } }) => {
                           if (line.id === "empty-line") return;
-                          
+
                           const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
                           if (hasError) {
                             const el = inputRefs?.current?.[line.id]?.["quantity"];
@@ -748,7 +796,7 @@ export default function TimesheetLines({
                             }
                             return;
                           }
-                          
+
                           const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
                           if ((e.key === "Enter" || e.key === "Tab") && hasError) {
                             e.preventDefault();
@@ -774,9 +822,16 @@ export default function TimesheetLines({
                       />
                   </div>
                 ) : (
-                  <div style={{ padding: "4px 8px", color: "#666", fontStyle: "italic" }}>
-                    {editFormData[line.id]?.quantity || ""}
-                  </div>
+                  <DecimalInput
+                    name="quantity"
+                    value={editFormData[line.id]?.quantity || ""}
+                    onChange={() => {}} // No hacer nada en líneas de Factorial
+                    onFocus={() => {}} // No hacer nada en líneas de Factorial
+                    onBlur={() => {}} // No hacer nada en líneas de Factorial
+                    onKeyDown={() => {}} // No hacer nada en líneas de Factorial
+                    disabled={true} // 🆕 Deshabilitar para líneas de Factorial
+                    className="ts-input ts-input-factorial" // 🆕 Clase especial para líneas de Factorial
+                  />
                 )}
               </EditableCell>
 
