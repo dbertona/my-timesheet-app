@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { FiCalendar } from "react-icons/fi";
 import { parse, format } from "date-fns";
 import { parseDate, formatDate } from "../../utils/dateHelpers";
-import EditableCell from "./EditableCell";
+import EditableCell from "../ui/EditableCell";
 import "../../styles/DateInput.css";
 
 export default function DateCell({
