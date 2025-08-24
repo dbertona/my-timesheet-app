@@ -63,6 +63,19 @@
 }
 .ts-input.pr-icon { padding-right: 26px; }
 
+/* 🆕 Estilos para líneas de Factorial (no editables) */
+.ts-input-factorial {
+  font-family: inherit !important; /* 🆕 Heredar fuente del padre */
+  font-size: inherit !important;   /* 🆕 Heredar tamaño de fuente del padre */
+  font-weight: inherit !important; /* 🆕 Heredar peso de fuente del padre */
+  line-height: inherit !important; /* 🆕 Heredar altura de línea del padre */
+  color: #666 !important;          /* 🆕 Color gris consistente */
+  font-style: italic !important;   /* 🆕 Estilo itálico consistente */
+  background-color: transparent !important; /* 🆕 Fondo transparente */
+  border: none !important;         /* 🆕 Sin bordes */
+  cursor: not-allowed !important;  /* 🆕 Cursor no permitido */
+}
+
 /* Dropdowns */
 .ts-dropdown {
   position: absolute;
