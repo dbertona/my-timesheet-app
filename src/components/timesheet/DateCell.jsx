@@ -250,6 +250,7 @@ export default function DateCell({
                     const isToday = date.toDateString() === new Date().toDateString();
                     const isHolidayDate = isHoliday(date);
                     const inRange = isInRange(date);
+                    const canSelect = inRange && !isHolidayDate;
 
                     return (
                       <button
@@ -264,10 +265,10 @@ export default function DateCell({
                         } ${
                           isHolidayDate ? 'ts-calendar-day--holiday' : ''
                         } ${
-                          !inRange ? 'ts-calendar-day--disabled' : ''
+                          !canSelect ? 'ts-calendar-day--disabled' : ''
                         }`}
-                        onClick={() => inRange && handleDateSelect(date)}
-                        disabled={!inRange}
+                        onClick={() => canSelect && handleDateSelect(date)}
+                        disabled={!canSelect}
                       >
                         {date.getDate()}
                       </button>
