@@ -20,6 +20,7 @@ export default function DateInput({
   calendarHolidays,
   className,
   inputId,
+  disabled = false, // 🆕 Prop para deshabilitar el input
 }) {
   const [selectedDate, setSelectedDate] = useState(parseDate(value) || new Date());
   const [currentMonth, setCurrentMonth] = useState(parseDate(value) || new Date());
@@ -221,16 +222,17 @@ export default function DateInput({
         type="text"
         name={name}
         value={value || ""}
-        onChange={(e) => onChange?.(e.target.value)}
-        onBlur={(e) => onBlur?.(e.target.value)}
-        onFocus={onFocus}
-        onKeyDown={onKeyDown}
+        onChange={(e) => !disabled && onChange?.(e.target.value)}
+        onBlur={(e) => !disabled && onBlur?.(e.target.value)}
+        onFocus={!disabled ? onFocus : undefined}
+        onKeyDown={!disabled ? onKeyDown : undefined}
         ref={inputRef}
         className={className}
         autoComplete="off"
         id={inputId}
         aria-invalid={!!error}
         aria-describedby={error ? `${inputId}-err` : undefined}
+        disabled={disabled}
         style={{
           textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
         }}

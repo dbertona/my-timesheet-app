@@ -715,6 +715,7 @@ export default function TimesheetLines({
                   />
                 ) : (
                   <DateInput
+                    key={`${line.id}-${editableHeader?.allocation_period || header?.allocation_period || 'default'}-${periodChangeTrigger}`}
                     name="date"
                     value={editFormData[line.id]?.date || ""}
                     onChange={() => {}} // No hacer nada en líneas de Factorial
@@ -728,6 +729,7 @@ export default function TimesheetLines({
                     calendarHolidays={calendarHolidays}
                     className="ts-input-factorial" // 🆕 Clase especial para líneas de Factorial
                     inputId={`input-date-factorial-${line.id}`}
+                    disabled={true} // 🆕 Deshabilitar para líneas de Factorial
                   />
                 )}
               </EditableCell>
