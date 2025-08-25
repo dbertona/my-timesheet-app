@@ -1164,8 +1164,10 @@ function TimesheetEdit({ headerId }) {
 
       // 2) Las líneas ahora se cargan vía React Query (ver linesQuery)
       if (!headerIdResolved) {
-        // Si no encontramos cabecera, limpiamos líneas
-        setLines([]);
+        // Si no encontramos cabecera, sólo limpiar líneas si NO estamos en nuevo parte
+        if (!isNewParte) {
+          setLines([]);
+        }
       }
 
       setLoading(false);
