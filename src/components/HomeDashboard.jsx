@@ -86,14 +86,30 @@ const HomeDashboard = () => {
     navigate(`/nuevo-parte?allocation_period=${allocationPeriod}`);
   };
 
+  const handleLogout = async () => {
+    try {
+      await instance.logoutRedirect({ postLogoutRedirectUri: window.location.origin });
+    } catch (e) {
+      // fallback a logoutPopup en caso de bloqueo
+      try { await instance.logoutPopup({ postLogoutRedirectUri: window.location.origin }); } catch {}
+    }
+  };
+
   return (
     <div className="dash">
-      <nav className="bc-menu">
-        <div className="bc-menu-item">
-          <Link to="/nuevo-parte">Nuevo Parte de Trabajo</Link>
+      <nav className="bc-menu" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 16 }}>
+          <div className="bc-menu-item">
+            <Link to="/nuevo-parte">Nuevo Parte de Trabajo</Link>
+          </div>
+          <div className="bc-menu-item">
+            <Link to="/editar-parte">Editar Partes de Trabajo</Link>
+          </div>
         </div>
-        <div className="bc-menu-item">
-          <Link to="/editar-parte">Editar Partes de Trabajo</Link>
+        <div>
+          <button onClick={handleLogout} className="bc-btn" style={{ padding: "6px 10px" }}>
+            Cerrar sesión
+          </button>
         </div>
       </nav>
 
