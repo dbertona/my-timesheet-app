@@ -1194,14 +1194,7 @@ function TimesheetEdit({ headerId }) {
   }, [effectiveHeaderId, loading]);
 
   // 🆕 Crear línea vacía cuando la información del recurso esté disponible
-  useEffect(() => {
-
-
-    if (!effectiveHeaderId && editableHeader && lines.length === 0) {
-
-      addEmptyLine();
-    }
-  }, [effectiveHeaderId, editableHeader, lines.length]);
+  // Eliminado: no crear línea al abrir; se creará al navegar al final
 
   // 🆕 Inicializar fecha sugerida para nuevo parte
   useEffect(() => {

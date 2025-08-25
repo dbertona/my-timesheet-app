@@ -205,11 +205,15 @@ export default function useTimesheetEdit({
 
   // -------- Focus/selección --------
   const handleInputFocus = (lineId, field, e) => {
+    // Registrar foco actual para que F8 global y la navegación sepan dónde estamos
+    const start = e?.target?.selectionStart ?? 0;
+    const end = e?.target?.selectionEnd ?? (e?.target?.value?.length ?? 0);
+    selectionRef.current = { lineId, field, start, end };
     const sel = selectionRef.current;
     if (sel.lineId === lineId && sel.field === field) {
-      setTimeout(() => e.target.setSelectionRange(sel.start, sel.end), 0);
+      setTimeout(() => { try { e.target.setSelectionRange(sel.start, sel.end); } catch {} }, 0);
     } else {
-      e.target.select();
+      try { e.target.select(); } catch {}
     }
   };
 
