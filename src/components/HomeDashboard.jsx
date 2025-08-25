@@ -132,9 +132,6 @@ const HomeDashboard = () => {
           </div>
         </div>
         <div ref={menuRef} style={{ position: "relative", display: "flex", alignItems: "center", gap: 12 }}>
-          {displayName && (
-            <span style={{ fontWeight: 600, fontSize: "14px" }}>{displayName}</span>
-          )}
           <button
             aria-haspopup="menu"
             aria-expanded={menuOpen}
