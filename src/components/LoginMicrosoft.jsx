@@ -6,16 +6,16 @@ export default function LoginMicrosoft({ onLogin }) {
 
   const handleLogin = async () => {
     try {
-      const loginResponse = await instance.loginPopup({
-        scopes: ["User.Read"],
-      });
-      const email = loginResponse.account.username;
-
-      // Set active account for future silent calls
-      instance.setActiveAccount(loginResponse.account);
-
-      // Logueado como usuario
-      onLogin(email);
+      if (!accounts || accounts.length === 0) {
+        await instance.loginRedirect({
+          scopes: ["User.Read"],
+          prompt: "select_account",
+        });
+        return;
+      }
+      // Si ya hay cuenta, asegurar que esté activa
+      instance.setActiveAccount(accounts[0]);
+      onLogin(accounts[0].username);
     } catch (err) {
       console.error("❌ Error en login:", err);
     }
@@ -23,7 +23,7 @@ export default function LoginMicrosoft({ onLogin }) {
 
   return (
     <div>
-      {accounts.length === 0 ? (
+      {(!accounts || accounts.length === 0) ? (
         <button
           onClick={handleLogin}
           className="bg-blue-600 text-white px-4 py-2 rounded"
