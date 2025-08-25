@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
 import "../styles/HomeDashboard.css";
 import { supabaseClient } from "../supabaseClient";
+import BcModal from "./ui/BcModal";
 
 function firstDayOfMonth(d = new Date()) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -17,6 +17,22 @@ function toISODate(d) {
 }
 
 const HomeDashboard = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { instance, accounts } = useMsal();
+
+  const [showMissingModal, setShowMissingModal] = useState(false);
+  const [missingEmail, setMissingEmail] = useState("");
+
+  useEffect(() => {
+    if (location.state && location.state.modal === "resource-missing") {
+      setShowMissingModal(true);
+      setMissingEmail(location.state.email || "");
+      // limpiar el estado para no reabrir en siguiente navegación
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour >= 6 && hour < 12) return "Buenos días";
@@ -24,7 +40,6 @@ const HomeDashboard = () => {
     return "Buenas noches";
   };
 
-  const { instance, accounts } = useMsal();
   let displayName = "usuario";
   let activeAccount = null;
   try {
@@ -36,7 +51,7 @@ const HomeDashboard = () => {
   try {
     const acct = activeAccount || accounts[0];
     userEmail = acct?.username || acct?.email || "";
-  } catch {}
+  } catch { userEmail = ""; }
 
   const [userPhoto, setUserPhoto] = useState("");
   const [pendingHours, setPendingHours] = useState(null);
@@ -100,7 +115,6 @@ const HomeDashboard = () => {
     return () => { cancelled = true; };
   }, [userEmail]);
 
-  const navigate = useNavigate();
   const now = new Date();
   const yy = String(now.getFullYear()).slice(-2);
   const mm = String(now.getMonth() + 1).padStart(2, "0");
@@ -122,6 +136,19 @@ const HomeDashboard = () => {
 
   return (
     <div className="dash">
+      {showMissingModal && (
+        <BcModal
+          isOpen={true}
+          onClose={() => setShowMissingModal(false)}
+          title="Recurso no encontrado"
+          confirmText="Aceptar"
+          onConfirm={() => setShowMissingModal(false)}
+        >
+          <p>
+            No se encontró un recurso asociado al email {missingEmail || userEmail || "(desconocido)"}. Por favor, contacta con Recursos Humanos para dar de alta tu recurso en el sistema.
+          </p>
+        </BcModal>
+      )}
       <nav className="bc-menu" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", gap: 16 }}>
           <div className="bc-menu-item">
