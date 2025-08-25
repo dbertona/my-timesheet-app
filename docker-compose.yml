@@ -1,0 +1,15 @@
+services:
+  web:
+    build: .
+    image: my-timesheet-app:web
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    # Si necesitas variables públicas para el build, usa args y .env
+    # build:
+    #   context: .
+    #   args:
+    #     VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+    #     VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
