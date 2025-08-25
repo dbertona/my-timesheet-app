@@ -1,8 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useMsal } from '@azure/msal-react';
 
 export default function LoginMicrosoft({ onLogin }) {
   const { instance, accounts } = useMsal();
+
+  // Auto-login SOLO en desarrollo cuando no hay sesión
+  useEffect(() => {
+    if (import.meta.env.DEV && (!accounts || accounts.length === 0)) {
+      instance.loginRedirect({ scopes: ["User.Read"], prompt: "select_account" }).catch(() => {});
+    }
+  }, [accounts, instance]);
 
   const handleLogin = async () => {
     try {
@@ -15,7 +22,7 @@ export default function LoginMicrosoft({ onLogin }) {
       }
       // Si ya hay cuenta, asegurar que esté activa
       instance.setActiveAccount(accounts[0]);
-      onLogin(accounts[0].username);
+      onLogin?.(accounts[0].username);
     } catch (err) {
       console.error("❌ Error en login:", err);
     }
