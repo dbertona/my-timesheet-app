@@ -311,7 +311,17 @@ function TimesheetEdit({ headerId }) {
       }
 
       // Email fijo para pruebas
-      const userEmail = "jtorres@powersolution.es";
+      let userEmail = "";
+      try {
+        const acct = instance.getActiveAccount() || accounts[0];
+        userEmail = acct?.username || acct?.email || "";
+      } catch {
+        userEmail = "";
+      }
+      if (!userEmail) {
+        toast.error("No se pudo obtener el email del usuario para importar Factorial");
+        return;
+      }
 
                   // Declarar variables de fechas
       let startDate, endDate;
@@ -528,7 +538,7 @@ function TimesheetEdit({ headerId }) {
       console.error("❌ Error importando vacaciones:", error);
       toast.error(`Error al importar vacaciones: ${error.message}`);
     }
-  }, [effectiveHeaderId, markAsChanged, calendarDays, dailyRequired, header, calendarHolidays]);
+  }, [effectiveHeaderId, markAsChanged, calendarDays, dailyRequired, header, calendarHolidays, instance, accounts]);
 
             // 🆕 Función para duplicar líneas seleccionadas
       const handleDuplicateLines = useCallback((lineIds) => {
