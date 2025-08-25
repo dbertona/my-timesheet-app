@@ -2036,6 +2036,7 @@ function TimesheetEdit({ headerId }) {
                     ...prev,
                     [id]: { ...(prev[id] || {}), date: display }
                   }));
+                  setLines(prev => prev.map(l => l.id === id ? { ...l, date: display } : l));
                   focusFirstAvailable(id);
                   return;
                 }
@@ -2046,6 +2047,7 @@ function TimesheetEdit({ headerId }) {
                   ...prev,
                   [newId]: { ...(prev[newId] || {}), date: display }
                 }));
+                setLines(prev => prev.map(l => l.id === newId ? { ...l, date: display } : l));
                 focusFirstAvailable(newId);
               } catch {}
             }}
