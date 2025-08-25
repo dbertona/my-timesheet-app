@@ -1951,6 +1951,22 @@ function TimesheetEdit({ headerId }) {
 
   if (loading && effectiveHeaderId) return <div>Cargando datos...</div>;
 
+  useEffect(() => {
+    // Autocompletar allocation_period en la URL para /nuevo-parte si falta
+    if (location.pathname === "/nuevo-parte") {
+      const params = new URLSearchParams(location.search);
+      const ap = params.get("allocation_period");
+      if (!ap) {
+        const now = new Date();
+        const yy = String(now.getFullYear()).slice(-2);
+        const mm = String(now.getMonth() + 1).padStart(2, "0");
+        const newAp = `M${yy}-M${mm}`;
+        params.set("allocation_period", newAp);
+        navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+      }
+    }
+  }, [location.pathname]);
+
   return (
     <div className="ts-responsive">
       <div className="timesheet-container">
