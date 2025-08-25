@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "deploy:test": "DEPLOY_USER=dbertona DEPLOY_HOST=192.168.88.68 DEPLOY_DIR=~/timesheet ./scripts/deploy_testing.sh"
+    "deploy:test": "DEPLOY_USER=dbertona DEPLOY_HOST=192.168.88.68 DEPLOY_DIR=/home/dbertona/timesheet ./scripts/deploy_testing.sh"
   },
   "dependencies": {
     "@azure/msal-browser": "^4.19.0",
