@@ -22,29 +22,6 @@ function TimesheetHeader({ header, onHeaderChange }) {
   // 🆕 Estado para effectiveHeader (debe estar aquí para mantener orden de hooks)
   const [effectiveHeader, setEffectiveHeader] = useState(header || editableHeader);
 
-  // Fallback inmediato en /nuevo-parte: establecer período mes actual mientras carga el recurso
-  useEffect(() => {
-    if (header) return;
-    if (editableHeader && editableHeader.allocation_period) return;
-    const now = new Date();
-    const yy = String(now.getFullYear()).slice(-2);
-    const mm = String(now.getMonth() + 1).padStart(2, "0");
-    const ap = `M${yy}-M${mm}`;
-    const provisional = {
-      resource_no: "",
-      resource_name: "",
-      department_code: "",
-      calendar_type: "",
-      allocation_period: ap,
-      posting_date: now.toISOString().split('T')[0],
-      posting_description: `Parte de trabajo ${ap}`,
-      calendar_period_days: ""
-    };
-    setEditableHeader(provisional);
-    if (onHeaderChange) onHeaderChange(provisional);
-    setAllocationPeriod(ap);
-  }, [header]);
-
   useEffect(() => {
     // Si no hay header, obtener información del recurso actual
     if (!header) {
@@ -84,14 +61,20 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
                 const mm = String(now.getMonth() + 1).padStart(2, "0");
                 ap = `M${yy}-M${mm}`;
-
+                console.log('🔍 DEBUG FECHAS TimesheetHeader 1:', {
+                  now: now.toISOString(),
+                  getMonth: now.getMonth(),
+                  getMonthPlus1: now.getMonth() + 1,
+                  mm,
+                  ap
+                });
               }
               setAllocationPeriod(ap);
 
               // Establecer valores por defecto
               const firstDayOfPeriod = getFirstDayOfPeriod(ap);
 
-              // 🆕 Calcular fecha sugerida: último día del mes siguiente al último timesheet
+                            // 🆕 Calcular fecha sugerida: último día del mes siguiente al último timesheet
               let suggestedDate = new Date().toISOString().split('T')[0]; // Fallback a fecha actual
               try {
                 const { data: lastHeader } = await supabaseClient
@@ -148,7 +131,13 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
                 const mm = String(now.getMonth() + 1).padStart(2, "0");
                 ap = `M${yy}-M${mm}`;
-
+                console.log('🔍 DEBUG FECHAS TimesheetHeader 2:', {
+                  now: now.toISOString(),
+                  getMonth: now.getMonth(),
+                  getMonthPlus1: now.getMonth() + 1,
+                  mm,
+                  ap
+                });
               }
 
               const firstDayOfPeriod = getFirstDayOfPeriod(ap);
@@ -178,6 +167,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
     }
   }, [header, onHeaderChange, instance, accounts]);
 
+  // 🆕 Segundo useEffect para actualizar effectiveHeader (debe estar aquí para mantener orden)
   useEffect(() => {
     if (header && (!header.resource_name || !header.calendar_type)) {
       // Consultar la tabla resource para obtener nombre y tipo de calendario
