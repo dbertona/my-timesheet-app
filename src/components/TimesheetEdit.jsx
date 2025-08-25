@@ -1225,16 +1225,22 @@ function TimesheetEdit({ headerId }) {
 
     const sorted = (linesHook.data || []).sort((a, b) => new Date(a.date) - new Date(b.date));
     const linesFormatted = sorted.map((line) => ({ ...line, date: toDisplayDate(line.date) }));
-    setLines(linesFormatted);
+    // Filtrar filas totalmente vacías provenientes del backend (sin datos y cantidad 0)
+    const filtered = linesFormatted.filter((l) => {
+      const hasData = Boolean(l.job_no || l.job_task_no || l.description || l.work_type || l.date);
+      const qty = Number(l.quantity) || 0;
+      return hasData || qty !== 0; // mantener solo si tiene datos o cantidad distinta de 0
+    });
+    setLines(filtered);
     const initialEditData = {};
-    linesFormatted.forEach((line) => {
+    filtered.forEach((line) => {
       initialEditData[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
     });
     setEditFormData(initialEditData);
 
     // Snapshot base para detectar cambios por campo (comparación en espacio DB)
     const snap = {};
-    linesFormatted.forEach((line) => {
+    filtered.forEach((line) => {
       snap[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
     });
     serverSnapshotRef.current = snap;
