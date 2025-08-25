@@ -1221,6 +1221,24 @@ function TimesheetEdit({ headerId }) {
     }
   }, [effectiveHeaderId, editableHeader?.resource_no, editableHeader?.posting_date]);
 
+  // 🆕 Fallback robusto: en /nuevo-parte garantizar período = mes actual si falta
+  useEffect(() => {
+    const isNewParte = location.pathname === "/nuevo-parte";
+    if (!isNewParte) return;
+    const hasAp = !!(editableHeader && editableHeader.allocation_period);
+    if (hasAp) return;
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const ap = `M${yy}-M${mm}`;
+    setEditableHeader(prev => ({
+      ...(prev || {}),
+      allocation_period: ap,
+      posting_date: (prev && prev.posting_date) || now.toISOString().split('T')[0],
+      posting_description: `Parte de trabajo ${ap}`,
+    }));
+  }, [location.pathname, editableHeader?.allocation_period]);
+
   // 🆕 Incrementar trigger cuando cambie el período
   useEffect(() => {
     if (editableHeader?.allocation_period) {
