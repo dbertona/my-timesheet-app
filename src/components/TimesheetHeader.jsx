@@ -18,6 +18,8 @@ function TimesheetHeader({ header, onHeaderChange }) {
     calendar_period_days: "" // Nuevo campo
   });
   const [headerErrors, setHeaderErrors] = useState({}); // 🆕 Errores de validación de la cabecera
+  const [resourceNotFound, setResourceNotFound] = useState(false);
+  const [notFoundMsg, setNotFoundMsg] = useState("");
 
   // 🆕 Estado para effectiveHeader (debe estar aquí para mantener orden de hooks)
   const [effectiveHeader, setEffectiveHeader] = useState(header || editableHeader);
@@ -61,20 +63,10 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
                 const mm = String(now.getMonth() + 1).padStart(2, "0");
                 ap = `M${yy}-M${mm}`;
-                console.log('🔍 DEBUG FECHAS TimesheetHeader 1:', {
-                  now: now.toISOString(),
-                  getMonth: now.getMonth(),
-                  getMonthPlus1: now.getMonth() + 1,
-                  mm,
-                  ap
-                });
               }
               setAllocationPeriod(ap);
 
               // Establecer valores por defecto
-              const firstDayOfPeriod = getFirstDayOfPeriod(ap);
-
-                            // 🆕 Calcular fecha sugerida: último día del mes siguiente al último timesheet
               let suggestedDate = new Date().toISOString().split('T')[0]; // Fallback a fecha actual
               try {
                 const { data: lastHeader } = await supabaseClient
@@ -86,20 +78,9 @@ function TimesheetHeader({ header, onHeaderChange }) {
                   .single();
 
                 if (lastHeader?.to_date) {
-                  const lastDate = new Date(lastHeader.to_date);
-                  // ✅ Calcular correctamente: último día del mes siguiente
-                  const nextMonth = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, 1);
-                  const lastDayOfNextMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0);
-
-                  // ✅ Corregir problema de zona horaria: usar fecha local en lugar de UTC
-                  const year = lastDayOfNextMonth.getFullYear();
-                  const month = String(lastDayOfNextMonth.getMonth() + 1).padStart(2, '0');
-                  const day = String(lastDayOfNextMonth.getDate()).padStart(2, '0');
-                  suggestedDate = `${year}-${month}-${day}`;
+                  suggestedDate = lastHeader.to_date;
                 }
-              } catch (error) {
-                // Si hay error, usar fecha actual como fallback
-              }
+              } catch {}
 
               // ✅ Calcular el período correcto basado en la fecha sugerida
               const correctPeriod = getPeriodFromDate(suggestedDate);
@@ -121,45 +102,30 @@ function TimesheetHeader({ header, onHeaderChange }) {
               if (onHeaderChange) {
                 onHeaderChange(newEditableHeader);
               }
-            } else if (resourceError) {
-              // Fallback: crear header con información básica
-              const params = new URLSearchParams(window.location.search);
-              let ap = params.get("allocation_period");
-              if (!ap) {
-                const now = new Date();
-                const yy = String(now.getFullYear()).slice(-2);
-                // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
-                const mm = String(now.getMonth() + 1).padStart(2, "0");
-                ap = `M${yy}-M${mm}`;
-                console.log('🔍 DEBUG FECHAS TimesheetHeader 2:', {
-                  now: now.toISOString(),
-                  getMonth: now.getMonth(),
-                  getMonthPlus1: now.getMonth() + 1,
-                  mm,
-                  ap
-                });
-              }
-
-              const firstDayOfPeriod = getFirstDayOfPeriod(ap);
-              const fallbackHeader = {
-                resource_no: userEmail, // Fallback al email si no se encuentra el recurso
-                resource_name: userEmail,
-                department_code: "DEFAULT",
-                calendar_type: "MAD INT",
-                allocation_period: ap,
-                posting_date: new Date().toISOString().split('T')[0], // Fecha de hoy
-                posting_description: `Parte de trabajo ${ap}`,
+            } else {
+              // No encontrado por email: NO asumir nada ni buscar alternativas
+              setResourceNotFound(true);
+              setNotFoundMsg(`Recurso no encontrado para el email ${userEmail}. Comprueba la tabla 'resource'.`);
+              // Limpiar cualquier cabecera editable previa
+              setEditableHeader({
+                resource_no: "",
+                resource_name: "",
+                department_code: "",
+                calendar_type: "",
+                allocation_period: "",
+                posting_date: "",
+                posting_description: "",
                 calendar_period_days: ""
-              };
-
-              setEditableHeader(fallbackHeader);
-              if (onHeaderChange) {
-                onHeaderChange(fallbackHeader);
-              }
+              });
+              if (onHeaderChange) onHeaderChange(null);
             }
+          } else {
+            setResourceNotFound(true);
+            setNotFoundMsg("No se pudo obtener el email del usuario desde MSAL.");
           }
         } catch (error) {
-          // Error silencioso
+          setResourceNotFound(true);
+          setNotFoundMsg("Error obteniendo la información del recurso.");
         }
       };
 
@@ -197,35 +163,15 @@ function TimesheetHeader({ header, onHeaderChange }) {
     }
   }, [header, editableHeader]);
 
-  // Función para obtener el primer día del período
-  const getFirstDayOfPeriod = (ap) => {
-    const m = /^M(\d{2})-M(\d{2})$/.exec(ap || "");
-    if (!m) return new Date().toISOString().split('T')[0];
-
-    const yy = parseInt(m[1], 10);
-    const year = 2000 + yy;
-    const month = parseInt(m[2], 10);
-
-    return new Date(year, month - 1, 1).toISOString().split('T')[0];
-  };
-
   // Función para obtener el período correspondiente a una fecha
   const getPeriodFromDate = (date) => {
     if (!date) return "";
-
     try {
-      const dateObj = new Date(date);
-      const year = dateObj.getFullYear();
-      const month = dateObj.getMonth() + 1; // getMonth() devuelve 0-11
-
-      const yy = String(year).slice(-2); // Últimos 2 dígitos del año
-      const mm = String(month).padStart(2, "0"); // Mes con 2 dígitos
-
+      const d = new Date(date);
+      const yy = String(d.getFullYear()).slice(-2);
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
       return `M${yy}-M${mm}`;
-    } catch (error) {
-      console.error("❌ Error calculando período:", error);
-      return "";
-    }
+    } catch { return ""; }
   };
 
   // Función para obtener calendar_period_days del calendario del recurso
@@ -281,15 +227,15 @@ function TimesheetHeader({ header, onHeaderChange }) {
     }
   };
 
-  if (!header && !resourceInfo) {
+  if (resourceNotFound) {
     return (
-      <div style={{ padding: "20px", textAlign: "center", color: "#666" }}>
-        Cargando información del recurso...
+      <div style={{ padding: 20, color: "#b91c1c", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8 }}>
+        {notFoundMsg}
       </div>
     );
   }
 
-      // 🆕 Cabecera unificada para inserción y edición
+  // 🆕 Cabecera unificada para inserción y edición
   const isEditMode = !!header;
 
   return (

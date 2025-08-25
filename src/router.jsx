@@ -5,6 +5,7 @@ import TimesheetHeaderList from "./components/TimesheetHeaderList";
 import TimesheetEdit from "./components/TimesheetEdit";
 import HomeDashboard from "./components/HomeDashboard";
 import RequireMsalAuth from "./components/auth/RequireMsalAuth";
+import EnsureResource from "./components/auth/EnsureResource";
 
 function TimesheetEditWrapper() {
   const { headerId } = useParams();
@@ -27,29 +28,16 @@ export const router = createBrowserRouter([
     path: "/",
     element: <AppWrapper />,
     children: [
+      { index: true, element: <HomeDashboard /> },
+      { path: "partes/:year?/:month?", element: <TimesheetHeaderList /> },
       {
-        index: true,
-        element: <HomeDashboard />
-      },
-      {
-        path: "partes/:year?/:month?",
-        element: <TimesheetHeaderList />
-      },
-      {
-        path: "edit/:headerId",
-        element: <TimesheetEditWrapper />
-      },
-      {
-        path: "editar-parte",
-        element: <TimesheetEdit />
-      },
-      {
-        path: "editar-parte/:headerId",
-        element: <TimesheetEditWrapper />
-      },
-      {
-        path: "nuevo-parte",
-        element: <TimesheetEdit />
+        element: <EnsureResource />, // Guard: requiere recurso válido
+        children: [
+          { path: "edit/:headerId", element: <TimesheetEditWrapper /> },
+          { path: "editar-parte", element: <TimesheetEdit /> },
+          { path: "editar-parte/:headerId", element: <TimesheetEditWrapper /> },
+          { path: "nuevo-parte", element: <TimesheetEdit /> }
+        ]
       }
     ]
   }
