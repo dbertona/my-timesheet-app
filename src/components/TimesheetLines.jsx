@@ -51,7 +51,16 @@ export default function TimesheetLines({
     DEFAULT_COL_WIDTH
   );
 
-  const safeLines = Array.isArray(lines) ? lines : [];
+  // Filtrar líneas "vacías" que puedan venir desde el servidor (todas las celdas vacías y cantidad 0)
+  const safeLines = Array.isArray(lines)
+    ? lines.filter((l) => {
+        const isTmp = String(l.id || "").startsWith("tmp-");
+        const hasData = Boolean(l.job_no || l.job_task_no || l.description || l.work_type || l.date);
+        const qty = Number(l.quantity) || 0;
+        // Mostrar siempre las temporales; ocultar las totalmente vacías del backend
+        return isTmp || hasData || qty !== 0;
+      })
+    : [];
   const tableRef = useRef(null);
 
   const getAlign = (key) => (TIMESHEET_ALIGN?.[key] || "left");
