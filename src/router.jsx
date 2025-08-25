@@ -4,6 +4,7 @@ import LoginMicrosoft from "./components/LoginMicrosoft";
 import TimesheetHeaderList from "./components/TimesheetHeaderList";
 import TimesheetEdit from "./components/TimesheetEdit";
 import HomeDashboard from "./components/HomeDashboard";
+import RequireMsalAuth from "./components/auth/RequireMsalAuth";
 
 function TimesheetEditWrapper() {
   const { headerId } = useParams();
@@ -12,10 +13,12 @@ function TimesheetEditWrapper() {
 
 function AppWrapper() {
   return (
-    <div style={{ padding: "2rem", fontSize: "1.5rem" }}>
-      <LoginMicrosoft />
-      <Outlet />
-    </div>
+    <RequireMsalAuth>
+      <div style={{ padding: "2rem", fontSize: "1.5rem" }}>
+        <LoginMicrosoft />
+        <Outlet />
+      </div>
+    </RequireMsalAuth>
   );
 }
 
