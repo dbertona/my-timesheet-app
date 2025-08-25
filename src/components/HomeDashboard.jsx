@@ -26,24 +26,53 @@ const HomeDashboard = () => {
 
   const { instance, accounts } = useMsal();
   let displayName = "usuario";
+  let activeAccount = null;
   try {
-    const active = instance.getActiveAccount() || accounts[0];
-    displayName = active?.name || active?.username || "usuario";
+    activeAccount = instance.getActiveAccount() || accounts[0];
+    displayName = activeAccount?.name || activeAccount?.username || "usuario";
   } catch {
     // fallback
   }
 
   let userEmail = "";
   try {
-    const acct = instance.getActiveAccount() || accounts[0];
+    const acct = activeAccount || accounts[0];
     userEmail = acct?.username || acct?.email || "";
   } catch {
     userEmail = "";
   }
 
+  const [userPhoto, setUserPhoto] = useState("");
   const [pendingHours, setPendingHours] = useState(null);
   const [loadingHours, setLoadingHours] = useState(true);
   const [errorHours, setErrorHours] = useState("");
+
+  // Cargar foto del usuario desde Microsoft Graph
+  useEffect(() => {
+    let cancelled = false;
+    async function loadPhoto() {
+      try {
+        if (!activeAccount) return;
+        const result = await instance.acquireTokenSilent({
+          account: activeAccount,
+          scopes: ["User.Read"],
+        });
+        // Intentar tamaño 64x64 para rapidez; si falla, usar foto por defecto
+        const res = await fetch("https://graph.microsoft.com/v1.0/me/photos/64x64/$value", {
+          headers: { Authorization: `Bearer ${result.accessToken}` },
+        });
+        if (!res.ok) return; // sin foto
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        if (!cancelled) setUserPhoto(url);
+      } catch {
+        // ignorar si no hay foto o permiso
+      }
+    }
+    loadPhoto();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeAccount]);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,7 +119,6 @@ const HomeDashboard = () => {
     try {
       await instance.logoutRedirect({ postLogoutRedirectUri: window.location.origin });
     } catch (e) {
-      // fallback a logoutPopup en caso de bloqueo
       try { await instance.logoutPopup({ postLogoutRedirectUri: window.location.origin }); } catch {}
     }
   };
@@ -106,7 +134,17 @@ const HomeDashboard = () => {
             <Link to="/editar-parte">Editar Partes de Trabajo</Link>
           </div>
         </div>
-        <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {displayName && (
+            <span style={{ fontWeight: 600 }}>{displayName}</span>
+          )}
+          {userPhoto ? (
+            <img src={userPhoto} alt="Foto de usuario" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "1px solid #ddd" }} />
+          ) : (
+            <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>
+              {(displayName || "U").charAt(0)}
+            </div>
+          )}
           <button onClick={handleLogout} className="bc-btn" style={{ padding: "6px 10px" }}>
             Cerrar sesión
           </button>
