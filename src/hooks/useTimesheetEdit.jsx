@@ -362,6 +362,25 @@ export default function useTimesheetEdit({
       attempts++;
     }
 
+    // Después de saltar columnas no editables: si estamos en última fila y
+    // el movimiento por Enter/Tab/ArrowRight termina en la primera columna,
+    // crear una nueva línea y enfocar `job_no` en esa nueva línea.
+    if ((key === "ArrowRight" || key === "Tab" || key === "Enter") &&
+        lineIndex === lines.length - 1 &&
+        nextFieldIndex === 0 &&
+        typeof addEmptyLine === "function") {
+      const newId = addEmptyLine();
+      const firstCol = TIMESHEET_FIELDS[0];
+      setTimeout(() => {
+        const input = inputRefs.current?.[newId]?.[firstCol];
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      }, 0);
+      return;
+    }
+
     const nextLineId = lines[nextLineIndex].id;
     const nextFieldName = TIMESHEET_FIELDS[nextFieldIndex];
     const nextInput = inputRefs.current?.[nextLineId]?.[nextFieldName];
