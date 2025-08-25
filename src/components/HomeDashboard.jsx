@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
@@ -30,49 +30,49 @@ const HomeDashboard = () => {
   try {
     activeAccount = instance.getActiveAccount() || accounts[0];
     displayName = activeAccount?.name || activeAccount?.username || "usuario";
-  } catch {
-    // fallback
-  }
+  } catch {}
 
   let userEmail = "";
   try {
     const acct = activeAccount || accounts[0];
     userEmail = acct?.username || acct?.email || "";
-  } catch {
-    userEmail = "";
-  }
+  } catch {}
 
   const [userPhoto, setUserPhoto] = useState("");
   const [pendingHours, setPendingHours] = useState(null);
   const [loadingHours, setLoadingHours] = useState(true);
   const [errorHours, setErrorHours] = useState("");
 
-  // Cargar foto del usuario desde Microsoft Graph
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     async function loadPhoto() {
       try {
         if (!activeAccount) return;
-        const result = await instance.acquireTokenSilent({
-          account: activeAccount,
-          scopes: ["User.Read"],
-        });
-        // Intentar tamaño 64x64 para rapidez; si falla, usar foto por defecto
+        const result = await instance.acquireTokenSilent({ account: activeAccount, scopes: ["User.Read"] });
         const res = await fetch("https://graph.microsoft.com/v1.0/me/photos/64x64/$value", {
           headers: { Authorization: `Bearer ${result.accessToken}` },
         });
-        if (!res.ok) return; // sin foto
+        if (!res.ok) return;
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         if (!cancelled) setUserPhoto(url);
-      } catch {
-        // ignorar si no hay foto o permiso
-      }
+      } catch {}
     }
     loadPhoto();
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeAccount]);
+  }, [activeAccount, instance]);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,13 +81,10 @@ const HomeDashboard = () => {
       try {
         setLoadingHours(true);
         setErrorHours("");
-
         if (!userEmail) {
           setPendingHours(0);
           return;
         }
-
-        // RPC directa a la función creada en Supabase
         const { data, error } = await supabaseClient.rpc('pending_hours', { p_email: userEmail });
         if (error) throw error;
         const pendientes = data && data[0] && typeof data[0].pendientes === 'number' ? data[0].pendientes : 0;
@@ -105,9 +102,9 @@ const HomeDashboard = () => {
 
   const navigate = useNavigate();
   const now = new Date();
-  const yy = String(now.getFullYear()).slice(-2); // e.g. "25"
-  const mm = String(now.getMonth() + 1).padStart(2, "0"); // e.g. "08"
-  const allocationPeriod = `M${yy}-M${mm}`; // e.g. M25-M08
+  const yy = String(now.getFullYear()).slice(-2);
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const allocationPeriod = `M${yy}-M${mm}`;
   const goToEditParte = () => {
     navigate(`/editar-parte?allocation_period=${allocationPeriod}`);
   };
@@ -134,20 +131,82 @@ const HomeDashboard = () => {
             <Link to="/editar-parte">Editar Partes de Trabajo</Link>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div ref={menuRef} style={{ position: "relative", display: "flex", alignItems: "center", gap: 12 }}>
           {displayName && (
             <span style={{ fontWeight: 600 }}>{displayName}</span>
           )}
-          {userPhoto ? (
-            <img src={userPhoto} alt="Foto de usuario" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "1px solid #ddd" }} />
-          ) : (
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>
-              {(displayName || "U").charAt(0)}
+          <button
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((v) => !v)}
+            style={{
+              border: "1px solid #ddd",
+              background: "#fff",
+              borderRadius: "9999px",
+              padding: 0,
+              width: 36,
+              height: 36,
+              cursor: "pointer",
+              overflow: "hidden",
+            }}
+          >
+            {userPhoto ? (
+              <img src={userPhoto} alt="Foto de usuario" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#e5e7eb", fontWeight: 700 }}>
+                {(displayName || "U").charAt(0)}
+              </div>
+            )}
+          </button>
+
+          {menuOpen && (
+            <div
+              role="menu"
+              style={{
+                position: "absolute",
+                right: 0,
+                top: "calc(100% + 8px)",
+                minWidth: 220,
+                background: "#fff",
+                border: "1px solid #e5e7eb",
+                borderRadius: 8,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                padding: 8,
+                zIndex: 1000,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: 8 }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "1px solid #ddd" }}>
+                  {userPhoto ? (
+                    <img src={userPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#e5e7eb", fontWeight: 700 }}>
+                      {(displayName || "U").charAt(0)}
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <span style={{ fontWeight: 600 }}>{displayName}</span>
+                  <span style={{ fontSize: 12, color: "#6b7280" }}>{userEmail}</span>
+                </div>
+              </div>
+              <div style={{ height: 1, background: "#f3f4f6", margin: "4px 0" }} />
+              <button
+                onClick={handleLogout}
+                role="menuitem"
+                style={{
+                  width: "100%",
+                  textAlign: "left",
+                  padding: "10px 12px",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Cerrar sesión
+              </button>
             </div>
           )}
-          <button onClick={handleLogout} className="bc-btn" style={{ padding: "6px 10px" }}>
-            Cerrar sesión
-          </button>
         </div>
       </nav>
 
