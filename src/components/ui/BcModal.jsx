@@ -11,7 +11,8 @@ export default function BcModal({
   onCancel,
   confirmButtonType = "danger", // "danger" o "primary"
   showActions = true,
-  size = "medium" // "small", "medium", "large"
+  size = "medium", // "small", "medium", "large"
+  oneButton = false
 }) {
   if (!isOpen) return null;
 
@@ -57,12 +58,14 @@ export default function BcModal({
             >
               {confirmText}
             </button>
-            <button 
-              onClick={handleCancel} 
-              className="ts-btn ts-btn--secondary"
-            >
-              {cancelText}
-            </button>
+            {!oneButton && (
+              <button 
+                onClick={handleCancel} 
+                className="ts-btn ts-btn--secondary"
+              >
+                {cancelText}
+              </button>
+            )}
           </div>
         )}
       </div>

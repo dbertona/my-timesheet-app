@@ -143,6 +143,7 @@ const HomeDashboard = () => {
           title="Recurso no encontrado"
           confirmText="Aceptar"
           onConfirm={() => setShowMissingModal(false)}
+          oneButton={true}
         >
           <p>
             No se encontró un recurso asociado al email {missingEmail || userEmail || "(desconocido)"}. Por favor, contacta con Recursos Humanos para dar de alta tu recurso en el sistema.
