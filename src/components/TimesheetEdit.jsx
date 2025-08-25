@@ -115,6 +115,7 @@ function TimesheetEdit({ headerId }) {
 
   const serverSnapshotRef = useRef({}); // Último estado confirmado por servidor por línea
   const [savingByLine, setSavingByLine] = useState({}); // { [id]: boolean }
+  const createdInitialLineRef = useRef(false); // Para crear 1 sola línea en /nuevo-parte
 
   // Estado para el modal de confirmación de navegación
   const [navigationModal, setNavigationModal] = useState({
@@ -1483,6 +1484,16 @@ function TimesheetEdit({ headerId }) {
 
     return newId;
   };
+
+  // Crear UNA línea vacía funcional al entrar en inserción ("/nuevo-parte")
+  useEffect(() => {
+    const isNewParte = location.pathname === "/nuevo-parte";
+    if (!isNewParte) return;
+    if (createdInitialLineRef.current) return;
+    if (Array.isArray(lines) && lines.length > 0) return;
+    const id = addEmptyLine();
+    if (id) createdInitialLineRef.current = true;
+  }, [location.pathname, lines]);
 
   // -- Buscar responsables de job
   const fetchJobResponsibles = async (jobNos) => {
