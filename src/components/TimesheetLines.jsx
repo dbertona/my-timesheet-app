@@ -317,28 +317,7 @@ export default function TimesheetLines({
     return !line.isFactorialLine; // Las líneas de Factorial no son editables
   };
 
-  // 🆕 Crear línea vacía local para asegurar alineación correcta
-  const emptyLine = useMemo(() => ({
-    id: "empty-line",
-    header_id: header?.id || editableHeader?.id,
-    job_no: "",
-    job_no_description: "",
-    job_task_no: "",
-    description: "",
-    work_type: "",
-    date: "",
-    quantity: 0,
-    department_code: header?.department_code || editableHeader?.department_code || "",
-    isFactorialLine: false
-  }), [header, editableHeader]);
-
-  // 🆕 Combinar líneas existentes con la línea vacía
-  const allLines = useMemo(() => {
-    const hasEmptyLine = safeLines.some(line =>
-      !line.job_no && !line.description && !line.work_type && !line.date && line.quantity === 0
-    );
-    return hasEmptyLine ? safeLines : [...safeLines, emptyLine];
-  }, [safeLines, emptyLine]);
+  // Eliminar línea ficticia: no agregar filas vacías automáticamente
 
 
 
@@ -390,8 +369,8 @@ export default function TimesheetLines({
         </thead>
 
         <tbody>
-          {/* Líneas existentes + línea vacía */}
-          {allLines.map((line, lineIndex) => (
+          {/* Líneas existentes */}
+          {safeLines.map((line, lineIndex) => (
             <tr key={line.id}>
               {/* 🆕 Columna de selección */}
               <td
@@ -725,39 +704,18 @@ export default function TimesheetLines({
                       <DecimalInput
                         name="quantity"
                         value={(() => {
-                          // 🆕 Manejar línea vacía
-                          if (line.id === "empty-line") {
-                            return editFormData[line.id]?.quantity || "";
-                          }
                           const q = editFormData[line.id]?.quantity;
                           if (typeof q === "number" || typeof q === "string") return q;
                           if (q && typeof q === "object" && "value" in q) return q.value;
                           return "";
                         })()}
                         onChange={({ target: { name, value } }) => {
-                          // 🆕 Si es línea vacía y se está editando, crear línea real
-                          if (line.id === "empty-line" && value.trim()) {
-                            if (addEmptyLine) {
-                              const newLineId = addEmptyLine();
-                              // Actualizar la nueva línea con el valor
-                              if (onLinesChange) {
-                                onLinesChange(newLineId, { quantity: value });
-                              }
-                            }
-                          } else {
-                            handleInputChange(line.id, { target: { name, value } });
-                          }
+                          handleInputChange(line.id, { target: { name, value } });
                         }}
                         onFocus={(e) => {
-                          if (line.id === "empty-line") {
-                            e.target.select();
-                          } else {
-                            handleInputFocus(line.id, "quantity", e);
-                          }
+                          handleInputFocus(line.id, "quantity", e);
                         }}
                         onBlur={({ target: { name, value } }) => {
-                          if (line.id === "empty-line") return;
-
                           const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
                           if (hasError) {
                             const el = inputRefs?.current?.[line.id]?.["quantity"];
@@ -768,18 +726,6 @@ export default function TimesheetLines({
                           else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
                         }}
                         onKeyDown={(e) => {
-                          if (line.id === "empty-line") {
-                            if (e.key === "Enter" || e.key === "Tab") {
-                              if (e.target.value.trim() && addEmptyLine) {
-                                const newLineId = addEmptyLine();
-                                if (onLinesChange) {
-                                  onLinesChange(newLineId, { quantity: e.target.value });
-                                }
-                              }
-                            }
-                            return;
-                          }
-
                           const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
                           if ((e.key === "Enter" || e.key === "Tab") && hasError) {
                             e.preventDefault();
