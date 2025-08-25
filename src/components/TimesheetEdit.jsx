@@ -2000,6 +2000,29 @@ function TimesheetEdit({ headerId }) {
             imputedSum={imputedSum}
             missingSum={missingSum}
             rightPadState={[rightPad, setRightPad]}
+            onDayClick={(iso) => {
+              try {
+                const display = toDisplayDate(iso);
+                const idx = lines.findIndex(l => toIsoFromInput(l.date) === iso);
+                if (idx !== -1) {
+                  const id = lines[idx].id;
+                  setTimeout(() => {
+                    const input = inputRefs.current?.[id]?.[TIMESHEET_FIELDS[0]];
+                    if (input) { input.focus(); input.select(); }
+                  }, 0);
+                  return;
+                }
+                const newId = addEmptyLine();
+                setEditFormData(prev => ({
+                  ...prev,
+                  [newId]: { ...(prev[newId] || {}), date: toDisplayDate(iso) }
+                }));
+                setTimeout(() => {
+                  const input = inputRefs.current?.[newId]?.[TIMESHEET_FIELDS[0]];
+                  if (input) { input.focus(); input.select(); }
+                }, 0);
+              } catch {}
+            }}
           />
             </div>
             </div>

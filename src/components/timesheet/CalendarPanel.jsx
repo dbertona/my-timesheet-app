@@ -13,6 +13,7 @@ export default function CalendarPanel({
   imputedSum,
   missingSum,
   rightPadState,
+  onDayClick,
 }) {
   const calendarBoxRef = useRef(null);
   const [rightPad, setRightPad] = rightPadState; // [value, setter] - mantenemos para compatibilidad
@@ -120,7 +121,12 @@ export default function CalendarPanel({
                 backgroundColor = undefined;
             }
             return (
-              <div key={day.iso} style={{ textAlign: "center" }} title={`${day.iso} • Req: ${day.need} • Imp: ${day.got}`}>
+              <div
+                key={day.iso}
+                style={{ textAlign: "center", cursor: "pointer" }}
+                title={`${day.iso} • Req: ${day.need} • Imp: ${day.got}`}
+                onClick={() => { if (typeof onDayClick === 'function') onDayClick(day.iso); }}
+              >
                 <div
                   style={{
                     display: "block",
