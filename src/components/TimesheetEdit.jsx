@@ -2003,24 +2003,50 @@ function TimesheetEdit({ headerId }) {
             onDayClick={(iso) => {
               try {
                 const display = toDisplayDate(iso);
+
+                const focusFirstAvailable = (lineId) => {
+                  const order = ["job_no", "date", "quantity", "work_type", "description"];
+                  setTimeout(() => {
+                    for (const key of order) {
+                      const el = inputRefs.current?.[lineId]?.[key];
+                      if (el && !el.disabled) { el.focus(); el.select?.(); return; }
+                    }
+                  }, 0);
+                };
+
+                // Si ya existe esa fecha
                 const idx = lines.findIndex(l => toIsoFromInput(l.date) === iso);
                 if (idx !== -1) {
                   const id = lines[idx].id;
-                  setTimeout(() => {
-                    const input = inputRefs.current?.[id]?.[TIMESHEET_FIELDS[0]];
-                    if (input) { input.focus(); input.select(); }
-                  }, 0);
+                  focusFirstAvailable(id);
                   return;
                 }
+
+                // Reutilizar una tmp- vacía si existe
+                const emptyTmp = (lines || []).find((l) => {
+                  const isTmp = String(l.id || "").startsWith("tmp-");
+                  const qty = Number(l.quantity) || 0;
+                  const noData = !(l.job_no || l.job_task_no || l.description || l.work_type || l.date);
+                  return isTmp && noData && qty === 0;
+                });
+
+                if (emptyTmp) {
+                  const id = emptyTmp.id;
+                  setEditFormData(prev => ({
+                    ...prev,
+                    [id]: { ...(prev[id] || {}), date: display }
+                  }));
+                  focusFirstAvailable(id);
+                  return;
+                }
+
+                // Crear nueva si no hay tmp vacía
                 const newId = addEmptyLine();
                 setEditFormData(prev => ({
                   ...prev,
-                  [newId]: { ...(prev[newId] || {}), date: toDisplayDate(iso) }
+                  [newId]: { ...(prev[newId] || {}), date: display }
                 }));
-                setTimeout(() => {
-                  const input = inputRefs.current?.[newId]?.[TIMESHEET_FIELDS[0]];
-                  if (input) { input.focus(); input.select(); }
-                }, 0);
+                focusFirstAvailable(newId);
               } catch {}
             }}
           />
