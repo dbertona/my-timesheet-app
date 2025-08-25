@@ -1497,6 +1497,17 @@ function TimesheetEdit({ headerId }) {
     if (id) createdInitialLineRef.current = true;
   }, [location.pathname, lines]);
 
+  // Crear UNA línea vacía funcional en edición si el parte no tiene líneas
+  useEffect(() => {
+    const isEditing = location.pathname !== "/nuevo-parte";
+    if (!isEditing) return;
+    if (!effectiveHeaderId) return; // sólo cuando ya tenemos header resuelto
+    if (createdInitialLineRef.current) return;
+    if (!Array.isArray(lines) || lines.length > 0) return;
+    const id = addEmptyLine();
+    if (id) createdInitialLineRef.current = true;
+  }, [location.pathname, effectiveHeaderId, lines]);
+
   // -- Buscar responsables de job
   const fetchJobResponsibles = async (jobNos) => {
     if (!jobNos || jobNos.length === 0) return {};
