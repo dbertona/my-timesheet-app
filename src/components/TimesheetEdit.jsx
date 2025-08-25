@@ -1508,6 +1508,24 @@ function TimesheetEdit({ headerId }) {
     if (id) createdInitialLineRef.current = true;
   }, [location.pathname, effectiveHeaderId, lines]);
 
+  // Garantizar SIEMPRE una línea vacía funcional al final
+  useEffect(() => {
+    // Evitar duplicar con el caso de nuevo parte sin líneas (se crea en el efecto anterior)
+    const isNewParte = location.pathname === "/nuevo-parte";
+    if (isNewParte && (!Array.isArray(lines) || lines.length === 0)) return;
+
+    const hasEmptyTmp = Array.isArray(lines) && lines.some((l) => {
+      const isTmp = String(l.id || "").startsWith("tmp-");
+      const qty = Number(l.quantity) || 0;
+      const noData = !(l.job_no || l.job_task_no || l.description || l.work_type || l.date);
+      return isTmp && noData && qty === 0;
+    });
+
+    if (Array.isArray(lines) && lines.length > 0 && !hasEmptyTmp) {
+      addEmptyLine();
+    }
+  }, [lines, location.pathname]);
+
   // -- Buscar responsables de job
   const fetchJobResponsibles = async (jobNos) => {
     if (!jobNos || jobNos.length === 0) return {};
