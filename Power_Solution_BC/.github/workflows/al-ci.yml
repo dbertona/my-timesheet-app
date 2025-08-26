@@ -41,7 +41,7 @@ jobs:
 
   compile:
     needs: validate
-    runs-on: windows-latest
+    runs-on: windows-2022
     env:
       BC_AUTHCONTEXT: ${{ secrets.BC_AUTHCONTEXT }}
     steps:
@@ -60,7 +60,7 @@ jobs:
 
       - name: Compilar AL con AL-Go Run-AlPipeline
         if: env.BC_AUTHCONTEXT != ''
-        uses: microsoft/AL-Go-Actions/Run-AlPipeline@v4
+        uses: microsoft/AL-Go-Actions/Run-AlPipeline@v5
         with:
           # Compilación contra un entorno SaaS usando Dev Endpoint (requiere secreto BC_AUTHCONTEXT)
           useDevEndpoint: true
