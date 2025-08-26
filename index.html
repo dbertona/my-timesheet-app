@@ -13,7 +13,16 @@
       rel="stylesheet"
     />
 
-    <title>Vite + React</title>
+    <title>Timesheet</title>
+    <script>
+      // Reparar rutas profundas en GitHub Pages: mantener navegación SPA
+      (function() {
+        var l = window.location;
+        if (l.pathname.startsWith('/my-timesheet-app/') && !l.hash && l.pathname !== '/my-timesheet-app/') {
+          l.replace('/my-timesheet-app/#' + l.pathname.replace('/my-timesheet-app/', '') + l.search + l.hash);
+        }
+      })();
+    </script>
   </head>
   <body class="font-sans">
     <div id="root"></div>
