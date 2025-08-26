@@ -48,7 +48,7 @@ export default function ProjectCell({
       candidates.forEach((j) => {
         if (j?.no) Promise.resolve(ensureTasksLoaded(j.no)).catch(() => {});
       });
-    } catch {}
+    } catch { /* ignore */ }
     // Dependemos del valor del filtro específico de esta línea para reaccionar
     // a los cambios que hace el usuario al escribir.
     // eslint-disable-next-line react-hooks/exhaustive-deps

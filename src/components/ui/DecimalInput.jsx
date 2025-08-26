@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { PLACEHOLDERS } from '../../constants/i18n';
 
 export default function DecimalInput({
