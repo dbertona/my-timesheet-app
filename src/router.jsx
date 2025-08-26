@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React from "react";
 import { createBrowserRouter, Outlet, useParams } from "react-router-dom";
 import LoginMicrosoft from "./components/LoginMicrosoft";

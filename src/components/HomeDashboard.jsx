@@ -5,16 +5,7 @@ import "../styles/HomeDashboard.css";
 import { supabaseClient } from "../supabaseClient";
 import BcModal from "./ui/BcModal";
 
-function firstDayOfMonth(d = new Date()) {
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
-function lastDayOfMonth(d = new Date()) {
-  return new Date(d.getFullYear(), d.getMonth() + 1, 0);
-}
-function toISODate(d) {
-  const z = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  return z.toISOString().slice(0, 10);
-}
+// Helper utilities removidos por no uso para cumplir lint
 
 const HomeDashboard = () => {
   const location = useLocation();

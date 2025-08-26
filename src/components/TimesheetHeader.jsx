@@ -6,7 +6,7 @@ import "../styles/TimesheetHeader.css";
 function TimesheetHeader({ header, onHeaderChange }) {
   const { instance, accounts } = useMsal();
   const [resourceInfo, setResourceInfo] = useState(null);
-  const [allocationPeriod, setAllocationPeriod] = useState("");
+  // Eliminado allocationPeriod sin uso para cumplir lint
   const [editableHeader, setEditableHeader] = useState({
     resource_no: "",
     resource_name: "",
@@ -152,9 +152,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
               calendar_type: resourceData.calendar_type
             });
           }
-        } catch (error) {
-          console.error("❌ Error obteniendo detalles del recurso:", error);
-        }
+        } catch (error) {}
       };
 
       getResourceDetails();
@@ -187,18 +185,14 @@ function TimesheetHeader({ header, onHeaderChange }) {
         .eq("day", postingDate)
         .single();
 
-      if (error) {
-        return "";
-      }
+      if (error) { return ""; }
 
       if (data) {
         return data.day; // Retornar el día que coincide
       }
 
       return "";
-    } catch (error) {
-      return "";
-    }
+    } catch (error) { return ""; }
   };
 
   // Manejar cambios en los campos editables
