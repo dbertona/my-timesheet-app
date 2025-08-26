@@ -8,7 +8,7 @@ import { supabaseClient } from "../supabaseClient";
 import useCalendarData from "../hooks/useCalendarData";
 import useTimesheetLines from "../hooks/useTimesheetLines";
 import useTimesheetEdit from "../hooks/useTimesheetEdit";
-import { useJobs, useAllJobs } from "../hooks/useTimesheetQueries";
+import { useAllJobs } from "../hooks/useTimesheetQueries";
 import TimesheetHeader from "./TimesheetHeader";
 import TimesheetLines from "./TimesheetLines";
 import CalendarPanel from "./timesheet/CalendarPanel";
@@ -58,7 +58,7 @@ function TimesheetEdit({ headerId }) {
   const [deletedLineIds, setDeletedLineIds] = useState([]); // 🆕 IDs de líneas eliminadas pendientes de borrar en BD
 
   // IDs de cabecera resueltos antes de usar hooks que dependen de ello
-  const [debugInfo, setDebugInfo] = useState({ ap: null, headerIdProp: headerId ?? null, headerIdResolved: null });
+  // debugInfo eliminado por no uso
   const [resolvedHeaderId, setResolvedHeaderId] = useState(null);
   const effectiveHeaderId = useMemo(
     () => resolvedHeaderId ?? header?.id ?? headerId ?? null,
@@ -141,22 +141,7 @@ function TimesheetEdit({ headerId }) {
   // Bandera para evitar múltiples modales
   const [isNavigating, setIsNavigating] = useState(false);
 
-  function parseAllocationPeriod(ap) {
-    const m = /^M(\d{2})-M(\d{2})$/.exec(ap || "");
-    if (!m) return null;
-    const yy = parseInt(m[1], 10);
-    const year = 2000 + yy;
-    const month = parseInt(m[2], 10); // 1..12
-    return { year, month };
-  }
-  function daysInMonth(year, month) { // month: 1..12
-    return new Date(year, month, 0).getDate();
-  }
-  function isoOf(y, m, d) {
-    const mm = String(m).padStart(2, "0");
-    const dd = String(d).padStart(2, "0");
-    return `${y}-${mm}-${dd}`;
-  }
+  // Helpers no usados eliminados (parseAllocationPeriod, daysInMonth, isoOf)
   function toIsoFromInput(value) {
     if (!value) return null;
     if (typeof value === "string" && value.includes("/")) {
@@ -191,16 +176,7 @@ function TimesheetEdit({ headerId }) {
     return Math.max(0, num).toFixed(2);
   };
 
-  const formatTimeAgo = (date) => {
-    if (!date) return "";
-    const secs = Math.floor((Date.now() - date.getTime()) / 1000);
-    if (secs < 5) return "Guardado ahora";
-    if (secs < 60) return `Guardado hace ${secs}s`;
-    const mins = Math.floor(secs / 60);
-    if (mins < 60) return `Guardado hace ${mins}m`;
-    const hrs = Math.floor(mins / 60);
-    return `Guardado hace ${hrs}h`;
-  };
+  // formatTimeAgo eliminado por no uso
 
   // Pequeño componente para mostrar totales del mes dentro del panel del calendario
   const TotalsForMonth = ({ dailyRequired, editFormData }) => {
@@ -1191,7 +1167,6 @@ function TimesheetEdit({ headerId }) {
 
       setHeader(headerData);
       setResolvedHeaderId(headerIdResolved);
-      setDebugInfo({ ap, headerIdProp: headerId ?? null, headerIdResolved, isNewParte });
 
 
 
