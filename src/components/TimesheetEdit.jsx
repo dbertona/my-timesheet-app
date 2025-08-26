@@ -87,8 +87,8 @@ function TimesheetEdit({ headerId }) {
   const jobsQuery = useAllJobs((header || editableHeader)?.resource_no);
   const jobs = jobsQuery.data || [];
   const [hasDailyErrors, setHasDailyErrors] = useState(false);
-  // 🆕 Estado para errores de validación de proyecto (Completed/Lost)
-  const [hasProjectValidationErrors, setHasProjectValidationErrors] = useState(false);
+  // Estado de validación de proyecto no usado actualmente
+  const [_hasProjectValidationErrors, _setHasProjectValidationErrors] = useState(false);
 
   // 🆕 Función para verificar si hay errores de validación de proyecto
   const checkProjectValidationErrors = useCallback(() => {
@@ -139,7 +139,7 @@ function TimesheetEdit({ headerId }) {
   });
 
   // Bandera para evitar múltiples modales
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [_isNavigating, _setIsNavigating] = useState(false);
 
   // Helpers no usados eliminados (parseAllocationPeriod, daysInMonth, isoOf)
   function toIsoFromInput(value) {

@@ -1,5 +1,5 @@
 // src/components/TimesheetLines.jsx
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 import { parseDate, formatDate } from "../utils/dateHelpers";
 import useColumnResize from "../hooks/useColumnResize";
@@ -31,18 +31,18 @@ export default function TimesheetLines({
   calendarHolidays,
   scheduleAutosave,
   saveLineNow,
-  savingByLine,
+  savingByLine: _savingByLine,
   onLinesChange,
-  onLineDelete,
-  onLineAdd,
-  markAsChanged,
-  addEmptyLine, // 🆕 Función para agregar línea vacía
+  onLineDelete: _onLineDelete,
+  onLineAdd: _onLineAdd,
+  markAsChanged: _markAsChanged,
+  addEmptyLine: _addEmptyLine, // 🆕 Función para agregar línea vacía
   handleKeyDown,
   handleInputChange: parentHandleInputChange, // ✅ Recibir función del padre
   onLineSelectionChange, // 🆕 Nueva función para manejar selección
   selectedLines = [], // 🆕 Array de IDs de líneas seleccionadas
-  onDuplicateLines, // 🆕 Función para duplicar líneas seleccionadas
-  onDeleteLines, // 🆕 Función para borrar líneas seleccionadas
+  onDuplicateLines: _onDuplicateLines, // 🆕 Función para duplicar líneas seleccionadas
+  onDeleteLines: _onDeleteLines, // 🆕 Función para borrar líneas seleccionadas
 }) {
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
     TIMESHEET_FIELDS,
@@ -65,11 +65,7 @@ export default function TimesheetLines({
   const getAlign = (key) => (TIMESHEET_ALIGN?.[key] || "left");
 
   // Función para identificar si una columna es editable
-  const isColumnEditable = (colKey) => {
-    // Columnas NO editables
-    const nonEditableColumns = ["job_no_description", "department_code"];
-    return !nonEditableColumns.includes(colKey);
-  };
+  // isColumnEditable eliminado (no usado)
 
 
   // ===============================
@@ -155,7 +151,6 @@ export default function TimesheetLines({
     const v = String(val).trim().toLowerCase();
     return (workTypes || []).find((wt) => wt?.toLowerCase() === v) || null;
   };
-  const isValidWorkType = (val) => !!findWorkType(val);
 
   // Helpers de validación/normalización para Proyecto y Tarea
   const findJob = (val) => {
@@ -163,7 +158,6 @@ export default function TimesheetLines({
     const v = String(val).trim().toLowerCase();
     return jobs.find((j) => j.no?.toLowerCase() === v) || null;
   };
-  const isValidJobNo = (val) => !!findJob(val);
 
   const findTask = (jobNo, val) => {
     if (!jobNo || !val) return null;
@@ -171,7 +165,6 @@ export default function TimesheetLines({
     const v = String(val).trim().toLowerCase();
     return list.find((t) => t.no?.toLowerCase() === v) || null;
   };
-  const isValidTaskNo = (jobNo, val) => !!findTask(jobNo, val);
 
   // Errores locales para validación de Proyecto/Tarea
   const [localErrors, setLocalErrors] = useState({}); // { [lineId]: { job_no?: string, job_task_no?: string } }
