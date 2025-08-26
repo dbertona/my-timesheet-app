@@ -2333,10 +2333,8 @@ function TimesheetEdit({ headerId }) {
         onContinueAnyway={() => {
           // Cerrar modal y continuar con el guardado (solo advertencias)
           setValidationModal({ show: false, validation: null });
-
-          // Ejecutar guardado sin validación (ya sabemos que solo hay advertencias)
-          setIsSaving(true);
-          executeSaveWithoutValidation();
+          // Continuar con guardado estándar
+          saveAllChanges();
         }}
       />
 

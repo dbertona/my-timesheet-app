@@ -1,7 +1,7 @@
 // src/components/TimesheetLines.jsx
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
-import { parseDate, formatDate } from "../utils/dateHelpers";
+// dateHelpers no usados aquí
 import useColumnResize from "../hooks/useColumnResize";
 import { supabaseClient } from "../supabaseClient";
 import { useJobs, useWorkTypes } from "../hooks/useTimesheetQueries";
