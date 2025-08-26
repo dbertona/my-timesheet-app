@@ -38,29 +38,29 @@ export default function BcModal({
 
   return (
     <div className="ts-modal-overlay" onClick={onClose}>
-      <div 
-        className={`ts-modal ${sizeClasses[size]}`} 
+      <div
+        className={`ts-modal ${sizeClasses[size]}`}
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
           <h3>{title}</h3>
         )}
-        
+
         <div className="ts-modal-content">
           {children}
         </div>
 
         {showActions && (
           <div className="ts-modal-actions">
-            <button 
-              onClick={handleConfirm} 
+            <button
+              onClick={handleConfirm}
               className={`ts-btn ts-btn--${confirmButtonType}`}
             >
               {confirmText}
             </button>
             {!oneButton && (
-              <button 
-                onClick={handleCancel} 
+              <button
+                onClick={handleCancel}
                 className="ts-btn ts-btn--secondary"
               >
                 {cancelText}

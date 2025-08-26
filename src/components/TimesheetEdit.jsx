@@ -1146,13 +1146,36 @@ function TimesheetEdit({ headerId }) {
         headerData = h || null;
       } else if (!isNewParte) {
         // 🆕 Solo buscar por allocation_period si NO estamos en modo "nuevo parte"
-        const { data: h, error: headerErr } = await supabaseClient
+        // Determinar el recurso actual por email (MSAL)
+        let currentResourceNo = null;
+        try {
+          let userEmail = "";
+          try {
+            const acct = instance.getActiveAccount() || accounts[0];
+            userEmail = acct?.username || acct?.email || "";
+          } catch {}
+          if (userEmail) {
+            const { data: r } = await supabaseClient
+              .from("resource")
+              .select("code")
+              .eq("email", userEmail)
+              .maybeSingle();
+            currentResourceNo = r?.code || null;
+          }
+        } catch {}
+
+        const query = supabaseClient
           .from("resource_timesheet_header")
           .select("*")
           .eq("allocation_period", ap)
           .order("id", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .limit(1);
+
+        if (currentResourceNo) {
+          query.eq("resource_no", currentResourceNo);
+        }
+
+        const { data: h, error: headerErr } = await query.maybeSingle();
         if (headerErr) {
           console.error("Error cargando cabecera por allocation_period:", headerErr);
           toast.error("No se encontró cabecera para el período");
@@ -1262,14 +1285,22 @@ function TimesheetEdit({ headerId }) {
       const qty = Number(l.quantity) || 0;
       return hasData || qty !== 0; // mantener solo si tiene datos o cantidad distinta de 0
     });
-    setLines(filtered);
-    const initialEditData = {};
-    filtered.forEach((line) => {
-      initialEditData[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
-    });
-    setEditFormData(initialEditData);
 
-    // Snapshot base para detectar cambios por campo (comparación en espacio DB)
+    // 🆕 Conservar líneas temporales locales (tmp-) cuando actualizamos desde servidor
+    const localTmp = (Array.isArray(lines) ? lines : []).filter((l) => String(l.id || "").startsWith("tmp-"));
+    const merged = [...localTmp, ...filtered];
+    setLines(merged);
+
+    // Inicializar/actualizar editFormData solo con las líneas del servidor y respetar tmp existentes
+    setEditFormData((prev) => {
+      const next = { ...prev };
+      filtered.forEach((line) => {
+        next[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
+      });
+      return next;
+    });
+
+    // Snapshot base para detectar cambios por campo (comparación en espacio DB) - solo servidor
     const snap = {};
     filtered.forEach((line) => {
       snap[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };

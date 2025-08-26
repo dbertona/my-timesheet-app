@@ -116,14 +116,48 @@ const HomeDashboard = () => {
   }, [userEmail]);
 
   const now = new Date();
-  const yy = String(now.getFullYear()).slice(-2);
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const allocationPeriod = `M${yy}-M${mm}`;
+  const yy = String(now.getFullYear()).slice(-2); // e.g. "25"
+  const mm = String(now.getMonth() + 1).padStart(2, "0"); // e.g. "08"
+  const allocationPeriod = `M${yy}-M${mm}`; // e.g. M25-M08
   const goToEditParte = () => {
     navigate(`/editar-parte?allocation_period=${allocationPeriod}`);
   };
   const goToNuevoParte = () => {
     navigate(`/nuevo-parte?allocation_period=${allocationPeriod}`);
+  };
+
+  const navigateToParteActual = async () => {
+    try {
+      // Determinar recurso del usuario
+      let email = "";
+      try {
+        const acct = instance.getActiveAccount() || accounts[0];
+        email = acct?.username || acct?.email || "";
+      } catch {}
+      let resourceNo = null;
+      if (email) {
+        const { data: r } = await supabaseClient
+          .from("resource")
+          .select("code")
+          .eq("email", email)
+          .maybeSingle();
+        resourceNo = r?.code || null;
+      }
+      if (!resourceNo) {
+        // Si no determinamos recurso, ir a nuevo parte (creará guard/modal si falta)
+        goToNuevoParte();
+        return;
+      }
+      const { data: h } = await supabaseClient
+        .from("resource_timesheet_header")
+        .select("id")
+        .eq("resource_no", resourceNo)
+        .eq("allocation_period", allocationPeriod)
+        .maybeSingle();
+      if (h?.id) goToEditParte(); else goToNuevoParte();
+    } catch {
+      goToNuevoParte();
+    }
   };
 
   const handleLogout = async () => {
@@ -246,8 +280,8 @@ const HomeDashboard = () => {
           className="bc-card dashboard-card"
           role="button"
           tabIndex={0}
-          onClick={goToEditParte}
-          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && goToEditParte()}
+          onClick={navigateToParteActual}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigateToParteActual()}
         >
           <h3 className="bc-card__title">Horas pendientes de imputar este mes</h3>
           <div className="bc-card__value">
