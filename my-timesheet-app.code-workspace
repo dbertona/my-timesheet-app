@@ -1,0 +1,17 @@
+{
+  "folders": [
+    { "path": ".", "name": "MY-TIMESHEET-APP" },
+    { "path": "Power_Solution_BC", "name": "Power_Solution_BC" }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/.alpackages": true,
+      "**/*.app": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-dynamics-smb.al"
+    ]
+  }
+}

@@ -1,0 +1,87 @@
+{
+    "id": "55231412-a787-4372-8f39-93f8ade34c13",
+    "name": "Power_Solution_BC",
+    "publisher": "Power Solution",
+    "version": "1.0.2.73",
+    "brief": "This extension provides advanced personalitation for PS.",
+    "description": "This extension provides advanced personalitation for PS.",
+    "privacyStatement": "http://www.mycompany.com/privacy",
+    "EULA": "http://www.mycompany.com/EULA",
+    "help": "http://www.mycompany.com/EULA",
+    "url": "http://www.mycompany.com/EULA",
+    "contextSensitiveHelpUrl": "http://www.mycompany.com/help/myextension",
+    "logo": "PS Logo OFICIAL.png",
+    "applicationInsightsConnectionString": "InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://placeholder.applicationinsights.azure.com/",
+    "dependencies": [
+        {
+            "id": "7d980206-ba23-464e-9623-0d5e8541986a",
+            "publisher": "ARBENTIA CONSULTING, S.L.",
+            "name": "ARBENTIA Project Management",
+            "version": "1.0.1.7"
+        },
+        {
+            "id": "5247c7b6-10be-44c7-8b18-98ec64cf6278",
+            "publisher": "ARBENTIA CONSULTING, S.L.",
+            "name": "ARBENTIA Extension Management",
+            "version": "1.0.0.11"
+        },
+        {
+            "id": "116b0113-a242-4151-94a4-17752be0be13",
+            "publisher": "ARBENTIA CONSULTING, S.L.",
+            "name": "BC_POWERSOLUTION",
+            "version": "1.0.0.47"
+        },
+        {
+            "id": "d50afbbf-aff3-4dac-bce7-8686b375b994",
+            "publisher": "Insight Works",
+            "name": "DocXtender",
+            "version": " 2.1.8635.2"
+        }
+    ],
+    "screenshots": [],
+    "platform": "1.0.0.0",
+    "application": "25.0.0.0",
+    "idRanges": [
+        {
+            "from": 50000,
+            "to": 50199
+        },
+        {
+            "from": 50200,
+            "to": 50299
+        },
+        {
+            "from": 50300,
+            "to": 50399
+        },
+        {
+            "from": 50400,
+            "to": 50499
+        },
+        {
+            "from": 50700,
+            "to": 50799
+        },
+        {
+            "from": 50900,
+            "to": 50999
+        },
+        {
+            "from": 51000,
+            "to": 51199
+        },
+        {
+            "from": 59000,
+            "to": 59199
+        }
+    ],
+    "resourceExposurePolicy": {
+        "allowDebugging": true,
+        "allowDownloadingSource": false,
+        "includeSourceInSymbolFile": true
+    },
+    "runtime": "15.2",
+    "features": [
+        "TranslationFile"
+    ]
+}

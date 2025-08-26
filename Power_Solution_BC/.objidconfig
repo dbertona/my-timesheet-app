@@ -1,0 +1,39 @@
+{
+  "idRanges": [
+    {
+      "from": 50000,
+      "to": 50199,
+      "description": "From 50000 to 50199"
+    },
+    {
+      "from": 50200,
+      "to": 50299,
+      "description": "From 50200 to 50299"
+    },
+    {
+      "from": 50300,
+      "to": 50399,
+      "description": "From 50300 to 50399"
+    },
+    {
+      "from": 50400,
+      "to": 50499,
+      "description": "From 50400 to 50499"
+    },
+    {
+      "from": 50700,
+      "to": 50799,
+      "description": "From 50700 to 50799"
+    },
+    {
+      "from": 50900,
+      "to": 50999,
+      "description": "From 50900 to 50999"
+    },
+    {
+      "from": 51000,
+      "to": 51199,
+      "description": "From 51000 to 51199"
+    }
+  ]
+}

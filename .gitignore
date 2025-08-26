@@ -32,3 +32,12 @@ dist/
 .env.*
 src/scripts/bc-sync/.env
 src/scripts/bc-sync/*.env
+
+# AL project ignores
+Power_Solution_BC/.alpackages/
+Power_Solution_BC/**/*.app
+Power_Solution_BC/.snapshots/
+Power_Solution_BC/.history/
+
+# Ignore external symlink
+al-external
