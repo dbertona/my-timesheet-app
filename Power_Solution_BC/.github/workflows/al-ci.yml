@@ -39,3 +39,33 @@ jobs:
             app.json
             Translations/**
 
+  compile:
+    needs: validate
+    runs-on: windows-latest
+    env:
+      BC_AUTHCONTEXT: ${{ secrets.BC_AUTHCONTEXT }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Mostrar entorno
+        run: |
+          echo "Runner: %RUNNER_OS%"
+          echo "Branch: $env:GITHUB_REF"
+        shell: pwsh
+
+      - name: Omitir compilación si no hay secretos
+        if: env.BC_AUTHCONTEXT == ''
+        run: echo "Sin secreto BC_AUTHCONTEXT configurado. Se omite compilación AL."
+
+      - name: Compilar AL con AL-Go Run-AlPipeline
+        if: env.BC_AUTHCONTEXT != ''
+        uses: microsoft/AL-Go-Actions/Run-AlPipeline@v4
+        with:
+          # Compilación contra un entorno SaaS usando Dev Endpoint (requiere secreto BC_AUTHCONTEXT)
+          useDevEndpoint: true
+          authContext: ${{ secrets.BC_AUTHCONTEXT }}
+          appFolders: '.'
+          doNotRunTests: true
+          doNotPublishArtifacts: true
+
