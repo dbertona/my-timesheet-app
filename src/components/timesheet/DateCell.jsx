@@ -22,8 +22,12 @@ export default function DateCell({
   handleKeyDown,
 }) {
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(parseDate(editFormData[line.id]?.date) || new Date());
-  const [currentMonth, setCurrentMonth] = useState(parseDate(editFormData[line.id]?.date) || new Date());
+  const [selectedDate, setSelectedDate] = useState(
+    parseDate(editFormData[line.id]?.date) || new Date(),
+  );
+  const [currentMonth, setCurrentMonth] = useState(
+    parseDate(editFormData[line.id]?.date) || new Date(),
+  );
   const calendarRef = useRef(null);
 
   // Cerrar calendario al hacer clic fuera
@@ -35,17 +39,18 @@ export default function DateCell({
     };
 
     if (calendarOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [calendarOpen]);
 
   // Re-renderizar cuando cambie el período para actualizar validación
   useEffect(() => {
-    const effectivePeriod = header?.allocation_period || editableHeader?.allocation_period;
+    const effectivePeriod =
+      header?.allocation_period || editableHeader?.allocation_period;
 
     if (effectivePeriod) {
       const period = effectivePeriod;
@@ -137,7 +142,7 @@ export default function DateCell({
 
   // Cambiar mes del calendario
   const changeMonth = (delta) => {
-    setCurrentMonth(prev => {
+    setCurrentMonth((prev) => {
       const newMonth = new Date(prev);
       newMonth.setMonth(newMonth.getMonth() + delta);
       return newMonth;
@@ -147,7 +152,9 @@ export default function DateCell({
   // Seleccionar fecha
   const handleDateSelect = (date) => {
     const formattedDate = formatDate(date);
-    handleInputChange(line.id, { target: { name: 'date', value: formattedDate } });
+    handleInputChange(line.id, {
+      target: { name: "date", value: formattedDate },
+    });
     setSelectedDate(date);
     setCalendarOpen(false);
   };
@@ -170,8 +177,18 @@ export default function DateCell({
 
   const days = generateDays();
   const monthNames = [
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
   ];
 
   // ==========================
@@ -228,26 +245,41 @@ export default function DateCell({
             type="text"
             name="date"
             value={editFormData[line.id]?.date || ""}
-            onChange={(e) => !disabled && handleInputChange(line.id, { target: { name: 'date', value: e.target.value } })}
+            onChange={(e) =>
+              !disabled &&
+              handleInputChange(line.id, {
+                target: { name: "date", value: e.target.value },
+              })
+            }
             onBlur={(e) => {
               if (disabled) return;
-              const normalized = normalizeDisplayDate(e.target.value) || e.target.value;
-              handleInputChange(line.id, { target: { name: 'date', value: normalized } });
+              const normalized =
+                normalizeDisplayDate(e.target.value) || e.target.value;
+              handleInputChange(line.id, {
+                target: { name: "date", value: normalized },
+              });
             }}
-            onFocus={(e) => !disabled && handleInputFocus && handleInputFocus(line.id, "date", e)}
+            onFocus={(e) =>
+              !disabled &&
+              handleInputFocus &&
+              handleInputFocus(line.id, "date", e)
+            }
             onKeyDown={(e) => {
               if (disabled) return;
               if (e.key === "Enter" || e.key === "Tab") {
                 const normalized = normalizeDisplayDate(e.currentTarget.value);
                 if (normalized) {
                   e.preventDefault();
-                  handleInputChange(line.id, { target: { name: 'date', value: normalized } });
+                  handleInputChange(line.id, {
+                    target: { name: "date", value: normalized },
+                  });
                 }
               }
-              handleKeyDown && handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("date"));
+              handleKeyDown &&
+                handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("date"));
             }}
             ref={hasRefs ? (el) => setSafeRef(line.id, "date", el) : null}
-            className={`ts-input pr-icon ${disabled ? 'ts-input-factorial' : ''}`}
+            className={`ts-input pr-icon ${disabled ? "ts-input-factorial" : ""}`}
             autoComplete="off"
             disabled={disabled}
             style={{
@@ -279,7 +311,8 @@ export default function DateCell({
                     ‹
                   </button>
                   <span className="ts-calendar-month">
-                    {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                    {monthNames[currentMonth.getMonth()]}{" "}
+                    {currentMonth.getFullYear()}
                   </span>
                   <button
                     type="button"
@@ -305,9 +338,13 @@ export default function DateCell({
                 {/* Días del mes */}
                 <div className="ts-calendar-days">
                   {days.map((date, index) => {
-                    const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
-                    const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
-                    const isToday = date.toDateString() === new Date().toDateString();
+                    const isCurrentMonth =
+                      date.getMonth() === currentMonth.getMonth();
+                    const isSelected =
+                      selectedDate &&
+                      date.toDateString() === selectedDate.toDateString();
+                    const isToday =
+                      date.toDateString() === new Date().toDateString();
                     const isHolidayDate = isHoliday(date);
                     const inRange = isInRange(date);
                     const canSelect = inRange && !isHolidayDate;
@@ -317,15 +354,11 @@ export default function DateCell({
                         key={index}
                         type="button"
                         className={`ts-calendar-day ${
-                          !isCurrentMonth ? 'ts-calendar-day--outside' : ''
-                        } ${
-                          isSelected ? 'ts-calendar-day--selected' : ''
-                        } ${
-                          isToday ? 'ts-calendar-day--today' : ''
-                        } ${
-                          isHolidayDate ? 'ts-calendar-day--holiday' : ''
-                        } ${
-                          !canSelect ? 'ts-calendar-day--disabled' : ''
+                          !isCurrentMonth ? "ts-calendar-day--outside" : ""
+                        } ${isSelected ? "ts-calendar-day--selected" : ""} ${
+                          isToday ? "ts-calendar-day--today" : ""
+                        } ${isHolidayDate ? "ts-calendar-day--holiday" : ""} ${
+                          !canSelect ? "ts-calendar-day--disabled" : ""
                         }`}
                         onClick={() => canSelect && handleDateSelect(date)}
                         disabled={!canSelect}

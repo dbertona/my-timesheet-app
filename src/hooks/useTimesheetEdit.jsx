@@ -6,12 +6,12 @@ import { formatDate, parseDate } from "../utils/dateHelpers";
 export default function useTimesheetEdit({
   header,
   lines,
-  editFormData,       // necesario para F8/validaciones
+  editFormData, // necesario para F8/validaciones
   setEditFormData,
   setErrors,
   calendarHolidays,
-  addEmptyLine,       // función sincrónica del padre: crea línea local y devuelve id
-  markAsChanged,      // función para marcar cambios no guardados
+  addEmptyLine, // función sincrónica del padre: crea línea local y devuelve id
+  markAsChanged, // función para marcar cambios no guardados
 }) {
   const inputRefs = useRef({});
   const selectionRef = useRef({ lineId: null, field: null, start: 0, end: 0 });
@@ -53,19 +53,29 @@ export default function useTimesheetEdit({
     const curYYYY = String(today.getFullYear());
 
     const onlyDigits = raw.replace(/[^\d]/g, "");
-    const parts = raw.split("/").map((p) => p.trim()).filter(Boolean);
+    const parts = raw
+      .split("/")
+      .map((p) => p.trim())
+      .filter(Boolean);
 
     // Con separadores: d/m(/y)
     if (raw.includes("/")) {
       let [d, m, y] = [parts[0] || "", parts[1] || "", parts[2] || ""];
-      if (d && !m && !y) { m = curMM; y = curYYYY; }
-      else if (d && m && !y) { y = curYYYY; }
+      if (d && !m && !y) {
+        m = curMM;
+        y = curYYYY;
+      } else if (d && m && !y) {
+        y = curYYYY;
+      }
 
       if (d) d = String(parseInt(d, 10)).padStart(2, "0");
       if (m) m = String(parseInt(m, 10)).padStart(2, "0");
       if (y && y.length === 2) {
         const yy = parseInt(y, 10);
-        y = yy <= 69 ? `20${String(yy).padStart(2, "0")}` : `19${String(yy).padStart(2, "0")}`;
+        y =
+          yy <= 69
+            ? `20${String(yy).padStart(2, "0")}`
+            : `19${String(yy).padStart(2, "0")}`;
       } else if (!y) y = curYYYY;
 
       if (d && m && y.length === 4) return `${d}/${m}/${y}`;
@@ -92,7 +102,10 @@ export default function useTimesheetEdit({
         const d = String(parseInt(onlyDigits.slice(0, 2), 10)).padStart(2, "0");
         const m = String(parseInt(onlyDigits.slice(2, 4), 10)).padStart(2, "0");
         const yy = parseInt(onlyDigits.slice(4, 6), 10);
-        const y = yy <= 69 ? `20${String(yy).padStart(2, "0")}` : `19${String(yy).padStart(2, "0")}`;
+        const y =
+          yy <= 69
+            ? `20${String(yy).padStart(2, "0")}`
+            : `19${String(yy).padStart(2, "0")}`;
         return `${d}/${m}/${y}`;
       }
     }
@@ -207,13 +220,23 @@ export default function useTimesheetEdit({
   const handleInputFocus = (lineId, field, e) => {
     // Registrar foco actual para que F8 global y la navegación sepan dónde estamos
     const start = e?.target?.selectionStart ?? 0;
-    const end = e?.target?.selectionEnd ?? (e?.target?.value?.length ?? 0);
+    const end = e?.target?.selectionEnd ?? e?.target?.value?.length ?? 0;
     selectionRef.current = { lineId, field, start, end };
     const sel = selectionRef.current;
     if (sel.lineId === lineId && sel.field === field) {
-      setTimeout(() => { try { e.target.setSelectionRange(sel.start, sel.end); } catch {} }, 0);
+      setTimeout(() => {
+        try {
+          e.target.setSelectionRange(sel.start, sel.end);
+        } catch {
+          /* ignore */
+        }
+      }, 0);
     } else {
-      try { e.target.select(); } catch {}
+      try {
+        e.target.select();
+      } catch {
+        /* ignore */
+      }
     }
   };
 
@@ -229,14 +252,14 @@ export default function useTimesheetEdit({
         const field = TIMESHEET_FIELDS[fieldIndex];
         const valueAbove = editFormData?.[prevLineId]?.[field] ?? "";
 
-        console.log('🔍 F8 DEBUG:', {
+        console.log("🔍 F8 DEBUG:", {
           lineIndex,
           fieldIndex,
           field,
           currentLineId,
           prevLineId,
           valueAbove,
-          currentValue: editFormData?.[currentLineId]?.[field]
+          currentValue: editFormData?.[currentLineId]?.[field],
         });
 
         setEditFormData((prev) => ({
@@ -245,7 +268,7 @@ export default function useTimesheetEdit({
         }));
 
         // Marcar como cambiado
-        if (typeof markAsChanged === 'function') {
+        if (typeof markAsChanged === "function") {
           markAsChanged();
         }
 
@@ -261,7 +284,14 @@ export default function useTimesheetEdit({
       return;
     }
 
-    const isNav = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab", "Enter"].includes(key);
+    const isNav = [
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight",
+      "Tab",
+      "Enter",
+    ].includes(key);
     if (!isNav) return;
 
     // Si estamos en "date", expandimos y validamos antes de movernos
@@ -294,7 +324,10 @@ export default function useTimesheetEdit({
       nextLineIndex = lineIndex > 0 ? lineIndex - 1 : lines.length - 1;
     } else if (key === "ArrowDown") {
       // si es la última fila, crear nueva y enfocar MISMA columna
-      if (lineIndex === lines.length - 1 && typeof addEmptyLine === "function") {
+      if (
+        lineIndex === lines.length - 1 &&
+        typeof addEmptyLine === "function"
+      ) {
         const newId = addEmptyLine();
         const colName = TIMESHEET_FIELDS[fieldIndex]; // misma columna
         setTimeout(() => {
@@ -309,15 +342,20 @@ export default function useTimesheetEdit({
         nextLineIndex = lineIndex + 1;
       }
     } else if (key === "ArrowLeft") {
-      nextFieldIndex = fieldIndex > 0 ? fieldIndex - 1 : TIMESHEET_FIELDS.length - 1;
+      nextFieldIndex =
+        fieldIndex > 0 ? fieldIndex - 1 : TIMESHEET_FIELDS.length - 1;
       if (nextFieldIndex === TIMESHEET_FIELDS.length - 1) {
         nextLineIndex = lineIndex > 0 ? lineIndex - 1 : lines.length - 1;
       }
     } else if (key === "ArrowRight" || key === "Tab" || key === "Enter") {
-      nextFieldIndex = fieldIndex < TIMESHEET_FIELDS.length - 1 ? fieldIndex + 1 : 0;
+      nextFieldIndex =
+        fieldIndex < TIMESHEET_FIELDS.length - 1 ? fieldIndex + 1 : 0;
       if (nextFieldIndex === 0) {
         // hemos envuelto a la primera columna → bajar de fila
-        if (lineIndex === lines.length - 1 && typeof addEmptyLine === "function") {
+        if (
+          lineIndex === lines.length - 1 &&
+          typeof addEmptyLine === "function"
+        ) {
           const newId = addEmptyLine();
           const firstCol = TIMESHEET_FIELDS[0]; // al tabular pasa a la primera columna
           setTimeout(() => {
@@ -345,18 +383,25 @@ export default function useTimesheetEdit({
     let attempts = 0;
     const maxAttempts = TIMESHEET_FIELDS.length; // Evitar bucle infinito
 
-    while (!isColumnEditable(TIMESHEET_FIELDS[nextFieldIndex]) && attempts < maxAttempts) {
+    while (
+      !isColumnEditable(TIMESHEET_FIELDS[nextFieldIndex]) &&
+      attempts < maxAttempts
+    ) {
       if (key === "ArrowLeft") {
         // Ir a la columna anterior
-        nextFieldIndex = nextFieldIndex > 0 ? nextFieldIndex - 1 : TIMESHEET_FIELDS.length - 1;
+        nextFieldIndex =
+          nextFieldIndex > 0 ? nextFieldIndex - 1 : TIMESHEET_FIELDS.length - 1;
         if (nextFieldIndex === TIMESHEET_FIELDS.length - 1) {
-          nextLineIndex = nextLineIndex > 0 ? nextLineIndex - 1 : lines.length - 1;
+          nextLineIndex =
+            nextLineIndex > 0 ? nextLineIndex - 1 : lines.length - 1;
         }
       } else if (key === "ArrowRight" || key === "Tab" || key === "Enter") {
         // Ir a la columna siguiente
-        nextFieldIndex = nextFieldIndex < TIMESHEET_FIELDS.length - 1 ? nextFieldIndex + 1 : 0;
+        nextFieldIndex =
+          nextFieldIndex < TIMESHEET_FIELDS.length - 1 ? nextFieldIndex + 1 : 0;
         if (nextFieldIndex === 0) {
-          nextLineIndex = nextLineIndex < lines.length - 1 ? nextLineIndex + 1 : 0;
+          nextLineIndex =
+            nextLineIndex < lines.length - 1 ? nextLineIndex + 1 : 0;
         }
       }
       attempts++;
@@ -365,10 +410,12 @@ export default function useTimesheetEdit({
     // Después de saltar columnas no editables: si estamos en última fila y
     // el movimiento por Enter/Tab/ArrowRight termina en la primera columna,
     // crear una nueva línea y enfocar `job_no` en esa nueva línea.
-    if ((key === "ArrowRight" || key === "Tab" || key === "Enter") &&
-        lineIndex === lines.length - 1 &&
-        nextFieldIndex === 0 &&
-        typeof addEmptyLine === "function") {
+    if (
+      (key === "ArrowRight" || key === "Tab" || key === "Enter") &&
+      lineIndex === lines.length - 1 &&
+      nextFieldIndex === 0 &&
+      typeof addEmptyLine === "function"
+    ) {
       const newId = addEmptyLine();
       const firstCol = TIMESHEET_FIELDS[0];
       setTimeout(() => {
@@ -387,7 +434,12 @@ export default function useTimesheetEdit({
     if (nextInput) {
       nextInput.focus();
       nextInput.select();
-      selectionRef.current = { lineId: nextLineId, field: nextFieldName, start: 0, end: nextInput.value.length };
+      selectionRef.current = {
+        lineId: nextLineId,
+        field: nextFieldName,
+        start: 0,
+        end: nextInput.value.length,
+      };
     }
   };
 
@@ -404,19 +456,30 @@ export default function useTimesheetEdit({
       const valueAbove = editFormData?.[prevId]?.[current.field] ?? "";
       setEditFormData((prev) => ({
         ...prev,
-        [current.lineId]: { ...prev[current.lineId], [current.field]: valueAbove },
+        [current.lineId]: {
+          ...prev[current.lineId],
+          [current.field]: valueAbove,
+        },
       }));
       // marcar cambios
-      if (typeof markAsChanged === 'function') {
+      if (typeof markAsChanged === "function") {
         markAsChanged();
       }
       // re-enfocar la celda activa si existe
       const input = inputRefs.current?.[current.lineId]?.[current.field];
-      if (input) setTimeout(() => { try { input.focus(); input.select(); } catch {} }, 0);
+      if (input)
+        setTimeout(() => {
+          try {
+            input.focus();
+            input.select();
+          } catch {
+            /* ignore */
+          }
+        }, 0);
     };
-    window.addEventListener('keydown', onGlobalKey);
-    return () => window.removeEventListener('keydown', onGlobalKey);
-  }, [lines, editFormData, markAsChanged]);
+    window.addEventListener("keydown", onGlobalKey);
+    return () => window.removeEventListener("keydown", onGlobalKey);
+  }, [lines, editFormData, markAsChanged, setEditFormData]);
 
   return {
     inputRefs,

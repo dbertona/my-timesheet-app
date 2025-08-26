@@ -16,10 +16,15 @@ export default function EnsureResource() {
       try {
         const acct = instance.getActiveAccount() || accounts[0];
         userEmail = acct?.username || acct?.email || "";
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       if (!userEmail) {
         setExists(false);
-        navigate("/", { replace: true, state: { modal: "resource-missing", email: "" } });
+        navigate("/", {
+          replace: true,
+          state: { modal: "resource-missing", email: "" },
+        });
         return;
       }
       const { data } = await supabaseClient
@@ -29,7 +34,10 @@ export default function EnsureResource() {
         .maybeSingle();
       if (!data) {
         setExists(false);
-        navigate("/", { replace: true, state: { modal: "resource-missing", email: userEmail } });
+        navigate("/", {
+          replace: true,
+          state: { modal: "resource-missing", email: userEmail },
+        });
         return;
       }
       setExists(true);

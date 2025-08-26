@@ -20,8 +20,13 @@ ReactDOM.createRoot(root).render(
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
         <Toaster position="top-center" gutter={8} />
-        {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" /> : null}
+        {import.meta.env.DEV ? (
+          <ReactQueryDevtools
+            initialIsOpen={false}
+            buttonPosition="bottom-right"
+          />
+        ) : null}
       </QueryClientProvider>
     </MsalProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

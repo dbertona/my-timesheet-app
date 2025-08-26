@@ -16,14 +16,16 @@
 }
 
 .ts-modal {
-  background: #FFFFFF !important;
+  background: #ffffff !important;
   border-radius: 4px !important;
   padding: 16px !important;
   max-width: 400px !important;
   width: 90% !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
-  border: 1px solid #E1E1E1 !important;
-  font-family: "Segoe UI", "Segoe WP", Segoe, device-segoe, Tahoma, Helvetica, Arial, sans-serif !important;
+  border: 1px solid #e1e1e1 !important;
+  font-family:
+    "Segoe UI", "Segoe WP", Segoe, device-segoe, Tahoma, Helvetica, Arial,
+    sans-serif !important;
   font-weight: 400 !important;
   font-size: 10pt !important;
   color: #444 !important;
@@ -109,7 +111,9 @@
   padding: 6px 12px !important;
   border: 1px solid !important;
   border-radius: 3px !important;
-  font-family: "Segoe UI", "Segoe WP", Segoe, device-segoe, Tahoma, Helvetica, Arial, sans-serif !important;
+  font-family:
+    "Segoe UI", "Segoe WP", Segoe, device-segoe, Tahoma, Helvetica, Arial,
+    sans-serif !important;
   font-size: 9pt !important;
   font-weight: 400 !important;
   cursor: pointer !important;
@@ -123,35 +127,35 @@
 }
 
 .ts-btn--danger {
-  background-color: #FFFFFF !important;
+  background-color: #ffffff !important;
   color: rgb(0, 132, 137) !important;
   border-color: rgb(0, 132, 137) !important;
 }
 
 .ts-btn--danger:hover {
   background-color: rgb(0, 132, 137) !important;
-  color: #FFFFFF !important;
+  color: #ffffff !important;
 }
 
 .ts-btn--primary {
-  background-color: #FFFFFF !important;
+  background-color: #ffffff !important;
   color: rgb(0, 132, 137) !important;
   border-color: rgb(0, 132, 137) !important;
 }
 
 .ts-btn--primary:hover {
   background-color: rgb(0, 132, 137) !important;
-  color: #FFFFFF !important;
+  color: #ffffff !important;
 }
 
 .ts-btn--secondary {
-  background-color: #FFFFFF !important;
+  background-color: #ffffff !important;
   color: #444 !important;
-  border-color: #C1C1C1 !important;
+  border-color: #c1c1c1 !important;
 }
 
 .ts-btn--secondary:hover {
-  background-color: #F8F8F8 !important;
+  background-color: #f8f8f8 !important;
   border-color: #999 !important;
 }
 
@@ -205,7 +209,7 @@
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .bc-modal-close {
@@ -251,7 +255,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .bc-modal-btn-primary {

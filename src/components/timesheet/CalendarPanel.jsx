@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { CALENDAR, LABELS } from '../../constants/i18n';
+import { CALENDAR, LABELS } from "../../constants/i18n";
 import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 
 export default function CalendarPanel({
@@ -22,8 +22,24 @@ export default function CalendarPanel({
 
   return (
     <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-      <div style={{ width: 210, border: "1px solid #d9d9d9", borderRadius: 6, padding: 12, background: "var(--bc-teal)" }}>
-        <div style={{ fontWeight: 700, marginBottom: 8, textAlign: "center", color: "#ffffff", fontSize: 14 }}>
+      <div
+        style={{
+          width: 210,
+          border: "1px solid #d9d9d9",
+          borderRadius: 6,
+          padding: 12,
+          background: "var(--bc-teal)",
+        }}
+      >
+        <div
+          style={{
+            fontWeight: 700,
+            marginBottom: 8,
+            textAlign: "center",
+            color: "#ffffff",
+            fontSize: 14,
+          }}
+        >
           Resumen mes
         </div>
         <div className="summary-grid">
@@ -57,7 +73,8 @@ export default function CalendarPanel({
                   className="progress-fill"
                   style={{
                     width: `${Math.min((imputedSum / requiredSum) * 100, 100)}%`,
-                    backgroundColor: imputedSum >= requiredSum ? '#4ade80' : '#fbbf24'
+                    backgroundColor:
+                      imputedSum >= requiredSum ? "#4ade80" : "#fbbf24",
                   }}
                 ></div>
               </div>
@@ -69,16 +86,44 @@ export default function CalendarPanel({
         </div>
       </div>
 
-      <div ref={calendarBoxRef} style={{ width: 210, border: "1px solid #d9d9d9", borderRadius: 6, padding: 12, background: "#fff" }}>
+      <div
+        ref={calendarBoxRef}
+        style={{
+          width: 210,
+          border: "1px solid #d9d9d9",
+          borderRadius: 6,
+          padding: 12,
+          background: "#fff",
+        }}
+      >
         <div style={{ fontWeight: 700, marginBottom: 8 }}>
-          {calRange.month ? `${String(calRange.month).padStart(2, "0")}/${calRange.year}` : "Mes"}
+          {calRange.month
+            ? `${String(calRange.month).padStart(2, "0")}/${calRange.year}`
+            : "Mes"}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, fontSize: 12, color: "#666", marginBottom: 6 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, 1fr)",
+            gap: 4,
+            fontSize: 12,
+            color: "#666",
+            marginBottom: 6,
+          }}
+        >
           {["L", "M", "X", "J", "V", "S", "D"].map((d) => (
-            <div key={d} style={{ textAlign: "center" }}>{d}</div>
+            <div key={d} style={{ textAlign: "center" }}>
+              {d}
+            </div>
           ))}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, 1fr)",
+            gap: 4,
+          }}
+        >
           {Array.from({ length: firstOffset }).map((_, i) => (
             <div key={`pad-${i}`} />
           ))}
@@ -105,7 +150,9 @@ export default function CalendarPanel({
                 key={day.iso}
                 style={{ textAlign: "center", cursor: "pointer" }}
                 title={`${day.iso} • Req: ${day.need} • Imp: ${day.got}`}
-                onClick={() => { if (typeof onDayClick === 'function') onDayClick(day.iso); }}
+                onClick={() => {
+                  if (typeof onDayClick === "function") onDayClick(day.iso);
+                }}
               >
                 <div
                   style={{
@@ -115,7 +162,13 @@ export default function CalendarPanel({
                     borderRadius: 5,
                     backgroundColor,
                     background: backgroundColor,
-                    color: backgroundColor === "yellow" || backgroundColor === "lightgray" ? "#222" : backgroundColor ? "#fff" : "inherit",
+                    color:
+                      backgroundColor === "yellow" ||
+                      backgroundColor === "lightgray"
+                        ? "#222"
+                        : backgroundColor
+                          ? "#fff"
+                          : "inherit",
                     fontSize: 11,
                     lineHeight: 1.2,
                   }}
@@ -126,21 +179,60 @@ export default function CalendarPanel({
             );
           })}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "auto auto", justifyContent: "space-between", alignItems: "center", rowGap: 6, columnGap: 8, marginTop: 8, fontSize: 12 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "auto auto",
+            justifyContent: "space-between",
+            alignItems: "center",
+            rowGap: 6,
+            columnGap: 8,
+            marginTop: 8,
+            fontSize: 12,
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 10, height: 10, backgroundColor: "red", borderRadius: 3 }}></span>
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                backgroundColor: "red",
+                borderRadius: 3,
+              }}
+            ></span>
             <span>Sin horas</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 10, height: 10, backgroundColor: "yellow", borderRadius: 3 }}></span>
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                backgroundColor: "yellow",
+                borderRadius: 3,
+              }}
+            ></span>
             <span>Parcial</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 10, height: 10, backgroundColor: "lightgreen", borderRadius: 3 }}></span>
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                backgroundColor: "lightgreen",
+                borderRadius: 3,
+              }}
+            ></span>
             <span>Completo</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 10, height: 10, backgroundColor: "lightgray", borderRadius: 3 }}></span>
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                backgroundColor: "lightgray",
+                borderRadius: 3,
+              }}
+            ></span>
             <span>Festivo</span>
           </div>
         </div>
@@ -148,5 +240,3 @@ export default function CalendarPanel({
     </div>
   );
 }
-
-

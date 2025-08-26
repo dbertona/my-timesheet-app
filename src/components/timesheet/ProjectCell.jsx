@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import useDropdownFilter from "../../utils/useDropdownFilter";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
@@ -33,7 +39,15 @@ export default function ProjectCell({
   const setJobFilter = jobsFilter.setFilterByLine;
   const jobOpenFor = jobsFilter.openFor;
   const setJobOpenFor = jobsFilter.setOpenFor;
-  const getVisibleJobs = (lineId) => jobsFilter.getVisible(lineId, jobs, (j) => `${j.no} ${j.description || ""}`);
+  const getVisibleJobs = useCallback(
+    (lineId) =>
+      jobsFilter.getVisible(
+        lineId,
+        jobs,
+        (j) => `${j.no} ${j.description || ""}`,
+      ),
+    [jobsFilter, jobs],
+  );
 
   // Estado para el status del proyecto seleccionado
   const [projectStatus, setProjectStatus] = useState(null);
@@ -48,7 +62,9 @@ export default function ProjectCell({
       candidates.forEach((j) => {
         if (j?.no) Promise.resolve(ensureTasksLoaded(j.no)).catch(() => {});
       });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     // Dependemos del valor del filtro específico de esta línea para reaccionar
     // a los cambios que hace el usuario al escribir.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,16 +75,19 @@ export default function ProjectCell({
     const currentJobNo = editFormData[line.id]?.job_no;
     if (currentJobNo) {
       fetchJobStatus(currentJobNo)
-        .then(status => setProjectStatus(status))
+        .then((status) => setProjectStatus(status))
         .catch(() => setProjectStatus(null));
     } else {
       setProjectStatus(null);
     }
-  }, [editFormData[line.id]?.job_no, line.id]);
+  }, [editFormData, line.id]);
 
   // Virtualización: hooks deben llamarse siempre, nunca condicionalmente
   const parentRef = useRef(null);
-  const items = useMemo(() => getVisibleJobs(line.id) || [], [getVisibleJobs, line.id, jobFilter?.[line.id], jobsLoaded, jobs]);
+  const items = useMemo(
+    () => getVisibleJobs(line.id) || [],
+    [getVisibleJobs, line.id],
+  );
   const rowVirtualizer = useVirtualizer({
     count: jobOpenFor === line.id && jobsLoaded ? items.length : 0,
     getScrollElement: () => parentRef.current,
@@ -92,7 +111,10 @@ export default function ProjectCell({
                 // Solo actualizamos job_no y, si cambió, limpiamos la TAREA. No tocamos quantity.
                 handleInputChange(line.id, e);
                 clearFieldError(line.id, "job_no");
-                setJobFilter((prev) => ({ ...prev, [line.id]: e.target.value }));
+                setJobFilter((prev) => ({
+                  ...prev,
+                  [line.id]: e.target.value,
+                }));
 
                 if (e.target.value !== editFormData[line.id]?.job_no) {
                   handleInputChange(line.id, {
@@ -109,10 +131,14 @@ export default function ProjectCell({
                   setFieldError(
                     line.id,
                     "job_no",
-                    "Proyecto inválido. Debe seleccionar uno de la lista."
+                    "Proyecto inválido. Debe seleccionar uno de la lista.",
                   );
                   const el = inputRefs?.current?.[line.id]?.["job_no"];
-                  if (el) setTimeout(() => { el.focus(); el.select(); }, 0);
+                  if (el)
+                    setTimeout(() => {
+                      el.focus();
+                      el.select();
+                    }, 0);
                   return;
                 }
                 if (found.no !== raw) {
@@ -142,7 +168,11 @@ export default function ProjectCell({
                   return;
                 }
                 // TODAS las teclas de navegación usan la misma función
-                if (e.key === "Tab" || e.key === "Enter" || e.key.startsWith("Arrow")) {
+                if (
+                  e.key === "Tab" ||
+                  e.key === "Enter" ||
+                  e.key.startsWith("Arrow")
+                ) {
                   e.preventDefault(); // Prevenir comportamiento por defecto
                   // job_no está en el índice 0 de TIMESHEET_FIELDS
                   handleKeyDown(e, lineIndex, 0);
@@ -163,17 +193,23 @@ export default function ProjectCell({
           </div>
 
           {/* Aviso de proyecto completado o perdido */}
-          {editFormData[line.id]?.job_no && projectStatus && (projectStatus === 'Completed' || projectStatus === 'Lost') && (
-            <div className="ts-project-status-warning">
-              <span className="ts-project-status-warning__icon">⚠️</span>
-              <span className="ts-project-status-warning__text">
-                Proyecto {projectStatus === 'Completed' ? 'Completado' : 'Perdido'}
-              </span>
-            </div>
-          )}
+          {editFormData[line.id]?.job_no &&
+            projectStatus &&
+            (projectStatus === "Completed" || projectStatus === "Lost") && (
+              <div className="ts-project-status-warning">
+                <span className="ts-project-status-warning__icon">⚠️</span>
+                <span className="ts-project-status-warning__text">
+                  Proyecto{" "}
+                  {projectStatus === "Completed" ? "Completado" : "Perdido"}
+                </span>
+              </div>
+            )}
 
           {jobOpenFor === line.id && (
-            <div className="ts-dropdown" onMouseDown={(e) => e.preventDefault()}>
+            <div
+              className="ts-dropdown"
+              onMouseDown={(e) => e.preventDefault()}
+            >
               <div className="ts-dropdown__header">
                 <FiSearch />
                 <input
@@ -187,31 +223,57 @@ export default function ProjectCell({
                   placeholder="Buscar proyecto..."
                   style={{ width: "100%", border: "none", outline: "none" }}
                 />
-                {!jobsLoaded && <span className="ts-spinner" aria-label="Cargando" />}
+                {!jobsLoaded && (
+                  <span className="ts-spinner" aria-label="Cargando" />
+                )}
               </div>
               {!jobsLoaded ? (
                 <div style={{ padding: "8px", color: "#999" }}>Cargando…</div>
               ) : (
-                <div ref={parentRef} style={{ height: 220, overflow: 'auto' }}>
-                  <div style={{ height: rowVirtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
+                <div ref={parentRef} style={{ height: 220, overflow: "auto" }}>
+                  <div
+                    style={{
+                      height: rowVirtualizer.getTotalSize(),
+                      width: "100%",
+                      position: "relative",
+                    }}
+                  >
                     {rowVirtualizer.getVirtualItems().map((v) => {
                       const j = items[v.index];
                       return (
                         <div
                           key={j.no}
-                          style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${v.start}px)` }}
-                          onMouseDown={async () => {
-                            handleInputChange(line.id, { target: { name: 'job_no', value: j.no } });
-                            setJobFilter((prev) => ({ ...prev, [line.id]: j.no }));
-                            setJobOpenFor(null);
-                            handleInputChange(line.id, { target: { name: 'job_task_no', value: '' } });
-                            await ensureTasksLoaded(j.no);
-                            const el = inputRefs.current?.[line.id]?.['job_task_no'];
-                            if (el) { el.focus(); el.select(); }
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100%",
+                            transform: `translateY(${v.start}px)`,
                           }}
-                          title={`${j.no} - ${j.description || ''}`}
+                          onMouseDown={async () => {
+                            handleInputChange(line.id, {
+                              target: { name: "job_no", value: j.no },
+                            });
+                            setJobFilter((prev) => ({
+                              ...prev,
+                              [line.id]: j.no,
+                            }));
+                            setJobOpenFor(null);
+                            handleInputChange(line.id, {
+                              target: { name: "job_task_no", value: "" },
+                            });
+                            await ensureTasksLoaded(j.no);
+                            const el =
+                              inputRefs.current?.[line.id]?.["job_task_no"];
+                            if (el) {
+                              el.focus();
+                              el.select();
+                            }
+                          }}
+                          title={`${j.no} - ${j.description || ""}`}
                         >
-                          <strong>{j.no}</strong> {j.description ? `— ${j.description}` : ''}
+                          <strong>{j.no}</strong>{" "}
+                          {j.description ? `— ${j.description}` : ""}
                         </div>
                       );
                     })}
@@ -253,7 +315,12 @@ export default function ProjectCell({
         </div>
       )}
       {error && (
-        <div className="ts-error"><span className="ts-inline-error"><span className="ts-inline-error__dot" />{error}</span></div>
+        <div className="ts-error">
+          <span className="ts-inline-error">
+            <span className="ts-inline-error__dot" />
+            {error}
+          </span>
+        </div>
       )}
     </td>
   );

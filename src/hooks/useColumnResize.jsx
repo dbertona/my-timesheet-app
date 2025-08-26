@@ -11,11 +11,15 @@ export default function useColumnResize(columns, storageKey, minWidth = 80) {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
       const base = {};
-      columns.forEach((c) => { base[c] = saved[c] ?? 160; });
+      columns.forEach((c) => {
+        base[c] = saved[c] ?? 160;
+      });
       return base;
     } catch {
       const base = {};
-      columns.forEach((c) => { base[c] = 160; });
+      columns.forEach((c) => {
+        base[c] = 160;
+      });
       return base;
     }
   });
@@ -28,7 +32,11 @@ export default function useColumnResize(columns, storageKey, minWidth = 80) {
 
   const onMouseDown = (e, colKey) => {
     e.preventDefault();
-    drag.current = { colKey, startX: e.clientX, startWidth: widths[colKey] ?? 160 };
+    drag.current = {
+      colKey,
+      startX: e.clientX,
+      startWidth: widths[colKey] ?? 160,
+    };
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
   };

@@ -11,6 +11,3 @@ export async function fetchTasksByJob(jobNo) {
   if (error) throw error;
   return data || [];
 }
-
-
-

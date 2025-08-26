@@ -13,7 +13,7 @@ export async function fetchJobsByResource(resourceNo) {
   return (data || []).map((j) => ({
     no: j.no,
     description: j.description,
-    status: j.status
+    status: j.status,
   }));
 }
 
@@ -30,7 +30,7 @@ export async function fetchAllJobsByResource(resourceNo) {
   return (data || []).map((j) => ({
     no: j.no,
     description: j.description,
-    status: j.status
+    status: j.status,
   }));
 }
 
@@ -45,6 +45,3 @@ export async function fetchJobStatus(jobNo) {
   if (error) return null;
   return data?.status;
 }
-
-
-

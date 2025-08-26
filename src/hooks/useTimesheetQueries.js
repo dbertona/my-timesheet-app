@@ -50,7 +50,10 @@ export function useTasks(jobNo) {
     queryFn: () => fetchTasksByJob(jobNo),
   });
   const prefetch = async (jobNoToFetch) =>
-    queryClient.fetchQuery({ queryKey: ["tasks", jobNoToFetch], queryFn: q.queryFn, staleTime: 5 * 60 * 1000 });
+    queryClient.fetchQuery({
+      queryKey: ["tasks", jobNoToFetch],
+      queryFn: q.queryFn,
+      staleTime: 5 * 60 * 1000,
+    });
   return { ...q, prefetch };
 }
-

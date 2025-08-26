@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useMsal } from '@azure/msal-react';
+import { useMsal } from "@azure/msal-react";
 
 export default function LoginMicrosoft({ onLogin }) {
   const { instance, accounts } = useMsal();
@@ -7,7 +7,9 @@ export default function LoginMicrosoft({ onLogin }) {
   // Auto-login SOLO en desarrollo cuando no hay sesión
   useEffect(() => {
     if (import.meta.env.DEV && (!accounts || accounts.length === 0)) {
-      instance.loginRedirect({ scopes: ["User.Read"], prompt: "select_account" }).catch(() => {});
+      instance
+        .loginRedirect({ scopes: ["User.Read"], prompt: "select_account" })
+        .catch(() => {});
     }
   }, [accounts, instance]);
 
@@ -30,7 +32,7 @@ export default function LoginMicrosoft({ onLogin }) {
 
   return (
     <div>
-      {(!accounts || accounts.length === 0) ? (
+      {!accounts || accounts.length === 0 ? (
         <button
           onClick={handleLogin}
           className="bg-blue-600 text-white px-4 py-2 rounded"

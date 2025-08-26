@@ -7,8 +7,8 @@ import "../../styles/DateInput.css";
 export default function DateInput({
   name = "date",
   value,
-  onChange,      // (newDisplayValue)
-  onBlur,        // (finalDisplayValue)
+  onChange, // (newDisplayValue)
+  onBlur, // (finalDisplayValue)
   onFocus,
   onKeyDown,
   inputRef,
@@ -22,8 +22,12 @@ export default function DateInput({
   inputId,
   disabled = false, // 🆕 Prop para deshabilitar el input
 }) {
-  const [selectedDate, setSelectedDate] = useState(parseDate(value) || new Date());
-  const [currentMonth, setCurrentMonth] = useState(parseDate(value) || new Date());
+  const [selectedDate, setSelectedDate] = useState(
+    parseDate(value) || new Date(),
+  );
+  const [currentMonth, setCurrentMonth] = useState(
+    parseDate(value) || new Date(),
+  );
   const calendarRef = useRef(null);
 
   // Cerrar calendario al hacer clic fuera
@@ -35,20 +39,19 @@ export default function DateInput({
     };
 
     if (calendarOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [calendarOpen, setCalendarOpen]);
 
-    // 🆕 Re-renderizar cuando cambie el período para actualizar validación
+  // 🆕 Re-renderizar cuando cambie el período para actualizar validación
   useEffect(() => {
-
-
     // ✅ Usar header.allocation_period en lugar de editableHeader.allocation_period
-    const effectivePeriod = header?.allocation_period || editableHeader?.allocation_period;
+    const effectivePeriod =
+      header?.allocation_period || editableHeader?.allocation_period;
 
     if (effectivePeriod) {
       // ✅ Cuando cambie el período, centrar el calendario en ese mes
@@ -58,8 +61,6 @@ export default function DateInput({
         const year = 2000 + parseInt(match[1]);
         const month = parseInt(match[2]) - 1;
         const newMonth = new Date(year, month, 1);
-
-
 
         setCurrentMonth(newMonth);
       }
@@ -101,7 +102,7 @@ export default function DateInput({
 
   // Navegar mes
   const changeMonth = (direction) => {
-    setCurrentMonth(prev => {
+    setCurrentMonth((prev) => {
       const newMonth = new Date(prev);
       newMonth.setMonth(newMonth.getMonth() + direction);
 
@@ -129,7 +130,11 @@ export default function DateInput({
         if (fromDate && toDate) {
           // Si vamos hacia atrás, verificar que no sea antes del mes de from_date
           if (direction < 0) {
-            const fromMonth = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
+            const fromMonth = new Date(
+              fromDate.getFullYear(),
+              fromDate.getMonth(),
+              1,
+            );
             if (newMonth < fromMonth) {
               return prev; // No cambiar si está fuera del rango
             }
@@ -137,7 +142,11 @@ export default function DateInput({
 
           // Si vamos hacia adelante, verificar que no sea después del mes de to_date
           if (direction > 0) {
-            const toMonth = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
+            const toMonth = new Date(
+              toDate.getFullYear(),
+              toDate.getMonth(),
+              1,
+            );
             if (newMonth > toMonth) {
               return prev; // No cambiar si está fuera del rango
             }
@@ -179,10 +188,12 @@ export default function DateInput({
       }
 
       // Comparar año, mes y día individualmente
-      return holidayDate.getFullYear() === dateYear &&
-             holidayDate.getMonth() === dateMonth &&
-             holidayDate.getDate() === dateDay &&
-             h.holiday === true;
+      return (
+        holidayDate.getFullYear() === dateYear &&
+        holidayDate.getMonth() === dateMonth &&
+        holidayDate.getDate() === dateDay &&
+        h.holiday === true
+      );
     });
   };
 
@@ -212,12 +223,25 @@ export default function DateInput({
 
   const days = generateDays();
   const monthNames = [
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
   ];
 
   return (
-    <div className="ts-cell" style={{ width: "100%", display: "flex", alignItems: "center" }}>
+    <div
+      className="ts-cell"
+      style={{ width: "100%", display: "flex", alignItems: "center" }}
+    >
       <input
         type="text"
         name={name}
@@ -258,7 +282,8 @@ export default function DateInput({
                 ‹
               </button>
               <span className="ts-calendar-month">
-                {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                {monthNames[currentMonth.getMonth()]}{" "}
+                {currentMonth.getFullYear()}
               </span>
               <button
                 type="button"
@@ -284,9 +309,13 @@ export default function DateInput({
             {/* Días del mes */}
             <div className="ts-calendar-days">
               {days.map((date, index) => {
-                const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
-                const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
-                const isToday = date.toDateString() === new Date().toDateString();
+                const isCurrentMonth =
+                  date.getMonth() === currentMonth.getMonth();
+                const isSelected =
+                  selectedDate &&
+                  date.toDateString() === selectedDate.toDateString();
+                const isToday =
+                  date.toDateString() === new Date().toDateString();
                 const isHolidayDate = isHoliday(date);
                 const inRange = isInRange(date);
 
@@ -295,15 +324,11 @@ export default function DateInput({
                     key={index}
                     type="button"
                     className={`ts-calendar-day ${
-                      !isCurrentMonth ? 'ts-calendar-day--outside' : ''
-                    } ${
-                      isSelected ? 'ts-calendar-day--selected' : ''
-                    } ${
-                      isToday ? 'ts-calendar-day--today' : ''
-                    } ${
-                      isHolidayDate ? 'ts-calendar-day--holiday' : ''
-                    } ${
-                      !inRange ? 'ts-calendar-day--disabled' : ''
+                      !isCurrentMonth ? "ts-calendar-day--outside" : ""
+                    } ${isSelected ? "ts-calendar-day--selected" : ""} ${
+                      isToday ? "ts-calendar-day--today" : ""
+                    } ${isHolidayDate ? "ts-calendar-day--holiday" : ""} ${
+                      !inRange ? "ts-calendar-day--disabled" : ""
                     }`}
                     onClick={() => inRange && handleDateSelect(date)}
                     disabled={!inRange}
@@ -319,5 +344,3 @@ export default function DateInput({
     </div>
   );
 }
-
-

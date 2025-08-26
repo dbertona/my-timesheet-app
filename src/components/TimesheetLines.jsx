@@ -6,7 +6,13 @@ import useColumnResize from "../hooks/useColumnResize";
 import { supabaseClient } from "../supabaseClient";
 import { useJobs, useWorkTypes } from "../hooks/useTimesheetQueries";
 import "../styles/TimesheetLines.css";
-import TIMESHEET_FIELDS, { TIMESHEET_LABELS, TIMESHEET_ALIGN, COL_MIN_WIDTH, COL_MAX_WIDTH, DEFAULT_COL_WIDTH } from "../constants/timesheetFields";
+import TIMESHEET_FIELDS, {
+  TIMESHEET_LABELS,
+  TIMESHEET_ALIGN,
+  COL_MIN_WIDTH,
+  COL_MAX_WIDTH,
+  DEFAULT_COL_WIDTH,
+} from "../constants/timesheetFields";
 import ProjectCell from "./timesheet/ProjectCell";
 import ProjectDescriptionCell from "./timesheet/ProjectDescriptionCell";
 import TaskCell from "./timesheet/TaskCell";
@@ -16,7 +22,6 @@ import InlineError from "./ui/InlineError";
 import DecimalInput from "./ui/DecimalInput";
 import DateCell from "./timesheet/DateCell";
 import EditableCell from "./ui/EditableCell";
-
 
 export default function TimesheetLines({
   lines,
@@ -47,14 +52,16 @@ export default function TimesheetLines({
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
     TIMESHEET_FIELDS,
     "timesheet_column_widths",
-    DEFAULT_COL_WIDTH
+    DEFAULT_COL_WIDTH,
   );
 
   // Filtrar líneas "vacías" que puedan venir desde el servidor (todas las celdas vacías y cantidad 0)
   const safeLines = Array.isArray(lines)
     ? lines.filter((l) => {
         const isTmp = String(l.id || "").startsWith("tmp-");
-        const hasData = Boolean(l.job_no || l.job_task_no || l.description || l.work_type || l.date);
+        const hasData = Boolean(
+          l.job_no || l.job_task_no || l.description || l.work_type || l.date,
+        );
         const qty = Number(l.quantity) || 0;
         // Mostrar siempre las temporales; ocultar las totalmente vacías del backend
         return isTmp || hasData || qty !== 0;
@@ -62,11 +69,10 @@ export default function TimesheetLines({
     : [];
   const tableRef = useRef(null);
 
-  const getAlign = (key) => (TIMESHEET_ALIGN?.[key] || "left");
+  const getAlign = (key) => TIMESHEET_ALIGN?.[key] || "left";
 
   // Función para identificar si una columna es editable
   // isColumnEditable eliminado (no usado)
-
 
   // ===============================
   // Jobs & Job Tasks (combos)
@@ -91,7 +97,9 @@ export default function TimesheetLines({
 
   // React Query: Carga y cache de servicios por recurso
   const workTypesQuery = useWorkTypes((header || editableHeader)?.resource_no);
-  const workTypes = Array.isArray(workTypesQuery.data) ? workTypesQuery.data : [];
+  const workTypes = Array.isArray(workTypesQuery.data)
+    ? workTypesQuery.data
+    : [];
   const workTypesLoaded = workTypesQuery.isSuccess;
 
   // Logs de debugging removidos - funcionalidad ya estable
@@ -125,7 +133,7 @@ export default function TimesheetLines({
     return jobs.filter(
       (j) =>
         j.no?.toLowerCase().includes(q) ||
-        j.description?.toLowerCase().includes(q)
+        j.description?.toLowerCase().includes(q),
     );
   };
 
@@ -136,7 +144,7 @@ export default function TimesheetLines({
     return list.filter(
       (t) =>
         t.no?.toLowerCase().includes(q) ||
-        t.description?.toLowerCase().includes(q)
+        t.description?.toLowerCase().includes(q),
     );
   };
 
@@ -215,13 +223,15 @@ export default function TimesheetLines({
     let maxContent = 0;
 
     const th = table.querySelector(`thead tr th:nth-child(${colIndex + 1})`);
-    const thText = th ? (th.childNodes[0]?.textContent?.trim() || "") : "";
+    const thText = th ? th.childNodes[0]?.textContent?.trim() || "" : "";
     maxContent = Math.max(maxContent, measureWithSpan(th, thText));
 
-    const tds = table.querySelectorAll(`tbody tr td:nth-child(${colIndex + 1})`);
+    const tds = table.querySelectorAll(
+      `tbody tr td:nth-child(${colIndex + 1})`,
+    );
     tds.forEach((td) => {
       const input = td.querySelector("input");
-      const txt = input ? (input.value ?? "") : (td.textContent?.trim() || "");
+      const txt = input ? (input.value ?? "") : td.textContent?.trim() || "";
       maxContent = Math.max(maxContent, measureWithSpan(input || td, txt));
     });
 
@@ -236,26 +246,32 @@ export default function TimesheetLines({
   // ===============================
   // Render
   // ===============================
-  const handleInputChange = useCallback((lineId, event) => {
-    const { name, value } = event.target;
+  const handleInputChange = useCallback(
+    (lineId, event) => {
+      const { name, value } = event.target;
 
       // ✅ Si se cambia el proyecto, usar la función del padre para obtener departamento automático
-  if (name === "job_no" && parentHandleInputChange) {
-    parentHandleInputChange(lineId, event);
-    return;
-  }
+      if (name === "job_no" && parentHandleInputChange) {
+        parentHandleInputChange(lineId, event);
+        return;
+      }
 
-    // Para otros campos, comportamiento normal
-    onLinesChange(lineId, { [name]: value });
-  }, [onLinesChange, parentHandleInputChange]);
+      // Para otros campos, comportamiento normal
+      onLinesChange(lineId, { [name]: value });
+    },
+    [onLinesChange, parentHandleInputChange],
+  );
 
   const handleInputFocus = (lineId, field, event) => {
     if (inputRefs && inputRefs.current) {
-      inputRefs.current[lineId] = { ...inputRefs.current[lineId], [field]: event.target };
+      inputRefs.current[lineId] = {
+        ...inputRefs.current[lineId],
+        [field]: event.target,
+      };
     }
   };
 
-    // handleKeyDown viene de useTimesheetEdit.jsx y maneja todas las teclas de navegación
+  // handleKeyDown viene de useTimesheetEdit.jsx y maneja todas las teclas de navegación
   // incluyendo ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Tab y Enter
 
   // handlers de fecha locales eliminados (no usados)
@@ -263,7 +279,9 @@ export default function TimesheetLines({
   // estado local de calendario eliminado (no usado)
 
   // 🆕 Estado para selección de líneas
-  const [localSelectedLines, setLocalSelectedLines] = useState(selectedLines || []);
+  const [localSelectedLines, setLocalSelectedLines] = useState(
+    selectedLines || [],
+  );
 
   // 🆕 Sincronizar selección local con props
   useEffect(() => {
@@ -274,7 +292,7 @@ export default function TimesheetLines({
   const handleLineSelection = (lineId, isSelected) => {
     const newSelection = isSelected
       ? [...localSelectedLines, lineId]
-      : localSelectedLines.filter(id => id !== lineId);
+      : localSelectedLines.filter((id) => id !== lineId);
 
     setLocalSelectedLines(newSelection);
     if (onLineSelectionChange) {
@@ -284,7 +302,7 @@ export default function TimesheetLines({
 
   // 🆕 Función para seleccionar/deseleccionar todas las líneas
   const handleSelectAll = (selectAll) => {
-    const newSelection = selectAll ? safeLines.map(line => line.id) : [];
+    const newSelection = selectAll ? safeLines.map((line) => line.id) : [];
     setLocalSelectedLines(newSelection);
     if (onLineSelectionChange) {
       onLineSelectionChange(newSelection);
@@ -298,12 +316,8 @@ export default function TimesheetLines({
 
   // Eliminar línea ficticia: no agregar filas vacías automáticamente
 
-
-
   return (
     <div className="ts-responsive">
-
-
       <table ref={tableRef} className="ts-table">
         <thead>
           <tr>
@@ -313,17 +327,20 @@ export default function TimesheetLines({
               style={{
                 width: "40px",
                 textAlign: "center",
-                padding: "8px 4px"
+                padding: "8px 4px",
               }}
             >
               <input
                 type="checkbox"
-                checked={localSelectedLines.length === safeLines.length && safeLines.length > 0}
+                checked={
+                  localSelectedLines.length === safeLines.length &&
+                  safeLines.length > 0
+                }
                 onChange={(e) => handleSelectAll(e.target.checked)}
                 style={{
                   width: "16px",
                   height: "16px",
-                  cursor: "pointer"
+                  cursor: "pointer",
                 }}
               />
             </th>
@@ -358,17 +375,19 @@ export default function TimesheetLines({
                   width: "40px",
                   textAlign: "center",
                   padding: "8px 4px",
-                  verticalAlign: "middle"
+                  verticalAlign: "middle",
                 }}
               >
                 <input
                   type="checkbox"
                   checked={localSelectedLines.includes(line.id)}
-                  onChange={(e) => handleLineSelection(line.id, e.target.checked)}
+                  onChange={(e) =>
+                    handleLineSelection(line.id, e.target.checked)
+                  }
                   style={{
                     width: "16px",
                     height: "16px",
-                    cursor: "pointer"
+                    cursor: "pointer",
                   }}
                 />
               </td>
@@ -449,7 +468,10 @@ export default function TimesheetLines({
 
               {/* ----- Descripción ----- */}
               <EditableCell
-                style={{ ...colStyles.description, textAlign: getAlign("description") }}
+                style={{
+                  ...colStyles.description,
+                  textAlign: getAlign("description"),
+                }}
               >
                 {isLineEditable(line) ? (
                   <input
@@ -458,12 +480,24 @@ export default function TimesheetLines({
                     value={editFormData[line.id]?.description || ""}
                     onChange={(e) => handleInputChange(line.id, e)}
                     onBlur={() => {
-                      if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                      else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                      if (typeof saveLineNow === "function")
+                        saveLineNow(line.id);
+                      else if (typeof scheduleAutosave === "function")
+                        scheduleAutosave(line.id);
                     }}
                     onFocus={(e) => handleInputFocus(line.id, "description", e)}
-                    onKeyDown={(e) => handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("description"))}
-                    ref={hasRefs ? (el) => setSafeRef(line.id, "description", el) : null}
+                    onKeyDown={(e) =>
+                      handleKeyDown(
+                        e,
+                        lineIndex,
+                        TIMESHEET_FIELDS.indexOf("description"),
+                      )
+                    }
+                    ref={
+                      hasRefs
+                        ? (el) => setSafeRef(line.id, "description", el)
+                        : null
+                    }
                     className="ts-input"
                     style={{
                       textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
@@ -488,7 +522,10 @@ export default function TimesheetLines({
 
               {/* ----- Servicio (work_type): combo por recurso ----- */}
               <EditableCell
-                style={{ ...colStyles.work_type, textAlign: getAlign("work_type") }}
+                style={{
+                  ...colStyles.work_type,
+                  textAlign: getAlign("work_type"),
+                }}
                 error={localErrors[line.id]?.work_type}
               >
                 {isLineEditable(line) ? (
@@ -501,84 +538,153 @@ export default function TimesheetLines({
                         onChange={(e) => {
                           handleInputChange(line.id, e);
                           clearFieldError(line.id, "work_type");
-                          setWtFilter((prev) => ({ ...prev, [line.id]: e.target.value }));
+                          setWtFilter((prev) => ({
+                            ...prev,
+                            [line.id]: e.target.value,
+                          }));
                         }}
                         onBlur={() => {
-                          const raw = (editFormData[line.id]?.work_type || "").trim();
+                          const raw = (
+                            editFormData[line.id]?.work_type || ""
+                          ).trim();
                           if (!raw) return; // permitir vacío sin error
                           const found = findWorkType(raw);
                           if (!found) {
-                            setFieldError(line.id, "work_type", "Servicio inválido. Debe seleccionar uno de la lista.");
-                            const el = inputRefs?.current?.[line.id]?.["work_type"];
-                            if (el) setTimeout(() => { el.focus(); el.select(); }, 0);
+                            setFieldError(
+                              line.id,
+                              "work_type",
+                              "Servicio inválido. Debe seleccionar uno de la lista.",
+                            );
+                            const el =
+                              inputRefs?.current?.[line.id]?.["work_type"];
+                            if (el)
+                              setTimeout(() => {
+                                el.focus();
+                                el.select();
+                              }, 0);
                             return;
                           }
                           if (found !== raw) {
-                            handleInputChange(line.id, { target: { name: "work_type", value: found } });
+                            handleInputChange(line.id, {
+                              target: { name: "work_type", value: found },
+                            });
                           }
                           clearFieldError(line.id, "work_type");
-                          if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                          else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                          if (typeof saveLineNow === "function")
+                            saveLineNow(line.id);
+                          else if (typeof scheduleAutosave === "function")
+                            scheduleAutosave(line.id);
                         }}
                         onFocus={(e) => {
                           handleInputFocus(line.id, "work_type", e);
                         }}
                         onKeyDown={(e) => {
-                          const isAdvance = e.key === "Enter" || e.key === "Tab";
+                          const isAdvance =
+                            e.key === "Enter" || e.key === "Tab";
                           if (isAdvance) {
-                            const raw = (editFormData[line.id]?.work_type || "").trim();
+                            const raw = (
+                              editFormData[line.id]?.work_type || ""
+                            ).trim();
                             // Permitir vacío
                             if (!raw) {
                               clearFieldError(line.id, "work_type");
-                              if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                              else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                              handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
+                              if (typeof saveLineNow === "function")
+                                saveLineNow(line.id);
+                              else if (typeof scheduleAutosave === "function")
+                                scheduleAutosave(line.id);
+                              handleKeyDown(
+                                e,
+                                lineIndex,
+                                TIMESHEET_FIELDS.indexOf("work_type"),
+                              );
                               return;
                             }
                             // Si coincide exacto con un servicio válido
                             const exact = findWorkType(raw);
                             if (exact) {
                               if (exact !== raw) {
-                                handleInputChange(line.id, { target: { name: "work_type", value: exact } });
+                                handleInputChange(line.id, {
+                                  target: { name: "work_type", value: exact },
+                                });
                               }
                               clearFieldError(line.id, "work_type");
-                              if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                              else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                              if (typeof saveLineNow === "function")
+                                saveLineNow(line.id);
+                              else if (typeof scheduleAutosave === "function")
+                                scheduleAutosave(line.id);
                               e.preventDefault();
-                              handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
+                              handleKeyDown(
+                                e,
+                                lineIndex,
+                                TIMESHEET_FIELDS.indexOf("work_type"),
+                              );
                               return;
                             }
                             // Si hay una única coincidencia visible, seleccionarla
                             const list = getVisibleWorkTypes(line.id);
                             if (list.length === 1) {
                               const val = list[0];
-                              handleInputChange(line.id, { target: { name: "work_type", value: val } });
+                              handleInputChange(line.id, {
+                                target: { name: "work_type", value: val },
+                              });
                               clearFieldError(line.id, "work_type");
-                              setWtFilter((prev) => ({ ...prev, [line.id]: val }));
+                              setWtFilter((prev) => ({
+                                ...prev,
+                                [line.id]: val,
+                              }));
                               setWtOpenFor(null);
-                              if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                              else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
+                              if (typeof saveLineNow === "function")
+                                saveLineNow(line.id);
+                              else if (typeof scheduleAutosave === "function")
+                                scheduleAutosave(line.id);
                               e.preventDefault();
-                              handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
+                              handleKeyDown(
+                                e,
+                                lineIndex,
+                                TIMESHEET_FIELDS.indexOf("work_type"),
+                              );
                               return;
                             }
                             // Inválido → no avanzar, marcar error
                             e.preventDefault();
-                            setFieldError(line.id, "work_type", "Servicio inválido. Debe seleccionar uno de la lista.");
-                            const el = inputRefs?.current?.[line.id]?.["work_type"];
-                            if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
+                            setFieldError(
+                              line.id,
+                              "work_type",
+                              "Servicio inválido. Debe seleccionar uno de la lista.",
+                            );
+                            const el =
+                              inputRefs?.current?.[line.id]?.["work_type"];
+                            if (el)
+                              setTimeout(() => {
+                                try {
+                                  el.focus();
+                                  el.select();
+                                } catch {
+                                  /* ignore */
+                                }
+                              }, 0);
                             return;
                           }
                           // Alt + ArrowDown: abrir dropdown de servicios
                           if (e.altKey && e.key === "ArrowDown") {
-                            setWtOpenFor((prev) => (prev === line.id ? null : line.id));
+                            setWtOpenFor((prev) =>
+                              prev === line.id ? null : line.id,
+                            );
                             e.preventDefault();
                             return;
                           }
-                          handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("work_type"));
+                          handleKeyDown(
+                            e,
+                            lineIndex,
+                            TIMESHEET_FIELDS.indexOf("work_type"),
+                          );
                         }}
-                        ref={hasRefs ? (el) => setSafeRef(line.id, "work_type", el) : null}
-                        className={`ts-input ${localErrors[line.id]?.work_type ? 'has-error' : ''}`}
+                        ref={
+                          hasRefs
+                            ? (el) => setSafeRef(line.id, "work_type", el)
+                            : null
+                        }
+                        className={`ts-input ${localErrors[line.id]?.work_type ? "has-error" : ""}`}
                         autoComplete="off"
                         style={{
                           textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
@@ -587,31 +693,53 @@ export default function TimesheetLines({
                       <FiChevronDown
                         onMouseDown={(e) => {
                           e.preventDefault();
-                          setWtOpenFor((prev) => (prev === line.id ? null : line.id));
+                          setWtOpenFor((prev) =>
+                            prev === line.id ? null : line.id,
+                          );
                         }}
                         className="ts-icon ts-icon--chevron"
                       />
                     </div>
 
                     {wtOpenFor === line.id && (
-                      <div className="ts-dropdown" onMouseDown={(e) => e.preventDefault()}>
+                      <div
+                        className="ts-dropdown"
+                        onMouseDown={(e) => e.preventDefault()}
+                      >
                         <div className="ts-dropdown__header">
                           <FiSearch />
                           <input
                             value={wtFilter[line.id] || ""}
-                            onChange={(e) => setWtFilter((prev) => ({ ...prev, [line.id]: e.target.value }))}
+                            onChange={(e) =>
+                              setWtFilter((prev) => ({
+                                ...prev,
+                                [line.id]: e.target.value,
+                              }))
+                            }
                             placeholder="Buscar servicio..."
-                            style={{ width: "100%", border: "none", outline: "none" }}
+                            style={{
+                              width: "100%",
+                              border: "none",
+                              outline: "none",
+                            }}
                           />
                         </div>
 
-                        {(workTypesLoaded ? getVisibleWorkTypes(line.id) : []).map((wt) => (
+                        {(workTypesLoaded
+                          ? getVisibleWorkTypes(line.id)
+                          : []
+                        ).map((wt) => (
                           <div
                             key={wt}
                             onMouseDown={() => {
-                              handleInputChange(line.id, { target: { name: "work_type", value: wt } });
+                              handleInputChange(line.id, {
+                                target: { name: "work_type", value: wt },
+                              });
                               clearFieldError(line.id, "work_type");
-                              setWtFilter((prev) => ({ ...prev, [line.id]: wt }));
+                              setWtFilter((prev) => ({
+                                ...prev,
+                                [line.id]: wt,
+                              }));
                               setWtOpenFor(null);
                             }}
                             title={wt}
@@ -620,9 +748,12 @@ export default function TimesheetLines({
                           </div>
                         ))}
 
-                        {workTypesLoaded && getVisibleWorkTypes(line.id).length === 0 && (
-                          <div style={{ padding: "8px", color: "#999" }}>Sin resultados…</div>
-                        )}
+                        {workTypesLoaded &&
+                          getVisibleWorkTypes(line.id).length === 0 && (
+                            <div style={{ padding: "8px", color: "#999" }}>
+                              Sin resultados…
+                            </div>
+                          )}
                       </div>
                     )}
                   </div>
@@ -654,80 +785,127 @@ export default function TimesheetLines({
               </EditableCell>
 
               {/* ----- Fecha (derecha) ----- */}
-                              <DateCell
-                  key={`${line.id}-${editableHeader?.allocation_period || header?.allocation_period || 'default'}-${periodChangeTrigger}`} // 🆕 Key que cambia cuando cambia el período O el trigger
-                  line={line}
-                  lineIndex={lineIndex}
-                  editFormData={editFormData}
-                  handleInputChange={handleInputChange}
-                  hasRefs={hasRefs}
-                  setSafeRef={setSafeRef}
-                  error={errors[line.id]?.date}
-                  header={header}
-                  editableHeader={editableHeader} // 🆕 Pasar editableHeader para validación en inserción
-                  calendarHolidays={calendarHolidays}
-                  disabled={!isLineEditable(line)} // 🆕 Deshabilitar para líneas de Factorial
-                  align={getAlign("date")} // 🆕 Pasar alineación correcta
-                  handleInputFocus={handleInputFocus}
-                  handleKeyDown={handleKeyDown}
-                />
+              <DateCell
+                key={`${line.id}-${editableHeader?.allocation_period || header?.allocation_period || "default"}-${periodChangeTrigger}`} // 🆕 Key que cambia cuando cambia el período O el trigger
+                line={line}
+                lineIndex={lineIndex}
+                editFormData={editFormData}
+                handleInputChange={handleInputChange}
+                hasRefs={hasRefs}
+                setSafeRef={setSafeRef}
+                error={errors[line.id]?.date}
+                header={header}
+                editableHeader={editableHeader} // 🆕 Pasar editableHeader para validación en inserción
+                calendarHolidays={calendarHolidays}
+                disabled={!isLineEditable(line)} // 🆕 Deshabilitar para líneas de Factorial
+                align={getAlign("date")} // 🆕 Pasar alineación correcta
+                handleInputFocus={handleInputFocus}
+                handleKeyDown={handleKeyDown}
+              />
 
               {/* ----- Cantidad (derecha) ----- */}
               <EditableCell
                 style={{ ...colStyles.quantity, verticalAlign: "top" }}
                 align={getAlign("quantity")} // 🆕 Pasar alineación correcta
-                error={errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id])}
+                error={
+                  errors[line.id]?.quantity ||
+                  (typeof errors[line.id] === "string" && errors[line.id])
+                }
               >
                 {isLineEditable(line) ? (
                   <div style={{ display: "flex", flexDirection: "column" }}>
-                      <DecimalInput
-                        name="quantity"
-                        value={(() => {
-                          const q = editFormData[line.id]?.quantity;
-                          if (typeof q === "number" || typeof q === "string") return q;
-                          if (q && typeof q === "object" && "value" in q) return q.value;
-                          return "";
-                        })()}
-                        onChange={({ target: { name, value } }) => {
-                          handleInputChange(line.id, { target: { name, value } });
-                        }}
-                        onFocus={(e) => {
-                          handleInputFocus(line.id, "quantity", e);
-                        }}
-                        onBlur={({ target: { name, value } }) => {
-                          const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
-                          if (hasError) {
-                            const el = inputRefs?.current?.[line.id]?.["quantity"];
-                            if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
-                          }
-                          handleInputChange(line.id, { target: { name, value } });
-                          if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                          else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                        }}
-                        onKeyDown={(e) => {
-                          const hasError = !!(errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id]));
-                          if ((e.key === "Enter" || e.key === "Tab") && hasError) {
-                            e.preventDefault();
-                            const el = inputRefs?.current?.[line.id]?.["quantity"];
-                            if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
-                            return;
-                          }
-                          if (e.key === "Enter" || e.key === "Tab") {
-                            if (typeof saveLineNow === 'function') saveLineNow(line.id);
-                            else if (typeof scheduleAutosave === 'function') scheduleAutosave(line.id);
-                          }
-                          handleKeyDown(e, lineIndex, TIMESHEET_FIELDS.indexOf("quantity"));
-                        }}
-                        inputRef={hasRefs ? (el) => setSafeRef(line.id, "quantity", el) : null}
-                        className={`ts-input ${
-                          errors[line.id]?.quantity || (typeof errors[line.id] === "string" && errors[line.id])
-                            ? "has-error"
-                            : ""
-                        }`}
-                        min={0}
-                        step={0.01}
-                        decimals={2}
-                      />
+                    <DecimalInput
+                      name="quantity"
+                      value={(() => {
+                        const q = editFormData[line.id]?.quantity;
+                        if (typeof q === "number" || typeof q === "string")
+                          return q;
+                        if (q && typeof q === "object" && "value" in q)
+                          return q.value;
+                        return "";
+                      })()}
+                      onChange={({ target: { name, value } }) => {
+                        handleInputChange(line.id, { target: { name, value } });
+                      }}
+                      onFocus={(e) => {
+                        handleInputFocus(line.id, "quantity", e);
+                      }}
+                      onBlur={({ target: { name, value } }) => {
+                        const hasError = !!(
+                          errors[line.id]?.quantity ||
+                          (typeof errors[line.id] === "string" &&
+                            errors[line.id])
+                        );
+                        if (hasError) {
+                          const el =
+                            inputRefs?.current?.[line.id]?.["quantity"];
+                          if (el)
+                            setTimeout(() => {
+                              try {
+                                el.focus();
+                                el.select();
+                              } catch {
+                                /* ignore */
+                              }
+                            }, 0);
+                        }
+                        handleInputChange(line.id, { target: { name, value } });
+                        if (typeof saveLineNow === "function")
+                          saveLineNow(line.id);
+                        else if (typeof scheduleAutosave === "function")
+                          scheduleAutosave(line.id);
+                      }}
+                      onKeyDown={(e) => {
+                        const hasError = !!(
+                          errors[line.id]?.quantity ||
+                          (typeof errors[line.id] === "string" &&
+                            errors[line.id])
+                        );
+                        if (
+                          (e.key === "Enter" || e.key === "Tab") &&
+                          hasError
+                        ) {
+                          e.preventDefault();
+                          const el =
+                            inputRefs?.current?.[line.id]?.["quantity"];
+                          if (el)
+                            setTimeout(() => {
+                              try {
+                                el.focus();
+                                el.select();
+                              } catch {
+                                /* ignore */
+                              }
+                            }, 0);
+                          return;
+                        }
+                        if (e.key === "Enter" || e.key === "Tab") {
+                          if (typeof saveLineNow === "function")
+                            saveLineNow(line.id);
+                          else if (typeof scheduleAutosave === "function")
+                            scheduleAutosave(line.id);
+                        }
+                        handleKeyDown(
+                          e,
+                          lineIndex,
+                          TIMESHEET_FIELDS.indexOf("quantity"),
+                        );
+                      }}
+                      inputRef={
+                        hasRefs
+                          ? (el) => setSafeRef(line.id, "quantity", el)
+                          : null
+                      }
+                      className={`ts-input ${
+                        errors[line.id]?.quantity ||
+                        (typeof errors[line.id] === "string" && errors[line.id])
+                          ? "has-error"
+                          : ""
+                      }`}
+                      min={0}
+                      step={0.01}
+                      decimals={2}
+                    />
                   </div>
                 ) : (
                   <DecimalInput

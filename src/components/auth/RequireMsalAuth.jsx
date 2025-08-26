@@ -7,7 +7,9 @@ export default function RequireMsalAuth({ children }) {
 
   useEffect(() => {
     if (!isAuthenticated && inProgress === "none") {
-      instance.loginRedirect({ scopes: ["User.Read"], prompt: "select_account" }).catch(() => {});
+      instance
+        .loginRedirect({ scopes: ["User.Read"], prompt: "select_account" })
+        .catch(() => {});
     }
   }, [isAuthenticated, inProgress, instance]);
 

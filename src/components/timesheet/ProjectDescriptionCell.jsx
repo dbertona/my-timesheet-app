@@ -12,7 +12,8 @@ export default function ProjectDescriptionCell({
   const currentJobNo = editFormData?.job_no || line.job_no;
 
   // Priorizar job_no_description de editFormData o line, luego buscar en jobs
-  let projectDescription = editFormData?.job_no_description || line.job_no_description;
+  let projectDescription =
+    editFormData?.job_no_description || line.job_no_description;
 
   // Si no hay descripción directa, buscar el proyecto para obtener su descripción
   if (!projectDescription) {

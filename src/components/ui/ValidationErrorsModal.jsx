@@ -6,7 +6,7 @@ export default function ValidationErrorsModal({
   onClose,
   validation,
   onGoToError,
-  onContinueAnyway
+  onContinueAnyway,
 }) {
   if (!isOpen) return null;
 
@@ -18,7 +18,9 @@ export default function ValidationErrorsModal({
       <div className="bc-modal" onClick={(e) => e.stopPropagation()}>
         <div className="bc-modal-header">
           <h2 className="bc-modal-title">
-            {totalErrors > 0 ? "❌ Errores de Validación" : "⚠️ Advertencias de Validación"}
+            {totalErrors > 0
+              ? "❌ Errores de Validación"
+              : "⚠️ Advertencias de Validación"}
           </h2>
           <button className="bc-modal-close" onClick={onClose}>
             ×
@@ -28,7 +30,7 @@ export default function ValidationErrorsModal({
         <div className="bc-modal-content">
           {/* Resumen general */}
           <div className="validation-summary">
-            <div className="summary-text" style={{ whiteSpace: 'pre-line' }}>
+            <div className="summary-text" style={{ whiteSpace: "pre-line" }}>
               {summary}
             </div>
           </div>

@@ -17,11 +17,17 @@ function App() {
       <LoginMicrosoft />
       <Routes>
         <Route path="/" element={<HomeDashboard />} />
-        <Route path="/partes/:year?/:month?" element={<TimesheetHeaderList />} />
+        <Route
+          path="/partes/:year?/:month?"
+          element={<TimesheetHeaderList />}
+        />
         <Route path="/edit/:headerId" element={<TimesheetEditWrapper />} />
         {/* nuevas rutas para editar por periodo o por id */}
         <Route path="/editar-parte" element={<TimesheetEdit />} />
-        <Route path="/editar-parte/:headerId" element={<TimesheetEditWrapper />} />
+        <Route
+          path="/editar-parte/:headerId"
+          element={<TimesheetEditWrapper />}
+        />
       </Routes>
     </div>
   );

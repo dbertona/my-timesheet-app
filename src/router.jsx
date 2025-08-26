@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React from "react";
 import { createBrowserRouter, Outlet, useParams } from "react-router-dom";
+import AppError from "./components/ui/AppError";
 import LoginMicrosoft from "./components/LoginMicrosoft";
 import TimesheetHeaderList from "./components/TimesheetHeaderList";
 import TimesheetEdit from "./components/TimesheetEdit";
@@ -28,18 +29,40 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <AppWrapper />,
+    errorElement: <AppError />,
     children: [
-      { index: true, element: <HomeDashboard /> },
-      { path: "partes/:year?/:month?", element: <TimesheetHeaderList /> },
+      { index: true, element: <HomeDashboard />, errorElement: <AppError /> },
+      {
+        path: "partes/:year?/:month?",
+        element: <TimesheetHeaderList />,
+        errorElement: <AppError />,
+      },
       {
         element: <EnsureResource />, // Guard: requiere recurso válido
+        errorElement: <AppError />,
         children: [
-          { path: "edit/:headerId", element: <TimesheetEditWrapper /> },
-          { path: "editar-parte", element: <TimesheetEdit /> },
-          { path: "editar-parte/:headerId", element: <TimesheetEditWrapper /> },
-          { path: "nuevo-parte", element: <TimesheetEdit /> }
-        ]
-      }
-    ]
-  }
+          {
+            path: "edit/:headerId",
+            element: <TimesheetEditWrapper />,
+            errorElement: <AppError />,
+          },
+          {
+            path: "editar-parte",
+            element: <TimesheetEdit />,
+            errorElement: <AppError />,
+          },
+          {
+            path: "editar-parte/:headerId",
+            element: <TimesheetEditWrapper />,
+            errorElement: <AppError />,
+          },
+          {
+            path: "nuevo-parte",
+            element: <TimesheetEdit />,
+            errorElement: <AppError />,
+          },
+        ],
+      },
+    ],
+  },
 ]);

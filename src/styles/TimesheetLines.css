@@ -27,7 +27,9 @@
   line-height: 1.1 !important; /* ✅ Line-height compacto */
   box-sizing: border-box !important;
 }
-.ts-cell { position: relative; }
+.ts-cell {
+  position: relative;
+}
 
 /* Resizer de columnas */
 .ts-resizer {
@@ -61,19 +63,21 @@
   border-radius: 6px;
   background: #fff7f9;
 }
-.ts-input.pr-icon { padding-right: 26px; }
+.ts-input.pr-icon {
+  padding-right: 26px;
+}
 
 /* 🆕 Estilos para líneas de Factorial (no editables) */
 .ts-input-factorial {
   font-family: inherit !important; /* 🆕 Heredar fuente del padre */
-  font-size: inherit !important;   /* 🆕 Heredar tamaño de fuente del padre */
+  font-size: inherit !important; /* 🆕 Heredar tamaño de fuente del padre */
   font-weight: inherit !important; /* 🆕 Heredar peso de fuente del padre */
   line-height: inherit !important; /* 🆕 Heredar altura de línea del padre */
-  color: #666 !important;          /* 🆕 Color gris consistente */
-  font-style: italic !important;   /* 🆕 Estilo itálico consistente */
+  color: #666 !important; /* 🆕 Color gris consistente */
+  font-style: italic !important; /* 🆕 Estilo itálico consistente */
   background-color: transparent !important; /* 🆕 Fondo transparente */
-  border: none !important;         /* 🆕 Sin bordes */
-  cursor: not-allowed !important;  /* 🆕 Cursor no permitido */
+  border: none !important; /* 🆕 Sin bordes */
+  cursor: not-allowed !important; /* 🆕 Cursor no permitido */
 }
 
 /* Dropdowns */
@@ -87,7 +91,7 @@
   overflow-y: auto;
   background: #fff;
   border: 1px solid #ccc;
-  box-shadow: 0 6px 16px rgba(0,0,0,.12);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
   z-index: 1000;
 }
 
@@ -113,7 +117,7 @@
 
 .ts-action-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .ts-action-btn--duplicate:hover {
@@ -130,7 +134,7 @@
 
 .ts-action-btn:active {
   transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Modal de confirmación - Estilo exacto de Business Central */
@@ -148,14 +152,16 @@
 }
 
 .ts-modal {
-  background: #FFFFFF !important;
+  background: #ffffff !important;
   border-radius: 4px !important;
   padding: 16px !important;
   max-width: 400px !important;
   width: 90% !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
-  border: 1px solid #E1E1E1 !important;
-  font-family: "Segoe UI", "Segoe WP", Segoe, device-segoe, Tahoma, Helvetica, Arial, sans-serif !important;
+  border: 1px solid #e1e1e1 !important;
+  font-family:
+    "Segoe UI", "Segoe WP", Segoe, device-segoe, Tahoma, Helvetica, Arial,
+    sans-serif !important;
   font-weight: 400 !important;
   font-size: 10pt !important;
   color: #444 !important;
@@ -220,7 +226,9 @@
   padding: 6px 12px !important;
   border: 1px solid !important;
   border-radius: 3px !important;
-  font-family: "Segoe UI", "Segoe WP", Segoe, device-segoe, Tahoma, Helvetica, Arial, sans-serif !important;
+  font-family:
+    "Segoe UI", "Segoe WP", Segoe, device-segoe, Tahoma, Helvetica, Arial,
+    sans-serif !important;
   font-size: 9pt !important;
   font-weight: 400 !important;
   cursor: pointer !important;
@@ -234,24 +242,24 @@
 }
 
 .ts-btn--danger {
-  background-color: #FFFFFF !important;
+  background-color: #ffffff !important;
   color: rgb(0, 132, 137) !important;
   border-color: rgb(0, 132, 137) !important;
 }
 
 .ts-btn--danger:hover {
   background-color: rgb(0, 132, 137) !important;
-  color: #FFFFFF !important;
+  color: #ffffff !important;
 }
 
 .ts-btn--secondary {
-  background-color: #FFFFFF !important;
+  background-color: #ffffff !important;
   color: #444 !important;
-  border-color: #C1C1C1 !important;
+  border-color: #c1c1c1 !important;
 }
 
 .ts-btn--secondary:hover {
-  background-color: #F8F8F8 !important;
+  background-color: #f8f8f8 !important;
   border-color: #999 !important;
 }
 
@@ -278,13 +286,15 @@
 .ts-spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(0,0,0,0.15);
-  border-top-color: #4A90E2;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  border-top-color: #4a90e2;
   border-radius: 50%;
   animation: ts-spin 0.8s linear infinite;
 }
 @keyframes ts-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 .ts-dropdown__header input {
   width: 100%;
@@ -299,7 +309,7 @@
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
-  color: #4A90E2;
+  color: #4a90e2;
 }
 
 /* 🆕 ESTILOS RESPONSIVE DIRECTOS - FORZAR ALTURA COMPACTA */
@@ -319,8 +329,12 @@
     line-height: 1 !important; /* ✅ Line-height mínimo */
   }
 }
-.ts-icon--chevron { font-size: 16px; }
-.ts-icon--calendar { font-size: 18px; }
+.ts-icon--chevron {
+  font-size: 16px;
+}
+.ts-icon--calendar {
+  font-size: 18px;
+}
 
 /* Datepicker popover */
 .ts-datepop {
@@ -328,14 +342,19 @@
   left: 0;
   top: 32px;
   z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.13);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.13);
   background: #fff;
 }
 
 /* Mensajes de error debajo del campo */
 /* Reservar espacio para que el pill no tape otras celdas */
-.ts-td.ts-cell > .ts-cell { margin-bottom: 6px; }
-.ts-error { position: static; margin-top: 4px; }
+.ts-td.ts-cell > .ts-cell {
+  margin-bottom: 6px;
+}
+.ts-error {
+  position: static;
+  margin-top: 4px;
+}
 
 /* Estilo pill para mensajes inline más agradables */
 .ts-inline-error {
@@ -348,7 +367,7 @@
   border-radius: 999px;
   padding: 2px 6px;
   line-height: 1.2;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
 }
 .ts-inline-error__dot {
   width: 5px;
@@ -357,8 +376,9 @@
   background: #e11d48;
 }
 :root {
-  --ts-font-family: "Segoe UI", SegoeUI, system-ui, -apple-system, BlinkMacSystemFont,
-                    "Helvetica Neue", Arial, Inter, "Noto Sans", "Liberation Sans", sans-serif;
+  --ts-font-family:
+    "Segoe UI", SegoeUI, system-ui, -apple-system, BlinkMacSystemFont,
+    "Helvetica Neue", Arial, Inter, "Noto Sans", "Liberation Sans", sans-serif;
   --ts-font-size: 12px; /* ajusta aquí si quieres cambiar todo el módulo */
 }
 
@@ -407,5 +427,3 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-

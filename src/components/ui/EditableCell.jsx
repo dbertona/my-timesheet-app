@@ -11,13 +11,19 @@ export default function EditableCell({
   align, // 🆕 Prop para alineación específica
 }) {
   return (
-    <td className={`ts-td ts-cell ${className || ""}`} style={{ ...style, textAlign: align }}>
-      <div className="ts-cell">
-        {children}
-      </div>
+    <td
+      className={`ts-td ts-cell ${className || ""}`}
+      style={{ ...style, textAlign: align }}
+    >
+      <div className="ts-cell">{children}</div>
       {error && (
         <div style={{ position: "static", marginTop: 4 }}>
-          <span id={errorId} className="ts-inline-error" role="alert" aria-live="polite">
+          <span
+            id={errorId}
+            className="ts-inline-error"
+            role="alert"
+            aria-live="polite"
+          >
             <span className="ts-inline-error__dot" />
             {error}
           </span>
@@ -26,5 +32,3 @@ export default function EditableCell({
     </td>
   );
 }
-
-

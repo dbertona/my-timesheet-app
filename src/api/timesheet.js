@@ -18,7 +18,7 @@ const SAFE_COLUMNS = [
   "job_responsible_approval",
   "resource_no",
   "resource_responsible",
-  "isFactorialLine",          // 🆕 Marca para líneas de Factorial (no editables)
+  "isFactorialLine", // 🆕 Marca para líneas de Factorial (no editables)
 ];
 
 export function prepareRowForDb(row, { header, jobResponsibleMap } = {}) {
@@ -46,7 +46,8 @@ export function prepareRowForDb(row, { header, jobResponsibleMap } = {}) {
     } else if (key === "resource_no") {
       out.resource_no = row.resource_no ?? header?.resource_no ?? "";
     } else if (key === "resource_responsible") {
-      out.resource_responsible = row.resource_responsible ?? header?.resource_no ?? "";
+      out.resource_responsible =
+        row.resource_responsible ?? header?.resource_no ?? "";
     } else if (key === "quantity") {
       out.quantity = Number(row.quantity) || 0;
     } else {
@@ -66,7 +67,10 @@ export async function fetchTimesheetLines(headerId) {
 }
 
 export async function updateTimesheetLine(id, row) {
-  const { error } = await supabaseClient.from("timesheet").update(row).eq("id", id);
+  const { error } = await supabaseClient
+    .from("timesheet")
+    .update(row)
+    .eq("id", id);
   if (error) throw error;
 }
 
@@ -74,5 +78,3 @@ export async function insertTimesheetLines(rows) {
   const { error } = await supabaseClient.from("timesheet").insert(rows);
   if (error) throw error;
 }
-
-

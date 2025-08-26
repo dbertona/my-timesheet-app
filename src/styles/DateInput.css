@@ -121,8 +121,6 @@
   transform: scale(1.05);
 }
 
-
-
 .ts-calendar-day--holiday:hover:not(:disabled) {
   background-color: #006b76 !important;
   color: white !important;

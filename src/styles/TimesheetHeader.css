@@ -1,47 +1,64 @@
 .timesheet-header {
-    font-size: 14px;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    border-collapse: separate;
-    width: auto;
+  font-size: 14px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  border-collapse: separate;
+  width: auto;
 }
 
 .timesheet-header th,
 .timesheet-header td {
-    padding: 6px 10px;
-    border: none;
+  padding: 6px 10px;
+  border: none;
 }
 
 .timesheet-header th {
-    background-color: transparent;
-    color: #4a4a4a;
-    text-align: left;
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-    font-weight: normal;
+  background-color: transparent;
+  color: #4a4a4a;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  font-weight: normal;
 }
 
 .timesheet-header th::after {
-    content: "";
-    flex: 1;
-    border-bottom: 1px dotted #ccc;
-    margin-left: 6px;
-    margin-right: 6px;
+  content: "";
+  flex: 1;
+  border-bottom: 1px dotted #ccc;
+  margin-left: 6px;
+  margin-right: 6px;
 }
 
 .timesheet-header td {
-    background-color: #edeff1;
-    color: #000000;
-    text-align: left;
-    font-weight: normal !important;
+  background-color: #edeff1;
+  color: #000000;
+  text-align: left;
+  font-weight: normal !important;
 }
 
 /* --- Overrides fuertes y helpers para líderes punteados --- */
-.timesheet-header tr { background: transparent !important; }
-.timesheet-header th { background: transparent !important; }
-.timesheet-header td { background: #edeff1 !important; }
+.timesheet-header tr {
+  background: transparent !important;
+}
+.timesheet-header th {
+  background: transparent !important;
+}
+.timesheet-header td {
+  background: #edeff1 !important;
+}
 
 /* Estructura del título con puntos: <th><span class="th-label">...</span><span class="th-leader"/></th> */
-.timesheet-header th { display: flex; align-items: center; }
-.timesheet-header .th-label { margin-right: 8px; color: #4a4a4a; white-space: nowrap; }
-.timesheet-header .th-leader { flex: 1; border-bottom: 1px dotted #ccc; height: 0; }
+.timesheet-header th {
+  display: flex;
+  align-items: center;
+}
+.timesheet-header .th-label {
+  margin-right: 8px;
+  color: #4a4a4a;
+  white-space: nowrap;
+}
+.timesheet-header .th-leader {
+  flex: 1;
+  border-bottom: 1px dotted #ccc;
+  height: 0;
+}

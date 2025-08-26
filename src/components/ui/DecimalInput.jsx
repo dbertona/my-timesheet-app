@@ -1,5 +1,5 @@
-import React from 'react';
-import { PLACEHOLDERS } from '../../constants/i18n';
+import React from "react";
+import { PLACEHOLDERS } from "../../constants/i18n";
 
 export default function DecimalInput({
   name,
@@ -9,7 +9,7 @@ export default function DecimalInput({
   onFocus,
   onKeyDown,
   inputRef,
-  className = '',
+  className = "",
   disabled = false,
   placeholder = PLACEHOLDERS.QUANTITY,
   min = 0,
@@ -52,11 +52,9 @@ export default function DecimalInput({
       autoComplete="off"
       style={{
         textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
-        ...rest.style                     // 🆕 Permitir estilos personalizados
+        ...rest.style, // 🆕 Permitir estilos personalizados
       }}
       {...rest}
     />
   );
 }
-
-

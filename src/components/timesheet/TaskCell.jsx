@@ -1,5 +1,5 @@
 // src/components/timesheet/TaskCell.jsx
-import React, { useMemo, useRef } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import useDropdownFilter from "../../utils/useDropdownFilter";
@@ -33,12 +33,23 @@ const TaskCell = ({
   const setTaskFilter = tasksFilter.setFilterByLine;
   const taskOpenFor = tasksFilter.openFor;
   const setTaskOpenFor = tasksFilter.setOpenFor;
-  const getVisibleTasks = (lineId, jobNo) => tasksFilter.getVisible(lineId, (tasksByJob[jobNo]||[]), (t) => `${t.no} ${t.description||""}`);
+  const getVisibleTasks = useCallback(
+    (lineId, jobNo) =>
+      tasksFilter.getVisible(
+        lineId,
+        tasksByJob[jobNo] || [],
+        (t) => `${t.no} ${t.description || ""}`,
+      ),
+    [tasksFilter, tasksByJob],
+  );
 
   // Virtualización siempre montada para mantener orden de hooks estable
   const parentRef = useRef(null);
   const jobNo = editFormData[line.id]?.job_no || "";
-  const items = useMemo(() => (jobNo ? getVisibleTasks(line.id, jobNo) : []), [getVisibleTasks, line.id, jobNo, taskFilter?.[line.id], tasksByJob]);
+  const items = useMemo(
+    () => (jobNo ? getVisibleTasks(line.id, jobNo) : []),
+    [getVisibleTasks, line.id, jobNo],
+  );
   const rowVirtualizer = useVirtualizer({
     count: taskOpenFor === line.id ? items.length : 0,
     getScrollElement: () => parentRef.current,
@@ -61,7 +72,10 @@ const TaskCell = ({
               onChange={(e) => {
                 handleInputChange(line.id, e);
                 clearFieldError(line.id, "job_task_no");
-                setTaskFilter((prev) => ({ ...prev, [line.id]: e.target.value }));
+                setTaskFilter((prev) => ({
+                  ...prev,
+                  [line.id]: e.target.value,
+                }));
               }}
               onBlur={async () => {
                 const jobNo = editFormData[line.id]?.job_no || "";
@@ -73,10 +87,14 @@ const TaskCell = ({
                   setFieldError(
                     line.id,
                     "job_task_no",
-                    "Tarea inválida para el proyecto seleccionado."
+                    "Tarea inválida para el proyecto seleccionado.",
                   );
                   const el = inputRefs?.current?.[line.id]?.["job_task_no"];
-                  if (el) setTimeout(() => { el.focus(); el.select(); }, 0);
+                  if (el)
+                    setTimeout(() => {
+                      el.focus();
+                      el.select();
+                    }, 0);
                   return;
                 }
                 if (found.no !== raw) {
@@ -110,14 +128,20 @@ const TaskCell = ({
                   return;
                 }
                 // TODAS las teclas de navegación usan la misma función
-                if (e.key === "Tab" || e.key === "Enter" || e.key.startsWith("Arrow")) {
+                if (
+                  e.key === "Tab" ||
+                  e.key === "Enter" ||
+                  e.key.startsWith("Arrow")
+                ) {
                   e.preventDefault(); // Prevenir comportamiento por defecto
                   // job_task_no está en el índice 2 de TIMESHEET_FIELDS
                   handleKeyDown(e, lineIndex, 2);
                   return;
                 }
               }}
-              ref={hasRefs ? (el) => setSafeRef(line.id, "job_task_no", el) : null}
+              ref={
+                hasRefs ? (el) => setSafeRef(line.id, "job_task_no", el) : null
+              }
               className={`ts-input`}
               autoComplete="off"
             />
@@ -133,7 +157,10 @@ const TaskCell = ({
           </div>
 
           {taskOpenFor === line.id && (
-            <div className="ts-dropdown" onMouseDown={(e) => e.preventDefault()}>
+            <div
+              className="ts-dropdown"
+              onMouseDown={(e) => e.preventDefault()}
+            >
               <div className="ts-dropdown__header">
                 <FiSearch />
                 <input
@@ -149,23 +176,41 @@ const TaskCell = ({
                 />
               </div>
 
-              <div ref={parentRef} style={{ height: 220, overflow: 'auto' }}>
-                <div style={{ height: rowVirtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
+              <div ref={parentRef} style={{ height: 220, overflow: "auto" }}>
+                <div
+                  style={{
+                    height: rowVirtualizer.getTotalSize(),
+                    width: "100%",
+                    position: "relative",
+                  }}
+                >
                   {rowVirtualizer.getVirtualItems().map((v) => {
                     const t = items[v.index];
                     if (!t) return null;
                     return (
                       <div
                         key={t.no}
-                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${v.start}px)` }}
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          transform: `translateY(${v.start}px)`,
+                        }}
                         onMouseDown={() => {
-                          handleInputChange(line.id, { target: { name: 'job_task_no', value: t.no } });
-                          setTaskFilter((prev) => ({ ...prev, [line.id]: t.no }));
+                          handleInputChange(line.id, {
+                            target: { name: "job_task_no", value: t.no },
+                          });
+                          setTaskFilter((prev) => ({
+                            ...prev,
+                            [line.id]: t.no,
+                          }));
                           setTaskOpenFor(null);
                         }}
-                        title={`${t.no} - ${t.description || ''}`}
+                        title={`${t.no} - ${t.description || ""}`}
                       >
-                        <strong>{t.no}</strong> {t.description ? `— ${t.description}` : ''}
+                        <strong>{t.no}</strong>{" "}
+                        {t.description ? `— ${t.description}` : ""}
                       </div>
                     );
                   })}
@@ -206,10 +251,15 @@ const TaskCell = ({
         </div>
       )}
       {error && (
-        <div className="ts-error"><span className="ts-inline-error"><span className="ts-inline-error__dot" />{error}</span></div>
+        <div className="ts-error">
+          <span className="ts-inline-error">
+            <span className="ts-inline-error__dot" />
+            {error}
+          </span>
+        </div>
       )}
     </td>
   );
-}
+};
 
 export default TaskCell;

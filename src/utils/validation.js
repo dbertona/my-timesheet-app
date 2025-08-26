@@ -24,12 +24,17 @@ export function isHolidayIso(iso, holidaySet) {
 }
 
 // 🆕 NUEVA FUNCIÓN: Validación completa antes de guardar
-export async function validateAllData(editFormData = {}, dailyRequired = {}, calendarHolidays = [], jobs = []) {
+export async function validateAllData(
+  editFormData = {},
+  dailyRequired = {},
+  calendarHolidays = [],
+  jobs = [],
+) {
   console.log("🔍 DEBUG VALIDACIÓN:", {
     editFormDataKeys: Object.keys(editFormData),
     jobsCount: jobs.length,
     jobsSample: jobs.slice(0, 3),
-    dailyRequiredKeys: Object.keys(dailyRequired)
+    dailyRequiredKeys: Object.keys(dailyRequired),
   });
 
   const errors = {};
@@ -46,7 +51,7 @@ export async function validateAllData(editFormData = {}, dailyRequired = {}, cal
     console.log(`🔍 Validando línea ${lineId}:`, {
       job_no: row.job_no,
       quantity: row.quantity,
-      date: row.date
+      date: row.date,
     });
 
     // 1. Validar fecha
@@ -75,11 +80,14 @@ export async function validateAllData(editFormData = {}, dailyRequired = {}, cal
     } else {
       // 🆕 NUEVA VALIDACIÓN: Estado del proyecto
       console.log(`🔍 Buscando proyecto ${row.job_no} en jobs:`, jobs);
-      const project = jobs.find(j => j.no === row.job_no);
+      const project = jobs.find((j) => j.no === row.job_no);
       console.log(`🔍 Proyecto encontrado:`, project);
 
-      if (project && (project.status === 'Completed' || project.status === 'Lost')) {
-        const errorMsg = `No se pueden imputar horas en proyecto ${project.status === 'Completed' ? 'Completado' : 'Perdido'}`;
+      if (
+        project &&
+        (project.status === "Completed" || project.status === "Lost")
+      ) {
+        const errorMsg = `No se pueden imputar horas en proyecto ${project.status === "Completed" ? "Completado" : "Perdido"}`;
         lineErrors.job_no = errorMsg;
         totalErrors++;
         console.log(`❌ ERROR CRÍTICO: ${errorMsg}`);
@@ -123,7 +131,7 @@ export async function validateAllData(editFormData = {}, dailyRequired = {}, cal
   console.log("🔍 RESULTADO VALIDACIÓN:", {
     totalErrors,
     totalWarnings,
-    errors: Object.keys(errors)
+    errors: Object.keys(errors),
   });
 
   // Crear resumen de errores
@@ -135,7 +143,7 @@ export async function validateAllData(editFormData = {}, dailyRequired = {}, cal
     errors,
     totalErrors,
     totalWarnings,
-    summary
+    summary,
   };
 }
 
@@ -148,17 +156,17 @@ function generateValidationSummary(errors, totalErrors, totalWarnings) {
   let summary = "";
 
   if (totalErrors > 0) {
-    summary += `❌ ${totalErrors} error${totalErrors > 1 ? 'es' : ''} crítico${totalErrors > 1 ? 's' : ''} que impiden guardar\n`;
+    summary += `❌ ${totalErrors} error${totalErrors > 1 ? "es" : ""} crítico${totalErrors > 1 ? "s" : ""} que impiden guardar\n`;
   }
 
   if (totalWarnings > 0) {
-    summary += `⚠️ ${totalWarnings} advertencia${totalWarnings > 1 ? 's' : ''} que deberías revisar\n`;
+    summary += `⚠️ ${totalWarnings} advertencia${totalWarnings > 1 ? "s" : ""} que deberías revisar\n`;
   }
 
   // Agregar detalles por tipo de error
   const errorTypes = {};
-  Object.values(errors).forEach(lineErrors => {
-    Object.values(lineErrors).forEach(errorMsg => {
+  Object.values(errors).forEach((lineErrors) => {
+    Object.values(lineErrors).forEach((errorMsg) => {
       errorTypes[errorMsg] = (errorTypes[errorMsg] || 0) + 1;
     });
   });
@@ -166,12 +174,9 @@ function generateValidationSummary(errors, totalErrors, totalWarnings) {
   if (Object.keys(errorTypes).length > 0) {
     summary += "\n📋 Resumen de problemas:\n";
     Object.entries(errorTypes).forEach(([error, count]) => {
-      summary += `• ${error}: ${count} línea${count > 1 ? 's' : ''}\n`;
+      summary += `• ${error}: ${count} línea${count > 1 ? "s" : ""}\n`;
     });
   }
 
   return summary.trim();
 }
-
-
-

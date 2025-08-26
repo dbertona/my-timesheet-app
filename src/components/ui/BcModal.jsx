@@ -12,7 +12,7 @@ export default function BcModal({
   confirmButtonType = "danger", // "danger" o "primary"
   showActions = true,
   size = "medium", // "small", "medium", "large"
-  oneButton = false
+  oneButton = false,
 }) {
   if (!isOpen) return null;
 
@@ -33,7 +33,7 @@ export default function BcModal({
   const sizeClasses = {
     small: "ts-modal--small",
     medium: "ts-modal--medium",
-    large: "ts-modal--large"
+    large: "ts-modal--large",
   };
 
   return (
@@ -42,13 +42,9 @@ export default function BcModal({
         className={`ts-modal ${sizeClasses[size]}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {title && (
-          <h3>{title}</h3>
-        )}
+        {title && <h3>{title}</h3>}
 
-        <div className="ts-modal-content">
-          {children}
-        </div>
+        <div className="ts-modal-content">{children}</div>
 
         {showActions && (
           <div className="ts-modal-actions">

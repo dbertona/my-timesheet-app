@@ -36,13 +36,17 @@ const HomeDashboard = () => {
   try {
     activeAccount = instance.getActiveAccount() || accounts[0];
     displayName = activeAccount?.name || activeAccount?.username || "usuario";
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   let userEmail = "";
   try {
     const acct = activeAccount || accounts[0];
     userEmail = acct?.username || acct?.email || "";
-  } catch { userEmail = ""; }
+  } catch {
+    userEmail = "";
+  }
 
   const [userPhoto, setUserPhoto] = useState("");
   const [pendingHours, setPendingHours] = useState(null);
@@ -66,18 +70,28 @@ const HomeDashboard = () => {
     async function loadPhoto() {
       try {
         if (!activeAccount) return;
-        const result = await instance.acquireTokenSilent({ account: activeAccount, scopes: ["User.Read"] });
-        const res = await fetch("https://graph.microsoft.com/v1.0/me/photos/64x64/$value", {
-          headers: { Authorization: `Bearer ${result.accessToken}` },
+        const result = await instance.acquireTokenSilent({
+          account: activeAccount,
+          scopes: ["User.Read"],
         });
+        const res = await fetch(
+          "https://graph.microsoft.com/v1.0/me/photos/64x64/$value",
+          {
+            headers: { Authorization: `Bearer ${result.accessToken}` },
+          },
+        );
         if (!res.ok) return;
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         if (!cancelled) setUserPhoto(url);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     loadPhoto();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [activeAccount, instance]);
 
   useEffect(() => {
@@ -91,19 +105,27 @@ const HomeDashboard = () => {
           setPendingHours(0);
           return;
         }
-        const { data, error } = await supabaseClient.rpc('pending_hours', { p_email: userEmail });
+        const { data, error } = await supabaseClient.rpc("pending_hours", {
+          p_email: userEmail,
+        });
         if (error) throw error;
-        const pendientes = data && data[0] && typeof data[0].pendientes === 'number' ? data[0].pendientes : 0;
+        const pendientes =
+          data && data[0] && typeof data[0].pendientes === "number"
+            ? data[0].pendientes
+            : 0;
         if (!cancelled) setPendingHours(pendientes);
       } catch (e) {
-        if (!cancelled) setErrorHours(e.message || "Error calculando horas pendientes");
+        if (!cancelled)
+          setErrorHours(e.message || "Error calculando horas pendientes");
       } finally {
         if (!cancelled) setLoadingHours(false);
       }
     }
 
     loadPendingHours();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userEmail]);
 
   const now = new Date();
@@ -124,7 +146,9 @@ const HomeDashboard = () => {
       try {
         const acct = instance.getActiveAccount() || accounts[0];
         email = acct?.username || acct?.email || "";
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       let resourceNo = null;
       if (email) {
         const { data: r } = await supabaseClient
@@ -145,7 +169,8 @@ const HomeDashboard = () => {
         .eq("resource_no", resourceNo)
         .eq("allocation_period", allocationPeriod)
         .maybeSingle();
-      if (h?.id) goToEditParte(); else goToNuevoParte();
+      if (h?.id) goToEditParte();
+      else goToNuevoParte();
     } catch {
       goToNuevoParte();
     }
@@ -153,9 +178,17 @@ const HomeDashboard = () => {
 
   const handleLogout = async () => {
     try {
-      await instance.logoutRedirect({ postLogoutRedirectUri: window.location.origin });
+      await instance.logoutRedirect({
+        postLogoutRedirectUri: window.location.origin,
+      });
     } catch {
-      try { await instance.logoutPopup({ postLogoutRedirectUri: window.location.origin }); } catch { /* ignore */ }
+      try {
+        await instance.logoutPopup({
+          postLogoutRedirectUri: window.location.origin,
+        });
+      } catch {
+        /* ignore */
+      }
     }
   };
 
@@ -171,11 +204,20 @@ const HomeDashboard = () => {
           oneButton={true}
         >
           <p>
-            No se encontró un recurso asociado al email {missingEmail || userEmail || "(desconocido)"}. Por favor, contacta con Recursos Humanos para dar de alta tu recurso en el sistema.
+            No se encontró un recurso asociado al email{" "}
+            {missingEmail || userEmail || "(desconocido)"}. Por favor, contacta
+            con Recursos Humanos para dar de alta tu recurso en el sistema.
           </p>
         </BcModal>
       )}
-      <nav className="bc-menu" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <nav
+        className="bc-menu"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <div style={{ display: "flex", gap: 16 }}>
           <div className="bc-menu-item">
             <Link to="/nuevo-parte">Nuevo Parte de Trabajo</Link>
@@ -184,7 +226,15 @@ const HomeDashboard = () => {
             <Link to="/editar-parte">Editar Partes de Trabajo</Link>
           </div>
         </div>
-        <div ref={menuRef} style={{ position: "relative", display: "flex", alignItems: "center", gap: 12 }}>
+        <div
+          ref={menuRef}
+          style={{
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
           <button
             aria-haspopup="menu"
             aria-expanded={menuOpen}
@@ -201,9 +251,23 @@ const HomeDashboard = () => {
             }}
           >
             {userPhoto ? (
-              <img src={userPhoto} alt="Foto de usuario" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <img
+                src={userPhoto}
+                alt="Foto de usuario"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
             ) : (
-              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#e5e7eb", fontWeight: 700 }}>
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "#e5e7eb",
+                  fontWeight: 700,
+                }}
+              >
                 {(displayName || "U").charAt(0)}
               </div>
             )}
@@ -225,22 +289,59 @@ const HomeDashboard = () => {
                 zIndex: 1000,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: 8 }}>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "1px solid #ddd" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: 8,
+                }}
+              >
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    overflow: "hidden",
+                    border: "1px solid #ddd",
+                  }}
+                >
                   {userPhoto ? (
-                    <img src={userPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <img
+                      src={userPhoto}
+                      alt=""
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
                   ) : (
-                    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#e5e7eb", fontWeight: 700 }}>
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "#e5e7eb",
+                        fontWeight: 700,
+                      }}
+                    >
                       {(displayName || "U").charAt(0)}
                     </div>
                   )}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <span style={{ fontWeight: 600 }}>{displayName}</span>
-                  <span style={{ fontSize: 12, color: "#6b7280" }}>{userEmail}</span>
+                  <span style={{ fontSize: 12, color: "#6b7280" }}>
+                    {userEmail}
+                  </span>
                 </div>
               </div>
-              <div style={{ height: 1, background: "#f3f4f6", margin: "4px 0" }} />
+              <div
+                style={{ height: 1, background: "#f3f4f6", margin: "4px 0" }}
+              />
               <button
                 onClick={handleLogout}
                 role="menuitem"
@@ -260,8 +361,22 @@ const HomeDashboard = () => {
         </div>
       </nav>
 
-      <header className="dash__header" style={{ padding: "8px 0", borderBottom: "1px solid #d9d9d9", marginBottom: "12px" }}>
-        <h2 style={{ fontSize: "1.25rem", fontWeight: "600", color: "#008489", margin: 0 }}>
+      <header
+        className="dash__header"
+        style={{
+          padding: "8px 0",
+          borderBottom: "1px solid #d9d9d9",
+          marginBottom: "12px",
+        }}
+      >
+        <h2
+          style={{
+            fontSize: "1.25rem",
+            fontWeight: "600",
+            color: "#008489",
+            margin: 0,
+          }}
+        >
           {getGreeting()}, {displayName}.
         </h2>
       </header>
@@ -272,11 +387,19 @@ const HomeDashboard = () => {
           role="button"
           tabIndex={0}
           onClick={navigateToParteActual}
-          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigateToParteActual()}
+          onKeyDown={(e) =>
+            (e.key === "Enter" || e.key === " ") && navigateToParteActual()
+          }
         >
-          <h3 className="bc-card__title">Horas pendientes de imputar este mes</h3>
+          <h3 className="bc-card__title">
+            Horas pendientes de imputar este mes
+          </h3>
           <div className="bc-card__value">
-            {loadingHours ? "…" : errorHours ? "—" : `${Math.round(pendingHours || 0)}H`}
+            {loadingHours
+              ? "…"
+              : errorHours
+                ? "—"
+                : `${Math.round(pendingHours || 0)}H`}
           </div>
           <div className="bc-card__line"></div>
           <div className="bc-card__icon">&gt;</div>
@@ -290,7 +413,9 @@ const HomeDashboard = () => {
         </article>
 
         <article className="bc-card dashboard-card">
-          <h3 className="bc-card__title">Partes de trabajo pendientes de aprobar</h3>
+          <h3 className="bc-card__title">
+            Partes de trabajo pendientes de aprobar
+          </h3>
           <div className="bc-card__value">0</div>
           <div className="bc-card__line"></div>
           <div className="bc-card__icon">&gt;</div>
@@ -304,7 +429,9 @@ const HomeDashboard = () => {
         </article>
 
         <article className="bc-card dashboard-card">
-          <h3 className="bc-card__title">Notas de gasto pendientes de aprobar</h3>
+          <h3 className="bc-card__title">
+            Notas de gasto pendientes de aprobar
+          </h3>
           <div className="bc-card__value">0</div>
           <div className="bc-card__line"></div>
           <div className="bc-card__icon">&gt;</div>

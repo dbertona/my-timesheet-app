@@ -12,7 +12,8 @@ function parseAllocationPeriod(ap) {
   return { year, month };
 }
 
-function daysInMonth(year, month) { // month: 1..12
+function daysInMonth(year, month) {
+  // month: 1..12
   return new Date(year, month, 0).getDate();
 }
 
@@ -22,7 +23,11 @@ function isoOf(y, m, d) {
   return `${y}-${mm}-${dd}`;
 }
 
-export default function useCalendarData(header, resolvedHeaderId, editFormData) {
+export default function useCalendarData(
+  header,
+  resolvedHeaderId,
+  editFormData,
+) {
   const [calendarDays, setCalendarDays] = useState([]); // [{ d, iso, need, got, status }]
   const [dailyRequired, setDailyRequired] = useState({}); // { 'YYYY-MM-DD': hours }
   const [calRange, setCalRange] = useState({ year: null, month: null }); // month: 1-12
@@ -33,13 +38,19 @@ export default function useCalendarData(header, resolvedHeaderId, editFormData) 
   useEffect(() => {
     async function fetchHolidays() {
       if (!header) return;
-      const calendarCode = header?.resource_calendar ?? header?.calendar_code ?? header?.calendar_type ?? null;
+      const calendarCode =
+        header?.resource_calendar ??
+        header?.calendar_code ??
+        header?.calendar_type ??
+        null;
       if (!calendarCode) return;
       try {
-        const data = await fetchCalendarDays(header?.allocation_period, calendarCode);
+        const data = await fetchCalendarDays(
+          header?.allocation_period,
+          calendarCode,
+        );
         setCalendarHolidays((data || []).filter((d) => d.holiday === true));
       } catch (error) {
-        // eslint-disable-next-line no-console
         console.error("Error cargando festivos:", error);
       }
     }
@@ -57,12 +68,16 @@ export default function useCalendarData(header, resolvedHeaderId, editFormData) 
 
       setCalRange({ year, month });
 
-            const first = new Date(year, month - 1, 1);
+      const first = new Date(year, month - 1, 1);
       const js = first.getDay(); // 0=Dom .. 6=Sáb
       const offset = (js + 6) % 7; // Lunes=0 .. Domingo=6
       setFirstOffset(offset);
 
-      const calendarCode = header?.resource_calendar ?? header?.calendar_code ?? header?.calendar_type ?? null;
+      const calendarCode =
+        header?.resource_calendar ??
+        header?.calendar_code ??
+        header?.calendar_type ??
+        null;
       if (!calendarCode) {
         setCalendarDays([]);
         return;
@@ -72,7 +87,10 @@ export default function useCalendarData(header, resolvedHeaderId, editFormData) 
       const toIso = isoOf(year, month, daysInMonth(year, month));
 
       // 1) Horas requeridas por día del calendario laboral
-      const calRows = await fetchCalendarDays(header.allocation_period, calendarCode);
+      const calRows = await fetchCalendarDays(
+        header.allocation_period,
+        calendarCode,
+      );
       const req = {};
       (calRows || []).forEach((r) => {
         const iso = (r.day || "").slice(0, 10);
@@ -90,7 +108,6 @@ export default function useCalendarData(header, resolvedHeaderId, editFormData) 
           .gte("date", fromIso)
           .lte("date", toIso);
         if (tErr) {
-          // eslint-disable-next-line no-console
           console.error("Error cargando imputaciones:", tErr);
         } else {
           (tRows || []).forEach((r) => {
@@ -120,9 +137,9 @@ export default function useCalendarData(header, resolvedHeaderId, editFormData) 
         if (holidaySet.has(iso)) {
           status = "sin-horas"; // festivo
         } else if (requiredHours > 0) {
-          if (got >= (requiredHours - EPS)) status = "completo";
-          else if (got > 0)                status = "parcial";
-          else                              status = "cero";
+          if (got >= requiredHours - EPS) status = "completo";
+          else if (got > 0) status = "parcial";
+          else status = "cero";
         }
 
         arr.push({ d, iso, need: requiredHours, got, status });
@@ -136,8 +153,6 @@ export default function useCalendarData(header, resolvedHeaderId, editFormData) 
   // Actualización en vivo con editFormData
   useEffect(() => {
     if (!calRange?.year || !calRange?.month) return;
-
-
 
     const EPS = 0.01;
     const holidaySet = buildHolidaySet(calendarHolidays);
@@ -154,22 +169,37 @@ export default function useCalendarData(header, resolvedHeaderId, editFormData) 
       if (holidaySet.has(iso)) {
         status = "sin-horas";
       } else if (need > 0) {
-        if (got >= (need - EPS)) status = "completo";
-        else if (got > 0)        status = "parcial";
-        else                      status = "cero";
+        if (got >= need - EPS) status = "completo";
+        else if (got > 0) status = "parcial";
+        else status = "cero";
       }
 
       arr.push({ d, iso, need, got, status });
     }
 
-
-
     setCalendarDays(arr);
   }, [editFormData, dailyRequired, calRange, calendarHolidays]);
 
-  const requiredSum = useMemo(() => Object.values(dailyRequired || {}).reduce((a, b) => a + (Number(b) || 0), 0), [dailyRequired]);
-  const imputedSum = useMemo(() => Object.values(editFormData || {}).reduce((a, r) => a + (Number(r?.quantity) || 0), 0), [editFormData]);
-  const missingSum = useMemo(() => Math.max(0, requiredSum - imputedSum), [requiredSum, imputedSum]);
+  const requiredSum = useMemo(
+    () =>
+      Object.values(dailyRequired || {}).reduce(
+        (a, b) => a + (Number(b) || 0),
+        0,
+      ),
+    [dailyRequired],
+  );
+  const imputedSum = useMemo(
+    () =>
+      Object.values(editFormData || {}).reduce(
+        (a, r) => a + (Number(r?.quantity) || 0),
+        0,
+      ),
+    [editFormData],
+  );
+  const missingSum = useMemo(
+    () => Math.max(0, requiredSum - imputedSum),
+    [requiredSum, imputedSum],
+  );
 
   return {
     calRange,
@@ -182,5 +212,3 @@ export default function useCalendarData(header, resolvedHeaderId, editFormData) 
     missingSum,
   };
 }
-
-

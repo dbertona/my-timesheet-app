@@ -13,7 +13,7 @@ export default function useDropdownFilter() {
       clearTimeout(debounceTimerRef.current);
     }
     debounceTimerRef.current = setTimeout(() => {
-      setFilterByLine(prev => ({ ...prev, [lineId]: value }));
+      setFilterByLine((prev) => ({ ...prev, [lineId]: value }));
       setActiveIndex(-1); // resetear ítem activo al cambiar filtro
     }, 100);
   }, []);
@@ -23,17 +23,17 @@ export default function useDropdownFilter() {
     if (!Array.isArray(items) || items.length === 0) return currentIndex;
 
     switch (key) {
-      case 'ArrowDown':
+      case "ArrowDown":
         return Math.min(currentIndex + 1, items.length - 1);
-      case 'ArrowUp':
+      case "ArrowUp":
         return Math.max(currentIndex - 1, 0);
-      case 'Home':
+      case "Home":
         return 0;
-      case 'End':
+      case "End":
         return items.length - 1;
-      case 'PageUp':
+      case "PageUp":
         return Math.max(currentIndex - 10, 0);
-      case 'PageDown':
+      case "PageDown":
         return Math.min(currentIndex + 10, items.length - 1);
       default:
         return currentIndex;
@@ -55,12 +55,17 @@ export default function useDropdownFilter() {
     };
   }, []);
 
-  const getVisible = useCallback((lineId, items, toText) => {
-    const list = Array.isArray(items) ? items : [];
-    const q = (filterByLine[lineId] || "").toLowerCase();
-    if (!q) return list;
-    return list.filter((it) => (toText?.(it) || String(it)).toLowerCase().includes(q));
-  }, [filterByLine]);
+  const getVisible = useCallback(
+    (lineId, items, toText) => {
+      const list = Array.isArray(items) ? items : [];
+      const q = (filterByLine[lineId] || "").toLowerCase();
+      if (!q) return list;
+      return list.filter((it) =>
+        (toText?.(it) || String(it)).toLowerCase().includes(q),
+      );
+    },
+    [filterByLine],
+  );
 
   return {
     filterByLine,
@@ -74,5 +79,3 @@ export default function useDropdownFilter() {
     handleEscape,
   };
 }
-
-

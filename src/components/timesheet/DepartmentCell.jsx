@@ -8,7 +8,8 @@ export default function DepartmentCell({
   editFormData, // ✅ Recibir editFormData para mostrar valor actualizado
 }) {
   // ✅ Usar editFormData si está disponible, sino usar line
-  const departmentCode = editFormData?.[line.id]?.department_code || line.department_code;
+  const departmentCode =
+    editFormData?.[line.id]?.department_code || line.department_code;
 
   return (
     <td
@@ -22,14 +23,14 @@ export default function DepartmentCell({
       }}
       data-col="department_code"
     >
-              <div
-          className="ts-cell-content"
-          style={{
-            padding: "0px 1px",
-            fontSize: "10px",
-            fontWeight: "500",
-          }}
-        >
+      <div
+        className="ts-cell-content"
+        style={{
+          padding: "0px 1px",
+          fontSize: "10px",
+          fontWeight: "500",
+        }}
+      >
         {departmentCode || (
           <span style={{ fontStyle: "italic", color: "#adb5bd" }}>
             Sin departamento

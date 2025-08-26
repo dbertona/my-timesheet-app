@@ -10,6 +10,3 @@ export async function fetchCalendarDays(allocationPeriod, calendarCode) {
   if (error) throw error;
   return data || [];
 }
-
-
-

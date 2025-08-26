@@ -2,7 +2,7 @@
   padding: 20px;
   background-color: #f8f9fa;
   min-height: 100vh;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Segoe UI", sans-serif;
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
@@ -37,7 +37,7 @@
 }
 /* ======= Dashboard (estilo Business Central) ======= */
 :root {
-  --bc-teal: #007c89;         /* teal BC */
+  --bc-teal: #007c89; /* teal BC */
   --bc-teal-dark: #006b76;
   --bc-bg: #f5f7f9;
   --bc-white: #ffffff;
@@ -53,18 +53,21 @@
   overflow-x: hidden;
 }
 
-.dash__header { margin-bottom: 16px; }
+.dash__header {
+  margin-bottom: 16px;
+}
 
 .dash__greeting {
   font-size: 28px;
   font-weight: 700;
-  color: #19a0ac;            /* similar al saludo de tu app */
+  color: #19a0ac; /* similar al saludo de tu app */
   margin: 0;
 }
 
 /* Grid responsive: 1 / 2 / 3 columnas con reparto completo del ancho */
 /* Both BC and new dashboard grid share the same styles */
-.dash__grid, .dashboard-grid {
+.dash__grid,
+.dashboard-grid {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(1, minmax(0, 1fr)); /* móvil */
@@ -73,25 +76,28 @@
 }
 
 @media (min-width: 768px) {
-  .dash__grid, .dashboard-grid {
+  .dash__grid,
+  .dashboard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)); /* tablet/medianas */
   }
 }
 
 @media (min-width: 992px) {
-  .dash__grid, .dashboard-grid {
+  .dash__grid,
+  .dashboard-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr)); /* portátil/escritorio */
   }
 }
 
 /* Cada tarjeta: BC style + responsive width */
-.bc-card, .dashboard-card {
+.bc-card,
+.dashboard-card {
   background: var(--bc-teal);
   color: var(--bc-white);
   border: 1px solid var(--bc-teal-dark);
   border-radius: 4px;
   padding: 16px;
-  height: 160px;                  /* alto parecido al de BC */
+  height: 160px; /* alto parecido al de BC */
   display: flex;
   flex-direction: column;
   justify-content: space-between; /* título arriba, valor centro, línea+icono abajo */
@@ -122,7 +128,11 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    "Segoe UI",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   width: 100%;
 }
 
@@ -169,7 +179,11 @@
   color: #ffffff;
   font-weight: 700;
   font-size: 12px;
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    "Segoe UI",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   letter-spacing: 0.2px;
   background: rgba(255, 255, 255, 0.15);
   padding: 3px 8px;
@@ -197,7 +211,9 @@
 .progress-fill {
   height: 100%;
   border-radius: 3px;
-  transition: width 0.5s ease, background-color 0.3s ease;
+  transition:
+    width 0.5s ease,
+    background-color 0.3s ease;
 }
 
 .progress-text {
@@ -205,7 +221,11 @@
   color: rgba(255, 255, 255, 0.8);
   font-size: 10px;
   font-weight: 500;
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    "Segoe UI",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   letter-spacing: 0.1px;
 }
 
@@ -215,13 +235,13 @@
   font-size: 44px;
   font-weight: 400;
   letter-spacing: 0.5px;
-  align-self: flex-start;         /* similar a BC (alineado a la izquierda) */
+  align-self: flex-start; /* similar a BC (alineado a la izquierda) */
   margin-left: 4px;
 }
 
 /* Línea divisoria inferior */
 .bc-card__line {
-  border-top: 2px solid rgba(255,255,255,0.85);
+  border-top: 2px solid rgba(255, 255, 255, 0.85);
   margin: 8px 0 0;
 }
 
@@ -237,19 +257,18 @@
 .bc-menu {
   display: flex;
   align-items: center;
-  gap: 28px;               /* separación entre ítems */
-  padding: 8px 0 12px;     /* respiración arriba/abajo */
+  gap: 28px; /* separación entre ítems */
+  padding: 8px 0 12px; /* respiración arriba/abajo */
   border-bottom: 1px solid #d9d9d9; /* separador sutil */
-  margin-bottom: 16px;     /* separa del grid de tarjetas */
+  margin-bottom: 16px; /* separa del grid de tarjetas */
 }
 
 .bc-menu-item a {
-  text-decoration: none;   /* sin subrayado por defecto */
-  color: var(--bc-teal);   /* mismo tono que el resto de la UI */
+  text-decoration: none; /* sin subrayado por defecto */
+  color: var(--bc-teal); /* mismo tono que el resto de la UI */
   font-size: 15px;
-  font-weight: 600;        /* aspecto de acción/pestaña de BC */
+  font-weight: 600; /* aspecto de acción/pestaña de BC */
 }
-
 
 /* Estado activo opcional por clase */
 .bc-menu-item--active a {
@@ -258,7 +277,10 @@
   padding-bottom: 2px;
 }
 
-.bc-card:hover, .dashboard-card:hover, .bc-card:focus, .dashboard-card:focus {
+.bc-card:hover,
+.dashboard-card:hover,
+.bc-card:focus,
+.dashboard-card:focus {
   background: var(--bc-teal-dark);
   cursor: pointer;
   transition: background 0.3s ease;
@@ -275,7 +297,9 @@
   margin-bottom: 14px;
 }
 
-.bc-menu-item { display: flex; }
+.bc-menu-item {
+  display: flex;
+}
 
 .bc-menu-item a {
   display: inline-block;
@@ -306,4 +330,6 @@
   border-bottom: 2px solid #008489;
 }
 
-.bc-menu-item a:visited { color: var(--bc-teal); }
+.bc-menu-item a:visited {
+  color: var(--bc-teal);
+}

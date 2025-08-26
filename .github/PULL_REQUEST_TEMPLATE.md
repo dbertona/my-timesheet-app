@@ -17,5 +17,3 @@ Resumen del cambio y motivación.
 ## Notas de implementación
 
 Detalles, riesgos y decisiones tomadas.
-
-

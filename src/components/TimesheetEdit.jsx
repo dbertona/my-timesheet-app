@@ -1,5 +1,11 @@
 // src/components/TimesheetEdit.jsx
-import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+} from "react";
 import { useNavigate, useLocation, useBlocker } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
 import { toast } from "react-hot-toast";
@@ -16,7 +22,12 @@ import BcModal from "./ui/BcModal";
 import ValidationErrorsModal from "./ui/ValidationErrorsModal";
 import { TOAST, PLACEHOLDERS, VALIDATION, LABELS } from "../constants/i18n";
 import { format } from "date-fns";
-import { buildHolidaySet, computeTotalsByIso, validateAllData } from "../utils/validation";
+import {
+  buildHolidaySet,
+  computeTotalsByIso,
+  validateAllData,
+} from "../utils/validation";
+/* eslint-disable react-hooks/exhaustive-deps */
 import "../styles/BcModal.css";
 
 // ✅ columnas existentes en la tabla 'timesheet'
@@ -34,13 +45,12 @@ const SAFE_COLUMNS = [
   "job_no_and_description",
   "job_responsible",
   "job_responsible_approval", // siempre true
-  "resource_no",              // NUEVO
-  "resource_responsible",     // NUEVO
-  "isFactorialLine",          // 🆕 Marca para líneas de Factorial (no editables)
+  "resource_no", // NUEVO
+  "resource_responsible", // NUEVO
+  "isFactorialLine", // 🆕 Marca para líneas de Factorial (no editables)
 ];
 
 function TimesheetEdit({ headerId }) {
-
   const navigate = useNavigate();
   const location = useLocation();
   const { instance, accounts } = useMsal();
@@ -62,7 +72,7 @@ function TimesheetEdit({ headerId }) {
   const [resolvedHeaderId, setResolvedHeaderId] = useState(null);
   const effectiveHeaderId = useMemo(
     () => resolvedHeaderId ?? header?.id ?? headerId ?? null,
-    [resolvedHeaderId, header?.id, headerId]
+    [resolvedHeaderId, header?.id, headerId],
   );
 
   // === Calendario (estado + helpers) ahora en hook dedicado
@@ -81,31 +91,31 @@ function TimesheetEdit({ headerId }) {
     missingSum,
   } = useCalendarData(headerForCalendar, resolvedHeaderId, editFormData);
 
-
-
   // 🆕 Obtener jobs para validación de estado (TODOS los proyectos del recurso)
   const jobsQuery = useAllJobs((header || editableHeader)?.resource_no);
-  const jobs = jobsQuery.data || [];
+  const jobs = useMemo(() => jobsQuery.data || [], [jobsQuery.data]);
   const [hasDailyErrors, setHasDailyErrors] = useState(false);
   // Estado de validación de proyecto no usado actualmente
-  const [_hasProjectValidationErrors, _setHasProjectValidationErrors] = useState(false);
+  const [_hasProjectValidationErrors, _setHasProjectValidationErrors] =
+    useState(false);
 
   // 🆕 Función para verificar si hay errores de validación de proyecto
   const checkProjectValidationErrors = useCallback(() => {
     if (!jobs.length || !Object.keys(editFormData).length) return false;
 
-    for (const [lineId, row] of Object.entries(editFormData)) {
+    for (const [__unused, row] of Object.entries(editFormData)) {
       if (row.job_no && row.quantity && parseFloat(row.quantity) > 0) {
-        const project = jobs.find(j => j.no === row.job_no);
-        if (project && (project.status === 'Completed' || project.status === 'Lost')) {
+        const project = jobs.find((j) => j.no === row.job_no);
+        if (
+          project &&
+          (project.status === "Completed" || project.status === "Lost")
+        ) {
           return true;
         }
       }
     }
     return false;
   }, [jobs, editFormData]);
-
-
 
   // 🆕 useEffect para actualizar el estado de errores de validación de proyecto
   useEffect(() => {
@@ -122,20 +132,20 @@ function TimesheetEdit({ headerId }) {
     show: false,
     message: "",
     onConfirm: null,
-    onCancel: null
+    onCancel: null,
   });
 
   // 🆕 Estado para el modal de errores de validación
   const [validationModal, setValidationModal] = useState({
     show: false,
-    validation: null
+    validation: null,
   });
 
   // 🆕 Estado para el modal de confirmación de eliminación
   const [deleteConfirmModal, setDeleteConfirmModal] = useState({
     show: false,
     lineIds: [],
-    onConfirm: null
+    onConfirm: null,
   });
 
   // Bandera para evitar múltiples modales
@@ -161,8 +171,11 @@ function TimesheetEdit({ headerId }) {
     const [y, m, d] = iso.split("-");
     if (y && m && d) {
       try {
-        return format(new Date(Number(y), Number(m) - 1, Number(d)), "dd/MM/yyyy");
-      } catch (_) {
+        return format(
+          new Date(Number(y), Number(m) - 1, Number(d)),
+          "dd/MM/yyyy",
+        );
+      } catch {
         return "";
       }
     }
@@ -180,7 +193,10 @@ function TimesheetEdit({ headerId }) {
 
   // Pequeño componente para mostrar totales del mes dentro del panel del calendario
   const TotalsForMonth = ({ dailyRequired, editFormData }) => {
-    const required = Object.values(dailyRequired || {}).reduce((acc, v) => acc + (Number(v) || 0), 0);
+    const required = Object.values(dailyRequired || {}).reduce(
+      (acc, v) => acc + (Number(v) || 0),
+      0,
+    );
     let imputed = 0;
     for (const row of Object.values(editFormData || {})) {
       imputed += Number(row?.quantity) || 0;
@@ -204,8 +220,6 @@ function TimesheetEdit({ headerId }) {
     );
   };
 
-
-
   const prevLinesSigRef = useRef("");
 
   // Estado para controlar cambios no guardados
@@ -221,7 +235,9 @@ function TimesheetEdit({ headerId }) {
   useEffect(() => {
     if (!isSaving) {
       // Resetear el estilo del botón cuando termine de guardar
-      const saveButton = document.querySelector('button[onclick*="saveAllChanges"]');
+      const saveButton = document.querySelector(
+        'button[onclick*="saveAllChanges"]',
+      );
       if (saveButton) {
         saveButton.style.backgroundColor = "#ffffff";
       }
@@ -241,22 +257,16 @@ function TimesheetEdit({ headerId }) {
   // 🆕 Función para importar vacaciones desde Factorial
   const handleImportFactorial = useCallback(async () => {
     try {
-
       // 🆕 Buscar el proyecto de vacaciones del recurso
       let vacationProject = null;
 
-              // Obtener el department_code del recurso actual
-        // Priorizar editableHeader sobre header para obtener el departamento correcto
-        const currentResource = editableHeader || header;
-        const resourceDepartment = currentResource?.department_code || '1-01'; // Fallback a '1-01'
+      // Obtener el department_code del recurso actual
+      // Priorizar editableHeader sobre header para obtener el departamento correcto
+      const currentResource = editableHeader || header;
+      const resourceDepartment = currentResource?.department_code || "1-01"; // Fallback a '1-01'
 
-        try {
-
-          // Buscar en la tabla job por departamento y nombre -VAC
-
-
-
-
+      try {
+        // Buscar en la tabla job por departamento y nombre -VAC
 
         const { data: jobData, error: jobError } = await supabaseClient
           .from("job")
@@ -269,7 +279,6 @@ function TimesheetEdit({ headerId }) {
         if (jobData && jobData.length > 0 && !jobError) {
           vacationProject = jobData[0]; // Tomar el primer elemento del array
         } else {
-
           // Intentar buscar proyecto genérico de vacaciones
           const { data: genericJob, error: genericError } = await supabaseClient
             .from("job")
@@ -295,11 +304,13 @@ function TimesheetEdit({ headerId }) {
         userEmail = "";
       }
       if (!userEmail) {
-        toast.error("No se pudo obtener el email del usuario para importar Factorial");
+        toast.error(
+          "No se pudo obtener el email del usuario para importar Factorial",
+        );
         return;
       }
 
-                  // Declarar variables de fechas
+      // Declarar variables de fechas
       let startDate, endDate;
 
       // Usar directamente las fechas del calendario ya cargado
@@ -320,10 +331,10 @@ function TimesheetEdit({ headerId }) {
       // 🆕 Función para obtener vacaciones reales desde Factorial vía tu servidor
       const getFactorialVacations = async (userEmail, startDate, endDate) => {
         try {
-          const response = await fetch('/api/factorial/vacations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userEmail, startDate, endDate })
+          const response = await fetch("/api/factorial/vacations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userEmail, startDate, endDate }),
           });
 
           if (!response.ok) {
@@ -332,7 +343,7 @@ function TimesheetEdit({ headerId }) {
 
           return response.json();
         } catch (error) {
-          console.error('Error obteniendo vacaciones de Factorial:', error);
+          console.error("Error obteniendo vacaciones de Factorial:", error);
           throw error;
         }
       };
@@ -341,11 +352,10 @@ function TimesheetEdit({ headerId }) {
       let vacations = [];
       try {
         vacations = await getFactorialVacations(userEmail, startDate, endDate);
-
       } catch (error) {
         // Si falla, no crear líneas - dejar array vacío
         vacations = [];
-        console.error('❌ Error obteniendo vacaciones:', error);
+        console.error("❌ Error obteniendo vacaciones:", error);
       }
 
       if (!vacations || vacations.length === 0) {
@@ -353,278 +363,306 @@ function TimesheetEdit({ headerId }) {
         return;
       }
 
-                            // 🆕 VALIDACIÓN PREVIA: Verificar si ya hay líneas de ausencias en el período
-        const existingAbsencesInPeriod = lines.filter(line =>
-          ['VACACIONES', 'BAJAS', 'PERMISOS'].includes(line.work_type) &&
+      // 🆕 VALIDACIÓN PREVIA: Verificar si ya hay líneas de ausencias en el período
+      const _existingAbsencesInPeriod = lines.filter(
+        (line) =>
+          ["VACACIONES", "BAJAS", "PERMISOS"].includes(line.work_type) &&
           line.date >= toDisplayDate(startDate) &&
-          line.date <= toDisplayDate(endDate)
-        );
+          line.date <= toDisplayDate(endDate),
+      );
 
-
-
-        // 🆕 MAPEO INTELIGENTE: Convertir tipo de Factorial a tarea del sistema
-        const getTaskFromFactorialType = (tipo) => {
-          const taskMapping = {
-            'Vacaciones': 'VACACIONES',
-            'Enfermedad': 'BAJAS',
-            'Asuntos personales (1,5 días por año trabajado)': 'PERMISOS',
-            'Día de cumpleaños': 'PERMISOS',
-            'Maternidad / Paternidad': 'BAJAS',
-            'Otro': 'PERMISOS',
-            'Permiso de mudanza': 'PERMISOS',
-            'Permiso por accidente, enfermedad grave u hospitalización de un familiar (PAS)': 'PERMISOS',
-            'Permiso por matrimonio': 'PERMISOS'
-          };
-
-          const task = taskMapping[tipo] || 'PERMISOS'; // Default a PERMISOS si no hay mapeo
-          return task;
+      // 🆕 MAPEO INTELIGENTE: Convertir tipo de Factorial a tarea del sistema
+      const getTaskFromFactorialType = (tipo) => {
+        const taskMapping = {
+          Vacaciones: "VACACIONES",
+          Enfermedad: "BAJAS",
+          "Asuntos personales (1,5 días por año trabajado)": "PERMISOS",
+          "Día de cumpleaños": "PERMISOS",
+          "Maternidad / Paternidad": "BAJAS",
+          Otro: "PERMISOS",
+          "Permiso de mudanza": "PERMISOS",
+          "Permiso por accidente, enfermedad grave u hospitalización de un familiar (PAS)":
+            "PERMISOS",
+          "Permiso por matrimonio": "PERMISOS",
         };
 
-        // Crear líneas de timesheet para cada día de vacaciones
-        const newLines = [];
-        for (const vacation of vacations) {
-          const start = new Date(vacation.desde);
-          const end = new Date(vacation.hasta);
+        const task = taskMapping[tipo] || "PERMISOS"; // Default a PERMISOS si no hay mapeo
+        return task;
+      };
 
-          // Iterar por cada día de vacaciones
-          for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-            const dateStr = date.toISOString().split('T')[0];
+      // Crear líneas de timesheet para cada día de vacaciones
+      const newLines = [];
+      for (const vacation of vacations) {
+        const start = new Date(vacation.desde);
+        const end = new Date(vacation.hasta);
 
-            // Verificar que la fecha esté dentro del período del timesheet
-            if (dateStr >= startDate && dateStr <= endDate) {
-              // Verificar si es día festivo
-              const isHoliday = calendarHolidays.some(holiday => holiday.day === dateStr);
-              if (isHoliday) {
-                continue; // Saltar este día
-              }
+        // Iterar por cada día de vacaciones
+        for (
+          let date = new Date(start);
+          date <= end;
+          date.setDate(date.getDate() + 1)
+        ) {
+          const dateStr = date.toISOString().split("T")[0];
 
-                            // 🆕 VALIDACIÓN: Verificar si ya existe una línea de ausencias para esta fecha
-              const existingAbsenceLine = lines.find(line =>
+          // Verificar que la fecha esté dentro del período del timesheet
+          if (dateStr >= startDate && dateStr <= endDate) {
+            // Verificar si es día festivo
+            const isHoliday = calendarHolidays.some(
+              (holiday) => holiday.day === dateStr,
+            );
+            if (isHoliday) {
+              continue; // Saltar este día
+            }
+
+            // 🆕 VALIDACIÓN: Verificar si ya existe una línea de ausencias para esta fecha
+            const existingAbsenceLine = lines.find(
+              (line) =>
                 line.date === toDisplayDate(dateStr) &&
-                ['VACACIONES', 'BAJAS', 'PERMISOS'].includes(line.work_type)
-              );
+                ["VACACIONES", "BAJAS", "PERMISOS"].includes(line.work_type),
+            );
 
-              if (existingAbsenceLine) {
-                continue; // Saltar este día
-              }
+            if (existingAbsenceLine) {
+              continue; // Saltar este día
+            }
 
-              // 🆕 VALIDACIÓN: Verificar si ya existe en Supabase (líneas del servidor)
-              const existingServerLine = linesHook.data?.find(line =>
+            // 🆕 VALIDACIÓN: Verificar si ya existe en Supabase (líneas del servidor)
+            const existingServerLine = linesHook.data?.find(
+              (line) =>
                 line.date === dateStr &&
-                ['VACACIONES', 'BAJAS', 'PERMISOS'].includes(line.work_type)
-              );
+                ["VACACIONES", "BAJAS", "PERMISOS"].includes(line.work_type),
+            );
 
-              if (existingServerLine) {
-                continue; // Saltar este día
-              }
+            if (existingServerLine) {
+              continue; // Saltar este día
+            }
 
-              // Buscar el día en el calendario para obtener las horas máximas permitidas
-              const calendarDay = calendarDays?.find(day => day.iso === dateStr);
+            // Buscar el día en el calendario para obtener las horas máximas permitidas
+            const calendarDay = calendarDays?.find(
+              (day) => day.iso === dateStr,
+            );
 
-              if (calendarDay) {
-                // Calcular las horas disponibles para ese día usando el calendario
-                const maxHours = dailyRequired[dateStr] || 8; // Horas requeridas específicas para este día
-                const currentHours = parseFloat(calendarDay.hours || 0); // Horas ya registradas
-                const availableHours = Math.max(0, maxHours - currentHours);
+            if (calendarDay) {
+              // Calcular las horas disponibles para ese día usando el calendario
+              const maxHours = dailyRequired[dateStr] || 8; // Horas requeridas específicas para este día
+              const currentHours = parseFloat(calendarDay.hours || 0); // Horas ya registradas
+              const availableHours = Math.max(0, maxHours - currentHours);
 
-                                              if (availableHours > 0) {
-                  const taskType = getTaskFromFactorialType(vacation.tipo);
+              if (availableHours > 0) {
+                const taskType = getTaskFromFactorialType(vacation.tipo);
 
-                                                  const newLine = {
+                const newLine = {
                   id: `tmp-${crypto.randomUUID()}`,
                   header_id: effectiveHeaderId,
-                  job_no: vacationProject?.no || '', // Asignar el proyecto de vacaciones encontrado
-                  job_no_description: vacationProject?.description || '', // Asignar la descripción del proyecto
+                  job_no: vacationProject?.no || "", // Asignar el proyecto de vacaciones encontrado
+                  job_no_description: vacationProject?.description || "", // Asignar la descripción del proyecto
                   job_task_no: taskType, // 🆕 Usar la tarea mapeada en lugar de 'GASTO' fijo
                   description: `${taskType} - ${vacation.tipo}`,
                   work_type: taskType, // Usar la tarea mapeada en lugar de 'VACACIONES' fijo
                   date: toDisplayDate(dateStr),
                   quantity: availableHours.toFixed(2), // Horas disponibles del calendario
                   department_code: resourceDepartment, // Usar el departamento del recurso actual
-                  isFactorialLine: true // 🆕 Marcar como línea de Factorial (no editable)
-                };
-
-                  newLines.push(newLine);
-                } else {
-                  // No hay horas disponibles para este día
-                }
-              } else {
-                // Si no hay calendario disponible, usar 8 horas por defecto
-                const defaultHours = 8.00;
-                const taskType = getTaskFromFactorialType(vacation.tipo);
-
-                const newLine = {
-                  id: `tmp-${crypto.randomUUID()}`,
-                  header_id: effectiveHeaderId,
-                  job_no: vacationProject?.no || '', // Asignar el proyecto de vacaciones encontrado
-                  job_no_description: vacationProject?.description || '', // Asignar la descripción del proyecto
-                  job_task_no: taskType, // 🆕 Usar la tarea mapeada en lugar de 'GASTO' fijo
-                  description: `${taskType} - ${vacation.tipo}`,
-                  work_type: taskType, // Usar la tarea mapeada en lugar de 'VACACIONES' fijo
-                  date: toDisplayDate(dateStr),
-                  quantity: defaultHours.toFixed(2), // 8 horas por defecto
-                  department_code: resourceDepartment, // Usar el departamento del recurso actual
-                  isFactorialLine: true // 🆕 Marcar como línea de Factorial (no editable)
+                  isFactorialLine: true, // 🆕 Marcar como línea de Factorial (no editable)
                 };
 
                 newLines.push(newLine);
+              } else {
+                // No hay horas disponibles para este día
               }
+            } else {
+              // Si no hay calendario disponible, usar 8 horas por defecto
+              const defaultHours = 8.0;
+              const taskType = getTaskFromFactorialType(vacation.tipo);
+
+              const newLine = {
+                id: `tmp-${crypto.randomUUID()}`,
+                header_id: effectiveHeaderId,
+                job_no: vacationProject?.no || "", // Asignar el proyecto de vacaciones encontrado
+                job_no_description: vacationProject?.description || "", // Asignar la descripción del proyecto
+                job_task_no: taskType, // 🆕 Usar la tarea mapeada en lugar de 'GASTO' fijo
+                description: `${taskType} - ${vacation.tipo}`,
+                work_type: taskType, // Usar la tarea mapeada en lugar de 'VACACIONES' fijo
+                date: toDisplayDate(dateStr),
+                quantity: defaultHours.toFixed(2), // 8 horas por defecto
+                department_code: resourceDepartment, // Usar el departamento del recurso actual
+                isFactorialLine: true, // 🆕 Marcar como línea de Factorial (no editable)
+              };
+
+              newLines.push(newLine);
             }
           }
         }
+      }
 
-              if (newLines.length > 0) {
-          // Agregar las nuevas líneas al estado
-          setLines(prev => [...prev, ...newLines]);
+      if (newLines.length > 0) {
+        // Agregar las nuevas líneas al estado
+        setLines((prev) => [...prev, ...newLines]);
 
-          // Agregar al editFormData
-          setEditFormData(prev => {
-            const newData = { ...prev };
-            newLines.forEach(line => {
-              newData[line.id] = line;
-            });
-            return newData;
+        // Agregar al editFormData
+        setEditFormData((prev) => {
+          const newData = { ...prev };
+          newLines.forEach((line) => {
+            newData[line.id] = line;
           });
+          return newData;
+        });
 
-          // Marcar como cambiado
-          markAsChanged();
+        // Marcar como cambiado
+        markAsChanged();
 
-          // 🆕 Resumen de la importación
-          const totalDaysInVacations = vacations.reduce((total, vac) => {
-            const start = new Date(vac.desde);
-            const end = new Date(vac.hasta);
-            const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-            return total + days;
-          }, 0);
+        // 🆕 Resumen de la importación
+        const totalDaysInVacations = vacations.reduce((total, vac) => {
+          const start = new Date(vac.desde);
+          const end = new Date(vac.hasta);
+          const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+          return total + days;
+        }, 0);
 
-          const skippedDays = totalDaysInVacations - newLines.length;
+        const skippedDays = totalDaysInVacations - newLines.length;
 
-                    if (skippedDays > 0) {
-            toast.success(`Se importaron ${newLines.length} días de ausencias (${skippedDays} días omitidos por duplicados/festivos)`);
-          } else {
-            toast.success(`Se importaron ${newLines.length} días de ausencias`);
-          }
-
-
+        if (skippedDays > 0) {
+          toast.success(
+            `Se importaron ${newLines.length} días de ausencias (${skippedDays} días omitidos por duplicados/festivos)`,
+          );
         } else {
-          toast("No se pudieron crear líneas de vacaciones para este período", { icon: "ℹ️" });
+          toast.success(`Se importaron ${newLines.length} días de ausencias`);
         }
-
+      } else {
+        toast("No se pudieron crear líneas de vacaciones para este período", {
+          icon: "ℹ️",
+        });
+      }
     } catch (error) {
       console.error("❌ Error importando vacaciones:", error);
       toast.error(`Error al importar vacaciones: ${error.message}`);
     }
-  }, [effectiveHeaderId, markAsChanged, calendarDays, dailyRequired, header, calendarHolidays, instance, accounts]);
+  }, [
+    effectiveHeaderId,
+    markAsChanged,
+    calendarDays,
+    dailyRequired,
+    header,
+    calendarHolidays,
+    instance,
+    accounts,
+  ]);
 
-            // 🆕 Función para duplicar líneas seleccionadas
-      const handleDuplicateLines = useCallback((lineIds) => {
+  // 🆕 Función para duplicar líneas seleccionadas
+  const handleDuplicateLines = useCallback(
+    (lineIds) => {
+      if (!lineIds.length) return;
 
-    if (!lineIds.length) return;
+      const newLines = [];
+      lineIds.forEach((lineId) => {
+        const originalLine = lines.find((line) => line.id === lineId);
+        if (originalLine) {
+          // 🆕 Lógica inteligente para la fecha usando el calendario existente
+          let newDate = originalLine.date || "";
 
-    const newLines = [];
-    lineIds.forEach(lineId => {
-      const originalLine = lines.find(line => line.id === lineId);
-      if (originalLine) {
-        // 🆕 Lógica inteligente para la fecha usando el calendario existente
-        let newDate = originalLine.date || "";
+          // Si la línea original tiene fecha, verificar el estado del día usando el calendario
+          if (newDate && newDate !== "") {
+            try {
+              // ✅ Usar la función existente toIsoFromInput para convertir fechas
+              const processedDate = toIsoFromInput(newDate);
+              if (!processedDate) {
+                console.warn("⚠️ Fecha inválida en línea:", newDate);
+                newDate = ""; // Resetear a fecha vacía si es inválida
+              } else {
+                const originalDate = new Date(processedDate);
+                const dayKey = originalDate.toISOString().split("T")[0];
 
-        // Si la línea original tiene fecha, verificar el estado del día usando el calendario
-        if (newDate && newDate !== "") {
-          try {
-            // ✅ Usar la función existente toIsoFromInput para convertir fechas
-            const processedDate = toIsoFromInput(newDate);
-            if (!processedDate) {
-              console.warn("⚠️ Fecha inválida en línea:", newDate);
-              newDate = ""; // Resetear a fecha vacía si es inválida
-            } else {
-              const originalDate = new Date(processedDate);
-              const dayKey = originalDate.toISOString().split('T')[0];
+                // Buscar el día en el calendario para obtener su estado real
+                const calendarDay = calendarDays.find(
+                  (day) => day.iso === dayKey,
+                );
 
-              // Buscar el día en el calendario para obtener su estado real
-              const calendarDay = calendarDays.find(day => day.iso === dayKey);
+                if (calendarDay) {
+                  // Si el día está completo, buscar el siguiente día disponible
+                  if (calendarDay.status === "completo") {
+                    // Buscar el siguiente día con estado "parcial" o "cero"
+                    const currentIndex = calendarDays.findIndex(
+                      (day) => day.iso === dayKey,
+                    );
+                    let nextAvailableDay = null;
 
-              if (calendarDay) {
-                // Si el día está completo, buscar el siguiente día disponible
-                if (calendarDay.status === "completo") {
-                  // Buscar el siguiente día con estado "parcial" o "cero"
-                  const currentIndex = calendarDays.findIndex(day => day.iso === dayKey);
-                  let nextAvailableDay = null;
-
-                  // Buscar hacia adelante en el calendario
-                  for (let i = currentIndex + 1; i < calendarDays.length; i++) {
-                    const day = calendarDays[i];
-                    if (day.status === "parcial" || day.status === "cero") {
-                      nextAvailableDay = day.iso;
-                      break;
-                    }
-                  }
-
-                  // Si no hay día siguiente disponible, buscar hacia atrás
-                  if (!nextAvailableDay) {
-                    for (let i = currentIndex - 1; i >= 0; i--) {
+                    // Buscar hacia adelante en el calendario
+                    for (
+                      let i = currentIndex + 1;
+                      i < calendarDays.length;
+                      i++
+                    ) {
                       const day = calendarDays[i];
                       if (day.status === "parcial" || day.status === "cero") {
                         nextAvailableDay = day.iso;
                         break;
                       }
                     }
-                  }
 
-                  // Usar el día disponible encontrado, o mantener el original si no hay ninguno
-                  if (nextAvailableDay) {
-                    newDate = nextAvailableDay;
+                    // Si no hay día siguiente disponible, buscar hacia atrás
+                    if (!nextAvailableDay) {
+                      for (let i = currentIndex - 1; i >= 0; i--) {
+                        const day = calendarDays[i];
+                        if (day.status === "parcial" || day.status === "cero") {
+                          nextAvailableDay = day.iso;
+                          break;
+                        }
+                      }
+                    }
+
+                    // Usar el día disponible encontrado, o mantener el original si no hay ninguno
+                    if (nextAvailableDay) {
+                      newDate = nextAvailableDay;
+                    }
                   }
                 }
               }
+            } catch (error) {
+              console.error("❌ Error procesando fecha:", error);
+              console.warn("⚠️ Fecha problemática:", newDate);
+              newDate = ""; // Resetear a fecha vacía en caso de error
             }
-          } catch (error) {
-            console.error("❌ Error procesando fecha:", error);
-            console.warn("⚠️ Fecha problemática:", newDate);
-            newDate = ""; // Resetear a fecha vacía en caso de error
           }
+
+          const duplicatedLine = {
+            ...originalLine,
+            id: `tmp-${Date.now()}-${Math.random()}`,
+            quantity: 0, // Resetear cantidad para nueva línea
+            date: newDate, // 🆕 Usar fecha inteligente calculada
+          };
+          newLines.push(duplicatedLine);
         }
-
-        const duplicatedLine = {
-          ...originalLine,
-          id: `tmp-${Date.now()}-${Math.random()}`,
-          quantity: 0, // Resetear cantidad para nueva línea
-          date: newDate, // 🆕 Usar fecha inteligente calculada
-        };
-        newLines.push(duplicatedLine);
-      }
-    });
-
-    if (newLines.length) {
-      // 🆕 Insertar todas las líneas duplicadas debajo de la última línea seleccionada
-      setLines(prev => {
-        const newLinesArray = [...prev];
-
-        // Encontrar la posición de la última línea seleccionada
-        const lastSelectedIndex = Math.max(
-          ...lineIds.map(lineId =>
-            newLinesArray.findIndex(line => line.id === lineId)
-          )
-        );
-
-        if (lastSelectedIndex !== -1) {
-          // Insertar todas las líneas duplicadas después de la última línea seleccionada
-          newLinesArray.splice(lastSelectedIndex + 1, 0, ...newLines);
-        }
-
-        return newLinesArray;
       });
 
-      // Limpiar selección después de duplicar
-      setSelectedLines([]);
-      markAsChanged();
-    }
-  }, [lines, markAsChanged, calendarDays]);
+      if (newLines.length) {
+        // 🆕 Insertar todas las líneas duplicadas debajo de la última línea seleccionada
+        setLines((prev) => {
+          const newLinesArray = [...prev];
 
+          // Encontrar la posición de la última línea seleccionada
+          const lastSelectedIndex = Math.max(
+            ...lineIds.map((lineId) =>
+              newLinesArray.findIndex((line) => line.id === lineId),
+            ),
+          );
 
+          if (lastSelectedIndex !== -1) {
+            // Insertar todas las líneas duplicadas después de la última línea seleccionada
+            newLinesArray.splice(lastSelectedIndex + 1, 0, ...newLines);
+          }
+
+          return newLinesArray;
+        });
+
+        // Limpiar selección después de duplicar
+        setSelectedLines([]);
+        markAsChanged();
+      }
+    },
+    [lines, markAsChanged, calendarDays],
+  );
 
   // Función para obtener el primer día del mes del período
   const getFirstDayOfPeriod = (allocationPeriod) => {
-    if (!allocationPeriod) return new Date().toISOString().split('T')[0];
+    if (!allocationPeriod) return new Date().toISOString().split("T")[0];
 
     // Parsear período M25-M08 (año-mes)
     const match = allocationPeriod.match(/M(\d{2})-M(\d{2})/);
@@ -632,15 +670,15 @@ function TimesheetEdit({ headerId }) {
       const year = 2000 + parseInt(match[1]); // 25 -> 2025
       const month = parseInt(match[2]) - 1; // M08 -> 7 (agosto, 0-indexed)
       const firstDay = new Date(year, month, 1);
-      return firstDay.toISOString().split('T')[0];
+      return firstDay.toISOString().split("T")[0];
     }
 
-    return new Date().toISOString().split('T')[0];
+    return new Date().toISOString().split("T")[0];
   };
 
   // Función para obtener el último día del mes del período
   const getLastDayOfPeriod = (allocationPeriod) => {
-    if (!allocationPeriod) return new Date().toISOString().split('T')[0];
+    if (!allocationPeriod) return new Date().toISOString().split("T")[0];
 
     // Parsear período M25-M08 (año-mes)
     const match = allocationPeriod.match(/M(\d{2})-M(\d{2})/);
@@ -648,26 +686,29 @@ function TimesheetEdit({ headerId }) {
       const year = 2000 + parseInt(match[1]); // 25 -> 2025
       const month = parseInt(match[2]); // M08 -> 8 (agosto, 1-indexed para next month)
       const lastDay = new Date(year, month, 0); // Día 0 del mes siguiente = último día del mes actual
-      return lastDay.toISOString().split('T')[0];
+      return lastDay.toISOString().split("T")[0];
     }
 
-    return new Date().toISOString().split('T')[0];
+    return new Date().toISOString().split("T")[0];
   };
 
   // ✅ Función para manejar cambios en las líneas desde TimesheetLines
-  const handleLinesChange = useCallback((lineId, changes) => {
-    // Actualizar solo el editFormData para la línea específica
-    setEditFormData(prev => ({
-      ...prev,
-      [lineId]: {
-        ...prev[lineId],
-        ...changes
-      }
-    }));
+  const handleLinesChange = useCallback(
+    (lineId, changes) => {
+      // Actualizar solo el editFormData para la línea específica
+      setEditFormData((prev) => ({
+        ...prev,
+        [lineId]: {
+          ...prev[lineId],
+          ...changes,
+        },
+      }));
 
-    // Marcar que hay cambios no guardados
-    markAsChanged();
-  }, [markAsChanged]);
+      // Marcar que hay cambios no guardados
+      markAsChanged();
+    },
+    [markAsChanged],
+  );
 
   // ✅ MUTATION: Actualizar línea individual
   const updateLineMutation = useMutation({
@@ -679,9 +720,9 @@ function TimesheetEdit({ headerId }) {
       }
 
       const { data, error } = await supabaseClient
-        .from('timesheet')
+        .from("timesheet")
         .update(processedChanges)
-        .eq('id', lineId)
+        .eq("id", lineId)
         .select()
         .single();
 
@@ -690,7 +731,11 @@ function TimesheetEdit({ headerId }) {
     },
     onSuccess: (data, variables) => {
       // ✅ Éxito: Actualizar cache local
-      setLines(prev => prev.map(l => l.id === variables.lineId ? { ...l, ...variables.changes } : l));
+      setLines((prev) =>
+        prev.map((l) =>
+          l.id === variables.lineId ? { ...l, ...variables.changes } : l,
+        ),
+      );
 
       // ✅ Mostrar toast de éxito solo si no es silencioso
       if (!variables.silent) {
@@ -698,10 +743,10 @@ function TimesheetEdit({ headerId }) {
       }
 
       // ✅ Limpiar indicador de guardado
-      setSavingByLine(prev => ({ ...prev, [variables.lineId]: false }));
+      setSavingByLine((prev) => ({ ...prev, [variables.lineId]: false }));
     },
     onError: (error, variables) => {
-      console.error('Error updating line:', error);
+      console.error("Error updating line:", error);
 
       // ✅ Mostrar toast de error solo si no es silencioso
       if (!variables.silent) {
@@ -709,30 +754,30 @@ function TimesheetEdit({ headerId }) {
       }
 
       // ✅ Limpiar indicador de guardado
-      setSavingByLine(prev => ({ ...prev, [variables.lineId]: false }));
-    }
+      setSavingByLine((prev) => ({ ...prev, [variables.lineId]: false }));
+    },
   });
 
   // ✅ MUTATION: Eliminar línea
   const deleteLineMutation = useMutation({
     mutationFn: async (lineId) => {
       const { error } = await supabaseClient
-        .from('timesheet')
+        .from("timesheet")
         .delete()
-        .eq('id', lineId);
+        .eq("id", lineId);
 
       if (error) throw error;
       return lineId;
     },
     onSuccess: (lineId) => {
       // ✅ Éxito: Actualizar estado local
-      setLines(prev => prev.filter(l => l.id !== lineId));
-      setEditFormData(prev => {
+      setLines((prev) => prev.filter((l) => l.id !== lineId));
+      setEditFormData((prev) => {
         const updated = { ...prev };
         delete updated[lineId];
         return updated;
       });
-      setErrors(prev => {
+      setErrors((prev) => {
         const updated = { ...prev };
         delete updated[lineId];
         return updated;
@@ -741,48 +786,55 @@ function TimesheetEdit({ headerId }) {
       // ✅ Mostrar toast de éxito
       toast.success(TOAST.SUCCESS.DELETE_LINE);
     },
-    onError: (error, lineId) => {
-      console.error('Error deleting line:', error);
+    onError: (error, _lineId) => {
+      console.error("Error deleting line:", error);
 
       // ✅ Mostrar toast de error
       toast.error(TOAST.ERROR.DELETE_LINE);
-    }
+    },
   });
 
-          // 🆕 Función para eliminar líneas seleccionadas
-      const handleDeleteLines = useCallback((lineIds) => {
+  // 🆕 Función para eliminar líneas seleccionadas
+  const handleDeleteLines = useCallback(
+    (lineIds) => {
+      if (!lineIds.length) return;
 
-    if (!lineIds.length) return;
+      // ✅ Mostrar modal de confirmación en lugar de window.confirm
+      setDeleteConfirmModal({
+        show: true,
+        lineIds: lineIds,
+        onConfirm: () => {
+          // ✅ ELIMINACIÓN SOLO LOCAL: NO se elimina de la BD hasta guardar
+          const updatedLines = lines.filter(
+            (line) => !lineIds.includes(line.id),
+          );
+          setLines(updatedLines);
 
-        // ✅ Mostrar modal de confirmación en lugar de window.confirm
-    setDeleteConfirmModal({
-      show: true,
-      lineIds: lineIds,
-      onConfirm: () => {
-        // ✅ ELIMINACIÓN SOLO LOCAL: NO se elimina de la BD hasta guardar
-        const updatedLines = lines.filter(line => !lineIds.includes(line.id));
-        setLines(updatedLines);
+          // ✅ Agregar IDs a la lista de líneas a eliminar de la BD
+          setDeletedLineIds((prev) => [
+            ...prev,
+            ...lineIds.filter((id) => !id.startsWith("tmp-")),
+          ]);
 
-        // ✅ Agregar IDs a la lista de líneas a eliminar de la BD
-        setDeletedLineIds(prev => [...prev, ...lineIds.filter(id => !id.startsWith('tmp-'))]);
+          // Limpiar selección después de eliminar
+          setSelectedLines([]);
 
-        // Limpiar selección después de eliminar
-        setSelectedLines([]);
+          // ✅ Marcar que hay cambios pendientes para habilitar el botón "Guardar Cambios"
+          markAsChanged();
 
-        // ✅ Marcar que hay cambios pendientes para habilitar el botón "Guardar Cambios"
-        markAsChanged();
-
-        // Cerrar el modal
-        setDeleteConfirmModal({ show: false, lineIds: [], onConfirm: null });
-      }
-    });
-  }, [lines, markAsChanged]);
+          // Cerrar el modal
+          setDeleteConfirmModal({ show: false, lineIds: [], onConfirm: null });
+        },
+      });
+    },
+    [lines, markAsChanged],
+  );
 
   // ✅ MUTATION: Insertar línea nueva
   const insertLineMutation = useMutation({
     mutationFn: async (lineData) => {
       const { data, error } = await supabaseClient
-        .from('timesheet')
+        .from("timesheet")
         .insert(lineData)
         .select()
         .single();
@@ -792,21 +844,21 @@ function TimesheetEdit({ headerId }) {
     },
     onSuccess: (newLine) => {
       // ✅ Éxito: Actualizar estado local
-      setLines(prev => [...prev, newLine]);
-      setEditFormData(prev => ({
+      setLines((prev) => [...prev, newLine]);
+      setEditFormData((prev) => ({
         ...prev,
-        [newLine.id]: newLine
+        [newLine.id]: newLine,
       }));
 
       // ✅ Mostrar toast de éxito
       toast.success("Línea duplicada correctamente");
     },
     onError: (error) => {
-      console.error('Error inserting line:', error);
+      console.error("Error inserting line:", error);
 
       // ✅ Mostrar toast de error
       toast.error("Error al duplicar la línea");
-    }
+    },
   });
 
   // 🆕 Obtener queryClient para invalidar cache
@@ -818,13 +870,18 @@ function TimesheetEdit({ headerId }) {
 
     // 🆕 PASO 1: Validar todos los datos antes de guardar
 
-    const validation = await validateAllData(editFormData, dailyRequired, calendarHolidays, jobs);
+    const validation = await validateAllData(
+      editFormData,
+      dailyRequired,
+      calendarHolidays,
+      jobs,
+    );
 
     // 🆕 PASO 2: Solo bloquear guardado si hay errores críticos (no campos requeridos)
     if (validation.totalErrors > 0) {
       setValidationModal({
         show: true,
-        validation
+        validation,
       });
       return;
     }
@@ -835,12 +892,9 @@ function TimesheetEdit({ headerId }) {
     // ✅ PASO 4: Si todo es válido, proceder con el guardado
     setIsSaving(true);
     try {
-
       // 🆕 PASO 4.1: Si no hay header, crear uno nuevo
       let currentHeaderId = effectiveHeaderId;
       if (!currentHeaderId) {
-
-
         // 🆕 Obtener email del usuario usando useMsal
         let userEmail = "";
         try {
@@ -858,14 +912,17 @@ function TimesheetEdit({ headerId }) {
         let headerData = editableHeader;
         if (!headerData) {
           // Fallback: obtener información del recurso de la tabla resource
-          const { data: resourceData, error: resourceError } = await supabaseClient
-            .from("resource")
-            .select("code, name, department_code, calendar_type")
-            .eq("email", userEmail)
-            .single();
+          const { data: resourceData, error: resourceError } =
+            await supabaseClient
+              .from("resource")
+              .select("code, name, department_code, calendar_type")
+              .eq("email", userEmail)
+              .single();
 
           if (resourceError || !resourceData) {
-            throw new Error(`No se pudo obtener información del recurso: ${resourceError?.message || 'Datos no encontrados'}`);
+            throw new Error(
+              `No se pudo obtener información del recurso: ${resourceError?.message || "Datos no encontrados"}`,
+            );
           }
 
           // Construir allocation_period
@@ -877,7 +934,6 @@ function TimesheetEdit({ headerId }) {
             // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
             const mm = String(now.getMonth() + 1).padStart(2, "0");
             ap = `M${yy}-M${mm}`;
-
           }
 
           headerData = {
@@ -886,26 +942,31 @@ function TimesheetEdit({ headerId }) {
             department_code: resourceData.department_code,
             calendar_type: resourceData.calendar_type,
             allocation_period: ap,
-            posting_date: new Date().toISOString().split('T')[0],
+            posting_date: new Date().toISOString().split("T")[0],
             posting_description: `Parte de trabajo ${ap}`,
-            calendar_period_days: "" // Se llenará cuando se seleccione la fecha
+            calendar_period_days: "", // Se llenará cuando se seleccione la fecha
           };
         }
 
         // PASO 1: Verificar qué valores exactos existen en calendar_period_days
-        const { data: existingCalendarDays, error: calendarQueryError } = await supabaseClient
-          .from("calendar_period_days")
-          .select("allocation_period, calendar_code, day")
-          .eq("allocation_period", headerData.allocation_period)
-          .eq("calendar_code", headerData.calendar_type)
-          .limit(1);
+        const { data: existingCalendarDays, error: calendarQueryError } =
+          await supabaseClient
+            .from("calendar_period_days")
+            .select("allocation_period, calendar_code, day")
+            .eq("allocation_period", headerData.allocation_period)
+            .eq("calendar_code", headerData.calendar_type)
+            .limit(1);
 
         if (calendarQueryError) {
-          throw new Error(`Error consultando calendar_period_days: ${calendarQueryError.message}`);
+          throw new Error(
+            `Error consultando calendar_period_days: ${calendarQueryError.message}`,
+          );
         }
 
         if (!existingCalendarDays || existingCalendarDays.length === 0) {
-          throw new Error(`No existen registros en calendar_period_days para período ${headerData.allocation_period} y calendario ${headerData.calendar_type}`);
+          throw new Error(
+            `No existen registros en calendar_period_days para período ${headerData.allocation_period} y calendario ${headerData.calendar_type}`,
+          );
         }
 
         // Usar los valores exactos que existen en la base de datos
@@ -916,9 +977,12 @@ function TimesheetEdit({ headerId }) {
         const newHeader = {
           id: crypto.randomUUID(), // Generar ID único manualmente
           resource_no: headerData.resource_no,
-          posting_date: headerData.posting_date || new Date().toISOString().split('T')[0],
+          posting_date:
+            headerData.posting_date || new Date().toISOString().split("T")[0],
           description: headerData.resource_name, // Nombre del recurso
-          posting_description: headerData.posting_description || `Parte de trabajo ${headerData.allocation_period}`,
+          posting_description:
+            headerData.posting_description ||
+            `Parte de trabajo ${headerData.allocation_period}`,
           from_date: existingRecord.day, // ✅ Usar día exacto que existe en calendar_period_days
           to_date: existingRecord.day, // ✅ Usar día exacto que existe en calendar_period_days
           allocation_period: existingRecord.allocation_period, // ✅ Usar período exacto que existe
@@ -926,9 +990,9 @@ function TimesheetEdit({ headerId }) {
           user_email: userEmail,
           created_at: now,
           updated_at: now,
-          "Company": headerData.company || null, // Campo opcional con comillas
+          Company: headerData.company || null, // Campo opcional con comillas
           synced_to_bc: false, // Campo opcional
-          department_code: headerData.department_code || '20' // Campo opcional con default
+          department_code: headerData.department_code || "20", // Campo opcional con default
         };
 
         const { data: createdHeader, error: headerError } = await supabaseClient
@@ -945,7 +1009,6 @@ function TimesheetEdit({ headerId }) {
         setHeader(createdHeader);
         setResolvedHeaderId(currentHeaderId);
 
-
         toast.success("Nuevo parte de trabajo creado");
       }
 
@@ -953,30 +1016,44 @@ function TimesheetEdit({ headerId }) {
       const linesToProcess = Object.keys(editFormData);
 
       // 🆕 FILTRAR: Solo procesar líneas que tengan TODOS los campos requeridos
-      const validLinesToProcess = linesToProcess.filter(lineId => {
+      const validLinesToProcess = linesToProcess.filter((lineId) => {
         const lineData = editFormData[lineId];
 
         // Verificar que la línea tenga todos los campos requeridos
-        const hasRequiredFields = lineData &&
-          lineData.date && lineData.date.trim() !== '' &&           // Fecha obligatoria
-          lineData.job_no && lineData.job_no.trim() !== '' &&      // Proyecto obligatorio
-          lineData.job_task_no && lineData.job_task_no.trim() !== '' && // Tarea obligatoria
-          lineData.quantity && parseFloat(lineData.quantity) > 0;  // Horas > 0 obligatorias
+        const hasRequiredFields =
+          lineData &&
+          lineData.date &&
+          lineData.date.trim() !== "" && // Fecha obligatoria
+          lineData.job_no &&
+          lineData.job_no.trim() !== "" && // Proyecto obligatorio
+          lineData.job_task_no &&
+          lineData.job_task_no.trim() !== "" && // Tarea obligatoria
+          lineData.quantity &&
+          parseFloat(lineData.quantity) > 0; // Horas > 0 obligatorias
 
         return hasRequiredFields;
       });
 
-      console.log(`📝 Procesando ${validLinesToProcess.length} de ${linesToProcess.length} líneas (filtradas por campos requeridos completos)`);
+      console.log(
+        `📝 Procesando ${validLinesToProcess.length} de ${linesToProcess.length} líneas (filtradas por campos requeridos completos)`,
+      );
 
       for (const lineId of validLinesToProcess) {
         const lineData = editFormData[lineId];
 
-        if (lineId.startsWith('tmp-')) {
+        if (lineId.startsWith("tmp-")) {
           // 🆕 Línea nueva - insertar (incluyendo duplicadas con cantidad 0)
-          if (lineData.job_no && lineData.job_no.trim() !== '' &&
-              lineData.date && lineData.date.trim() !== '' &&
-              lineData.job_task_no && lineData.job_task_no.trim() !== '' &&
-              lineData.quantity && parseFloat(lineData.quantity) > 0) { // Verificar TODOS los campos requeridos
+          if (
+            lineData.job_no &&
+            lineData.job_no.trim() !== "" &&
+            lineData.date &&
+            lineData.date.trim() !== "" &&
+            lineData.job_task_no &&
+            lineData.job_task_no.trim() !== "" &&
+            lineData.quantity &&
+            parseFloat(lineData.quantity) > 0
+          ) {
+            // Verificar TODOS los campos requeridos
             // ✅ Obtener información del proyecto (responsable y departamento)
             const jobInfo = await fetchJobInfo([lineData.job_no]);
 
@@ -997,47 +1074,58 @@ function TimesheetEdit({ headerId }) {
             }
 
             // Actualizar el ID temporal por el real
-            setLines(prev => prev.map(l => l.id === lineId ? createdLine : l));
-            setEditFormData(prev => {
+            setLines((prev) =>
+              prev.map((l) => (l.id === lineId ? createdLine : l)),
+            );
+            setEditFormData((prev) => {
               const newData = { ...prev };
               delete newData[lineId];
-              newData[createdLine.id] = { ...createdLine, date: toDisplayDate(createdLine.date) };
+              newData[createdLine.id] = {
+                ...createdLine,
+                date: toDisplayDate(createdLine.date),
+              };
               return newData;
             });
           }
         } else {
           // Línea existente - actualizar si hay cambios
-          const originalLine = lines.find(l => l.id === lineId);
-        if (lineData && originalLine &&
-            lineData.date && lineData.date.trim() !== '' &&
-            lineData.job_no && lineData.job_no.trim() !== '' &&
-            lineData.job_task_no && lineData.job_task_no.trim() !== '' &&
-            lineData.quantity && parseFloat(lineData.quantity) > 0) {
-          const changedFields = {};
-          Object.keys(lineData).forEach(key => {
-            if (lineData[key] !== originalLine[key]) {
-              if (key === "date" && lineData[key]) {
-                changedFields[key] = toIsoFromInput(lineData[key]);
-              } else {
-                changedFields[key] = lineData[key];
+          const originalLine = lines.find((l) => l.id === lineId);
+          if (
+            lineData &&
+            originalLine &&
+            lineData.date &&
+            lineData.date.trim() !== "" &&
+            lineData.job_no &&
+            lineData.job_no.trim() !== "" &&
+            lineData.job_task_no &&
+            lineData.job_task_no.trim() !== "" &&
+            lineData.quantity &&
+            parseFloat(lineData.quantity) > 0
+          ) {
+            const changedFields = {};
+            Object.keys(lineData).forEach((key) => {
+              if (lineData[key] !== originalLine[key]) {
+                if (key === "date" && lineData[key]) {
+                  changedFields[key] = toIsoFromInput(lineData[key]);
+                } else {
+                  changedFields[key] = lineData[key];
+                }
               }
-            }
-          });
+            });
 
-          if (Object.keys(changedFields).length > 0) {
-            await updateLineMutation.mutateAsync({
-              lineId,
-              changes: changedFields,
-                silent: true
+            if (Object.keys(changedFields).length > 0) {
+              await updateLineMutation.mutateAsync({
+                lineId,
+                changes: changedFields,
+                silent: true,
               });
             }
           }
         }
       }
 
-            // ✅ PASO 4.3: Eliminar líneas que fueron marcadas para eliminación
+      // ✅ PASO 4.3: Eliminar líneas que fueron marcadas para eliminación
       if (deletedLineIds.length > 0) {
-
         for (const lineId of deletedLineIds) {
           await deleteLineMutation.mutateAsync(lineId);
         }
@@ -1050,29 +1138,47 @@ function TimesheetEdit({ headerId }) {
       // 🆕 Informar sobre líneas filtradas por campos requeridos incompletos
       const filteredLines = linesToProcess.length - validLinesToProcess.length;
       if (filteredLines > 0) {
-        toast.success(`${TOAST.SUCCESS.SAVE_ALL} (${filteredLines} líneas con campos requeridos incompletos omitidas)`);
+        toast.success(
+          `${TOAST.SUCCESS.SAVE_ALL} (${filteredLines} líneas con campos requeridos incompletos omitidas)`,
+        );
       } else {
-      toast.success(TOAST.SUCCESS.SAVE_ALL);
+        toast.success(TOAST.SUCCESS.SAVE_ALL);
       }
 
       // 🆕 CRÍTICO: Invalidar el cache de React Query para que se recarguen las líneas
       if (currentHeaderId) {
         try {
-          await queryClient.invalidateQueries({ queryKey: ["lines", currentHeaderId] });
-          console.log('🔄 Cache invalidado para header:', currentHeaderId);
+          await queryClient.invalidateQueries({
+            queryKey: ["lines", currentHeaderId],
+          });
+          console.log("🔄 Cache invalidado para header:", currentHeaderId);
         } catch (error) {
-          console.error('❌ Error invalidando cache:', error);
+          console.error("❌ Error invalidando cache:", error);
         }
       }
     } catch (error) {
-      console.error('Error saving all changes:', error);
+      console.error("Error saving all changes:", error);
       toast.error(`Error al guardar: ${error.message}`);
     } finally {
       setIsSaving(false);
     }
-  }, [hasUnsavedChanges, editFormData, lines, updateLineMutation, deleteLineMutation, deletedLineIds, setDeletedLineIds, dailyRequired, calendarHolidays, effectiveHeaderId, location.search, editableHeader, instance, accounts, queryClient]);
-
-
+  }, [
+    hasUnsavedChanges,
+    editFormData,
+    lines,
+    updateLineMutation,
+    deleteLineMutation,
+    deletedLineIds,
+    setDeletedLineIds,
+    dailyRequired,
+    calendarHolidays,
+    effectiveHeaderId,
+    location.search,
+    editableHeader,
+    instance,
+    accounts,
+    queryClient,
+  ]);
 
   // NOTA: handleNavigateBack eliminado porque useBlocker maneja toda la navegación
   // incluyendo navegación desde botones de la interfaz
@@ -1098,7 +1204,6 @@ function TimesheetEdit({ headerId }) {
         // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
         const mm = String(now.getMonth() + 1).padStart(2, "0"); // "08"
         ap = `M${yy}-M${mm}`; // p.ej. M25-M08
-
       }
 
       // 🆕 PASO 0.5: Verificar si estamos en modo "nuevo parte"
@@ -1129,7 +1234,9 @@ function TimesheetEdit({ headerId }) {
           try {
             const acct = instance.getActiveAccount() || accounts[0];
             userEmail = acct?.username || acct?.email || "";
-          } catch {}
+          } catch {
+            /* ignore */
+          }
           if (userEmail) {
             const { data: r } = await supabaseClient
               .from("resource")
@@ -1138,7 +1245,9 @@ function TimesheetEdit({ headerId }) {
               .maybeSingle();
             currentResourceNo = r?.code || null;
           }
-        } catch {}
+        } catch {
+          /* ignore */
+        }
 
         const query = supabaseClient
           .from("resource_timesheet_header")
@@ -1153,7 +1262,10 @@ function TimesheetEdit({ headerId }) {
 
         const { data: h, error: headerErr } = await query.maybeSingle();
         if (headerErr) {
-          console.error("Error cargando cabecera por allocation_period:", headerErr);
+          console.error(
+            "Error cargando cabecera por allocation_period:",
+            headerErr,
+          );
           toast.error("No se encontró cabecera para el período");
         }
         headerData = h || null;
@@ -1167,8 +1279,6 @@ function TimesheetEdit({ headerId }) {
 
       setHeader(headerData);
       setResolvedHeaderId(headerIdResolved);
-
-
 
       // 2) Las líneas ahora se cargan vía React Query (ver linesQuery)
       if (!headerIdResolved) {
@@ -1209,15 +1319,23 @@ function TimesheetEdit({ headerId }) {
 
   // 🆕 Inicializar fecha sugerida para nuevo parte
   useEffect(() => {
-    if (!effectiveHeaderId && editableHeader?.resource_no && !editableHeader.posting_date) {
-      getSuggestedPartDate(editableHeader.resource_no).then(suggestedDate => {
-        setEditableHeader(prev => ({
+    if (
+      !effectiveHeaderId &&
+      editableHeader?.resource_no &&
+      !editableHeader.posting_date
+    ) {
+      getSuggestedPartDate(editableHeader.resource_no).then((suggestedDate) => {
+        setEditableHeader((prev) => ({
           ...prev,
-          posting_date: suggestedDate
+          posting_date: suggestedDate,
         }));
       });
     }
-  }, [effectiveHeaderId, editableHeader?.resource_no, editableHeader?.posting_date]);
+  }, [
+    effectiveHeaderId,
+    editableHeader?.resource_no,
+    editableHeader?.posting_date,
+  ]);
 
   // 🆕 Fallback robusto: en /nuevo-parte garantizar período = mes actual si falta
   useEffect(() => {
@@ -1229,10 +1347,11 @@ function TimesheetEdit({ headerId }) {
     const yy = String(now.getFullYear()).slice(-2);
     const mm = String(now.getMonth() + 1).padStart(2, "0");
     const ap = `M${yy}-M${mm}`;
-    setEditableHeader(prev => ({
+    setEditableHeader((prev) => ({
       ...(prev || {}),
       allocation_period: ap,
-      posting_date: (prev && prev.posting_date) || now.toISOString().split('T')[0],
+      posting_date:
+        (prev && prev.posting_date) || now.toISOString().split("T")[0],
       posting_description: `Parte de trabajo ${ap}`,
     }));
   }, [location.pathname, editableHeader?.allocation_period]);
@@ -1240,7 +1359,7 @@ function TimesheetEdit({ headerId }) {
   // 🆕 Incrementar trigger cuando cambie el período
   useEffect(() => {
     if (editableHeader?.allocation_period) {
-      setPeriodChangeTrigger(prev => prev + 1);
+      setPeriodChangeTrigger((prev) => prev + 1);
     }
   }, [editableHeader?.allocation_period]);
 
@@ -1252,17 +1371,26 @@ function TimesheetEdit({ headerId }) {
     // NO resetear hasUnsavedChanges si ya hay cambios pendientes
     const shouldPreserveChanges = hasUnsavedChanges;
 
-    const sorted = (linesHook.data || []).sort((a, b) => new Date(a.date) - new Date(b.date));
-    const linesFormatted = sorted.map((line) => ({ ...line, date: toDisplayDate(line.date) }));
+    const sorted = (linesHook.data || []).sort(
+      (a, b) => new Date(a.date) - new Date(b.date),
+    );
+    const linesFormatted = sorted.map((line) => ({
+      ...line,
+      date: toDisplayDate(line.date),
+    }));
     // Filtrar filas totalmente vacías provenientes del backend (sin datos y cantidad 0)
     const filtered = linesFormatted.filter((l) => {
-      const hasData = Boolean(l.job_no || l.job_task_no || l.description || l.work_type || l.date);
+      const hasData = Boolean(
+        l.job_no || l.job_task_no || l.description || l.work_type || l.date,
+      );
       const qty = Number(l.quantity) || 0;
       return hasData || qty !== 0; // mantener solo si tiene datos o cantidad distinta de 0
     });
 
     // 🆕 Conservar líneas temporales locales (tmp-) cuando actualizamos desde servidor
-    const localTmp = (Array.isArray(lines) ? lines : []).filter((l) => String(l.id || "").startsWith("tmp-"));
+    const localTmp = (Array.isArray(lines) ? lines : []).filter((l) =>
+      String(l.id || "").startsWith("tmp-"),
+    );
     const merged = [...localTmp, ...filtered];
     setLines(merged);
 
@@ -1270,7 +1398,10 @@ function TimesheetEdit({ headerId }) {
     setEditFormData((prev) => {
       const next = { ...prev };
       filtered.forEach((line) => {
-        next[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
+        next[line.id] = {
+          ...line,
+          quantity: toTwoDecimalsString(line.quantity),
+        };
       });
       return next;
     });
@@ -1293,29 +1424,40 @@ function TimesheetEdit({ headerId }) {
   // Esto reemplaza todo el sistema manual de navegación
 
   // Bloquear navegación si hay cambios sin guardar
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) => {
-      // Solo bloquear si hay cambios sin guardar y la ubicación cambia
-      return hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname;
-    }
-  );
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+    // Solo bloquear si hay cambios sin guardar y la ubicación cambia
+    return (
+      hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname
+    );
+  });
 
   // Mostrar modal cuando se bloquea la navegación
   useEffect(() => {
     if (blocker.state === "blocked") {
       setNavigationModal({
         show: true,
-        message: 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?',
+        message:
+          "Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?",
         onConfirm: () => {
-          setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+          setNavigationModal({
+            show: false,
+            message: "",
+            onConfirm: null,
+            onCancel: null,
+          });
           // Permitir la navegación bloqueada
           blocker.proceed();
         },
         onCancel: () => {
-          setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null });
+          setNavigationModal({
+            show: false,
+            message: "",
+            onConfirm: null,
+            onCancel: null,
+          });
           // Cancelar la navegación bloqueada
           blocker.reset();
-        }
+        },
       });
     }
   }, [blocker.state, blocker.proceed, blocker.reset]);
@@ -1326,18 +1468,20 @@ function TimesheetEdit({ headerId }) {
     const handleBeforeUnload = (e) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue = 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?';
+        e.returnValue =
+          "Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?";
         return e.returnValue;
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
   // calendarHolidays seguirá disponible en este componente para validaciones
   useEffect(() => {
-    if (Array.isArray(calHolidaysFromHook)) setCalendarHolidays(calHolidaysFromHook);
+    if (Array.isArray(calHolidaysFromHook))
+      setCalendarHolidays(calHolidaysFromHook);
   }, [calHolidaysFromHook]);
 
   // === Validación en vivo: tope diario y festivos (no permitir imputar)
@@ -1373,9 +1517,15 @@ function TimesheetEdit({ headerId }) {
           // autocorregimos a 0
           nextEdit[id] = { ...row, quantity: 0 };
           changedSomething = true;
-          nextErrors[id] = { ...(nextErrors[id] || {}), date: VALIDATION.HOLIDAY_NO_HOURS };
+          nextErrors[id] = {
+            ...(nextErrors[id] || {}),
+            date: VALIDATION.HOLIDAY_NO_HOURS,
+          };
         } else {
-          nextErrors[id] = { ...(nextErrors[id] || {}), date: VALIDATION.HOLIDAY_NO_HOURS };
+          nextErrors[id] = {
+            ...(nextErrors[id] || {}),
+            date: VALIDATION.HOLIDAY_NO_HOURS,
+          };
         }
         continue; // no más validaciones sobre festivos
       }
@@ -1386,7 +1536,10 @@ function TimesheetEdit({ headerId }) {
       const totalForDay = Number(totals[iso] || 0);
       const EPS = 0.01;
       if (totalForDay > required + EPS) {
-        nextErrors[id] = { ...(nextErrors[id] || {}), quantity: `Excede tope diario (${totalForDay.toFixed(2)} / ${required.toFixed(2)})` };
+        nextErrors[id] = {
+          ...(nextErrors[id] || {}),
+          quantity: `Excede tope diario (${totalForDay.toFixed(2)} / ${required.toFixed(2)})`,
+        };
       }
     }
 
@@ -1466,7 +1619,7 @@ function TimesheetEdit({ headerId }) {
             return {
               user_email: userEmail,
               department_code: resourceData.department_code,
-              calendar_type: resourceData.calendar_type
+              calendar_type: resourceData.calendar_type,
             };
           }
         }
@@ -1503,17 +1656,17 @@ function TimesheetEdit({ headerId }) {
     }));
 
     // Obtener información del recurso en background y actualizar si es necesario
-    getResourceInfo().then(resourceInfo => {
+    getResourceInfo().then((resourceInfo) => {
       if (resourceInfo) {
-        setEditFormData(prev => ({
+        setEditFormData((prev) => ({
           ...prev,
           [newId]: {
             ...prev[newId],
             department_code: resourceInfo.department_code,
             company: resourceInfo.company,
             resource_no: resourceInfo.code,
-            resource_responsible: resourceInfo.code
-          }
+            resource_responsible: resourceInfo.code,
+          },
         }));
       }
     });
@@ -1548,12 +1701,20 @@ function TimesheetEdit({ headerId }) {
     const isNewParte = location.pathname === "/nuevo-parte";
     if (isNewParte && (!Array.isArray(lines) || lines.length === 0)) return;
 
-    const hasEmptyTmp = Array.isArray(lines) && lines.some((l) => {
-      const isTmp = String(l.id || "").startsWith("tmp-");
-      const qty = Number(l.quantity) || 0;
-      const noData = !(l.job_no || l.job_task_no || l.description || l.work_type || l.date);
-      return isTmp && noData && qty === 0;
-    });
+    const hasEmptyTmp =
+      Array.isArray(lines) &&
+      lines.some((l) => {
+        const isTmp = String(l.id || "").startsWith("tmp-");
+        const qty = Number(l.quantity) || 0;
+        const noData = !(
+          l.job_no ||
+          l.job_task_no ||
+          l.description ||
+          l.work_type ||
+          l.date
+        );
+        return isTmp && noData && qty === 0;
+      });
 
     if (Array.isArray(lines) && lines.length > 0 && !hasEmptyTmp) {
       addEmptyLine();
@@ -1561,7 +1722,7 @@ function TimesheetEdit({ headerId }) {
   }, [lines, location.pathname]);
 
   // -- Buscar responsables de job
-  const fetchJobResponsibles = async (jobNos) => {
+  const _fetchJobResponsibles = async (jobNos) => {
     if (!jobNos || jobNos.length === 0) return {};
     const unique = Array.from(new Set(jobNos.filter(Boolean)));
     if (unique.length === 0) return {};
@@ -1601,7 +1762,7 @@ function TimesheetEdit({ headerId }) {
     for (const r of data) {
       map[r.no] = {
         responsible: r.responsible ?? "",
-        department_code: r.departamento ?? "" // ✅ Usar departamento del proyecto
+        department_code: r.departamento ?? "", // ✅ Usar departamento del proyecto
       };
     }
 
@@ -1628,7 +1789,7 @@ function TimesheetEdit({ headerId }) {
       } else if (key === "job_no_and_description") {
         const j = row.job_no || "";
         const d = row.description || "";
-        out.job_no_and_description = (j && d) ? `${j} - ${d}` : `${j}${d}`;
+        out.job_no_and_description = j && d ? `${j} - ${d}` : `${j}${d}`;
       } else if (key === "job_responsible") {
         const jobNo = row.job_no || "";
         const resolved = jobResponsibleMap?.[jobNo];
@@ -1638,13 +1799,14 @@ function TimesheetEdit({ headerId }) {
       } else if (key === "resource_no") {
         out.resource_no = row.resource_no ?? header?.resource_no ?? "";
       } else if (key === "resource_responsible") {
-        out.resource_responsible = row.resource_responsible ?? header?.resource_no ?? "";
+        out.resource_responsible =
+          row.resource_responsible ?? header?.resource_no ?? "";
       } else if (key === "department_code") {
         // ✅ Obtener departamento del proyecto, no del recurso
         const jobNo = row.job_no || "";
         const jobInfo = jobResponsibleMap?.[jobNo];
 
-        if (jobInfo && typeof jobInfo === 'object' && jobInfo.department_code) {
+        if (jobInfo && typeof jobInfo === "object" && jobInfo.department_code) {
           out.department_code = jobInfo.department_code;
         } else {
           out.department_code = row.department_code ?? "";
@@ -1661,7 +1823,7 @@ function TimesheetEdit({ headerId }) {
   // -- Festivos: obtener lista de fechas ISO (YYYY-MM-DD) de los festivos
   const festivos = useMemo(
     () => (calendarHolidays || []).map((h) => (h.day || "").slice(0, 10)),
-    [calendarHolidays]
+    [calendarHolidays],
   );
 
   // -- Hook de edición (modificado para interceptar cambios de fecha/cantidad)
@@ -1671,7 +1833,7 @@ function TimesheetEdit({ headerId }) {
     hasRefs,
     calendarOpenFor,
     setCalendarOpenFor,
-    handleDateInputChange,
+    handleDateInputChange: _handleDateChangeFromHook,
     handleDateInputBlur,
     handleInputFocus,
     handleKeyDown,
@@ -1687,63 +1849,69 @@ function TimesheetEdit({ headerId }) {
   });
 
   // -- Router de cambios por campo: deriva quantity/date a sus handlers y el resto al handler original
-  const handleInputChange = useCallback(async (lineId, event) => {
-    const { name, value } = event.target;
+  const handleInputChange = useCallback(
+    async (lineId, event) => {
+      const { name, value } = event.target;
 
-                // ✅ Si se cambia el proyecto, obtener automáticamente el departamento
-        if (name === "job_no" && value) {
-          try {
-            // Obtener información del proyecto (responsable y departamento)
-            const jobInfo = await fetchJobInfo([value]);
+      // ✅ Si se cambia el proyecto, obtener automáticamente el departamento
+      if (name === "job_no" && value) {
+        try {
+          // Obtener información del proyecto (responsable y departamento)
+          const jobInfo = await fetchJobInfo([value]);
 
-            // ✅ Establecer responsable del proyecto y departamento del recurso
-            setEditFormData(prev => {
-              const newData = {
-                ...prev[lineId],
-                [name]: value,
-                department_code: jobInfo[value]?.department_code || editableHeader?.department_code || "20", // ✅ Departamento del proyecto, recurso o default
-                job_responsible: jobInfo[value]?.responsible || "" // ✅ Responsable del proyecto
-              };
+          // ✅ Establecer responsable del proyecto y departamento del recurso
+          setEditFormData((prev) => {
+            const newData = {
+              ...prev[lineId],
+              [name]: value,
+              department_code:
+                jobInfo[value]?.department_code ||
+                editableHeader?.department_code ||
+                "20", // ✅ Departamento del proyecto, recurso o default
+              job_responsible: jobInfo[value]?.responsible || "", // ✅ Responsable del proyecto
+            };
 
-              return {
-                ...prev,
-                [lineId]: newData
-              };
-            });
-          } catch (error) {
-            console.error(`Error obteniendo info del proyecto:`, error);
-            // En caso de error, usar valor normal
-    setEditFormData(prev => ({
-      ...prev,
-      [lineId]: {
-        ...prev[lineId],
-        [name]: value
-      }
-    }));
-          }
-        } else {
-          // Para otros campos, comportamiento normal
-          setEditFormData(prev => ({
+            return {
+              ...prev,
+              [lineId]: newData,
+            };
+          });
+        } catch (error) {
+          console.error(`Error obteniendo info del proyecto:`, error);
+          // En caso de error, usar valor normal
+          setEditFormData((prev) => ({
             ...prev,
             [lineId]: {
               ...prev[lineId],
-              [name]: value
-            }
+              [name]: value,
+            },
           }));
         }
-
-    // Marcar que hay cambios no guardados
-    markAsChanged();
-
-    // Limpiar errores del campo
-    setErrors(prev => ({
-      ...prev,
-      [lineId]: {
-        ...prev[lineId],
-        [name]: null
+      } else {
+        // Para otros campos, comportamiento normal
+        setEditFormData((prev) => ({
+          ...prev,
+          [lineId]: {
+            ...prev[lineId],
+            [name]: value,
+          },
+        }));
       }
-    }));
-  }, [markAsChanged, fetchJobInfo]);
+
+      // Marcar que hay cambios no guardados
+      markAsChanged();
+
+      // Limpiar errores del campo
+      setErrors((prev) => ({
+        ...prev,
+        [lineId]: {
+          ...prev[lineId],
+          [name]: null,
+        },
+      }));
+    },
+    [markAsChanged, fetchJobInfo],
+  );
 
   // -- Función unificada para validar rango de fechas
   const validateDateRange = (date, headerData) => {
@@ -1768,7 +1936,7 @@ function TimesheetEdit({ headerId }) {
     if (selectedDate < fromDate || selectedDate > toDate) {
       return {
         isValid: false,
-        error: `La fecha debe estar entre ${fromDate.toLocaleDateString()} y ${toDate.toLocaleDateString()}`
+        error: `La fecha debe estar entre ${fromDate.toLocaleDateString()} y ${toDate.toLocaleDateString()}`,
       };
     }
 
@@ -1777,7 +1945,7 @@ function TimesheetEdit({ headerId }) {
 
   // -- Obtener fecha sugerida para nuevo parte (último día del mes siguiente al último)
   const getSuggestedPartDate = async (resourceNo) => {
-    if (!resourceNo) return new Date().toISOString().split('T')[0];
+    if (!resourceNo) return new Date().toISOString().split("T")[0];
 
     try {
       // Obtener el último timesheet del recurso
@@ -1791,23 +1959,31 @@ function TimesheetEdit({ headerId }) {
 
       if (error || !lastHeader?.to_date) {
         // Si no hay timesheets previos, usar fecha actual
-        return new Date().toISOString().split('T')[0];
+        return new Date().toISOString().split("T")[0];
       }
 
       // ✅ Obtener el ÚLTIMO día del mes siguiente al último timesheet
       const lastDate = new Date(lastHeader.to_date);
-      const nextMonth = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, 1);
-      const lastDayOfNextMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0);
+      const nextMonth = new Date(
+        lastDate.getFullYear(),
+        lastDate.getMonth() + 1,
+        1,
+      );
+      const lastDayOfNextMonth = new Date(
+        nextMonth.getFullYear(),
+        nextMonth.getMonth() + 1,
+        0,
+      );
 
-      return lastDayOfNextMonth.toISOString().split('T')[0];
+      return lastDayOfNextMonth.toISOString().split("T")[0];
     } catch (error) {
       console.error("Error obteniendo fecha sugerida:", error);
-      return new Date().toISOString().split('T')[0];
+      return new Date().toISOString().split("T")[0];
     }
   };
 
   // -- Custom handleDateChange
-  const handleDateChange = (id, value) => {
+  const handleDateChangeLocal = (id, value) => {
     // value puede ser "dd/MM/yyyy" o similar
     const iso = toIsoFromInput(value);
 
@@ -1873,7 +2049,7 @@ function TimesheetEdit({ headerId }) {
   };
 
   // -- Custom handleQuantityChange
-  const handleQuantityChange = (id, value) => {
+  const _handleQuantityChange = (id, value) => {
     const row = editFormData[id] || {};
     const iso = toIsoFromInput(row?.date);
     // Si la fila es festivo (por isHoliday o porque la fecha está en festivos)
@@ -1893,18 +2069,18 @@ function TimesheetEdit({ headerId }) {
       return;
     }
     // Si no es festivo, actualizar cantidad normalmente
-      setEditFormData((prev) => ({
-        ...prev,
-        [id]: {
-          ...prev[id],
-          quantity: value,
-        },
-      }));
+    setEditFormData((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        quantity: value,
+      },
+    }));
     markAsChanged();
   };
 
   // -- Guardar cambios
-  const saveAllEdits = async () => {
+  const _saveAllEdits = async () => {
     if (hasDailyErrors) {
       toast.error("Corrige los errores diarios antes de guardar");
       return;
@@ -1914,7 +2090,9 @@ function TimesheetEdit({ headerId }) {
     const toInsertIds = ids.filter((id) => String(id).startsWith("tmp-"));
     const toUpdateIds = ids.filter((id) => !String(id).startsWith("tmp-"));
 
-    const allRowsToSave = [...toInsertIds, ...toUpdateIds].map((id) => editFormData[id] || {});
+    const allRowsToSave = [...toInsertIds, ...toUpdateIds].map(
+      (id) => editFormData[id] || {},
+    );
     const jobNosNeeded = allRowsToSave
       .filter((r) => r.job_no) // ✅ Obtener info de TODOS los proyectos para departamento
       .map((r) => r.job_no);
@@ -1923,8 +2101,12 @@ function TimesheetEdit({ headerId }) {
 
     // INSERT
     if (toInsertIds.length > 0) {
-      const rowsToInsert = toInsertIds.map((id) => prepareRowForDb(editFormData[id], jobResponsibleMap));
-      const { error: insertErr } = await supabaseClient.from("timesheet").insert(rowsToInsert);
+      const rowsToInsert = toInsertIds.map((id) =>
+        prepareRowForDb(editFormData[id], jobResponsibleMap),
+      );
+      const { error: insertErr } = await supabaseClient
+        .from("timesheet")
+        .insert(rowsToInsert);
       if (insertErr) {
         console.error("Error insertando nuevas líneas:", insertErr);
         errorOccurred = true;
@@ -1934,7 +2116,10 @@ function TimesheetEdit({ headerId }) {
     // UPDATE
     for (const id of toUpdateIds) {
       const row = prepareRowForDb(editFormData[id], jobResponsibleMap);
-      const { error } = await supabaseClient.from("timesheet").update(row).eq("id", id);
+      const { error } = await supabaseClient
+        .from("timesheet")
+        .update(row)
+        .eq("id", id);
       if (error) {
         console.error(`Error actualizando línea ${id}:`, error);
         errorOccurred = true;
@@ -1947,15 +2132,18 @@ function TimesheetEdit({ headerId }) {
     }
 
     toast.success("Guardado correctamente");
-    setLastSavedAt(new Date());
 
     // Invalidate para que React Query recargue líneas
     try {
-      await queryClient.invalidateQueries({ queryKey: ["lines", effectiveHeaderId] });
-    } catch {}
+      await queryClient.invalidateQueries({
+        queryKey: ["lines", effectiveHeaderId],
+      });
+    } catch {
+      /* ignore */
+    }
   };
 
-  if (loading && effectiveHeaderId) return <div>Cargando datos...</div>;
+  const isLoadingView = loading && effectiveHeaderId;
 
   useEffect(() => {
     // Autocompletar allocation_period en la URL para /nuevo-parte si falta
@@ -1968,159 +2156,220 @@ function TimesheetEdit({ headerId }) {
         const mm = String(now.getMonth() + 1).padStart(2, "0");
         const newAp = `M${yy}-M${mm}`;
         params.set("allocation_period", newAp);
-        navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+        navigate(`${location.pathname}?${params.toString()}`, {
+          replace: true,
+        });
       }
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.search, navigate]);
+
+  if (isLoadingView) {
+    return <div>Cargando datos...</div>;
+  }
 
   return (
     <div className="ts-responsive">
       <div className="timesheet-container">
         {/* Header de navegación */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-        {/* Botón circular solo con el icono */}
-        <button
-          type="button"
-          aria-label="Lista Parte Trabajo"
-          onClick={() => navigate("/")}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#D8EEF1"; // hover suave
-            e.currentTarget.style.borderColor = "#007E87";
-          }}
-          onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#ffffff";
-            e.currentTarget.style.borderColor = "rgba(0,126,135,0.35)";
-          }}
+        <div
           style={{
-            width: 36,
-            height: 36,
-            display: "inline-flex",
+            display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "9999px",
-            border: "1px solid rgba(0,126,135,0.35)",
-            background: "#EAF7F9",
-            padding: 0,
-            cursor: "pointer",
+            gap: 10,
+            marginBottom: 12,
           }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 6L9 12L15 18" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-        {/* Etiqueta clickable con el mismo color del botón Editar, modificado a color negro */}
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          aria-label="Ir a lista de parte de trabajo"
-          style={{
-            background: "transparent",
-            border: "none",
-            color: "#000",
-            fontWeight: 700,
-            fontSize: "22px",
-            lineHeight: 1,
-            cursor: "pointer",
-            padding: 0,
-          }}
-        >
+          {/* Botón circular solo con el icono */}
+          <button
+            type="button"
+            aria-label="Lista Parte Trabajo"
+            onClick={() => navigate("/")}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#D8EEF1"; // hover suave
+              e.currentTarget.style.borderColor = "#007E87";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#ffffff";
+              e.currentTarget.style.borderColor = "rgba(0,126,135,0.35)";
+            }}
+            style={{
+              width: 36,
+              height: 36,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "9999px",
+              border: "1px solid rgba(0,126,135,0.35)",
+              background: "#EAF7F9",
+              padding: 0,
+              cursor: "pointer",
+            }}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15 6L9 12L15 18"
+                stroke="#007E87"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          {/* Etiqueta clickable con el mismo color del botón Editar, modificado a color negro */}
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            aria-label="Ir a lista de parte de trabajo"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#000",
+              fontWeight: 700,
+              fontSize: "22px",
+              lineHeight: 1,
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
             {header ? "Editar Parte de Trabajo" : "Nuevo Parte de Trabajo"}
-        </button>
-      </div>
+          </button>
+        </div>
 
         {/* Sección del header y calendario - altura fija */}
         <div className="timesheet-header-section">
-      {/* Header, resumen y calendario en la misma fila, alineados a la derecha */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        {/* Header a la izquierda */}
-        <div style={{ flex: 1 }}>
+          {/* Header, resumen y calendario en la misma fila, alineados a la derecha */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
+          >
+            {/* Header a la izquierda */}
+            <div style={{ flex: 1 }}>
               <TimesheetHeader
                 header={header}
                 onHeaderChange={setEditableHeader}
               />
-        </div>
+            </div>
 
-        {/* Panel derecho con resumen y calendario - fijo a la derecha */}
-        <div style={{ marginLeft: 24, flexShrink: 0 }}>
-          <CalendarPanel
-            calRange={calRange}
-            firstOffset={firstOffset}
-            calendarDays={calendarDays}
-            requiredSum={requiredSum}
-            imputedSum={imputedSum}
-            missingSum={missingSum}
-            rightPadState={[rightPad, setRightPad]}
-            onDayClick={(iso) => {
-              try {
-                const display = toDisplayDate(iso);
+            {/* Panel derecho con resumen y calendario - fijo a la derecha */}
+            <div style={{ marginLeft: 24, flexShrink: 0 }}>
+              <CalendarPanel
+                calRange={calRange}
+                firstOffset={firstOffset}
+                calendarDays={calendarDays}
+                requiredSum={requiredSum}
+                imputedSum={imputedSum}
+                missingSum={missingSum}
+                rightPadState={[rightPad, setRightPad]}
+                onDayClick={(iso) => {
+                  try {
+                    const display = toDisplayDate(iso);
 
-                const focusFirstAvailable = (lineId) => {
-                  const order = ["job_no", "date", "quantity", "work_type", "description"];
-                  setTimeout(() => {
-                    for (const key of order) {
-                      const el = inputRefs.current?.[lineId]?.[key];
-                      if (el && !el.disabled) { el.focus(); el.select?.(); return; }
+                    const focusFirstAvailable = (lineId) => {
+                      const order = [
+                        "job_no",
+                        "date",
+                        "quantity",
+                        "work_type",
+                        "description",
+                      ];
+                      setTimeout(() => {
+                        for (const key of order) {
+                          const el = inputRefs.current?.[lineId]?.[key];
+                          if (el && !el.disabled) {
+                            el.focus();
+                            el.select?.();
+                            return;
+                          }
+                        }
+                      }, 0);
+                    };
+
+                    // Si ya existe esa fecha
+                    const idx = lines.findIndex(
+                      (l) => toIsoFromInput(l.date) === iso,
+                    );
+                    if (idx !== -1) {
+                      const id = lines[idx].id;
+                      focusFirstAvailable(id);
+                      return;
                     }
-                  }, 0);
-                };
 
-                // Si ya existe esa fecha
-                const idx = lines.findIndex(l => toIsoFromInput(l.date) === iso);
-                if (idx !== -1) {
-                  const id = lines[idx].id;
-                  focusFirstAvailable(id);
-                  return;
-                }
+                    // Reutilizar una tmp- vacía si existe
+                    const emptyTmp = (lines || []).find((l) => {
+                      const isTmp = String(l.id || "").startsWith("tmp-");
+                      const qty = Number(l.quantity) || 0;
+                      const noData = !(
+                        l.job_no ||
+                        l.job_task_no ||
+                        l.description ||
+                        l.work_type ||
+                        l.date
+                      );
+                      return isTmp && noData && qty === 0;
+                    });
 
-                // Reutilizar una tmp- vacía si existe
-                const emptyTmp = (lines || []).find((l) => {
-                  const isTmp = String(l.id || "").startsWith("tmp-");
-                  const qty = Number(l.quantity) || 0;
-                  const noData = !(l.job_no || l.job_task_no || l.description || l.work_type || l.date);
-                  return isTmp && noData && qty === 0;
-                });
+                    if (emptyTmp) {
+                      const id = emptyTmp.id;
+                      setEditFormData((prev) => ({
+                        ...prev,
+                        [id]: { ...(prev[id] || {}), date: display },
+                      }));
+                      setLines((prev) =>
+                        prev.map((l) =>
+                          l.id === id ? { ...l, date: display } : l,
+                        ),
+                      );
+                      focusFirstAvailable(id);
+                      return;
+                    }
 
-                if (emptyTmp) {
-                  const id = emptyTmp.id;
-                  setEditFormData(prev => ({
-                    ...prev,
-                    [id]: { ...(prev[id] || {}), date: display }
-                  }));
-                  setLines(prev => prev.map(l => l.id === id ? { ...l, date: display } : l));
-                  focusFirstAvailable(id);
-                  return;
-                }
-
-                // Crear nueva si no hay tmp vacía
-                const newId = addEmptyLine();
-                setEditFormData(prev => ({
-                  ...prev,
-                  [newId]: { ...(prev[newId] || {}), date: display }
-                }));
-                setLines(prev => prev.map(l => l.id === newId ? { ...l, date: display } : l));
-                focusFirstAvailable(newId);
-              } catch {}
-            }}
-          />
+                    // Crear nueva si no hay tmp vacía
+                    const newId = addEmptyLine();
+                    setEditFormData((prev) => ({
+                      ...prev,
+                      [newId]: { ...(prev[newId] || {}), date: display },
+                    }));
+                    setLines((prev) =>
+                      prev.map((l) =>
+                        l.id === newId ? { ...l, date: display } : l,
+                      ),
+                    );
+                    focusFirstAvailable(newId);
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+              />
             </div>
-            </div>
+          </div>
         </div>
 
         {/* Sección de líneas - ocupa todo el espacio restante */}
         <div className="timesheet-lines-section">
           {/* Controles de líneas */}
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 16,
-            gap: "12px"
-          }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 16,
+              gap: "12px",
+            }}
+          >
             {/* 🆕 Botones de acción para líneas seleccionadas */}
             <div style={{ display: "flex", gap: "8px" }}>
               {/* 🆕 Botón Importar Factorial */}
               <button
-                        onClick={handleImportFactorial}
+                onClick={handleImportFactorial}
                 style={{
                   padding: "8px 16px",
                   backgroundColor: "#ffffff",
@@ -2131,7 +2380,7 @@ function TimesheetEdit({ headerId }) {
                   fontSize: "14px",
                   fontWeight: "500",
                   fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
-                  transition: "all 0.2s ease"
+                  transition: "all 0.2s ease",
                 }}
                 onMouseEnter={(e) => {
                   e.target.style.backgroundColor = "#D9F0F2";
@@ -2162,7 +2411,7 @@ function TimesheetEdit({ headerId }) {
                   fontSize: "14px",
                   fontWeight: "500",
                   fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
-                  transition: "all 0.2s ease"
+                  transition: "all 0.2s ease",
                 }}
                 onMouseEnter={(e) => {
                   if (selectedLines.length > 0) {
@@ -2197,7 +2446,7 @@ function TimesheetEdit({ headerId }) {
                   fontSize: "14px",
                   fontWeight: "500",
                   fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
-                  transition: "all 0.2s ease"
+                  transition: "all 0.2s ease",
                 }}
                 onMouseEnter={(e) => {
                   if (selectedLines.length > 0) {
@@ -2225,14 +2474,15 @@ function TimesheetEdit({ headerId }) {
                   color: hasUnsavedChanges ? "#000" : "#9ca3af",
                   border: "none",
                   borderRadius: "4px",
-                  cursor: hasUnsavedChanges && !isSaving ? "pointer" : "not-allowed",
+                  cursor:
+                    hasUnsavedChanges && !isSaving ? "pointer" : "not-allowed",
                   fontSize: "14px",
                   fontWeight: "500",
                   fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
                   transition: "all 0.2s ease",
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: 8
+                  gap: 8,
                 }}
                 onMouseEnter={(e) => {
                   if (hasUnsavedChanges && !isSaving) {
@@ -2245,55 +2495,87 @@ function TimesheetEdit({ headerId }) {
                   }
                 }}
               >
-                {isSaving ? "Guardando..." : (
+                {isSaving ? (
+                  "Guardando..."
+                ) : (
                   <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M17 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V7L17 3Z" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M17 3V7H21" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M7 13H17" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M7 17H13" stroke="#007E87" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M17 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V7L17 3Z"
+                        stroke="#007E87"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M17 3V7H21"
+                        stroke="#007E87"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M7 13H17"
+                        stroke="#007E87"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M7 17H13"
+                        stroke="#007E87"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                     Guardar
-                    </>
-                  )}
+                  </>
+                )}
               </button>
-                </div>
-        </div>
+            </div>
+          </div>
 
           {/* Contenedor de la tabla - ocupa todo el espacio disponible */}
           <div className="timesheet-table-container" style={{ width: "100%" }}>
-        <TimesheetLines
-          lines={lines}
-          editFormData={editFormData}
-          errors={errors}
-          inputRefs={inputRefs}
-          hasRefs={hasRefs}
-          setSafeRef={setSafeRef}
-          calendarOpenFor={calendarOpenFor}
-          setCalendarOpenFor={setCalendarOpenFor}
-          handleInputChange={handleInputChange}
-          handleDateInputChange={handleDateChange}
-          handleDateInputBlur={handleDateInputBlur}
-          handleInputFocus={handleInputFocus}
-          handleKeyDown={handleKeyDown}
-          header={header}
+            <TimesheetLines
+              lines={lines}
+              editFormData={editFormData}
+              errors={errors}
+              inputRefs={inputRefs}
+              hasRefs={hasRefs}
+              setSafeRef={setSafeRef}
+              calendarOpenFor={calendarOpenFor}
+              setCalendarOpenFor={setCalendarOpenFor}
+              handleInputChange={handleInputChange}
+              handleDateInputChange={handleDateChangeLocal}
+              handleDateInputBlur={handleDateInputBlur}
+              handleInputFocus={handleInputFocus}
+              handleKeyDown={handleKeyDown}
+              header={header}
               editableHeader={editableHeader}
               periodChangeTrigger={periodChangeTrigger} // 🆕 Pasar trigger para forzar re-renderizado
-          calendarHolidays={calendarHolidays}
-          scheduleAutosave={() => {}} // Eliminado
-          saveLineNow={() => {}} // Eliminado
-          savingByLine={savingByLine}
-          onLinesChange={handleLinesChange}
-          deleteLineMutation={deleteLineMutation}
-          insertLineMutation={insertLineMutation}
-          markAsChanged={markAsChanged}
+              calendarHolidays={calendarHolidays}
+              scheduleAutosave={() => {}} // Eliminado
+              saveLineNow={() => {}} // Eliminado
+              savingByLine={savingByLine}
+              onLinesChange={handleLinesChange}
+              deleteLineMutation={deleteLineMutation}
+              insertLineMutation={insertLineMutation}
+              markAsChanged={markAsChanged}
               // 🆕 Nuevas props para selección de líneas
               onLineSelectionChange={handleLineSelectionChange}
               selectedLines={selectedLines}
               onDuplicateLines={handleDuplicateLines}
               onDeleteLines={handleDeleteLines}
               addEmptyLine={addEmptyLine} // 🆕 Pasar función para agregar línea vacía
-        />
+            />
           </div>
         </div>
       </div>
@@ -2301,7 +2583,14 @@ function TimesheetEdit({ headerId }) {
       {/* Modal de confirmación de navegación */}
       <BcModal
         isOpen={navigationModal.show}
-        onClose={() => setNavigationModal({ show: false, message: "", onConfirm: null, onCancel: null })}
+        onClose={() =>
+          setNavigationModal({
+            show: false,
+            message: "",
+            onConfirm: null,
+            onCancel: null,
+          })
+        }
         title="Confirmar navegación"
         confirmText="Sí, salir"
         cancelText="No, cancelar"
@@ -2323,8 +2612,13 @@ function TimesheetEdit({ headerId }) {
 
           // Encontrar y enfocar la línea con error
           setTimeout(() => {
-            const firstErrorField = Object.keys(validationModal.validation?.errors[lineId] || {})[0];
-            if (firstErrorField && inputRefs.current?.[lineId]?.[firstErrorField]) {
+            const firstErrorField = Object.keys(
+              validationModal.validation?.errors[lineId] || {},
+            )[0];
+            if (
+              firstErrorField &&
+              inputRefs.current?.[lineId]?.[firstErrorField]
+            ) {
               inputRefs.current[lineId][firstErrorField].focus();
               inputRefs.current[lineId][firstErrorField].select();
             }
@@ -2341,14 +2635,22 @@ function TimesheetEdit({ headerId }) {
       {/* 🆕 Modal de confirmación de eliminación */}
       <BcModal
         isOpen={deleteConfirmModal.show}
-        onClose={() => setDeleteConfirmModal({ show: false, lineIds: [], onConfirm: null })}
+        onClose={() =>
+          setDeleteConfirmModal({ show: false, lineIds: [], onConfirm: null })
+        }
         title="Confirmar eliminación"
         confirmText="Sí, eliminar"
         onConfirm={deleteConfirmModal.onConfirm}
-        onCancel={() => setDeleteConfirmModal({ show: false, lineIds: [], onConfirm: null })}
+        onCancel={() =>
+          setDeleteConfirmModal({ show: false, lineIds: [], onConfirm: null })
+        }
         confirmButtonType="danger"
       >
-        <p>¿Estás seguro de que quieres eliminar {deleteConfirmModal.lineIds.length} línea{deleteConfirmModal.lineIds.length !== 1 ? 's' : ''}?</p>
+        <p>
+          ¿Estás seguro de que quieres eliminar{" "}
+          {deleteConfirmModal.lineIds.length} línea
+          {deleteConfirmModal.lineIds.length !== 1 ? "s" : ""}?
+        </p>
         <p className="text-muted">Esta acción no se puede deshacer.</p>
       </BcModal>
     </div>
