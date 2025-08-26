@@ -26,3 +26,9 @@ dist-ssr
 *storybook.log
 storybook-static
 dist/
+
+# Secrets and environment files
+.env
+.env.*
+src/scripts/bc-sync/.env
+src/scripts/bc-sync/*.env
