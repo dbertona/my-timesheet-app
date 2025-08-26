@@ -1,3 +1,5 @@
+[![CI](https://github.com/dbertona/my-timesheet-app/actions/workflows/ci.yml/badge.svg)](https://github.com/dbertona/my-timesheet-app/actions/workflows/ci.yml)
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
