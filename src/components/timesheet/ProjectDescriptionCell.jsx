@@ -3,10 +3,8 @@ import "../../styles/TimesheetLines.css";
 
 export default function ProjectDescriptionCell({
   line,
-  lineIndex,
   colStyle,
   align,
-  jobs,
   findJob,
   editFormData, // Agregar editFormData para detectar cambios
 }) {

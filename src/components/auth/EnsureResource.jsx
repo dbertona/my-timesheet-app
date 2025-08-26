@@ -16,7 +16,7 @@ export default function EnsureResource() {
       try {
         const acct = instance.getActiveAccount() || accounts[0];
         userEmail = acct?.username || acct?.email || "";
-      } catch {}
+      } catch { /* ignore */ }
       if (!userEmail) {
         setExists(false);
         navigate("/", { replace: true, state: { modal: "resource-missing", email: "" } });

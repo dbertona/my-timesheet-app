@@ -1,7 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
-import BcCard from "../ui/BcCard";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth } from 'date-fns';
-import { es } from 'date-fns/locale';
+import React, { useEffect, useRef } from "react";
 import { CALENDAR, LABELS } from '../../constants/i18n';
 import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 
@@ -16,24 +13,10 @@ export default function CalendarPanel({
   onDayClick,
 }) {
   const calendarBoxRef = useRef(null);
-  const [rightPad, setRightPad] = rightPadState; // [value, setter] - mantenemos para compatibilidad
-  const [calendarHeight, setCalendarHeight] = useState(0);
 
   useEffect(() => {
-    const updateCalendarHeight = () => {
-      try {
-        const el = calendarBoxRef.current;
-        const h = el ? el.offsetHeight : 0;
-        setCalendarHeight(h || 0);
-      } catch {}
-    };
+    const updateCalendarHeight = () => {};
     updateCalendarHeight();
-    window.addEventListener("resize", updateCalendarHeight);
-    let ro;
-    if (window.ResizeObserver && calendarBoxRef.current) {
-      ro = new ResizeObserver(updateCalendarHeight);
-      ro.observe(calendarBoxRef.current);
-    }
     return () => {
       window.removeEventListener("resize", updateCalendarHeight);
       if (ro && calendarBoxRef.current) ro.disconnect();
