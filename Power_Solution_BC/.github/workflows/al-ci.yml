@@ -117,7 +117,7 @@ jobs:
 
       - name: Bump patch en app.json y commit [skip ci]
         run: |
-          node -e "const fs=require('fs');const p='app.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));const v=j.version||'1.0.0.0';const parts=v.split('.').map(n=>parseInt(n||'0',10));parts[2]=parts[2]+1; j.version=`${parts[0]}.${parts[1]}.${parts[2]}.${parts[3]||0}`; fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n'); console.log('Nueva versión:', j.version);"
+          node -e "const fs=require('fs');const p='app.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));const v=j.version||'1.0.0.0';const parts=v.split('.').map(n=>parseInt(n||'0',10));parts[2]=parts[2]+1; j.version=[parts[0],parts[1],parts[2],(parts[3]||0)].join('.'); fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n'); console.log('Nueva versión:', j.version);"
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git add app.json
