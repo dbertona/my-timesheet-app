@@ -17,10 +17,7 @@ export default function CalendarPanel({
   useEffect(() => {
     const updateCalendarHeight = () => {};
     updateCalendarHeight();
-    return () => {
-      window.removeEventListener("resize", updateCalendarHeight);
-      if (ro && calendarBoxRef.current) ro.disconnect();
-    };
+    return () => {};
   }, []);
 
   return (
