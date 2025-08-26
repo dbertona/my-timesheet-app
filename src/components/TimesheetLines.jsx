@@ -1,18 +1,17 @@
 // src/components/TimesheetLines.jsx
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
-import { format } from "date-fns";
 import { parseDate, formatDate } from "../utils/dateHelpers";
 import useColumnResize from "../hooks/useColumnResize";
 import { supabaseClient } from "../supabaseClient";
-import { useJobs, useWorkTypes, useTasks } from "../hooks/useTimesheetQueries";
+import { useJobs, useWorkTypes } from "../hooks/useTimesheetQueries";
 import "../styles/TimesheetLines.css";
 import TIMESHEET_FIELDS, { TIMESHEET_LABELS, TIMESHEET_ALIGN, COL_MIN_WIDTH, COL_MAX_WIDTH, DEFAULT_COL_WIDTH } from "../constants/timesheetFields";
 import ProjectCell from "./timesheet/ProjectCell";
 import ProjectDescriptionCell from "./timesheet/ProjectDescriptionCell";
 import TaskCell from "./timesheet/TaskCell";
 import DepartmentCell from "./timesheet/DepartmentCell";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import InlineError from "./ui/InlineError";
 import DecimalInput from "./ui/DecimalInput";
 import DateCell from "./timesheet/DateCell";

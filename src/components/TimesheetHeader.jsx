@@ -44,7 +44,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
               .from("resource")
               .select("code, name, department_code, calendar_type")
               .eq("email", userEmail)
-              .single();
+              .maybeSingle();
 
             if (resourceData) {
               setResourceInfo({
@@ -64,7 +64,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 const mm = String(now.getMonth() + 1).padStart(2, "0");
                 ap = `M${yy}-M${mm}`;
               }
-              setAllocationPeriod(ap);
+              // allocationPeriod local eliminado; se usa directamente en editableHeader
 
               // Establecer valores por defecto
               let suggestedDate = new Date().toISOString().split('T')[0]; // Fallback a fecha actual
@@ -143,7 +143,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
             .from("resource")
             .select("name, calendar_type")
             .eq("code", header.resource_no)
-            .single();
+            .maybeSingle();
 
           if (resourceData && !error) {
             setEffectiveHeader({
