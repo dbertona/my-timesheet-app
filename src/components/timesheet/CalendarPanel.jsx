@@ -9,7 +9,7 @@ export default function CalendarPanel({
   requiredSum,
   imputedSum,
   missingSum,
-  rightPadState,
+  rightPadState: _rightPadState,
   onDayClick,
 }) {
   const calendarBoxRef = useRef(null);

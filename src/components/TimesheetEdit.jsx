@@ -671,7 +671,7 @@ function TimesheetEdit({ headerId }) {
 
   // ✅ MUTATION: Actualizar línea individual
   const updateLineMutation = useMutation({
-    mutationFn: async ({ lineId, changes, silent = false }) => {
+    mutationFn: async ({ lineId, changes, silent: _silent = false }) => {
       // Convertir fecha a formato ISO si está presente
       const processedChanges = { ...changes };
       if (processedChanges.date) {

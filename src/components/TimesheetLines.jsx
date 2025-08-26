@@ -258,22 +258,9 @@ export default function TimesheetLines({
     // handleKeyDown viene de useTimesheetEdit.jsx y maneja todas las teclas de navegación
   // incluyendo ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Tab y Enter
 
-  const handleDateInputChange = (lineId, val) => {
-    onLinesChange(lineId, { date: val });
-  };
+  // handlers de fecha locales eliminados (no usados)
 
-  const handleDateInputBlur = (lineId, val) => {
-    const date = parseDate(val);
-    if (!date) {
-      setFieldError(lineId, "date", "Fecha inválida.");
-      const el = inputRefs?.current?.[lineId]?.["date"];
-      if (el) setTimeout(() => { try { el.focus(); el.select(); } catch {} }, 0);
-      return;
-    }
-    onLinesChange(lineId, { date: formatDate(date) });
-  };
-
-  const [calendarOpenFor, setCalendarOpenFor] = useState(null);
+  // estado local de calendario eliminado (no usado)
 
   // 🆕 Estado para selección de líneas
   const [localSelectedLines, setLocalSelectedLines] = useState(selectedLines || []);
