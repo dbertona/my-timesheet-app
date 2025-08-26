@@ -41,3 +41,6 @@ Power_Solution_BC/.history/
 
 # Ignore external symlink
 al-external
+
+# AL project editor settings
+Power_Solution_BC/.vscode/
