@@ -110,7 +110,7 @@ function TimesheetEdit({ headerId }) {
   // 🆕 useEffect para actualizar el estado de errores de validación de proyecto
   useEffect(() => {
     const hasErrors = checkProjectValidationErrors();
-    setHasProjectValidationErrors(hasErrors);
+    _setHasProjectValidationErrors(hasErrors);
   }, [checkProjectValidationErrors]);
 
   const serverSnapshotRef = useRef({}); // Último estado confirmado por servidor por línea
