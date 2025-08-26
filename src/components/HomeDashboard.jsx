@@ -124,7 +124,7 @@ const HomeDashboard = () => {
       try {
         const acct = instance.getActiveAccount() || accounts[0];
         email = acct?.username || acct?.email || "";
-      } catch {}
+      } catch { /* ignore */ }
       let resourceNo = null;
       if (email) {
         const { data: r } = await supabaseClient
@@ -154,8 +154,8 @@ const HomeDashboard = () => {
   const handleLogout = async () => {
     try {
       await instance.logoutRedirect({ postLogoutRedirectUri: window.location.origin });
-    } catch (e) {
-      try { await instance.logoutPopup({ postLogoutRedirectUri: window.location.origin }); } catch {}
+    } catch {
+      try { await instance.logoutPopup({ postLogoutRedirectUri: window.location.origin }); } catch { /* ignore */ }
     }
   };
 

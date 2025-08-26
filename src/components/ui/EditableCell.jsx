@@ -5,10 +5,7 @@ import React from "react";
 export default function EditableCell({
   children,
   error,
-  inputRef,
   className,
-  onFocus,
-  onKeyDown,
   style,
   errorId,
   align, // 🆕 Prop para alineación específica

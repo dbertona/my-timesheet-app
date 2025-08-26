@@ -3,7 +3,6 @@ import "../../styles/TimesheetLines.css";
 
 export default function DepartmentCell({
   line,
-  lineIndex,
   colStyle,
   align,
   editFormData, // ✅ Recibir editFormData para mostrar valor actualizado
