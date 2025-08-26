@@ -36,7 +36,7 @@ const HomeDashboard = () => {
   try {
     activeAccount = instance.getActiveAccount() || accounts[0];
     displayName = activeAccount?.name || activeAccount?.username || "usuario";
-  } catch {}
+  } catch { /* ignore */ }
 
   let userEmail = "";
   try {
@@ -74,7 +74,7 @@ const HomeDashboard = () => {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         if (!cancelled) setUserPhoto(url);
-      } catch {}
+      } catch { /* ignore */ }
     }
     loadPhoto();
     return () => { cancelled = true; };
