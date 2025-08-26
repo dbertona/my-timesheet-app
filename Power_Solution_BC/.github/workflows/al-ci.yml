@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  contents: write
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -66,5 +69,57 @@ jobs:
           authContext: ${{ secrets.BC_AUTHCONTEXT }}
           appFolders: '.'
           doNotRunTests: true
-          doNotPublishArtifacts: true
+          doNotPublishArtifacts: false
 
+      - name: Listar paquetes .app generados
+        if: env.BC_AUTHCONTEXT != ''
+        shell: pwsh
+        run: |
+          Get-ChildItem -Recurse -Filter *.app | ForEach-Object { Write-Host $_.FullName }
+
+      - name: Subir artefactos .app
+        if: env.BC_AUTHCONTEXT != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: al-apps
+          path: |
+            **/*.app
+            app.json
+
+  deploy:
+    needs: compile
+    runs-on: windows-2022
+    env:
+      BC_AUTHCONTEXT: ${{ secrets.BC_AUTHCONTEXT }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Omitir deploy si no hay secretos
+        if: env.BC_AUTHCONTEXT == ''
+        run: echo "Sin secreto BC_AUTHCONTEXT. Se omite deploy."
+
+      - name: Desplegar a Sandbox Pruebas_PS
+        if: env.BC_AUTHCONTEXT != ''
+        uses: microsoft/AL-Go-Actions/Deploy@main
+        with:
+          authContext: ${{ secrets.BC_AUTHCONTEXT }}
+          appFolders: '.'
+
+  version:
+    needs: compile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bump patch en app.json y commit [skip ci]
+        run: |
+          node -e "const fs=require('fs');const p='app.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));const v=j.version||'1.0.0.0';const parts=v.split('.').map(n=>parseInt(n||'0',10));parts[2]=parts[2]+1; j.version=`${parts[0]}.${parts[1]}.${parts[2]}.${parts[3]||0}`; fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n'); console.log('Nueva versión:', j.version);"
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add app.json
+          git commit -m "ci(version): bump app.json [skip ci]" || echo "Sin cambios que commitear"
+          git push || echo "Sin cambios que empujar"
