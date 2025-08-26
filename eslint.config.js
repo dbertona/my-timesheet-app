@@ -29,4 +29,13 @@ export default defineConfig([
       ],
     },
   },
+  {
+    files: ["**/__tests__/**/*.{js,jsx}", "**/*.test.{js,jsx}"],
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+        vi: "readonly",
+      },
+    },
+  },
 ]);
