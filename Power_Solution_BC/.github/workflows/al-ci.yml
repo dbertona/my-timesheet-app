@@ -1,0 +1,41 @@
+name: AL CI
+
+on:
+  push:
+    branches: [ main, develop, 'feature/**' ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validar app.json
+        run: |
+          if [ ! -f app.json ]; then
+            echo "Falta app.json en la raíz del repo"; exit 1; fi
+          node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync('app.json','utf8')); const req=['id','name','publisher','version']; const missing=req.filter(k=>!j[k]); if(missing.length){console.error('app.json faltan claves:',missing.join(',')); process.exit(1);} console.log('app.json OK');"
+
+      - name: Verificar archivos .al
+        run: |
+          set -e
+          cnt=$(ls -1 *.al 2>/dev/null | wc -l | tr -d ' ')
+          if [ "$cnt" = "0" ]; then
+            cnt=$(find . -name '*.al' | wc -l | tr -d ' ')
+          fi
+          if [ "$cnt" = "0" ]; then
+            echo "No se encontraron archivos .al"; exit 1; fi
+          echo "Encontrados $cnt archivos .al"
+
+      - name: Subir artefacto de fuentes AL
+        uses: actions/upload-artifact@v4
+        with:
+          name: al-sources
+          path: |
+            ./**/*.al
+            app.json
+            Translations/**
+
