@@ -9,7 +9,6 @@ pageextension 50918 "PS_JobPlanningLinesFilter" extends "Job Planning Lines Part
         modify("Line Type")
         {
             Editable = LineEditable;
-            OptionCaption = 'Budget, Billable';
         }
         modify("Type")
         {
