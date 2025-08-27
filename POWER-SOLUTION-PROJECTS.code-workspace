@@ -1,6 +1,6 @@
 {
   "folders": [
-    { "name": "my-timesheet-app", "path": "." },
+    { "name": "my-timesheet-app", "path": "my-timesheet-app" },
     { "name": "Power_Solution_BC", "path": "Power_Solution_BC" }
   ],
   "settings": {

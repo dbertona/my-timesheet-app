@@ -1,3 +1,4 @@
+// cspell:ignore msal useMsal
 import React, { useEffect, useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";

@@ -2,9 +2,9 @@ name: AL CI
 
 on:
   push:
-    branches: [ main, develop, 'feature/**' ]
+    branches: [main, develop, "feature/**"]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 permissions:
   contents: write
@@ -64,7 +64,7 @@ jobs:
         with:
           useDevEndpoint: true
           authContext: ${{ secrets.BC_AUTHCONTEXT }}
-          appFolders: 'Power_Solution_BC'
+          appFolders: "Power_Solution_BC"
           doNotRunTests: true
           doNotPublishArtifacts: false
 
@@ -101,7 +101,7 @@ jobs:
         uses: microsoft/AL-Go-Actions/Deploy@main
         with:
           authContext: ${{ secrets.BC_AUTHCONTEXT }}
-          appFolders: 'Power_Solution_BC'
+          appFolders: "Power_Solution_BC"
 
   version:
     needs: compile
