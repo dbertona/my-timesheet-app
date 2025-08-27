@@ -7,7 +7,7 @@ const chain = () => ({ select: () => chain(), eq: () => chain(), order: () => ch
 vi.mock('../supabaseClient', () => ({ supabaseClient: { from: () => chain() } }));
 vi.mock('@azure/msal-react', () => ({ useMsal: () => ({ instance: { getActiveAccount: () => ({ username: 'u@x.com' }) } , accounts: [] }) }));
 
-it('renderiza botón Guardar', () => {
+it('renderiza botón Guardar', async () => {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const routes = [{ path: '/', element: <TimesheetEdit /> }];
   const router = createMemoryRouter(routes, { initialEntries: ['/'] });
@@ -16,5 +16,6 @@ it('renderiza botón Guardar', () => {
       <RouterProvider router={router} />
     </QueryClientProvider>
   );
-  expect(screen.getByText(/Guardar/i)).toBeInTheDocument();
+  const boton = await screen.findByRole('button', { name: /Guardar/i });
+  expect(boton).toBeInTheDocument();
 });

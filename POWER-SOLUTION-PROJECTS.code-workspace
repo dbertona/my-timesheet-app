@@ -1,15 +1,13 @@
 {
-  "folders": [
-    { "name": "my-timesheet-app", "path": "my-timesheet-app" },
-    { "name": "Power_Solution_BC", "path": "Power_Solution_BC" }
-  ],
-  "settings": {
-    "files.exclude": {
-      "Power_Solution_BC/.vscode": true,
-      "Power_Solution_BC/.alpackages": true,
-      "Power_Solution_BC/.history": true,
-      "Power_Solution_BC/.snapshots": true,
-      "Power_Solution_BC/**/*.app": true
-    }
-  }
+	"folders": [
+		{
+			"path": "my-timesheet-app"
+		},
+		{
+			"path": "Power_Solution_BC"
+		}
+	],
+	"settings": {
+		"CodeGPT.apiKey": "Anthropic"
+	}
 }
