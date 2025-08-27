@@ -8,6 +8,10 @@
 		}
 	],
 	"settings": {
-		"CodeGPT.apiKey": "Anthropic"
+		"CodeGPT.apiKey": "Anthropic",
+		"files.associations": {
+			"**/.github/workflows/al-ci.yml": "plaintext",
+			"/Users/marcelodanielbertona/POWER-SOLUTION-PROJECTS/.github/workflows/al-ci.yml": "plaintext"
+		}
 	}
 }
