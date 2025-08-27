@@ -1,4 +1,4 @@
-table 50005 "UniqueJobPlanning"
+table 50005 "PS_UniqueJobPlanning_EnDesuso"
 {
     DataClassification = ToBeClassified;
 

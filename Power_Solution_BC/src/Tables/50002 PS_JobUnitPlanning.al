@@ -1,4 +1,4 @@
-table 50002 PS_JobUnitPlanning
+table 50002 "PS_JobUnitPlanning"
 {
     Caption = 'Job Unit Planning';
 

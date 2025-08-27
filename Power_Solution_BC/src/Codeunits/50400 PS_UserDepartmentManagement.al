@@ -2,7 +2,7 @@
 /// Codeunit UserDepartmentManagement (ID 50000).
 /// </summary>
 
-codeunit 50400 PS_UserDepartmentManagement
+codeunit 50400 "PS_UserDepartmentManagement"
 {
     var
         UserDepartment: Code[10];

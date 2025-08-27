@@ -1,4 +1,4 @@
-table 50004 PS_ObjectivesByDepartments
+table 50004 "PS_ObjectivesByDepartments"
 {
     Caption = 'PS_ObjectivesByDepartments';
     DataClassification = ToBeClassified;
@@ -9,27 +9,27 @@ table 50004 PS_ObjectivesByDepartments
         {
             Caption = 'Departments';
             TableRelation = "Dimension Value".Code where("Global Dimension No." = filter(1));
-                        DataClassification = SystemMetadata;
+            DataClassification = SystemMetadata;
         }
         field(2; PS_Year; Integer)
         {
             Caption = 'Year';
-                        DataClassification = SystemMetadata;
+            DataClassification = SystemMetadata;
         }
         field(3; "PS_Billing Target"; Decimal)
         {
             Caption = 'Billing Target';
-                        DataClassification = SystemMetadata;
+            DataClassification = SystemMetadata;
         }
         field(4; "PS_Margin Target"; Decimal)
         {
             Caption = 'Margin Target';
-                        DataClassification = SystemMetadata;
+            DataClassification = SystemMetadata;
         }
         field(5; "PS_Cost Target"; Decimal)
         {
             Caption = 'Cost Target';
-                        DataClassification = SystemMetadata;
+            DataClassification = SystemMetadata;
         }
     }
     keys

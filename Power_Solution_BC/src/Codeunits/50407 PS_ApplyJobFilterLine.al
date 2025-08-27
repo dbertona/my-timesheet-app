@@ -1,4 +1,4 @@
-codeunit 50407 "ApplyJobFilterLine"
+codeunit 50407 "PS_ApplyJobFilterLine"
 {
     procedure ApplyFilter(var RecRef: RecordRef; FieldId: Integer; SearchFieldId1: Integer; SearchFieldId2: Integer; JobTypeFilter: Enum "PS_JobTypeEnum"; var AdditionalRecRef: RecordRef; AdditionalFieldId: Integer; AdditionalSearchFieldId1: Integer; AdditionalSearchFieldId2: Integer)
     var
