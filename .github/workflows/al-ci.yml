@@ -86,7 +86,7 @@ jobs:
         with:
           useDevEndpoint: true
           authContext: ${{ secrets.BC_AUTHCONTEXT }}
-          appFolders: ["Power_Solution_BC"]
+          appFolders: '["Power_Solution_BC"]'
           doNotRunTests: true
           doNotPublishArtifacts: false
 
@@ -124,7 +124,7 @@ jobs:
         uses: microsoft/AL-Go-Actions/Deploy@main
         with:
           authContext: ${{ secrets.BC_AUTHCONTEXT }}
-          appFolders: ["Power_Solution_BC"]
+          appFolders: '["Power_Solution_BC"]'
 
   version:
     needs: compile
