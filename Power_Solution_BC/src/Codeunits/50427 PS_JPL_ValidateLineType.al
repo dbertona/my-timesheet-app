@@ -1,4 +1,4 @@
-codeunit 50404 "PS_JPL_ValidateLineType"
+codeunit 50427 "PS_JPL_ValidateLineType"
 {
     [EventSubscriber(ObjectType::Table, Database::"Job Planning Line", 'OnBeforeValidateEvent', 'Line Type', true, true)]
     local procedure EnforceAllowedLineType(var Rec: Record "Job Planning Line"; var xRec: Record "Job Planning Line"; CurrFieldNo: Integer)
