@@ -48,6 +48,76 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table PS API Insert TimeSheet - Field Work Type Code - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 651833179 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Project Task</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 651833179 - Field 3461834954 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Description</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Description - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 651833179 - Field 2649176925 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>End Date</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field End Date - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 651833179 - Field 1303377601 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Global Dimension 1 Code</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Global Dimension 1 Code - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 651833179 - Field 1337243520 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Global Dimension 2 Code</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Global Dimension 2 Code - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 651833179 - Field 1908272084 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Project No.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Job No. - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 651833179 - Field 561421623 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Project Task No.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Job Task No. - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 651833179 - Field 395609334 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Project Task Type</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Job Task Type - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 651833179 - Field 2890855359 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Budget (Total Cost)</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Schedule (Total Cost) - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 651833179 - Field 3812295981 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Budget (Total Price)</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Schedule (Total Price) - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 651833179 - Field 474480784 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Start Date</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Start Date - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 651833179 - Field 478049462 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Totaling</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Totaling - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 651833179 - Field 3854027455 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Actual (Total Cost)</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Usage (Total Cost) - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 651833179 - Field 330380333 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Actual (Total Price)</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Usage (Total Price) - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 400617665 - Field 541984264 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Project</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -903,76 +973,6 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table PS_JobUnitPlanning - Field PS_VersionName - Property Caption</note>
         </trans-unit>
-        <trans-unit id="Table 785167115 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Project Task</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 785167115 - Field 3461834954 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Description</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Description - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 785167115 - Field 2649176925 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>End Date</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field End Date - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 785167115 - Field 1303377601 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Global Dimension 1 Code</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Global Dimension 1 Code - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 785167115 - Field 1337243520 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Global Dimension 2 Code</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Global Dimension 2 Code - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 785167115 - Field 1908272084 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Project No.</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Job No. - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 785167115 - Field 561421623 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Project Task No.</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Job Task No. - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 785167115 - Field 395609334 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Project Task Type</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Job Task Type - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 785167115 - Field 2890855359 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Budget (Total Cost)</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Schedule (Total Cost) - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 785167115 - Field 3812295981 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Budget (Total Price)</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Schedule (Total Price) - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 785167115 - Field 474480784 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Start Date</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Start Date - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 785167115 - Field 478049462 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Totaling</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Totaling - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 785167115 - Field 3854027455 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Actual (Total Cost)</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Usage (Total Cost) - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 785167115 - Field 330380333 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Actual (Total Price)</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Usage (Total Price) - Property Caption</note>
-        </trans-unit>
         <trans-unit id="Table 2756680625 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>MonthClosing</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1403,41 +1403,6 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanningMatriz - Field Year - Property Caption</note>
         </trans-unit>
-        <trans-unit id="Table 3584043102 - Field 935069018 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>ARBVRNAnaliticConcept</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanning_EnDesuso - Field ARBVRNAnaliticConcept - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 3584043102 - Field 4231510117 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Cost</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanning_EnDesuso - Field Cost - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 3584043102 - Field 821689635 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Invoice</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanning_EnDesuso - Field Invoice - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 3584043102 - Field 1908272084 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Job No.</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanning_EnDesuso - Field Job No. - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 3584043102 - Field 3465500804 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Month</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanning_EnDesuso - Field Month - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 3584043102 - Field 4200184881 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>No.</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanning_EnDesuso - Field No. - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 3584043102 - Field 2832340769 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Year</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanning_EnDesuso - Field Year - Property Caption</note>
-        </trans-unit>
         <trans-unit id="Table 513856637 - Field 513856637 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Year</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1472,6 +1437,41 @@
           <source>Facturado</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Resultado - Field Facturado - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 731631883 - Field 935069018 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ARBVRNAnaliticConcept</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table UniqueJobPlanning - Field ARBVRNAnaliticConcept - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 731631883 - Field 4231510117 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Cost</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table UniqueJobPlanning - Field Cost - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 731631883 - Field 821689635 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Invoice</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table UniqueJobPlanning - Field Invoice - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 731631883 - Field 1908272084 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Job No.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table UniqueJobPlanning - Field Job No. - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 731631883 - Field 3465500804 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Month</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table UniqueJobPlanning - Field Month - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 731631883 - Field 4200184881 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>No.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table UniqueJobPlanning - Field No. - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 731631883 - Field 2832340769 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Year</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table UniqueJobPlanning - Field Year - Property Caption</note>
         </trans-unit>
         <trans-unit id="Codeunit 43115910 - NamedType 1622492122" size-unit="char" translate="yes" xml:space="preserve">
           <source>Budget Price,Usage Price,Billable Price,Invoiced Price,Budget Cost,Usage Cost,Billable Cost,Invoiced Cost,Budget Profit,Usage Profit,Contract Profit,Invoiced Profit</source>
