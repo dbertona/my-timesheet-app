@@ -1,0 +1,15 @@
+{
+  "folders": [
+    { "name": "my-timesheet-app", "path": "." },
+    { "name": "Power_Solution_BC", "path": "Power_Solution_BC" }
+  ],
+  "settings": {
+    "files.exclude": {
+      "Power_Solution_BC/.vscode": true,
+      "Power_Solution_BC/.alpackages": true,
+      "Power_Solution_BC/.history": true,
+      "Power_Solution_BC/.snapshots": true,
+      "Power_Solution_BC/**/*.app": true
+    }
+  }
+}
