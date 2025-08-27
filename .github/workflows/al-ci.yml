@@ -3,11 +3,33 @@ name: AL CI
 on:
   push:
     branches: [main, develop, "feature/**"]
+    paths:
+      - 'Power_Solution_BC/**'
+      - '.github/workflows/al-ci.yml'
   pull_request:
     branches: [main, develop]
+    paths:
+      - 'Power_Solution_BC/**'
+      - '.github/workflows/al-ci.yml'
+  workflow_dispatch:
+    inputs:
+      doDeploy:
+        description: 'Deploy to Sandbox?'
+        required: false
+        type: boolean
+        default: true
+      bumpVersion:
+        description: 'Bump app.json patch version?'
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: write
+
+concurrency:
+  group: al-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
@@ -55,36 +77,37 @@ jobs:
         shell: pwsh
 
       - name: Omitir compilación si no hay secretos
-        if: env.BC_AUTHCONTEXT == ''
+        if: ${{ env.BC_AUTHCONTEXT == '' }}
         run: echo "Sin secreto BC_AUTHCONTEXT configurado. Se omite compilación AL."
 
       - name: Compilar AL con AL-Go RunPipeline
-        if: env.BC_AUTHCONTEXT != ''
+        if: ${{ env.BC_AUTHCONTEXT != '' }}
         uses: microsoft/AL-Go-Actions/RunPipeline@main
         with:
           useDevEndpoint: true
           authContext: ${{ secrets.BC_AUTHCONTEXT }}
-          appFolders: "Power_Solution_BC"
+          appFolders: ["Power_Solution_BC"]
           doNotRunTests: true
           doNotPublishArtifacts: false
 
       - name: Listar paquetes .app generados
-        if: env.BC_AUTHCONTEXT != ''
+        if: ${{ env.BC_AUTHCONTEXT != '' }}
         shell: pwsh
         run: |
           Get-ChildItem -Recurse -Filter *.app | ForEach-Object { Write-Host $_.FullName }
 
       - name: Subir artefactos .app
-        if: env.BC_AUTHCONTEXT != ''
+        if: ${{ env.BC_AUTHCONTEXT != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: al-apps
           path: |
-            **/*.app
-            app.json
+            Power_Solution_BC/**/*.app
+            Power_Solution_BC/app.json
 
   deploy:
     needs: compile
+    if: github.ref == 'refs/heads/main' && github.event.inputs.doDeploy != 'false'
     runs-on: windows-2022
     env:
       BC_AUTHCONTEXT: ${{ secrets.BC_AUTHCONTEXT }}
@@ -93,18 +116,19 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Omitir deploy si no hay secretos
-        if: env.BC_AUTHCONTEXT == ''
+        if: ${{ env.BC_AUTHCONTEXT == '' }}
         run: echo "Sin secreto BC_AUTHCONTEXT. Se omite deploy."
 
       - name: Desplegar a Sandbox Pruebas_PS
-        if: env.BC_AUTHCONTEXT != ''
+        if: ${{ env.BC_AUTHCONTEXT != '' }}
         uses: microsoft/AL-Go-Actions/Deploy@main
         with:
           authContext: ${{ secrets.BC_AUTHCONTEXT }}
-          appFolders: "Power_Solution_BC"
+          appFolders: ["Power_Solution_BC"]
 
   version:
     needs: compile
+    if: github.ref == 'refs/heads/main' && github.event.inputs.bumpVersion != 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
