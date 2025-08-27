@@ -1,4 +1,4 @@
-table 50016 "PS_Job_Task"
+table 50016 "PS Job Task"
 {
     Caption = 'Project Task';
     DrillDownPageID = "Job Task Lines";

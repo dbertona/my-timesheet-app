@@ -48,76 +48,6 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table PS API Insert TimeSheet - Field Work Type Code - Property Caption</note>
         </trans-unit>
-        <trans-unit id="Table 651833179 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Project Task</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 651833179 - Field 3461834954 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Description</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Description - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 651833179 - Field 2649176925 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>End Date</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field End Date - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 651833179 - Field 1303377601 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Global Dimension 1 Code</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Global Dimension 1 Code - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 651833179 - Field 1337243520 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Global Dimension 2 Code</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Global Dimension 2 Code - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 651833179 - Field 1908272084 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Project No.</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Job No. - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 651833179 - Field 561421623 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Project Task No.</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Job Task No. - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 651833179 - Field 395609334 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Project Task Type</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Job Task Type - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 651833179 - Field 2890855359 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Budget (Total Cost)</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Schedule (Total Cost) - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 651833179 - Field 3812295981 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Budget (Total Price)</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Schedule (Total Price) - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 651833179 - Field 474480784 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Start Date</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Start Date - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 651833179 - Field 478049462 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Totaling</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Totaling - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 651833179 - Field 3854027455 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Actual (Total Cost)</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Usage (Total Cost) - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 651833179 - Field 330380333 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Actual (Total Price)</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table PS Job Task - Field Usage (Total Price) - Property Caption</note>
-        </trans-unit>
         <trans-unit id="Table 400617665 - Field 541984264 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Project</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -973,6 +903,76 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table PS_JobUnitPlanning - Field PS_VersionName - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 785167115 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Project Task</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 785167115 - Field 3461834954 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Description</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Description - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 785167115 - Field 2649176925 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>End Date</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field End Date - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 785167115 - Field 1303377601 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Global Dimension 1 Code</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Global Dimension 1 Code - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 785167115 - Field 1337243520 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Global Dimension 2 Code</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Global Dimension 2 Code - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 785167115 - Field 1908272084 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Project No.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Job No. - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 785167115 - Field 561421623 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Project Task No.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Job Task No. - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 785167115 - Field 395609334 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Project Task Type</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Job Task Type - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 785167115 - Field 2890855359 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Budget (Total Cost)</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Schedule (Total Cost) - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 785167115 - Field 3812295981 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Budget (Total Price)</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Schedule (Total Price) - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 785167115 - Field 474480784 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Start Date</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Start Date - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 785167115 - Field 478049462 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Totaling</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Totaling - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 785167115 - Field 3854027455 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Actual (Total Cost)</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Usage (Total Cost) - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 785167115 - Field 330380333 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Actual (Total Price)</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_Job_Task - Field Usage (Total Price) - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 2756680625 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>MonthClosing</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1403,6 +1403,41 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanningMatriz - Field Year - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 3584043102 - Field 935069018 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ARBVRNAnaliticConcept</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanning_EnDesuso - Field ARBVRNAnaliticConcept - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 3584043102 - Field 4231510117 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Cost</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanning_EnDesuso - Field Cost - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 3584043102 - Field 821689635 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Invoice</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanning_EnDesuso - Field Invoice - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 3584043102 - Field 1908272084 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Job No.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanning_EnDesuso - Field Job No. - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 3584043102 - Field 3465500804 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Month</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanning_EnDesuso - Field Month - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 3584043102 - Field 4200184881 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>No.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanning_EnDesuso - Field No. - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 3584043102 - Field 2832340769 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Year</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_UniqueJobPlanning_EnDesuso - Field Year - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 513856637 - Field 513856637 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Year</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1438,48 +1473,8 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Resultado - Field Facturado - Property Caption</note>
         </trans-unit>
-        <trans-unit id="Table 731631883 - Field 935069018 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>ARBVRNAnaliticConcept</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table UniqueJobPlanning - Field ARBVRNAnaliticConcept - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 731631883 - Field 4231510117 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Cost</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table UniqueJobPlanning - Field Cost - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 731631883 - Field 821689635 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Invoice</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table UniqueJobPlanning - Field Invoice - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 731631883 - Field 1908272084 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Job No.</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table UniqueJobPlanning - Field Job No. - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 731631883 - Field 3465500804 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Month</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table UniqueJobPlanning - Field Month - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 731631883 - Field 4200184881 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>No.</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table UniqueJobPlanning - Field No. - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 731631883 - Field 2832340769 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Year</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table UniqueJobPlanning - Field Year - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Codeunit 2922489317 - Method 2922489317 - NamedType 2779639592" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Procesando.......#1######################\</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Codeunit PonerRealenPlanificado - Method PonerRealenPlanificado - NamedType ProgressMsg</note>
-        </trans-unit>
         <trans-unit id="Codeunit 43115910 - NamedType 1622492122" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Budget Price,Usage Price,Billable Price,Invoiced Price,Budget Cost,Usage Cost,Billable Cost,Invoiced Cost,Budget Profit,Usage Profit,Billable Profit,Invoiced Profit</source>
+          <source>Budget Price,Usage Price,Billable Price,Invoiced Price,Budget Cost,Usage Cost,Billable Cost,Invoiced Cost,Budget Profit,Usage Profit,Contract Profit,Invoiced Profit</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Codeunit PS Calculate Statistics - NamedType HeadlineTxt</note>
         </trans-unit>
@@ -1493,15 +1488,15 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Codeunit PS_ImportarNominas - Method UploadAttachment - NamedType DialogTitle</note>
         </trans-unit>
+        <trans-unit id="Codeunit 1934587161 - Method 2922489317 - NamedType 2779639592" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Procesando.......#1######################\</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Codeunit PS_PonerRealenPlanificado - Method PonerRealenPlanificado - NamedType ProgressMsg</note>
+        </trans-unit>
         <trans-unit id="Codeunit 899323228 - Method 996602753 - NamedType 2779639592" size-unit="char" translate="yes" xml:space="preserve">
           <source>Procesando.......#1######################\</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Codeunit PS_ProcessAdjustment - Method ProcesarAjuste - NamedType ProgressMsg</note>
-        </trans-unit>
-        <trans-unit id="Codeunit 1191301372 - Method 1665861916 - NamedType 2779639592" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Procesando.......#1######################\</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Codeunit PS_RenumerarPlanificadas - Method OnRun - NamedType ProgressMsg</note>
         </trans-unit>
         <trans-unit id="Page 1118681002 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Bank conciliation</source>
@@ -1627,66 +1622,6 @@
           <source>Tipo de cta.</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Bank conciliation - Control Tipo de cta. - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3053043190 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Internal Procedure</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page Internal Procedure - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3053043190 - Action 345663435 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Rearmo PS_JobLedgerEntryMonthYear Tabla que tiene mes y año unificado entre Fecha trabajo, Fecha Iva y Fecha de registro</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page Internal Procedure - Action JobLedgerEntryMonthYear - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3053043190 - Action 2718779759 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Migrate Month and Year from PS_JobLedgerEntryMonthYear</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page Internal Procedure - Action MigrateMonthandYear - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3053043190 - Action 3299345438 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Populate Project Resource Hours</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page Internal Procedure - Action PopulateProjectResourceHours - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3053043190 - Action 2959474795 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Poner Real en Planificado Todos los meses cerrados</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page Internal Procedure - Action ProcessClosedMonthClosings - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3053043190 - Action 2282091409 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Limpiar líneas antiguas de histórico planificación</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page Internal Procedure - Action ProcessLimpiarLineasAntiguas - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3053043190 - Action 2478681555 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Unifico planificación y expediente</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page Internal Procedure - Action PS_CargarUnificacionPlanning - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3053043190 - Action 2006818532 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>CREAR MESES PARA EL AÑO 2023</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page Internal Procedure - Action PS_FillMonthClosing - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3053043190 - Action 2995543428 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Historial Plannig</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page Internal Procedure - Action PS_HistorialPlannig - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3053043190 - Action 1191301372 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Renumerar planificación</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page Internal Procedure - Action PS_RenumerarPlanificadas - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3053043190 - Action 2318855977 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Pongo real en histórico planificación enero 2025</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page Internal Procedure - Action PS_SyncJobPlanningLine - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3053043190 - Action 4080890795 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Recalcular Probabilidad</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page Internal Procedure - Action RecalcularProbabilidad - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 3827459282 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Payroll Adjustment</source>
@@ -2047,6 +1982,86 @@
           <source>Job</source>
           <note from="Developer" annotates="general" priority="2">Generated from the PromotedActionCategories property index 6.</note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Job List Planificacion - Action Category_Category7 - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>PS Internal Procedure</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 345663435 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Rearmo PS_JobLedgerEntryMonthYear Tabla que tiene mes y año unificado entre Fecha trabajo, Fecha Iva y Fecha de registro</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action JobLedgerEntryMonthYear - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 2718779759 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Migrate Month and Year from PS_JobLedgerEntryMonthYear</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action MigrateMonthandYear - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 3299345438 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Populate Project Resource Hours</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action PopulateProjectResourceHours - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 2959474795 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Poner Real en Planificado Todos los meses cerrados</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action ProcessClosedMonthClosings - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 2282091409 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Limpiar líneas antiguas de histórico planificación</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action ProcessLimpiarLineasAntiguas - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 29244614 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Calculate Statistics</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action PS_Calculate_Statistics - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 2478681555 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Unifico planificación y expediente</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action PS_CargarUnificacionPlanning - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 2006818532 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>CREAR MESES PARA EL AÑO 2023</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action PS_FillMonthClosing - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 2995543428 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Historial Plannig</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action PS_HistorialPlannig - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 1165330389 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Importar Nominas</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action PS_ImportarNominas - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 1218273592 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Monthly Closing Helper</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action PS_MonthlyClosingHelper - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 899323228 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Process Adjustment</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action PS_ProcessAdjustment - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 1191301372 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Renumerar planificación</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action PS_RenumerarPlanificadas - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 2318855977 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Pongo real en histórico planificación enero 2025</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action PS_SyncJobPlanningLine - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 135218027 - Action 4080890795 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Recalcular Probabilidad</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS Internal Procedure - Action RecalcularProbabilidad - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 1277495875 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>General project statistics</source>
@@ -5873,6 +5888,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page PS_Stadistycs - Control UsageCostLCYTotal - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 4114494469 - Control 149686053 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Job No. Texto</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS_TimeSheetLinesAPI - Control jobNoText - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Query 4093897907 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>PS_EquipoProyectos</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -5932,11 +5952,6 @@
           <source>Specifies the % probability for the project</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension PS_JobList - Control % probability - Property ToolTip</note>
-        </trans-unit>
-        <trans-unit id="PageExtension 634157229 - Change 158172202 - Property 62802879" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 684274076">
-          <source>Budget, Billable</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension PS_JobPlanningLinesFilter - Change Line Type - Property OptionCaption</note>
         </trans-unit>
         <trans-unit id="PageExtension 3927097940 - Control 4097048509 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 3377672696">
           <source>Due on payment day</source>
@@ -6053,11 +6068,6 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension PS_ResurceCard - Control Perfil - Property Caption</note>
         </trans-unit>
-        <trans-unit id="PageExtension 4085663529 - Change 1608775420 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 3689007477">
-          <source>Specifies the project Task No.</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension PS_Sales Invoice Subform - Change ARBVRNJobTaskNo - Property ToolTip</note>
-        </trans-unit>
         <trans-unit id="PageExtension 2455410094 - Control 1108580020 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 337631938">
           <source>Specifies whether filters are applied by project team.</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -6102,6 +6112,11 @@
           <source>Solo permitir Imputacion</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension PS_ARBVRNJobTeam - Field PS_SoloImputar - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2102760183 - Field 170318020 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 144041983">
+          <source>Job No. Texto</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension PS_Debug_TimesheetLines - Field PS_JobNo_Text - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 3766531743 - Field 1839572872 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2818324089">
           <source>% Probability</source>

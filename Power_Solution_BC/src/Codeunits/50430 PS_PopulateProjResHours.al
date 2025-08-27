@@ -1,4 +1,4 @@
-codeunit 50430 "PS_PopulateProjectResourceHours"
+codeunit 50430 "PS_PopulateProjResHours"
 {
     Subtype = Normal;
 

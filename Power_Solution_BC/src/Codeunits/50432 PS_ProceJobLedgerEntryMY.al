@@ -1,4 +1,4 @@
-codeunit 50432 "PS_ProceJobLedgerEntryMonthYear"
+codeunit 50432 "PS_ProceJobLedgerEntryMY"
 {
     var
         JobLedgerEntry: Record "Job Ledger Entry";

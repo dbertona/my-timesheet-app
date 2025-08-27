@@ -16,7 +16,7 @@ page 50151 "PS Internal Procedure"
                 Image = Process;
                 trigger OnAction()
                 begin
-                    Codeunit.Run(Codeunit::"PS_PopulateProjectResourceHours");
+                    Codeunit.Run(Codeunit::"PS_PopulateProjResHours");
                 end;
             }
             action(PS_HistorialPlannig)
@@ -46,7 +46,7 @@ page 50151 "PS Internal Procedure"
                 Image = Process;
                 trigger OnAction()
                 begin
-                    Codeunit.Run(Codeunit::"PS_ProceJobLedgerEntryMonthYear");
+                    Codeunit.Run(Codeunit::"PS_ProceJobLedgerEntryMY");
                 end;
             }
             action(PS_FillMonthClosing)

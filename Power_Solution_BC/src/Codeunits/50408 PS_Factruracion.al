@@ -1,4 +1,4 @@
-/* codeunit 50408 "DataProcessing"
+/* codeunit 50408 "PS_Factruracion"
 {
     procedure ProcessData()
     var
@@ -105,7 +105,6 @@
         QueryRec.SetFilter("Job", 'PSI-OT-24-2000');
         QueryRec.SetFilter("DocumenDay", '01/01/2024');
 
-
         QueryRec.Open;
         while QueryRec.Read do begin
             TempRec.Invoice := QueryRec.Invoice;
@@ -154,7 +153,7 @@
             TempRec.probability := QueryRec.probability;
             TempRec.departamento := QueryRec.departamento;
             TempRec.year := format(QueryRec.BudgetDateYear);
-            TempRec.month := format(QueryRec.BudgetDateMonth);
+            TempRec.month := format(QueryRec.Month);
             TempRec.job := QueryRec.Job;
             TempRec.lineType := '';
             TempRec.nr := 0;

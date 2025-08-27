@@ -19,12 +19,12 @@ codeunit 50438 "PS_CargarUnificacionPlanning"
             repeat
                 // Cargar cada línea de planificación en la tabla unificada
                 PS_JobPlanningUnified.Init();
-                PS_JobPlanningUnified."PS_LineNo." := JobPlanningLine."Line No.";
-                PS_JobPlanningUnified."PS_JobNo." := JobPlanningLine."Job No.";
+                PS_JobPlanningUnified."PS_LineNo" := JobPlanningLine."Line No.";
+                PS_JobPlanningUnified."PS_JobNo" := JobPlanningLine."Job No.";
                 PS_JobPlanningUnified."PS_PlanningDate" := JobPlanningLine."Planning Date";
-                PS_JobPlanningUnified."PS_DocumentNo." := JobPlanningLine."Document No.";
+                PS_JobPlanningUnified."PS_DocumentNo" := JobPlanningLine."Document No.";
                 PS_JobPlanningUnified.PS_Type := JobPlanningLine.Type;
-                PS_JobPlanningUnified."PS_No." := JobPlanningLine."No.";
+                PS_JobPlanningUnified."PS_No" := JobPlanningLine."No.";
                 PS_JobPlanningUnified.PS_Description := JobPlanningLine.Description;
                 PS_JobPlanningUnified.PS_Quantity := JobPlanningLine.Quantity;
                 PS_JobPlanningUnified."PS_DirectUnitCost(LCY)" := JobPlanningLine."Direct Unit Cost (LCY)";
