@@ -9,6 +9,16 @@ page 50151 "PS Internal Procedure"
     {
         area(Processing)
         {
+            action(PopulateProjectResourceHours)
+            {
+                Caption = 'Populate Project Resource Hours';
+                ApplicationArea = All;
+                Image = Process;
+                trigger OnAction()
+                begin
+                    Codeunit.Run(Codeunit::"PS_PopulateProjectResourceHours");
+                end;
+            }
             action(PS_HistorialPlannig)
             {
                 Caption = 'Historial Plannig';
@@ -19,6 +29,96 @@ page 50151 "PS Internal Procedure"
                     Codeunit.Run(Codeunit::"PS_HistorialPlannig");
                 end;
             }
+            action(MigrateMonthandYear)
+            {
+                Caption = 'Migrate Month and Year from PS_JobLedgerEntryMonthYear';
+                ApplicationArea = All;
+                Image = Process;
+                trigger OnAction()
+                begin
+                    Codeunit.Run(Codeunit::"PS_MigrateMonthandYear");
+                end;
+            }
+            action(JobLedgerEntryMonthYear)
+            {
+                Caption = 'Rearmo PS_JobLedgerEntryMonthYear Tabla que tiene mes y año unificado entre Fecha trabajo, Fecha Iva y Fecha de registro';
+                ApplicationArea = All;
+                Image = Process;
+                trigger OnAction()
+                begin
+                    Codeunit.Run(Codeunit::"PS_ProceJobLedgerEntryMonthYear");
+                end;
+            }
+            action(PS_FillMonthClosing)
+            {
+                Caption = 'CREAR MESES PARA EL AÑO 2023';
+                ApplicationArea = All;
+                Image = Process;
+                trigger OnAction()
+                begin
+                    Codeunit.Run(Codeunit::"PS_FillMonthClosing");
+                end;
+            }
+            action(ProcessClosedMonthClosings)
+            {
+                Caption = 'Poner Real en Planificado Todos los meses cerrados';
+                ApplicationArea = All;
+                Image = Process;
+                trigger OnAction()
+                begin
+                    Codeunit.Run(Codeunit::"PS_ProcessClosedMonthClosings");
+                end;
+            }
+            action(ProcessLimpiarLineasAntiguas)
+            {
+                Caption = 'Limpiar líneas antiguas de histórico planificación';
+                ApplicationArea = All;
+                Image = Process;
+                trigger OnAction()
+                begin
+                    Codeunit.Run(Codeunit::"PS_LimpiarPlanificacion");
+                end;
+            }
+            action(RecalcularProbabilidad)
+            {
+                Caption = 'Recalcular Probabilidad';
+                ApplicationArea = All;
+                Image = Calculate;
+                trigger OnAction()
+                begin
+                    Codeunit.Run(Codeunit::"PS_RecalcularProbabilidad");
+                end;
+            }
+            action(PS_SyncJobPlanningLine)
+            {
+                Caption = 'Pongo real en histórico planificación enero 2025';
+                ApplicationArea = All;
+                Image = Calculate;
+                trigger OnAction()
+                begin
+                    Codeunit.Run(Codeunit::"PS_SyncJobPlanningLine");
+                end;
+            }
+            action(PS_CargarUnificacionPlanning)
+            {
+                Caption = 'Unifico planificación y expediente';
+                ApplicationArea = All;
+                Image = Calculate;
+                trigger OnAction()
+                begin
+                    Codeunit.Run(Codeunit::"PS_CargarUnificacionPlanning");
+                end;
+            }
+            action(PS_RenumerarPlanificadas)
+            {
+                Caption = 'Renumerar planificación';
+                ApplicationArea = All;
+                Image = Calculate;
+                trigger OnAction()
+                begin
+                    Codeunit.Run(Codeunit::"PS_RenumerarPlanificadas");
+                end;
+            }
             action(PS_ProcessAdjustment)
             {
                 Caption = 'Process Adjustment';
@@ -27,26 +127,6 @@ page 50151 "PS Internal Procedure"
                 trigger OnAction()
                 begin
                     Codeunit.Run(Codeunit::"PS_ProcessAdjustment");
-                end;
-            }
-            action(PS_HistoricoPlanificacion)
-            {
-                Caption = 'Historico Planificacion';
-                ApplicationArea = All;
-                Image = Process;
-                trigger OnAction()
-                begin
-                    Codeunit.Run(Codeunit::"PS_Historico Planificacion");
-                end;
-            }
-            action(PS_UserDepartmentManagement)
-            {
-                Caption = 'User Department Management';
-                ApplicationArea = All;
-                Image = Process;
-                trigger OnAction()
-                begin
-                    Codeunit.Run(Codeunit::"PS_UserDepartmentManagement");
                 end;
             }
             action(PS_Calculate_Statistics)
@@ -77,26 +157,6 @@ page 50151 "PS Internal Procedure"
                 trigger OnAction()
                 begin
                     Codeunit.Run(Codeunit::"PS_MonthlyClosingHelper");
-                end;
-            }
-            action(PS_JobPlanningLineHandler)
-            {
-                Caption = 'Job Planning Line Handler';
-                ApplicationArea = All;
-                Image = Process;
-                trigger OnAction()
-                begin
-                    Codeunit.Run(Codeunit::"PS_JobPlanningLineHandler");
-                end;
-            }
-            action(PS_InsertTimeSheetLineAPI)
-            {
-                Caption = 'Insert TimeSheet Line API';
-                ApplicationArea = All;
-                Image = Process;
-                trigger OnAction()
-                begin
-                    Codeunit.Run(Codeunit::"PS_InsertTimeSheetLineAPI");
                 end;
             }
         }

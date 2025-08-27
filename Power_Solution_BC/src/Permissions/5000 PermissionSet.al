@@ -103,7 +103,7 @@ permissionset 50000 GeneratedPermission
         tabledata PS_ProjectTaskResourceHours = RIMD,
         table PS_ProjectTaskResourceHours = X,
         codeunit PS_ProceJobLedgerEntryMonthYear = X,
-        codeunit ProcessClosedMonthClosings = X,
+        codeunit PS_ProcessClosedMonthClosings = X,
         codeunit PS_FillMonthClosing = X,
         codeunit "PS_Historico Planificacion" = X,
         page PS_ProjectTaskResourceHours = X,
