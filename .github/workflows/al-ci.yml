@@ -2,16 +2,6 @@
 name: AL CI
 
 on:
-  push:
-    branches: [main, develop, "feature/**"]
-    paths:
-      - "Power_Solution_BC/**"
-      - ".github/workflows/al-ci.yml"
-  pull_request:
-    branches: [main, develop]
-    paths:
-      - "Power_Solution_BC/**"
-      - ".github/workflows/al-ci.yml"
   workflow_dispatch:
     inputs:
       doDeploy:

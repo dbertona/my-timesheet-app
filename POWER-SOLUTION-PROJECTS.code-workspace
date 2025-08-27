@@ -12,6 +12,10 @@
 		"files.associations": {
 			"**/.github/workflows/al-ci.yml": "plaintext",
 			"/Users/marcelodanielbertona/POWER-SOLUTION-PROJECTS/.github/workflows/al-ci.yml": "plaintext"
+		},
+		"github-actions.workflows.validate": false,
+		"problems.exclude": {
+			"**/.github/workflows/al-ci.yml": true
 		}
 	}
 }
