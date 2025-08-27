@@ -16,6 +16,9 @@
 		"github-actions.workflows.validate": false,
 		"problems.exclude": {
 			"**/.github/workflows/al-ci.yml": true
-		}
+		},
+		"window.restoreWindows": "all",
+		"workbench.startupEditor": "none",
+		"workbench.editor.restoreViewState": true
 	}
 }
