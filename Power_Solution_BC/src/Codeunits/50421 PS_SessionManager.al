@@ -1,4 +1,4 @@
-codeunit 50100 PS_SessionManager
+codeunit 50421 "PS_SessionManager"
 {
     SingleInstance = true;
 
