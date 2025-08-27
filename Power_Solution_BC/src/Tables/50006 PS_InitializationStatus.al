@@ -1,4 +1,4 @@
-table 50006 PS_InitializationStatus
+table 50006 "PS_InitializationStatus"
 {
     DataClassification = ToBeClassified;
 
