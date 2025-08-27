@@ -1,4 +1,4 @@
-codeunit 50404 InvoiceBalanceHelper
+codeunit 50428 "PS_InvoiceBalanceHelper"
 {
     procedure GetInvoiceBalance(EntryNo: Integer): Decimal
     var
