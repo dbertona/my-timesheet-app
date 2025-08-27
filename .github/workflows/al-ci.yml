@@ -75,12 +75,20 @@ jobs:
           echo "Branch: $env:GITHUB_REF"
         shell: pwsh
 
+      - name: Comprobar BC_AUTHCONTEXT
+        id: check_secret
+        shell: pwsh
+        env:
+          BC_AUTHCONTEXT: ${{ secrets.BC_AUTHCONTEXT }}
+        run: |
+          if (-not $env:BC_AUTHCONTEXT) { "has=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append } else { "has=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append }
+
       - name: Omitir compilación si no hay secretos
-        if: ${{ secrets.BC_AUTHCONTEXT == '' }}
+        if: ${{ steps.check_secret.outputs.has != 'true' }}
         run: echo "Sin secreto BC_AUTHCONTEXT configurado. Se omite compilación AL."
 
       - name: Compilar AL con AL-Go RunPipeline
-        if: ${{ secrets.BC_AUTHCONTEXT != '' }}
+        if: ${{ steps.check_secret.outputs.has == 'true' }}
         uses: microsoft/AL-Go-Actions/RunPipeline@main
         with:
           authContext: ${{ secrets.BC_AUTHCONTEXT }}
@@ -89,13 +97,13 @@ jobs:
           doNotPublishArtifacts: false
 
       - name: Listar paquetes .app generados
-        if: ${{ secrets.BC_AUTHCONTEXT != '' }}
+        if: ${{ steps.check_secret.outputs.has == 'true' }}
         shell: pwsh
         run: |
           Get-ChildItem -Recurse -Filter *.app | ForEach-Object { Write-Host $_.FullName }
 
       - name: Subir artefactos .app
-        if: ${{ secrets.BC_AUTHCONTEXT != '' }}
+        if: ${{ steps.check_secret.outputs.has == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: al-apps
@@ -111,12 +119,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Comprobar BC_AUTHCONTEXT
+        id: check_secret_deploy
+        shell: pwsh
+        env:
+          BC_AUTHCONTEXT: ${{ secrets.BC_AUTHCONTEXT }}
+        run: |
+          if (-not $env:BC_AUTHCONTEXT) { "has=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append } else { "has=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append }
+
       - name: Omitir deploy si no hay secretos
-        if: ${{ secrets.BC_AUTHCONTEXT == '' }}
+        if: ${{ steps.check_secret_deploy.outputs.has != 'true' }}
         run: echo "Sin secreto BC_AUTHCONTEXT. Se omite deploy."
 
       - name: Desplegar a Sandbox Pruebas_PS
-        if: ${{ secrets.BC_AUTHCONTEXT != '' }}
+        if: ${{ steps.check_secret_deploy.outputs.has == 'true' }}
         uses: microsoft/AL-Go-Actions/Deploy@main
         with:
           authContext: ${{ secrets.BC_AUTHCONTEXT }}
