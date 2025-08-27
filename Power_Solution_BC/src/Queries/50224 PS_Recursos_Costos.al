@@ -1,0 +1,33 @@
+/// <summary>
+/// Query PS_Proyectos (ID 50006).
+/// </summary>
+query 50224 PS_RecursosCostos
+{
+    APIGroup = 'PS_API';
+    APIPublisher = 'Power_Solution';
+    APIVersion = 'v2.0';
+    EntityName = 'RecursosCostos';
+    EntitySetName = 'RecursosCostos';
+    QueryType = API;
+
+    elements
+    {
+        dataitem(ResourceCost; "Resource Cost")
+        {
+            column(resource_no; Code)
+            {
+            }
+            column(work_type; "Work Type Code")
+            {
+            }
+            column(unit_cost; "Unit Cost")
+            {
+            }
+        }
+    }
+
+    trigger OnBeforeOpen()
+    begin
+
+    end;
+}
