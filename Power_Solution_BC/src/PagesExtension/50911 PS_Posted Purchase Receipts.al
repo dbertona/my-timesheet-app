@@ -9,7 +9,7 @@ pageextension 50911 "PS Posted Purchase Receipts" extends "Posted Purchase Recei
         JobRec: Record Job;
         LineTable: Record "Purch. Cr. Memo Line";
         grp: Integer;
-        ApplyJobFilterLine: Codeunit "ApplyJobFilterLine"; // Cambiar el nombre del codeunit
+        ApplyJobFilterLine: Codeunit "PS_ApplyJobFilterLine"; // Cambiar el nombre del codeunit
         RecRef: RecordRef;
         LineRecRef: RecordRef;
         FieldId: Integer;

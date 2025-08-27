@@ -9,7 +9,7 @@ pageextension 50905 PS_Posted_Sales_Credit_Memos extends "Posted Sales Credit Me
         JobRec: Record Job;
         SalesInvLine: Record "Sales Cr.Memo Line";
         grp: Integer;
-        ApplyJobFilterLine: Codeunit "ApplyJobFilterLine"; // Cambiar el nombre del codeunit
+        ApplyJobFilterLine: Codeunit "PS_ApplyJobFilterLine"; // Cambiar el nombre del codeunit
         RecRef: RecordRef;
         LineRecRef: RecordRef;
         FieldId: Integer;

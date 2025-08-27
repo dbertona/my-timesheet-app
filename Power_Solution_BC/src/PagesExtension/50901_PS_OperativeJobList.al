@@ -211,7 +211,7 @@ pageextension 50901 PS_OperativeJobList extends ARBVRNOperativeJobList
         UserDepartment: Code[10];
         JobRec: Record Job;
         grp: Integer;
-        ApplyJobFilter: Codeunit "ApplyJobFilter";
+        ApplyJobFilter: Codeunit "PS_ApplyJobFilter";
         RecRef: RecordRef;
         EmptyRecRef: RecordRef; // Referencia de registro vacía
         FieldId: Integer;

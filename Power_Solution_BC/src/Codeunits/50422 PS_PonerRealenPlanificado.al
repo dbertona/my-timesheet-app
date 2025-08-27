@@ -1,4 +1,4 @@
-codeunit 50422 "PonerRealenPlanificado"
+codeunit 50422 "PS_PonerRealenPlanificado"
 {
     procedure PonerRealenPlanificado(JobNo: Code[20]; Month: Integer; Year: Integer)
     var

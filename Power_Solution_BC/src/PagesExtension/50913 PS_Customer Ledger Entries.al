@@ -6,7 +6,7 @@ pageextension 50913 "PS Customer Ledger Entries" extends "Customer Ledger Entrie
         JobRec: Record Job;
         SalesInvLine: Record "Sales Invoice Line";
         grp: Integer;
-        ApplyJobFilterLine: Codeunit "ApplyJobFilterLine"; // Cambiar el nombre del codeunit
+        ApplyJobFilterLine: Codeunit "PS_ApplyJobFilterLine";
         RecRef: RecordRef;
         LineRecRef: RecordRef;
         FieldId: Integer;

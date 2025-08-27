@@ -5,7 +5,7 @@ pageextension 50914 "PS Dimension Value List" extends "Dimension Value List"
         UserDepartment: Code[10];
         JobRec: Record Job;
         grp: Integer;
-        ApplyJobFilter: Codeunit "ApplyJobFilter";
+        ApplyJobFilter: Codeunit "PS_ApplyJobFilter";
         RecRef: RecordRef;
         EmptyRecRef: RecordRef; // Referencia de registro vacía
         FieldId: Integer;

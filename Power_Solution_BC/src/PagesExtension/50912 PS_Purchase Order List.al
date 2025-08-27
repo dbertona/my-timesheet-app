@@ -9,7 +9,7 @@ pageextension 50912 "PS Purchase Order List" extends "Purchase Order List"
         JobRec: Record Job;
         LineTable: Record "Purchase Line";
         grp: Integer;
-        ApplyJobFilterLine: Codeunit "ApplyJobFilterLine"; // Cambiar el nombre del codeunit
+        ApplyJobFilterLine: Codeunit "PS_ApplyJobFilterLine"; // Cambiar el nombre del codeunit
         RecRef: RecordRef;
         LineRecRef: RecordRef;
         FieldId: Integer;

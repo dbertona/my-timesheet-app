@@ -9,7 +9,7 @@ pageextension 50906 PS_Posted_Purchase_Invoices extends "Posted Purchase Invoice
         JobRec: Record Job;
         LineTable: Record "Purch. Inv. Line";
         grp: Integer;
-        ApplyJobFilterLine: Codeunit "ApplyJobFilterLine"; // Cambiar el nombre del codeunit
+        ApplyJobFilterLine: Codeunit "PS_ApplyJobFilterLine"; // Cambiar el nombre del codeunit
         RecRef: RecordRef;
         LineRecRef: RecordRef;
         FieldId: Integer;

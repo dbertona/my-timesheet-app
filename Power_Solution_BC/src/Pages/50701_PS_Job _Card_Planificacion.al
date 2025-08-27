@@ -872,7 +872,7 @@ page 50701 "PS_Job _Card_Planificacion"
         JobRec: Record Job;
         SalesInvLine: Record "Sales Invoice Line"; // Referencia adicional para el ejemplo
         grp: Integer;
-        ApplyJobFilter: Codeunit "ApplyJobFilter";
+        ApplyJobFilter: Codeunit "PS_ApplyJobFilter";
         RecRef: RecordRef;
         EmptyRecRef: RecordRef; // Referencia de registro vacía
         FieldId: Integer;

@@ -9,32 +9,36 @@ pageextension 50907 PS_Sales_Invoice_List extends "Sales Invoice List"
         JobRec: Record Job;
         SalesInvLine: Record "Sales Invoice Line";
         grp: Integer;
-        ApplyJobFilter: Codeunit "ApplyJobFilterLine";
+        ApplyJobFilter: Codeunit "PS_ApplyJobFilter";
         RecRef: RecordRef;
         LineRecRef: RecordRef;
         FieldId: Integer;
         LineFieldId: Integer;
         JobTypeFilter: Enum "PS_JobTypeEnum";
+        SearchFieldRef1: Integer;
+        SearchFieldRef2: Integer;
+        AdditionalSearchFieldRef1: Integer;
+        AdditionalSearchFieldRef2: Integer;
 
     trigger OnOpenPage()
     begin
-
         grp := JobRec.FilterGroup;
         Rec.FilterGroup(10);
-        UserDepartment := DepartamentoFun.PS_GetUserDepartment();
-        if UserDepartment <> '' then
-            Rec.SetRange(Rec."Shortcut Dimension 1 Code", UserDepartment);
         JobRec.FilterGroup(grp);
-        RecRef.GetTable(Rec); // Obtener la tabla en RecRef
-        JobTypeFilter := JobTypeFilter::Todos;
+        RecRef.GetTable(Rec);
         LineRecRef.GetTable(SalesInvLine);
         FieldId := 3; // Campo en la cabecera
-        LineFieldId := 7180911; // ID del campo en la línea de la factura, cambiar por el campo correcto
+        LineFieldId := 3; // ID del campo en la línea de la factura, cambiar por el campo correcto
+        JobTypeFilter := JobTypeFilter::Todos;
+        SearchFieldRef1 := 7180911;
+        SearchFieldRef2 := 29;
+        AdditionalSearchFieldRef1 := 7180960;
+        AdditionalSearchFieldRef2 := 40;
 
+        // Llamar al procedimiento ApplyFilter del nuevo codeunit ApplyJobFilter
+        ApplyJobFilter.ApplyFilter(RecRef, FieldId, JobTypeFilter, LineRecRef, LineFieldId);
 
-        //ApplyJobFilter.ApplyFilter(RecRef, FieldId, JobTypeFilter, LineRecRef, LineFieldId);
-
-        jobrec.FilterGroup(grp);
+        JobRec.FilterGroup(grp);
         RecRef.SetTable(Rec);
     end;
 }

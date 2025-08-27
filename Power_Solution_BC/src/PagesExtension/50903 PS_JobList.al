@@ -24,7 +24,7 @@ pageextension 50903 PS_JobList extends "Job List"
         UserDepartment: Code[10];
         JobRec: Record Job;
         grp: Integer;
-        ApplyJobFilter: Codeunit "ApplyJobFilter";
+        ApplyJobFilter: Codeunit "PS_ApplyJobFilter";
         RecRef: RecordRef;
         EmptyRecRef: RecordRef; // Referencia de registro vacía
         FieldId: Integer;

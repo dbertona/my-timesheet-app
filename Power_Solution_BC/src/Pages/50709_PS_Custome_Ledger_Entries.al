@@ -933,7 +933,7 @@ page 50709 "PS_Custome_Ledger_Entries"
 
     trigger OnAfterGetRecord()
     var
-        InvoiceBalanceHelper: Codeunit "InvoiceBalanceHelper";
+        InvoiceBalanceHelper: Codeunit "PS_InvoiceBalanceHelper";
     begin
         StyleTxt := Rec.SetStyle();
         RunningBalanceLCY := InvoiceBalanceHelper.GetInvoiceBalance(Rec."Entry No.");

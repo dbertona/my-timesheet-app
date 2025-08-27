@@ -9,7 +9,7 @@ codeunit 50419 "PS_MonthlyClosingHelper"
         ConfirmClosure: Boolean;
         TotalCost: Decimal;
         TotalPrice: Decimal;
-        Helper: Codeunit "PonerRealenPlanificado";
+        Helper: Codeunit "PS_PonerRealenPlanificado";
 
         PS_Job: Record Job;
         LocalMonth: Integer;

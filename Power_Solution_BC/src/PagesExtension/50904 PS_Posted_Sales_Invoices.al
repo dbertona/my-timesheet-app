@@ -6,7 +6,7 @@ pageextension 50904 PS_Posted_Sales_Invoices extends "Posted Sales Invoices"
         JobRec: Record Job;
         SalesInvLine: Record "Sales Invoice Line";
         grp: Integer;
-        ApplyJobFilterLine: Codeunit "ApplyJobFilterLine"; // Cambiar el nombre del codeunit
+        ApplyJobFilterLine: Codeunit "PS_ApplyJobFilterLine";
         RecRef: RecordRef;
         LineRecRef: RecordRef;
         FieldId: Integer;
