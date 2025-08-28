@@ -80,8 +80,8 @@ page 50731 "PS_EconomicMonitoring"
             repeater("Project Data")
             {
                 ShowAsTree = true;
-                IndentationColumn = REC.HierarchyLevel;
-                TreeInitialState = CollapseAll;
+                IndentationColumn = Rec.HierarchyLevel;
+                TreeInitialState = ExpandAll;
                 field("HierarchyLevel"; Rec.HierarchyLevel)
                 {
                     ApplicationArea = All;
