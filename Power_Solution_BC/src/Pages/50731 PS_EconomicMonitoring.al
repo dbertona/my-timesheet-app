@@ -130,7 +130,6 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownJobNo := Rec."Job No.";
                         CurrentDrillDownConcept := Rec.Concept;
                         CurrentDrillDownType := Rec.Type;
-                        LastBCValue := Rec."JanImport";
 
                         // Abrir página de BC
                         JobPlanningLines(01, YearFilter);
@@ -153,7 +152,6 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownJobNo := Rec."Job No.";
                         CurrentDrillDownConcept := Rec.Concept;
                         CurrentDrillDownType := Rec.Type;
-                        LastBCValue := Rec."FebImport";
 
                         // Abrir página de BC
                         JobPlanningLines(02, YearFilter);
@@ -176,7 +174,6 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownJobNo := Rec."Job No.";
                         CurrentDrillDownConcept := Rec.Concept;
                         CurrentDrillDownType := Rec.Type;
-                        LastBCValue := Rec."MarImport";
 
                         // Abrir página de BC
                         JobPlanningLines(03, YearFilter);
@@ -199,7 +196,6 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownJobNo := Rec."Job No.";
                         CurrentDrillDownConcept := Rec.Concept;
                         CurrentDrillDownType := Rec.Type;
-                        LastBCValue := Rec."AprImport";
 
                         // Abrir página de BC
                         JobPlanningLines(04, YearFilter);
@@ -222,7 +218,6 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownJobNo := Rec."Job No.";
                         CurrentDrillDownConcept := Rec.Concept;
                         CurrentDrillDownType := Rec.Type;
-                        LastBCValue := Rec."MayImport";
 
                         // Abrir página de BC
                         JobPlanningLines(05, YearFilter);
@@ -245,7 +240,6 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownJobNo := Rec."Job No.";
                         CurrentDrillDownConcept := Rec.Concept;
                         CurrentDrillDownType := Rec.Type;
-                        LastBCValue := Rec."JunImport";
 
                         // Abrir página de BC
                         JobPlanningLines(06, YearFilter);
@@ -268,7 +262,6 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownJobNo := Rec."Job No.";
                         CurrentDrillDownConcept := Rec.Concept;
                         CurrentDrillDownType := Rec.Type;
-                        LastBCValue := Rec."JulImport";
 
                         // Abrir página de BC
                         JobPlanningLines(07, YearFilter);
@@ -291,7 +284,6 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownJobNo := Rec."Job No.";
                         CurrentDrillDownConcept := Rec.Concept;
                         CurrentDrillDownType := Rec.Type;
-                        LastBCValue := Rec."AugImport";
 
                         // Abrir página de BC
                         JobPlanningLines(08, YearFilter);
@@ -314,7 +306,6 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownJobNo := Rec."Job No.";
                         CurrentDrillDownConcept := Rec.Concept;
                         CurrentDrillDownType := Rec.Type;
-                        LastBCValue := Rec."SepImport";
 
                         // Abrir página de BC
                         JobPlanningLines(09, YearFilter);
@@ -337,7 +328,6 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownJobNo := Rec."Job No.";
                         CurrentDrillDownConcept := Rec.Concept;
                         CurrentDrillDownType := Rec.Type;
-                        LastBCValue := Rec."OctImport";
 
                         // Abrir página de BC
                         JobPlanningLines(10, YearFilter);
@@ -360,7 +350,6 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownJobNo := Rec."Job No.";
                         CurrentDrillDownConcept := Rec.Concept;
                         CurrentDrillDownType := Rec.Type;
-                        LastBCValue := Rec."NovImport";
 
                         // Abrir página de BC
                         JobPlanningLines(11, YearFilter);
@@ -383,7 +372,6 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownJobNo := Rec."Job No.";
                         CurrentDrillDownConcept := Rec.Concept;
                         CurrentDrillDownType := Rec.Type;
-                        LastBCValue := Rec."DecImport";
 
                         // Abrir página de BC
                         JobPlanningLines(12, YearFilter);
