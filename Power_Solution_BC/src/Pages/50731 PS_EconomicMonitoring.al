@@ -1551,94 +1551,60 @@ page 50731 "PS_EconomicMonitoring"
 
     local procedure SyncMonthValueAfterDrillDown(Month: Integer; JobNo: Code[20]; Concept: Option; Type: Option)
     var
-        JobPlanningLine: Record "Job Planning Line";
-        FirstDay: Date;
-        LastDay: Date;
-        BCValue: Decimal;
         savedView: Text;
-        CurrentValue: Decimal;
     begin
-        // Obtener valor actual de BC
-        GetMonthDateRange(Month, YearFilter, FirstDay, LastDay);
-        JobPlanningLine.SetRange("Job No.", JobNo);
-        JobPlanningLine.SetRange("Planning Date", FirstDay, LastDay);
-        JobPlanningLine.SetRange("Line Type", JobPlanningLine."Line Type"::Billable);
-
-        BCValue := 0;
-        if JobPlanningLine.FindSet() then begin
-            repeat
-                BCValue += JobPlanningLine."Line Amount (LCY)";
-            until JobPlanningLine.Next() = 0;
-        end;
-
-        // Obtener valor actual en la tabla temporal para comparar
+        // Recargar solo la línea específica desde la base de datos
+        // Esto es más eficiente que sincronizar solo un mes
         savedView := Rec.GetView();
         Rec.Reset();
         Rec.SetRange("Job No.", JobNo);
         Rec.SetRange(Concept, Concept);
         Rec.SetRange(Type, Type);
         Rec.SetRange(Year, YearFilter);
+        
         if Rec.FindFirst() then begin
-            case Month of
-                1:
-                    CurrentValue := Rec."JanImport";
-                2:
-                    CurrentValue := Rec."FebImport";
-                3:
-                    CurrentValue := Rec."MarImport";
-                4:
-                    CurrentValue := Rec."AprImport";
-                5:
-                    CurrentValue := Rec."MayImport";
-                6:
-                    CurrentValue := Rec."JunImport";
-                7:
-                    CurrentValue := Rec."JulImport";
-                8:
-                    CurrentValue := Rec."AugImport";
-                9:
-                    CurrentValue := Rec."SepImport";
-                10:
-                    CurrentValue := Rec."OctImport";
-                11:
-                    CurrentValue := Rec."NovImport";
-                12:
-                    CurrentValue := Rec."DecImport";
-            end;
-
-            // Sincronizar tabla temporal si hay cambios
-            if BCValue <> CurrentValue then begin
-                case Month of
-                    1:
-                        Rec."JanImport" := BCValue;
-                    2:
-                        Rec."FebImport" := BCValue;
-                    3:
-                        Rec."MarImport" := BCValue;
-                    4:
-                        Rec."AprImport" := BCValue;
-                    5:
-                        Rec."MayImport" := BCValue;
-                    6:
-                        Rec."JunImport" := BCValue;
-                    7:
-                        Rec."JulImport" := BCValue;
-                    8:
-                        Rec."AugImport" := BCValue;
-                    9:
-                        Rec."SepImport" := BCValue;
-                    10:
-                        Rec."OctImport" := BCValue;
-                    11:
-                        Rec."NovImport" := BCValue;
-                    12:
-                        Rec."DecImport" := BCValue;
-                end;
-                Rec.Modify(false);
-            end;
+            // Recargar todos los meses para esta línea específica
+            Rec."JanImport" := GetMonthValueFromBC(01, JobNo);
+            Rec."FebImport" := GetMonthValueFromBC(02, JobNo);
+            Rec."MarImport" := GetMonthValueFromBC(03, JobNo);
+            Rec."AprImport" := GetMonthValueFromBC(04, JobNo);
+            Rec."MayImport" := GetMonthValueFromBC(05, JobNo);
+            Rec."JunImport" := GetMonthValueFromBC(06, JobNo);
+            Rec."JulImport" := GetMonthValueFromBC(07, JobNo);
+            Rec."AugImport" := GetMonthValueFromBC(08, JobNo);
+            Rec."SepImport" := GetMonthValueFromBC(09, JobNo);
+            Rec."OctImport" := GetMonthValueFromBC(10, JobNo);
+            Rec."NovImport" := GetMonthValueFromBC(11, JobNo);
+            Rec."DecImport" := GetMonthValueFromBC(12, JobNo);
+            
+            Rec.Modify(false);
         end;
+        
         Rec.SetView(savedView);
         CurrPage.Update(false);
+    end;
+
+    local procedure GetMonthValueFromBC(Month: Integer; JobNo: Code[20]): Decimal
+    var
+        JobPlanningLine: Record "Job Planning Line";
+        FirstDay: Date;
+        LastDay: Date;
+        MonthValue: Decimal;
+    begin
+        // Obtener valor de BC para un mes específico
+        GetMonthDateRange(Month, YearFilter, FirstDay, LastDay);
+        JobPlanningLine.SetRange("Job No.", JobNo);
+        JobPlanningLine.SetRange("Planning Date", FirstDay, LastDay);
+        JobPlanningLine.SetRange("Line Type", JobPlanningLine."Line Type"::Billable);
+
+        MonthValue := 0;
+        if JobPlanningLine.FindSet() then begin
+            repeat
+                MonthValue += JobPlanningLine."Line Amount (LCY)";
+            until JobPlanningLine.Next() = 0;
+        end;
+        
+        exit(MonthValue);
     end;
 }
 
