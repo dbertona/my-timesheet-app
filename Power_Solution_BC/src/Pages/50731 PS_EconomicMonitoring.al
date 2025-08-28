@@ -102,10 +102,10 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownMonth := 01;
                         CurrentDrillDownJobNo := Rec."Job No.";
                         LastBCValue := Rec."JanImport";
-                        
+
                         // Abrir página de BC
                         JobPlanningLines(01, YearFilter);
-                        
+
                         // Sincronizar al regresar
                         SyncMonthValueAfterDrillDown(01, Rec."Job No.");
                     end;
@@ -1444,6 +1444,57 @@ page 50731 "PS_EconomicMonitoring"
     local procedure GetProjectInfo(): Text
     begin
         exit(Rec."Job No." + ' - ' + Rec.Description);
+    end;
+
+    local procedure SyncMonthValueAfterDrillDown(Month: Integer; JobNo: Code[20])
+    var
+        JobPlanningLine: Record "Job Planning Line";
+        FirstDay: Date;
+        LastDay: Date;
+        BCValue: Decimal;
+        savedView: Text;
+    begin
+        // Obtener valor actual de BC
+        GetMonthDateRange(Month, YearFilter, FirstDay, LastDay);
+        JobPlanningLine.SetRange("Job No.", JobNo);
+        JobPlanningLine.SetRange("Planning Date", FirstDay, LastDay);
+        JobPlanningLine.SetRange("Line Type", JobPlanningLine."Line Type"::Billable);
+        
+        BCValue := 0;
+        if JobPlanningLine.FindSet() then begin
+            repeat
+                BCValue += JobPlanningLine."Line Amount (LCY)";
+            until JobPlanningLine.Next() = 0;
+        end;
+        
+        // Sincronizar tabla temporal si hay cambios
+        if BCValue <> LastBCValue then begin
+            savedView := Rec.GetView();
+            Rec.Reset();
+            Rec.SetRange("Job No.", JobNo);
+            Rec.SetRange(Year, YearFilter);
+            if Rec.FindSet() then begin
+                repeat
+                    case Month of
+                        1: Rec."JanImport" := BCValue;
+                        2: Rec."FebImport" := BCValue;
+                        3: Rec."MarImport" := BCValue;
+                        4: Rec."AprImport" := BCValue;
+                        5: Rec."MayImport" := BCValue;
+                        6: Rec."JunImport" := BCValue;
+                        7: Rec."JulImport" := BCValue;
+                        8: Rec."AugImport" := BCValue;
+                        9: Rec."SepImport" := BCValue;
+                        10: Rec."OctImport" := BCValue;
+                        11: Rec."NovImport" := BCValue;
+                        12: Rec."DecImport" := BCValue;
+                    end;
+                    Rec.Modify(false);
+                until Rec.Next() = 0;
+            end;
+            Rec.SetView(savedView);
+            CurrPage.Update(false);
+        end;
     end;
 }
 
