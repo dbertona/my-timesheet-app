@@ -338,6 +338,24 @@ page 50731 "PS_EconomicMonitoring"
             }
         }
     }
+    actions
+    {
+        area(Processing)
+        {
+            action(UpdateClosedMonths)
+            {
+                ApplicationArea = All;
+                Caption = 'Actualizar cierres';
+                Image = Refresh;
+
+                trigger OnAction()
+                begin
+                    SetClosedMonthsInMatrix();
+                    CurrPage.Update(false);
+                end;
+            }
+        }
+    }
 
     var
         YearFilter: Integer;
@@ -1342,11 +1360,15 @@ page 50731 "PS_EconomicMonitoring"
                                 Rec.IsDecClosed := true;
                         end;
                         Rec.Modify(false);
-                        UpdateRowStyles();
-                        CurrPage.Update(false);
+                        if Rec.Get(Rec.Concept, Rec.Type, Rec."Job No.", Rec.Year) then begin
+                            UpdateRowStyles();
+                            CurrPage.UPDATE(false);
+                        end;
                         Rec.Modify(false);
-                        UpdateRowStyles();
-                        CurrPage.Update(false);
+                        if Rec.Get(Rec.Concept, Rec.Type, Rec."Job No.", Rec.Year) then begin
+                            UpdateRowStyles();
+                            CurrPage.UPDATE(false);
+                        end;
                     until Rec.Next() = 0;
                 end;
                 Rec.SetView(savedView);
