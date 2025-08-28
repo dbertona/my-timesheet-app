@@ -8,7 +8,7 @@ page 50731 "PS_EconomicMonitoring"
     Editable = true;
     UsageCategory = Lists;
     SourceTable = "PS_EconomicMonitoringMatrix";
-    SourceTableView = SORTING("Probability", "Job No.", Concept, Type) ORDER(DESCENDING);
+    SourceTableView = SORTING("Job No.", "Year", "HierarchyLevel", Concept, Type, Description);
     SourceTableTemporary = true;
 
     layout

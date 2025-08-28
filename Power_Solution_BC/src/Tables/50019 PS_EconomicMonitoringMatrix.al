@@ -244,6 +244,9 @@ table 50019 "PS_EconomicMonitoringMatrix"
         {
             Clustered = true;
         }
+        key(TreeOrder; "Job No.", "Year", "HierarchyLevel", Concept, Type, Description)
+        {
+        }
         key(PK1; Probability, "Job No.", Description, Concept, Type, Year)
         {
         }
