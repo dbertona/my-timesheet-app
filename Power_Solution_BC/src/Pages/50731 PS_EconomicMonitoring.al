@@ -1561,30 +1561,30 @@ page 50731 "PS_EconomicMonitoring"
         Rec.SetRange(Concept, Concept);
         Rec.SetRange(Type, Type);
         Rec.SetRange(Year, YearFilter);
-        
+
         if Rec.FindFirst() then begin
             // Recargar todos los meses para esta línea específica
-            Rec."JanImport" := GetMonthValueFromBC(01, JobNo);
-            Rec."FebImport" := GetMonthValueFromBC(02, JobNo);
-            Rec."MarImport" := GetMonthValueFromBC(03, JobNo);
-            Rec."AprImport" := GetMonthValueFromBC(04, JobNo);
-            Rec."MayImport" := GetMonthValueFromBC(05, JobNo);
-            Rec."JunImport" := GetMonthValueFromBC(06, JobNo);
-            Rec."JulImport" := GetMonthValueFromBC(07, JobNo);
-            Rec."AugImport" := GetMonthValueFromBC(08, JobNo);
-            Rec."SepImport" := GetMonthValueFromBC(09, JobNo);
-            Rec."OctImport" := GetMonthValueFromBC(10, JobNo);
-            Rec."NovImport" := GetMonthValueFromBC(11, JobNo);
-            Rec."DecImport" := GetMonthValueFromBC(12, JobNo);
-            
+            Rec."JanImport" := GetMonthValueFromBC(01, JobNo, Concept, Type);
+            Rec."FebImport" := GetMonthValueFromBC(02, JobNo, Concept, Type);
+            Rec."MarImport" := GetMonthValueFromBC(03, JobNo, Concept, Type);
+            Rec."AprImport" := GetMonthValueFromBC(04, JobNo, Concept, Type);
+            Rec."MayImport" := GetMonthValueFromBC(05, JobNo, Concept, Type);
+            Rec."JunImport" := GetMonthValueFromBC(06, JobNo, Concept, Type);
+            Rec."JulImport" := GetMonthValueFromBC(07, JobNo, Concept, Type);
+            Rec."AugImport" := GetMonthValueFromBC(08, JobNo, Concept, Type);
+            Rec."SepImport" := GetMonthValueFromBC(09, JobNo, Concept, Type);
+            Rec."OctImport" := GetMonthValueFromBC(10, JobNo, Concept, Type);
+            Rec."NovImport" := GetMonthValueFromBC(11, JobNo, Concept, Type);
+            Rec."DecImport" := GetMonthValueFromBC(12, JobNo, Concept, Type);
+
             Rec.Modify(false);
         end;
-        
+
         Rec.SetView(savedView);
         CurrPage.Update(false);
     end;
 
-    local procedure GetMonthValueFromBC(Month: Integer; JobNo: Code[20]): Decimal
+    local procedure GetMonthValueFromBC(Month: Integer; JobNo: Code[20]; Concept: Option; Type: Option): Decimal
     var
         JobPlanningLine: Record "Job Planning Line";
         FirstDay: Date;
@@ -1595,7 +1595,23 @@ page 50731 "PS_EconomicMonitoring"
         GetMonthDateRange(Month, YearFilter, FirstDay, LastDay);
         JobPlanningLine.SetRange("Job No.", JobNo);
         JobPlanningLine.SetRange("Planning Date", FirstDay, LastDay);
-        JobPlanningLine.SetRange("Line Type", JobPlanningLine."Line Type"::Billable);
+        
+        // Filtrar por tipo de línea según el concepto y tipo
+        case Concept of
+            Rec.Concept::Labour:
+                // Para mano de obra (Labour), considerar Budget y Billable
+                JobPlanningLine.SetFilter("Line Type", '%1|%2', 
+                    JobPlanningLine."Line Type"::Budget, 
+                    JobPlanningLine."Line Type"::Billable);
+            Rec.Concept::Cost:
+                // Para costos (Cost), considerar Budget y Billable
+                JobPlanningLine.SetFilter("Line Type", '%1|%2', 
+                    JobPlanningLine."Line Type"::Budget, 
+                    JobPlanningLine."Line Type"::Billable);
+            else
+                // Para otros conceptos (Invoice, A), considerar Billable por defecto
+                JobPlanningLine.SetRange("Line Type", JobPlanningLine."Line Type"::Billable);
+        end;
 
         MonthValue := 0;
         if JobPlanningLine.FindSet() then begin
@@ -1603,7 +1619,7 @@ page 50731 "PS_EconomicMonitoring"
                 MonthValue += JobPlanningLine."Line Amount (LCY)";
             until JobPlanningLine.Next() = 0;
         end;
-        
+
         exit(MonthValue);
     end;
 }
