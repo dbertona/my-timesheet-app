@@ -1641,24 +1641,28 @@ page 50731 "PS_EconomicMonitoring"
             Rec.Concept::Labour:
                 // Para mano de obra (Labour)
                 if Type = Rec.Type::P then begin
-                    // Si es planificado (P), solo considerar Budget
+                    // Si es planificado (P), solo considerar Budget + Resource
                     JobPlanningLine.SetRange("Line Type", JobPlanningLine."Line Type"::Budget);
+                    JobPlanningLine.SetRange(Type, JobPlanningLine.Type::Resource);
                 end else begin
-                    // Si es real (R), considerar Budget y Billable
+                    // Si es real (R), considerar Budget + Resource
                     JobPlanningLine.SetFilter("Line Type", '%1|%2',
                         JobPlanningLine."Line Type"::Budget,
                         JobPlanningLine."Line Type"::Billable);
+                    JobPlanningLine.SetRange(Type, JobPlanningLine.Type::Resource);
                 end;
             Rec.Concept::Cost:
                 // Para costos (Cost)
                 if Type = Rec.Type::P then begin
-                    // Si es planificado (P), solo considerar Budget
+                    // Si es planificado (P), solo considerar Budget + NO Resource
                     JobPlanningLine.SetRange("Line Type", JobPlanningLine."Line Type"::Budget);
+                    JobPlanningLine.SetFilter(Type, '<>%1', JobPlanningLine.Type::Resource);
                 end else begin
-                    // Si es real (R), considerar Budget y Billable
+                    // Si es real (R), considerar Budget + NO Resource
                     JobPlanningLine.SetFilter("Line Type", '%1|%2',
                         JobPlanningLine."Line Type"::Budget,
                         JobPlanningLine."Line Type"::Billable);
+                    JobPlanningLine.SetFilter(Type, '<>%1', JobPlanningLine.Type::Resource);
                 end;
             else
                 // Para otros conceptos (Invoice, A), considerar Billable por defecto
@@ -1687,7 +1691,7 @@ page 50731 "PS_EconomicMonitoring"
 
                 LineCount += 1;
 
-                // Debug detallado de cada línea encontrada
+            // Debug detallado de cada línea encontrada
 
             until JobPlanningLine.Next() = 0;
         end;
