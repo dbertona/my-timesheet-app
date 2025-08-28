@@ -408,6 +408,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table PS_EconomicMonitoringMatrix - Field IsOctClosed - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 1660684376 - Field 3652561658 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Recently Closed</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_EconomicMonitoringMatrix - Field IsRecentlyClosed - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 1660684376 - Field 3337629978 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>September Closed</source>
           <note from="Developer" annotates="general" priority="2"></note>
