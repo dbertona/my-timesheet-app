@@ -247,6 +247,11 @@ table 50019 "PS_EconomicMonitoringMatrix"
             Caption = 'Sort Type';
             Editable = false;
         }
+        field(48; IsRecentlyClosed; Boolean)
+        {
+            Caption = 'Recently Closed';
+            Editable = false;
+        }
     }
     keys
     {

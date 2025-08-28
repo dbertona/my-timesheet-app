@@ -3888,15 +3888,10 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Action Update - Property Caption</note>
         </trans-unit>
-        <trans-unit id="Page 3769604473 - Action 3383493608 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Process</source>
-          <note from="Developer" annotates="general" priority="2">Generated from the PromotedActionCategories property index 1.</note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Action Category_Process - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3769604473 - Action 3162358218 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Post/Print</source>
-          <note from="Developer" annotates="general" priority="2">Generated from the PromotedActionCategories property index 8.</note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Action Category_Category9 - Property Caption</note>
+        <trans-unit id="Page 3769604473 - Action 1385561196 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Actualizar cierres</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Action UpdateClosedMonths - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 1126184009 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Job Ledger Entry Payroll Costs</source>

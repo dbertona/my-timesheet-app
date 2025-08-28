@@ -94,7 +94,7 @@ page 50731 "PS_EconomicMonitoring"
                     ApplicationArea = All;
                     Caption = 'Project & Description';
                     Editable = false;
-                    StyleExpr = BoldStyle;
+                    StyleExpr = ProjectStyleExpr;
 
                     trigger OnDrillDown()
                     var
@@ -314,34 +314,12 @@ page 50731 "PS_EconomicMonitoring"
                     TempSelectedRecords.TransferFields(PS_MonthClosing);
                     TempSelectedRecords.Insert();
                     MonthlyClosingHelper.CerrarProyectosMes(TempSelectedRecords);
+                    // Actualizar flags de cierre en la tabla temporal para este proyecto
+                    UpdateClosedMonthsForJob(Rec."Job No.");
+                    MarkProjectRecentlyClosed(Rec."Job No.");
+                    CurrPage.Update(false);
                 end;
             }
-        }
-        area(Promoted)
-        {
-            group(Category_Process)
-            {
-                Caption = 'Process', Comment = 'Generated from the PromotedActionCategories property index 1.';
-
-                group(Category_Category9)
-                {
-                    Caption = 'Post/Print', Comment = 'Generated from the PromotedActionCategories property index 8.';
-                    ShowAs = SplitButton;
-
-                    actionref(Post_Promoted; Update)
-                    {
-                    }
-                    actionref(Preview_Promoted; Close)
-                    {
-                    }
-                }
-            }
-        }
-    }
-    actions
-    {
-        area(Processing)
-        {
             action(UpdateClosedMonths)
             {
                 ApplicationArea = All;
@@ -367,6 +345,7 @@ page 50731 "PS_EconomicMonitoring"
         RecordCount: Integer;
         ProgressMsg: Label 'Procesando.......#1######################\';
         BoldStyle: Text[20];
+        ProjectStyleExpr: Text[20];
         Progress: Dialog;
         Visible1: Boolean;
         Visible2: Boolean;
@@ -418,6 +397,77 @@ page 50731 "PS_EconomicMonitoring"
         SetClosedMonthsInMatrix();
         Progress.CLOSE();
         CurrPage.Update(false);
+    end;
+
+    local procedure UpdateClosedMonthsForJob(JobNo: Code[20])
+    var
+        MonthClosing: Record "PS_MonthClosing";
+        LocalMonth: Integer;
+        savedView: Text;
+    begin
+        MonthClosing.Reset();
+        MonthClosing.SetRange(PS_JobNo, JobNo);
+        MonthClosing.SetRange("PS_Year", Format(YearFilter));
+        MonthClosing.SetRange("PS_Status", MonthClosing."PS_Status"::Close);
+        if MonthClosing.FindSet() then begin
+            repeat
+                Evaluate(LocalMonth, MonthClosing."PS_Month");
+
+                savedView := Rec.GetView();
+                Rec.Reset();
+                Rec.SetRange("Job No.", JobNo);
+                Rec.SetRange(Year, YearFilter);
+                if Rec.FindSet() then begin
+                    repeat
+                        case LocalMonth of
+                            1:
+                                Rec.IsJanClosed := true;
+                            2:
+                                Rec.IsFebClosed := true;
+                            3:
+                                Rec.IsMarClosed := true;
+                            4:
+                                Rec.IsAprClosed := true;
+                            5:
+                                Rec.IsMayClosed := true;
+                            6:
+                                Rec.IsJunClosed := true;
+                            7:
+                                Rec.IsJulClosed := true;
+                            8:
+                                Rec.IsAugClosed := true;
+                            9:
+                                Rec.IsSepClosed := true;
+                            10:
+                                Rec.IsOctClosed := true;
+                            11:
+                                Rec.IsNovClosed := true;
+                            12:
+                                Rec.IsDecClosed := true;
+                        end;
+                        Rec.Modify(false);
+                    until Rec.Next() = 0;
+                end;
+                Rec.SetView(savedView);
+            until MonthClosing.Next() = 0;
+        end;
+    end;
+
+    local procedure MarkProjectRecentlyClosed(JobNo: Code[20])
+    var
+        savedView: Text;
+    begin
+        savedView := Rec.GetView();
+        Rec.Reset();
+        Rec.SetRange("Job No.", JobNo);
+        Rec.SetRange(Year, YearFilter);
+        if Rec.FindSet() then begin
+            repeat
+                Rec.IsRecentlyClosed := true;
+                Rec.Modify(false);
+            until Rec.Next() = 0;
+        end;
+        Rec.SetView(savedView);
     end;
 
     procedure PopulateMatrixExpediente();
@@ -1094,6 +1144,11 @@ page 50731 "PS_EconomicMonitoring"
             BoldStyle := 'StrongAccent'
         else
             BoldStyle := 'Standard';
+
+        if Rec.IsRecentlyClosed then
+            ProjectStyleExpr := 'Favorable'
+        else
+            ProjectStyleExpr := BoldStyle;
 
         Clear(Rec.JanStyleExpr);
         Clear(Rec.FebStyleExpr);
