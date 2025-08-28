@@ -1307,9 +1307,9 @@ page 50731 "PS_EconomicMonitoring"
             case Concept of
                 Matrix.Concept::A:
                     Matrix.SortConcept := 0;
-                Matrix.Concept::Invoice:
-                    Matrix.SortConcept := 1;
                 Matrix.Concept::Cost:
+                    Matrix.SortConcept := 1;
+                Matrix.Concept::Invoice:
                     Matrix.SortConcept := 2;
                 Matrix.Concept::Labour:
                     Matrix.SortConcept := 3;
