@@ -1308,11 +1308,11 @@ page 50731 "PS_EconomicMonitoring"
                 Matrix.Concept::A:
                     Matrix.SortConcept := 0;
                 Matrix.Concept::Cost:
-                    Matrix.SortConcept := 1;
-                Matrix.Concept::Invoice:
                     Matrix.SortConcept := 2;
-                Matrix.Concept::Labour:
+                Matrix.Concept::Invoice:
                     Matrix.SortConcept := 3;
+                Matrix.Concept::Labour:
+                    Matrix.SortConcept := 1;
             end;
             case EntryType of
                 Matrix.Type::A:
