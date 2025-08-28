@@ -1706,7 +1706,7 @@ page 50731 "PS_EconomicMonitoring"
 
                 // Debug detallado de cada línea encontrada
                 if LineCount = 1 then begin
-                    Message('Debug Línea %1:\nJob No.: %2\nLine Type: %3\nLine Amount (LCY): %4\nTotal Cost (LCY): %5\nPlanning Date: %6\nDescription: %7',
+                    Message('Debug Linea %1:\nJob No.: %2\nLine Type: %3\nLine Amount (LCY): %4\nTotal Cost (LCY): %5\nPlanning Date: %6\nDescription: %7',
                         LineCount, JobPlanningLine."Job No.", JobPlanningLine."Line Type",
                         JobPlanningLine."Line Amount (LCY)", JobPlanningLine."Total Cost (LCY)",
                         JobPlanningLine."Planning Date", JobPlanningLine.Description);
@@ -1716,7 +1716,7 @@ page 50731 "PS_EconomicMonitoring"
 
         // Debug: Mostrar información del filtrado
         if LineCount > 0 then begin
-            Message('Debug GetMonthValueFromBC:\nMes: %1\nJob: %2\nConcept: %3 (%4)\nType: %5 (%6)\nLine Type Filter: %7\nLíneas encontradas: %8\nValor total: %9',
+            Message('Debug GetMonthValueFromBC:\nMes: %1\nJob: %2\nConcept: %3 (%4)\nType: %5 (%6)\nLine Type Filter: %7\nLineas encontradas: %8\nValor total: %9',
                 Month, JobNo, Concept, GetConceptDescription(Concept), Type, GetTypeDescription(Type),
                 JobPlanningLine.GetFilters, LineCount, MonthValue);
         end;
