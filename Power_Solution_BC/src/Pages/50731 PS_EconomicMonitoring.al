@@ -1568,6 +1568,7 @@ page 50731 "PS_EconomicMonitoring"
         LastDay: Date;
         BCValue: Decimal;
         savedView: Text;
+        CurrentValue: Decimal;
     begin
         // Obtener valor actual de BC
         GetMonthDateRange(Month, YearFilter, FirstDay, LastDay);
@@ -1582,11 +1583,9 @@ page 50731 "PS_EconomicMonitoring"
             until JobPlanningLine.Next() = 0;
         end;
 
-        // Siempre sincronizar la tabla temporal (no solo si hay cambios)
-        // Esto asegura que si se mueve un valor de un mes a otro, ambos se actualicen correctamente
+        // Obtener valor actual en la tabla temporal para comparar
         savedView := Rec.GetView();
         Rec.Reset();
-        // Buscar solo la línea específica por Job No., Concept, Type y Year
         Rec.SetRange("Job No.", JobNo);
         Rec.SetRange(Concept, Concept);
         Rec.SetRange(Type, Type);
@@ -1594,31 +1593,61 @@ page 50731 "PS_EconomicMonitoring"
         if Rec.FindFirst() then begin
             case Month of
                 1:
-                    Rec."JanImport" := BCValue;
+                    CurrentValue := Rec."JanImport";
                 2:
-                    Rec."FebImport" := BCValue;
+                    CurrentValue := Rec."FebImport";
                 3:
-                    Rec."MarImport" := BCValue;
+                    CurrentValue := Rec."MarImport";
                 4:
-                    Rec."AprImport" := BCValue;
+                    CurrentValue := Rec."AprImport";
                 5:
-                    Rec."MayImport" := BCValue;
+                    CurrentValue := Rec."MayImport";
                 6:
-                    Rec."JunImport" := BCValue;
+                    CurrentValue := Rec."JunImport";
                 7:
-                    Rec."JulImport" := BCValue;
+                    CurrentValue := Rec."JulImport";
                 8:
-                    Rec."AugImport" := BCValue;
+                    CurrentValue := Rec."AugImport";
                 9:
-                    Rec."SepImport" := BCValue;
+                    CurrentValue := Rec."SepImport";
                 10:
-                    Rec."OctImport" := BCValue;
+                    CurrentValue := Rec."OctImport";
                 11:
-                    Rec."NovImport" := BCValue;
+                    CurrentValue := Rec."NovImport";
                 12:
-                    Rec."DecImport" := BCValue;
+                    CurrentValue := Rec."DecImport";
             end;
-            Rec.Modify(false);
+
+            // Sincronizar tabla temporal si hay cambios
+            if BCValue <> CurrentValue then begin
+                case Month of
+                    1:
+                        Rec."JanImport" := BCValue;
+                    2:
+                        Rec."FebImport" := BCValue;
+                    3:
+                        Rec."MarImport" := BCValue;
+                    4:
+                        Rec."AprImport" := BCValue;
+                    5:
+                        Rec."MayImport" := BCValue;
+                    6:
+                        Rec."JunImport" := BCValue;
+                    7:
+                        Rec."JulImport" := BCValue;
+                    8:
+                        Rec."AugImport" := BCValue;
+                    9:
+                        Rec."SepImport" := BCValue;
+                    10:
+                        Rec."OctImport" := BCValue;
+                    11:
+                        Rec."NovImport" := BCValue;
+                    12:
+                        Rec."DecImport" := BCValue;
+                end;
+                Rec.Modify(false);
+            end;
         end;
         Rec.SetView(savedView);
         CurrPage.Update(false);
