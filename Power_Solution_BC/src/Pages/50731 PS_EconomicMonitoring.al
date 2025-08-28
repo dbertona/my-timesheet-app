@@ -1557,7 +1557,7 @@ page 50731 "PS_EconomicMonitoring"
     begin
         // Solo sincronizar si realmente hay cambios en el mes específico
         // Esto evita sobrescribir valores correctos innecesariamente
-        
+
         // Obtener valor actual en la tabla temporal
         savedView := Rec.GetView();
         Rec.Reset();
@@ -1569,18 +1569,30 @@ page 50731 "PS_EconomicMonitoring"
         if Rec.FindFirst() then begin
             // Obtener valor actual del mes en la tabla temporal
             case Month of
-                1: CurrentValue := Rec."JanImport";
-                2: CurrentValue := Rec."FebImport";
-                3: CurrentValue := Rec."MarImport";
-                4: CurrentValue := Rec."AprImport";
-                5: CurrentValue := Rec."MayImport";
-                6: CurrentValue := Rec."JunImport";
-                7: CurrentValue := Rec."JulImport";
-                8: CurrentValue := Rec."AugImport";
-                9: CurrentValue := Rec."SepImport";
-                10: CurrentValue := Rec."OctImport";
-                11: CurrentValue := Rec."NovImport";
-                12: CurrentValue := Rec."DecImport";
+                1:
+                    CurrentValue := Rec."JanImport";
+                2:
+                    CurrentValue := Rec."FebImport";
+                3:
+                    CurrentValue := Rec."MarImport";
+                4:
+                    CurrentValue := Rec."AprImport";
+                5:
+                    CurrentValue := Rec."MayImport";
+                6:
+                    CurrentValue := Rec."JunImport";
+                7:
+                    CurrentValue := Rec."JulImport";
+                8:
+                    CurrentValue := Rec."AugImport";
+                9:
+                    CurrentValue := Rec."SepImport";
+                10:
+                    CurrentValue := Rec."OctImport";
+                11:
+                    CurrentValue := Rec."NovImport";
+                12:
+                    CurrentValue := Rec."DecImport";
             end;
 
             // Obtener valor actual de BC para el mes específico
@@ -1590,18 +1602,30 @@ page 50731 "PS_EconomicMonitoring"
             if BCValue <> CurrentValue then begin
                 // Actualizar solo el mes que cambió
                 case Month of
-                    1: Rec."JanImport" := BCValue;
-                    2: Rec."FebImport" := BCValue;
-                    3: Rec."MarImport" := BCValue;
-                    4: Rec."AprImport" := BCValue;
-                    5: Rec."MayImport" := BCValue;
-                    6: Rec."JunImport" := BCValue;
-                    7: Rec."JulImport" := BCValue;
-                    8: Rec."AugImport" := BCValue;
-                    9: Rec."SepImport" := BCValue;
-                    10: Rec."OctImport" := BCValue;
-                    11: Rec."NovImport" := BCValue;
-                    12: Rec."DecImport" := BCValue;
+                    1:
+                        Rec."JanImport" := BCValue;
+                    2:
+                        Rec."FebImport" := BCValue;
+                    3:
+                        Rec."MarImport" := BCValue;
+                    4:
+                        Rec."AprImport" := BCValue;
+                    5:
+                        Rec."MayImport" := BCValue;
+                    6:
+                        Rec."JunImport" := BCValue;
+                    7:
+                        Rec."JulImport" := BCValue;
+                    8:
+                        Rec."AugImport" := BCValue;
+                    9:
+                        Rec."SepImport" := BCValue;
+                    10:
+                        Rec."OctImport" := BCValue;
+                    11:
+                        Rec."NovImport" := BCValue;
+                    12:
+                        Rec."DecImport" := BCValue;
                 end;
                 Rec.Modify(false);
             end;
@@ -1617,37 +1641,89 @@ page 50731 "PS_EconomicMonitoring"
         FirstDay: Date;
         LastDay: Date;
         MonthValue: Decimal;
+        LineCount: Integer;
     begin
         // Obtener valor de BC para un mes específico
         GetMonthDateRange(Month, YearFilter, FirstDay, LastDay);
         JobPlanningLine.SetRange("Job No.", JobNo);
         JobPlanningLine.SetRange("Planning Date", FirstDay, LastDay);
-        
+
         // Filtrar por tipo de línea según el concepto y tipo
         case Concept of
             Rec.Concept::Labour:
-                // Para mano de obra (Labour), considerar Budget y Billable
-                JobPlanningLine.SetFilter("Line Type", '%1|%2', 
-                    JobPlanningLine."Line Type"::Budget, 
-                    JobPlanningLine."Line Type"::Billable);
+                // Para mano de obra (Labour)
+                if Type = Rec.Type::P then begin
+                    // Si es planificado (P), solo considerar Budget
+                    JobPlanningLine.SetRange("Line Type", JobPlanningLine."Line Type"::Budget);
+                end else begin
+                    // Si es real (R), considerar Budget y Billable
+                    JobPlanningLine.SetFilter("Line Type", '%1|%2',
+                        JobPlanningLine."Line Type"::Budget,
+                        JobPlanningLine."Line Type"::Billable);
+                end;
             Rec.Concept::Cost:
-                // Para costos (Cost), considerar Budget y Billable
-                JobPlanningLine.SetFilter("Line Type", '%1|%2', 
-                    JobPlanningLine."Line Type"::Budget, 
-                    JobPlanningLine."Line Type"::Billable);
+                // Para costos (Cost)
+                if Type = Rec.Type::P then begin
+                    // Si es planificado (P), solo considerar Budget
+                    JobPlanningLine.SetRange("Line Type", JobPlanningLine."Line Type"::Budget);
+                end else begin
+                    // Si es real (R), considerar Budget y Billable
+                    JobPlanningLine.SetFilter("Line Type", '%1|%2',
+                        JobPlanningLine."Line Type"::Budget,
+                        JobPlanningLine."Line Type"::Billable);
+                end;
             else
                 // Para otros conceptos (Invoice, A), considerar Billable por defecto
                 JobPlanningLine.SetRange("Line Type", JobPlanningLine."Line Type"::Billable);
         end;
 
         MonthValue := 0;
+        LineCount := 0;
         if JobPlanningLine.FindSet() then begin
             repeat
                 MonthValue += JobPlanningLine."Line Amount (LCY)";
+                LineCount += 1;
             until JobPlanningLine.Next() = 0;
         end;
 
+        // Debug: Mostrar información del filtrado
+        if LineCount > 0 then begin
+            Message('Debug GetMonthValueFromBC:\nMes: %1\nJob: %2\nConcept: %3 (%4)\nType: %5 (%6)\nLine Type Filter: %7\nLíneas encontradas: %8\nValor total: %9',
+                Month, JobNo, Concept, GetConceptDescription(Concept), Type, GetTypeDescription(Type),
+                JobPlanningLine.GetFilters, LineCount, MonthValue);
+        end;
+
         exit(MonthValue);
+    end;
+
+    local procedure GetConceptDescription(ConceptValue: Option): Text
+    begin
+        case ConceptValue of
+            Rec.Concept::A:
+                exit('A (Otros)');
+            Rec.Concept::Invoice:
+                exit('Invoice (Facturación)');
+            Rec.Concept::Cost:
+                exit('Cost (Costos)');
+            Rec.Concept::Labour:
+                exit('Labour (Mano de Obra)');
+            else
+                exit('Desconocido');
+        end;
+    end;
+
+    local procedure GetTypeDescription(TypeValue: Option): Text
+    begin
+        case TypeValue of
+            Rec.Type::A:
+                exit('A (Otros)');
+            Rec.Type::P:
+                exit('P (Planificado)');
+            Rec.Type::R:
+                exit('R (Real)');
+            else
+                exit('Desconocido');
+        end;
     end;
 }
 
