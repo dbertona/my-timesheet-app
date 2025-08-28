@@ -1552,9 +1552,13 @@ page 50731 "PS_EconomicMonitoring"
     local procedure SyncMonthValueAfterDrillDown(Month: Integer; JobNo: Code[20]; Concept: Option; Type: Option)
     var
         savedView: Text;
+        CurrentValue: Decimal;
+        BCValue: Decimal;
     begin
-        // Recargar solo la línea específica desde la base de datos
-        // Esto es más eficiente que sincronizar solo un mes
+        // Solo sincronizar si realmente hay cambios en el mes específico
+        // Esto evita sobrescribir valores correctos innecesariamente
+        
+        // Obtener valor actual en la tabla temporal
         savedView := Rec.GetView();
         Rec.Reset();
         Rec.SetRange("Job No.", JobNo);
@@ -1563,21 +1567,44 @@ page 50731 "PS_EconomicMonitoring"
         Rec.SetRange(Year, YearFilter);
 
         if Rec.FindFirst() then begin
-            // Recargar todos los meses para esta línea específica
-            Rec."JanImport" := GetMonthValueFromBC(01, JobNo, Concept, Type);
-            Rec."FebImport" := GetMonthValueFromBC(02, JobNo, Concept, Type);
-            Rec."MarImport" := GetMonthValueFromBC(03, JobNo, Concept, Type);
-            Rec."AprImport" := GetMonthValueFromBC(04, JobNo, Concept, Type);
-            Rec."MayImport" := GetMonthValueFromBC(05, JobNo, Concept, Type);
-            Rec."JunImport" := GetMonthValueFromBC(06, JobNo, Concept, Type);
-            Rec."JulImport" := GetMonthValueFromBC(07, JobNo, Concept, Type);
-            Rec."AugImport" := GetMonthValueFromBC(08, JobNo, Concept, Type);
-            Rec."SepImport" := GetMonthValueFromBC(09, JobNo, Concept, Type);
-            Rec."OctImport" := GetMonthValueFromBC(10, JobNo, Concept, Type);
-            Rec."NovImport" := GetMonthValueFromBC(11, JobNo, Concept, Type);
-            Rec."DecImport" := GetMonthValueFromBC(12, JobNo, Concept, Type);
+            // Obtener valor actual del mes en la tabla temporal
+            case Month of
+                1: CurrentValue := Rec."JanImport";
+                2: CurrentValue := Rec."FebImport";
+                3: CurrentValue := Rec."MarImport";
+                4: CurrentValue := Rec."AprImport";
+                5: CurrentValue := Rec."MayImport";
+                6: CurrentValue := Rec."JunImport";
+                7: CurrentValue := Rec."JulImport";
+                8: CurrentValue := Rec."AugImport";
+                9: CurrentValue := Rec."SepImport";
+                10: CurrentValue := Rec."OctImport";
+                11: CurrentValue := Rec."NovImport";
+                12: CurrentValue := Rec."DecImport";
+            end;
 
-            Rec.Modify(false);
+            // Obtener valor actual de BC para el mes específico
+            BCValue := GetMonthValueFromBC(Month, JobNo, Concept, Type);
+
+            // Solo sincronizar si hay diferencias
+            if BCValue <> CurrentValue then begin
+                // Actualizar solo el mes que cambió
+                case Month of
+                    1: Rec."JanImport" := BCValue;
+                    2: Rec."FebImport" := BCValue;
+                    3: Rec."MarImport" := BCValue;
+                    4: Rec."AprImport" := BCValue;
+                    5: Rec."MayImport" := BCValue;
+                    6: Rec."JunImport" := BCValue;
+                    7: Rec."JulImport" := BCValue;
+                    8: Rec."AugImport" := BCValue;
+                    9: Rec."SepImport" := BCValue;
+                    10: Rec."OctImport" := BCValue;
+                    11: Rec."NovImport" := BCValue;
+                    12: Rec."DecImport" := BCValue;
+                end;
+                Rec.Modify(false);
+            end;
         end;
 
         Rec.SetView(savedView);
