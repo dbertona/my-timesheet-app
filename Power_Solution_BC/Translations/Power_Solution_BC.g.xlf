@@ -503,6 +503,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table PS_EconomicMonitoringMatrix - Field SepStyleExpr - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 1660684376 - Field 352274990 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Sort Concept</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_EconomicMonitoringMatrix - Field SortConcept - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1660684376 - Field 209020094 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Sort Type</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_EconomicMonitoringMatrix - Field SortType - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 1660684376 - Field 1878130204 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Type</source>
           <note from="Developer" annotates="general" priority="2"></note>

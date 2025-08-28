@@ -1306,13 +1306,13 @@ page 50731 "PS_EconomicMonitoring"
             // Ordenación estable para TreeView
             case Concept of
                 Matrix.Concept::A:
-                    Matrix.SortConcept := 0;
+                    Matrix.SortConcept := 0; // Padre
                 Matrix.Concept::Cost:
-                    Matrix.SortConcept := 2;
+                    Matrix.SortConcept := 1; // Gasto
                 Matrix.Concept::Invoice:
-                    Matrix.SortConcept := 3;
+                    Matrix.SortConcept := 2; // Facturación
                 Matrix.Concept::Labour:
-                    Matrix.SortConcept := 1;
+                    Matrix.SortConcept := 3; // Mano de Obra
             end;
             case EntryType of
                 Matrix.Type::A:
