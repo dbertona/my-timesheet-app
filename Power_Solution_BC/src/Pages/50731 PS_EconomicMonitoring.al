@@ -1692,20 +1692,23 @@ page 50731 "PS_EconomicMonitoring"
                         // Para mano de obra, usar Total Cost (LCY)
                         MonthValue += JobPlanningLine."Total Cost (LCY)";
                     Rec.Concept::Cost:
-                        // Para costos, usar Total Cost (LCY)
+                        // Para costos/gastos, usar Total Cost (LCY)
                         MonthValue += JobPlanningLine."Total Cost (LCY)";
-                    else
-                        // Para otros conceptos (Invoice, A), usar Line Amount (LCY)
+                    Rec.Concept::Invoice:
+                        // Para facturación, usar Line Amount (LCY)
                         MonthValue += JobPlanningLine."Line Amount (LCY)";
+                    else
+                        // Para otros conceptos (A), usar Total Cost (LCY) por defecto
+                        MonthValue += JobPlanningLine."Total Cost (LCY)";
                 end;
-                
+
                 LineCount += 1;
 
                 // Debug detallado de cada línea encontrada
                 if LineCount = 1 then begin
                     Message('Debug Línea %1:\nJob No.: %2\nLine Type: %3\nLine Amount (LCY): %4\nTotal Cost (LCY): %5\nPlanning Date: %6\nDescription: %7',
                         LineCount, JobPlanningLine."Job No.", JobPlanningLine."Line Type",
-                        JobPlanningLine."Line Amount (LCY)", JobPlanningLine."Total Cost (LCY)", 
+                        JobPlanningLine."Line Amount (LCY)", JobPlanningLine."Total Cost (LCY)",
                         JobPlanningLine."Planning Date", JobPlanningLine.Description);
                 end;
             until JobPlanningLine.Next() = 0;
