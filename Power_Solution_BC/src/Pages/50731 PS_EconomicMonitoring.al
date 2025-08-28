@@ -102,10 +102,10 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownMonth := 01;
                         CurrentDrillDownJobNo := Rec."Job No.";
                         LastBCValue := Rec."JanImport";
-                        
+
                         // Abrir página de BC
                         JobPlanningLines(01, YearFilter);
-                        
+
                         // Sincronizar al regresar
                         SyncMonthValueAfterDrillDown(01, Rec."Job No.");
                     end;
@@ -143,10 +143,10 @@ page 50731 "PS_EconomicMonitoring"
                         CurrentDrillDownMonth := 01;
                         CurrentDrillDownJobNo := Rec."Job No.";
                         LastBCValue := Rec."JanImport";
-                        
+
                         // Abrir página de BC
                         JobPlanningLines(01, YearFilter);
-                        
+
                         // Sincronizar al regresar
                         SyncMonthValueAfterDrillDown(01, Rec."Job No.");
                     end;
