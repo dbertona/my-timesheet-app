@@ -1303,6 +1303,25 @@ page 50731 "PS_EconomicMonitoring"
             Matrix.Type := EntryType;
             Matrix.IsClosedMonth := IsClosed;
             Matrix.Probability := Probability;
+            // Ordenación estable para TreeView
+            case Concept of
+                Matrix.Concept::A:
+                    Matrix.SortConcept := 0;
+                Matrix.Concept::Invoice:
+                    Matrix.SortConcept := 1;
+                Matrix.Concept::Cost:
+                    Matrix.SortConcept := 2;
+                Matrix.Concept::Labour:
+                    Matrix.SortConcept := 3;
+            end;
+            case EntryType of
+                Matrix.Type::A:
+                    Matrix.SortType := 0;
+                Matrix.Type::R:
+                    Matrix.SortType := 1;
+                Matrix.Type::P:
+                    Matrix.SortType := 2;
+            end;
             Matrix.Insert();
         end;
     end;

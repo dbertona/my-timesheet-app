@@ -237,6 +237,16 @@ table 50019 "PS_EconomicMonitoringMatrix"
             Caption = 'December Closed';
             DataClassification = ToBeClassified;
         }
+        field(46; SortConcept; Integer)
+        {
+            Caption = 'Sort Concept';
+            Editable = false;
+        }
+        field(47; SortType; Integer)
+        {
+            Caption = 'Sort Type';
+            Editable = false;
+        }
     }
     keys
     {
@@ -244,7 +254,7 @@ table 50019 "PS_EconomicMonitoringMatrix"
         {
             Clustered = true;
         }
-        key(TreeOrder; "Job No.", "Year", "HierarchyLevel", Concept, Type, Description)
+        key(TreeOrder; "Job No.", "Year", "HierarchyLevel", SortConcept, SortType, Description)
         {
         }
         key(PK1; Probability, "Job No.", Description, Concept, Type, Year)
