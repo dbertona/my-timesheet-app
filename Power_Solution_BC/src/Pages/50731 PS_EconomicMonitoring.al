@@ -1050,83 +1050,7 @@ page 50731 "PS_EconomicMonitoring"
 
     trigger OnAfterGetRecord()
     begin
-        Clear(BoldStyle);
-        if Rec.HierarchyLevel = 0 then
-            BoldStyle := 'StrongAccent'
-        else
-            BoldStyle := 'Standard';
-        Clear(Rec.JanStyleExpr);
-        Clear(Rec.FebStyleExpr);
-        Clear(Rec.MarStyleExpr);
-        Clear(Rec.AprStyleExpr);
-        Clear(Rec.MayStyleExpr);
-        Clear(Rec.JunStyleExpr);
-        Clear(Rec.JulStyleExpr);
-        Clear(Rec.AugStyleExpr);
-        Clear(Rec.SepStyleExpr);
-        Clear(Rec.OctStyleExpr);
-        Clear(Rec.NovStyleExpr);
-        Clear(Rec.DecStyleExpr);
-        // Estilos por mes cerrado
-        if Rec.IsJanClosed then
-            Rec."JanStyleExpr" := 'Subordinate'
-        else
-            Rec."JanStyleExpr" := 'StrongAccent';
-
-        if Rec.IsFebClosed then
-            Rec."FebStyleExpr" := 'Subordinate'
-        else
-            Rec."FebStyleExpr" := 'StrongAccent';
-
-        if Rec.IsMarClosed then
-            Rec."MarStyleExpr" := 'Subordinate'
-        else
-            Rec."MarStyleExpr" := 'StrongAccent';
-
-        if Rec.IsAprClosed then
-            Rec."AprStyleExpr" := 'Subordinate'
-        else
-            Rec."AprStyleExpr" := 'StrongAccent';
-
-        if Rec.IsMayClosed then
-            Rec."MayStyleExpr" := 'Subordinate'
-        else
-            Rec."MayStyleExpr" := 'StrongAccent';
-
-        if Rec.IsJunClosed then
-            Rec."JunStyleExpr" := 'Subordinate'
-        else
-            Rec."JunStyleExpr" := 'StrongAccent';
-
-        if Rec.IsJulClosed then
-            Rec."JulStyleExpr" := 'Subordinate'
-        else
-            Rec."JulStyleExpr" := 'StrongAccent';
-
-        if Rec.IsAugClosed then
-            Rec."AugStyleExpr" := 'Subordinate'
-        else
-            Rec."AugStyleExpr" := 'StrongAccent';
-
-        if Rec.IsSepClosed then
-            Rec."SepStyleExpr" := 'Subordinate'
-        else
-            Rec."SepStyleExpr" := 'StrongAccent';
-
-        if Rec.IsOctClosed then
-            Rec."OctStyleExpr" := 'Subordinate'
-        else
-            Rec."OctStyleExpr" := 'StrongAccent';
-
-        if Rec.IsNovClosed then
-            Rec."NovStyleExpr" := 'Subordinate'
-        else
-            Rec."NovStyleExpr" := 'StrongAccent';
-
-        if Rec.IsDecClosed then
-            Rec."DecStyleExpr" := 'Subordinate'
-        else
-            Rec."DecStyleExpr" := 'StrongAccent';
+        UpdateRowStyles();
         case FORMAT(Rec."Probability") of
             '100':
                 FormattedProbability := '100%';
@@ -1143,6 +1067,41 @@ page 50731 "PS_EconomicMonitoring"
             else
                 FormattedProbability := 'Error';
         end;
+    end;
+
+    local procedure UpdateRowStyles()
+    begin
+        Clear(BoldStyle);
+        if Rec.HierarchyLevel = 0 then
+            BoldStyle := 'StrongAccent'
+        else
+            BoldStyle := 'Standard';
+
+        Clear(Rec.JanStyleExpr);
+        Clear(Rec.FebStyleExpr);
+        Clear(Rec.MarStyleExpr);
+        Clear(Rec.AprStyleExpr);
+        Clear(Rec.MayStyleExpr);
+        Clear(Rec.JunStyleExpr);
+        Clear(Rec.JulStyleExpr);
+        Clear(Rec.AugStyleExpr);
+        Clear(Rec.SepStyleExpr);
+        Clear(Rec.OctStyleExpr);
+        Clear(Rec.NovStyleExpr);
+        Clear(Rec.DecStyleExpr);
+
+        if Rec.IsJanClosed then Rec."JanStyleExpr" := 'Subordinate' else Rec."JanStyleExpr" := 'StrongAccent';
+        if Rec.IsFebClosed then Rec."FebStyleExpr" := 'Subordinate' else Rec."FebStyleExpr" := 'StrongAccent';
+        if Rec.IsMarClosed then Rec."MarStyleExpr" := 'Subordinate' else Rec."MarStyleExpr" := 'StrongAccent';
+        if Rec.IsAprClosed then Rec."AprStyleExpr" := 'Subordinate' else Rec."AprStyleExpr" := 'StrongAccent';
+        if Rec.IsMayClosed then Rec."MayStyleExpr" := 'Subordinate' else Rec."MayStyleExpr" := 'StrongAccent';
+        if Rec.IsJunClosed then Rec."JunStyleExpr" := 'Subordinate' else Rec."JunStyleExpr" := 'StrongAccent';
+        if Rec.IsJulClosed then Rec."JulStyleExpr" := 'Subordinate' else Rec."JulStyleExpr" := 'StrongAccent';
+        if Rec.IsAugClosed then Rec."AugStyleExpr" := 'Subordinate' else Rec."AugStyleExpr" := 'StrongAccent';
+        if Rec.IsSepClosed then Rec."SepStyleExpr" := 'Subordinate' else Rec."SepStyleExpr" := 'StrongAccent';
+        if Rec.IsOctClosed then Rec."OctStyleExpr" := 'Subordinate' else Rec."OctStyleExpr" := 'StrongAccent';
+        if Rec.IsNovClosed then Rec."NovStyleExpr" := 'Subordinate' else Rec."NovStyleExpr" := 'StrongAccent';
+        if Rec.IsDecClosed then Rec."DecStyleExpr" := 'Subordinate' else Rec."DecStyleExpr" := 'StrongAccent';
     end;
 
     local procedure IsBusinessManager(): Boolean
@@ -1383,6 +1342,11 @@ page 50731 "PS_EconomicMonitoring"
                                 Rec.IsDecClosed := true;
                         end;
                         Rec.Modify(false);
+                        UpdateRowStyles();
+                        CurrPage.Update(false);
+                        Rec.Modify(false);
+                        UpdateRowStyles();
+                        CurrPage.Update(false);
                     until Rec.Next() = 0;
                 end;
                 Rec.SetView(savedView);
