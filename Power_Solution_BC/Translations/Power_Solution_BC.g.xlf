@@ -3788,6 +3788,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control February - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 3769604473 - Control 3589778539 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Level</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control HierarchyLevel - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 3769604473 - Control 1051135142 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>January</source>
           <note from="Developer" annotates="general" priority="2"></note>
