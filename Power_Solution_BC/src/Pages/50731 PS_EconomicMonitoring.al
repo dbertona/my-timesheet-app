@@ -531,9 +531,9 @@ page 50731 "PS_EconomicMonitoring"
 
                     if JobOrigenData.FindSet(false) then begin
                         repeat
-                            JobRec.Get(CurrentJobNo);
+                            // JobRec.Get(CurrentJobNo); // ❌ REDUNDANTE - ya tenemos Probability del bucle externo
                             IF JobOrigenData."Line Amount (LCY)" <> 0 THEN BEGIN
-                                Probability := GetProbabilityFromJob(JobRec);
+                                // Probability := GetProbabilityFromJob(JobRec); // ❌ REDUNDANTE - ya calculado
                                 if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
                                     EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
                                     EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Invoice, Rec.Type::A, 2, JobRec.Description, IsClosed, Probability);
@@ -609,9 +609,9 @@ page 50731 "PS_EconomicMonitoring"
 
                     if JobOrigenData.FindSet(false) then begin
                         repeat
-                            JobRec.Get(CurrentJobNo);
+                            // JobRec.Get(CurrentJobNo); // ❌ REDUNDANTE - ya tenemos Probability del bucle externo
                             IF JobOrigenData."Total Cost (LCY)" <> 0 THEN BEGIN
-                                Probability := GetProbabilityFromJob(JobRec);
+                                // Probability := GetProbabilityFromJob(JobRec); // ❌ REDUNDANTE - ya calculado
                                 if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
                                     if JobOrigenData.Type = JobOrigenData.Type::Resource then begin
                                         ConceptValue := Rec.Concept::Labour;
@@ -703,8 +703,8 @@ page 50731 "PS_EconomicMonitoring"
 
                     if JobOrigenData.FindSet(false) then begin
                         repeat
-                            JobRec.Get(CurrentJobNo);
-                            Probability := GetProbabilityFromJob(JobRec);
+                            // JobRec.Get(CurrentJobNo); // ❌ REDUNDANTE - ya tenemos Probability del bucle externo
+                            // Probability := GetProbabilityFromJob(JobRec); // ❌ REDUNDANTE - ya calculado
                             IF JobOrigenData."Line Amount (LCY)" <> 0 THEN BEGIN
                                 if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
                                     EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
@@ -783,8 +783,8 @@ page 50731 "PS_EconomicMonitoring"
                     JobOrigenData.SetLoadFields("Job No.", "Total Cost (LCY)");
                     if JobOrigenData.FindSet(false) then begin
                         repeat
-                            JobRec.Get(CurrentJobNo);
-                            Probability := GetProbabilityFromJob(JobRec);
+                            // JobRec.Get(CurrentJobNo); // ❌ REDUNDANTE - ya tenemos Probability del bucle externo
+                            // Probability := GetProbabilityFromJob(JobRec); // ❌ REDUNDANTE - ya calculado
                             IF JobOrigenData."Total Cost (LCY)" <> 0 THEN BEGIN
                                 if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
                                     EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
@@ -866,9 +866,9 @@ page 50731 "PS_EconomicMonitoring"
                     JobOrigenData.SetLoadFields("Job No.", "Total Cost (LCY)");
                     if JobOrigenData.FindSet(false) then begin
                         repeat
-                            JobRec.Get(CurrentJobNo);
+                            // JobRec.Get(CurrentJobNo); // ❌ REDUNDANTE - ya tenemos Probability del bucle externo
                             IF JobOrigenData."Total Cost (LCY)" <> 0 THEN BEGIN
-                                Probability := GetProbabilityFromJob(JobRec);
+                                // Probability := GetProbabilityFromJob(JobRec); // ❌ REDUNDANTE - ya calculado
                                 if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
                                     ConceptValue := Rec.Concept::Labour;
                                     EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
