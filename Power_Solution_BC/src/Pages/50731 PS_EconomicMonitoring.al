@@ -431,7 +431,7 @@ page 50731 "PS_EconomicMonitoring"
             PS_MonthClosingRec.SetRange(PS_GlobalDimension1Code, DepartamentFilter);
         if not SinProjectTeamfilter THEN
             PS_MonthClosingRec.SetFilter(PS_JobNo, Filter);
-        if PS_MonthClosingRec.FindSet(false) then begin
+        if PS_MonthClosingRec.FindSet() then begin
             repeat
                 IsClosed := PS_MonthClosingRec.PS_Status = PS_MonthClosingRec.PS_Status::Close;
                 CurrentJobNo := PS_MonthClosingRec."PS_JobNo";
@@ -455,7 +455,6 @@ page 50731 "PS_EconomicMonitoring"
                     Progress.Update(1, RecordCount);
                 if JobOrigenData.FindSet() then begin
                     repeat
-                        JobRec.Get(CurrentJobNo);
                         IF JobOrigenData.ARBVRNCertificationAmount <> 0 THEN BEGIN
                             if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
                                 EnsureMatrixLine(Rec, JobOrigenData."ARBVRNJobNo", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
@@ -502,7 +501,7 @@ page 50731 "PS_EconomicMonitoring"
             PS_MonthClosingRec.SetRange(PS_GlobalDimension1Code, DepartamentFilter);
         if not SinProjectTeamfilter THEN
             PS_MonthClosingRec.SetFilter(PS_JobNo, Filter);
-        if PS_MonthClosingRec.FindSet(false) then begin
+        if PS_MonthClosingRec.FindSet() then begin
             repeat
                 IsClosed := PS_MonthClosingRec.PS_Status = PS_MonthClosingRec.PS_Status::Close;
                 RecordCount := RecordCount + 1;
