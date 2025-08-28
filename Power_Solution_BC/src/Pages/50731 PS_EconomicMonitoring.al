@@ -1582,47 +1582,46 @@ page 50731 "PS_EconomicMonitoring"
             until JobPlanningLine.Next() = 0;
         end;
 
-        // Sincronizar tabla temporal si hay cambios
-        if BCValue <> LastBCValue then begin
-            savedView := Rec.GetView();
-            Rec.Reset();
-            // Buscar solo la línea específica por Job No., Concept, Type y Year
-            Rec.SetRange("Job No.", JobNo);
-            Rec.SetRange(Concept, Concept);
-            Rec.SetRange(Type, Type);
-            Rec.SetRange(Year, YearFilter);
-            if Rec.FindFirst() then begin
-                case Month of
-                    1:
-                        Rec."JanImport" := BCValue;
-                    2:
-                        Rec."FebImport" := BCValue;
-                    3:
-                        Rec."MarImport" := BCValue;
-                    4:
-                        Rec."AprImport" := BCValue;
-                    5:
-                        Rec."MayImport" := BCValue;
-                    6:
-                        Rec."JunImport" := BCValue;
-                    7:
-                        Rec."JulImport" := BCValue;
-                    8:
-                        Rec."AugImport" := BCValue;
-                    9:
-                        Rec."SepImport" := BCValue;
-                    10:
-                        Rec."OctImport" := BCValue;
-                    11:
-                        Rec."NovImport" := BCValue;
-                    12:
-                        Rec."DecImport" := BCValue;
-                end;
-                Rec.Modify(false);
+        // Siempre sincronizar la tabla temporal (no solo si hay cambios)
+        // Esto asegura que si se mueve un valor de un mes a otro, ambos se actualicen correctamente
+        savedView := Rec.GetView();
+        Rec.Reset();
+        // Buscar solo la línea específica por Job No., Concept, Type y Year
+        Rec.SetRange("Job No.", JobNo);
+        Rec.SetRange(Concept, Concept);
+        Rec.SetRange(Type, Type);
+        Rec.SetRange(Year, YearFilter);
+        if Rec.FindFirst() then begin
+            case Month of
+                1:
+                    Rec."JanImport" := BCValue;
+                2:
+                    Rec."FebImport" := BCValue;
+                3:
+                    Rec."MarImport" := BCValue;
+                4:
+                    Rec."AprImport" := BCValue;
+                5:
+                    Rec."MayImport" := BCValue;
+                6:
+                    Rec."JunImport" := BCValue;
+                7:
+                    Rec."JulImport" := BCValue;
+                8:
+                    Rec."AugImport" := BCValue;
+                9:
+                    Rec."SepImport" := BCValue;
+                10:
+                    Rec."OctImport" := BCValue;
+                11:
+                    Rec."NovImport" := BCValue;
+                12:
+                    Rec."DecImport" := BCValue;
             end;
-            Rec.SetView(savedView);
-            CurrPage.Update(false);
+            Rec.Modify(false);
         end;
+        Rec.SetView(savedView);
+        CurrPage.Update(false);
     end;
 }
 
