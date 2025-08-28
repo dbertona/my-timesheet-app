@@ -82,10 +82,10 @@ page 50731 "PS_EconomicMonitoring"
                 ShowAsTree = true;
                 IndentationColumn = REC.HierarchyLevel;
                 TreeInitialState = CollapseAll;
-                field("Job No."; Rec."Job No.")
+                field("ProjectInfo"; GetProjectInfo())
                 {
                     ApplicationArea = All;
-                    Caption = 'Job No.';
+                    Caption = 'Project & Description';
                     Editable = false;
 
                     trigger OnDrillDown()
@@ -102,13 +102,7 @@ page 50731 "PS_EconomicMonitoring"
                         end;
                     end;
                 }
-                field("Description"; Rec."Description")
-                {
-                    ApplicationArea = All;
-                    Caption = 'Description';
-                    Editable = false;
-                    StyleExpr = BoldStyle;
-                }
+
                 field("Probability"; FormattedProbability)
                 {
                     ApplicationArea = All;
@@ -1367,6 +1361,11 @@ page 50731 "PS_EconomicMonitoring"
                 Rec.SetView(savedView);
             until MonthClosing.Next() = 0;
         end;
+    end;
+
+    local procedure GetProjectInfo(): Text
+    begin
+        exit(Rec."Job No." + ' - ' + Rec.Description);
     end;
 }
 

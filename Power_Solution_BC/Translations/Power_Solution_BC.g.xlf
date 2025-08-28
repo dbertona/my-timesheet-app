@@ -3783,11 +3783,6 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control December - Property Caption</note>
         </trans-unit>
-        <trans-unit id="Page 3769604473 - Control 3461834954 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Description</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control Description - Property Caption</note>
-        </trans-unit>
         <trans-unit id="Page 3769604473 - Control 1211292400 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>February</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -3797,11 +3792,6 @@
           <source>January</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control January - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3769604473 - Control 1908272084 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Job No.</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control Job No. - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 3769604473 - Control 3896244062 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>July</source>
@@ -3837,6 +3827,11 @@
           <source>Probability</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control Probability - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3769604473 - Control 3190122413 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Project &amp; Description</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control ProjectInfo - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 3769604473 - Control 1594031793 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>September</source>
