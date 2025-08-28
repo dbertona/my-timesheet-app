@@ -1549,7 +1549,7 @@ page 50731 "PS_EconomicMonitoring"
         exit(Rec."Job No." + ' - ' + Rec.Description);
     end;
 
-        local procedure SyncMonthValueAfterDrillDown(Month: Integer; JobNo: Code[20]; Concept: Option; Type: Option)
+    local procedure SyncMonthValueAfterDrillDown(Month: Integer; JobNo: Code[20]; Concept: Option; Type: Option)
     var
         savedView: Text;
         CurrentValue: Decimal;
@@ -1557,7 +1557,7 @@ page 50731 "PS_EconomicMonitoring"
     begin
         // Recargar toda la línea desde BC cuando se detecta un cambio
         // Esto asegura que todos los meses se sincronicen correctamente
-        
+
         // Obtener valor actual en la tabla temporal
         savedView := Rec.GetView();
         Rec.Reset();
@@ -1613,7 +1613,7 @@ page 50731 "PS_EconomicMonitoring"
                 Rec."OctImport" := GetMonthValueFromBC(10, JobNo, Concept, Type);
                 Rec."NovImport" := GetMonthValueFromBC(11, JobNo, Concept, Type);
                 Rec."DecImport" := GetMonthValueFromBC(12, JobNo, Concept, Type);
-                
+
                 Rec.Modify(false);
             end;
         end;
@@ -1632,10 +1632,6 @@ page 50731 "PS_EconomicMonitoring"
     begin
         // Obtener valor de BC para un mes específico
         GetMonthDateRange(Month, YearFilter, FirstDay, LastDay);
-
-        // Debug: Verificar fechas calculadas
-        Message('Debug Fechas:\nMes solicitado: %1\nPrimer día: %2\nÚltimo día: %3',
-            Month, FirstDay, LastDay);
 
         JobPlanningLine.SetRange("Job No.", JobNo);
         JobPlanningLine.SetRange("Planning Date", FirstDay, LastDay);
@@ -1692,54 +1688,16 @@ page 50731 "PS_EconomicMonitoring"
                 LineCount += 1;
 
                 // Debug detallado de cada línea encontrada
-                if LineCount = 1 then begin
-                    Message('Debug Linea %1:\nJob No.: %2\nLine Type: %3\nLine Amount (LCY): %4\nTotal Cost (LCY): %5\nPlanning Date: %6\nDescription: %7',
-                        LineCount, JobPlanningLine."Job No.", JobPlanningLine."Line Type",
-                        JobPlanningLine."Line Amount (LCY)", JobPlanningLine."Total Cost (LCY)",
-                        JobPlanningLine."Planning Date", JobPlanningLine.Description);
-                end;
+
             until JobPlanningLine.Next() = 0;
         end;
 
-        // Debug: Mostrar información del filtrado
-        if LineCount > 0 then begin
-            Message('Debug GetMonthValueFromBC:\nMes: %1\nJob: %2\nConcept: %3 (%4)\nType: %5 (%6)\nLine Type Filter: %7\nLineas encontradas: %8\nValor total: %9',
-                Month, JobNo, Concept, GetConceptDescription(Concept), Type, GetTypeDescription(Type),
-                JobPlanningLine.GetFilters, LineCount, MonthValue);
-        end;
+
 
         exit(MonthValue);
     end;
 
-    local procedure GetConceptDescription(ConceptValue: Option): Text
-    begin
-        case ConceptValue of
-            Rec.Concept::A:
-                exit('A (Otros)');
-            Rec.Concept::Invoice:
-                exit('Invoice (Facturación)');
-            Rec.Concept::Cost:
-                exit('Cost (Costos)');
-            Rec.Concept::Labour:
-                exit('Labour (Mano de Obra)');
-            else
-                exit('Desconocido');
-        end;
-    end;
 
-    local procedure GetTypeDescription(TypeValue: Option): Text
-    begin
-        case TypeValue of
-            Rec.Type::A:
-                exit('A (Otros)');
-            Rec.Type::P:
-                exit('P (Planificado)');
-            Rec.Type::R:
-                exit('R (Real)');
-            else
-                exit('Desconocido');
-        end;
-    end;
 }
 
 
