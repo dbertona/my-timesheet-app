@@ -489,6 +489,12 @@
           <note from="Developer" annotates="general" priority="2"/>
           <note from="Xliff Generator" annotates="general" priority="3">Table PS_EconomicMonitoringMatrix - Field IsOctClosed - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 1660684376 - Field 3652561658 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Recently Closed</source>
+          <target state="needs-translation"/>
+          <note from="Developer" annotates="general" priority="2"/>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_EconomicMonitoringMatrix - Field IsRecentlyClosed - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 1660684376 - Field 3337629978 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>September Closed</source>
           <target state="translated">Septiembre cerrado</target>
@@ -602,6 +608,18 @@
           <target state="translated">SepStyleExpr</target>
           <note from="Developer" annotates="general" priority="2"/>
           <note from="Xliff Generator" annotates="general" priority="3">Table PS_EconomicMonitoringMatrix - Field SepStyleExpr - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1660684376 - Field 352274990 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Sort Concept</source>
+          <target state="needs-translation"/>
+          <note from="Developer" annotates="general" priority="2"/>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_EconomicMonitoringMatrix - Field SortConcept - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1660684376 - Field 209020094 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Sort Type</source>
+          <target state="needs-translation"/>
+          <note from="Developer" annotates="general" priority="2"/>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_EconomicMonitoringMatrix - Field SortType - Property Caption</note>
         </trans-unit>
         <trans-unit id="Table 1660684376 - Field 1878130204 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Type</source>
@@ -4539,29 +4557,23 @@
           <note from="Developer" annotates="general" priority="2"/>
           <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control December - Property Caption</note>
         </trans-unit>
-        <trans-unit id="Page 3769604473 - Control 3461834954 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Description</source>
-          <target state="translated">Descripción</target>
-          <note from="Developer" annotates="general" priority="2"/>
-          <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control Description - Property Caption</note>
-        </trans-unit>
         <trans-unit id="Page 3769604473 - Control 1211292400 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>February</source>
           <target state="translated">Febrero</target>
           <note from="Developer" annotates="general" priority="2"/>
           <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control February - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 3769604473 - Control 3589778539 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Level</source>
+          <target state="needs-translation"/>
+          <note from="Developer" annotates="general" priority="2"/>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control HierarchyLevel - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 3769604473 - Control 1051135142 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>January</source>
           <target state="translated">Enero</target>
           <note from="Developer" annotates="general" priority="2"/>
           <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control January - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3769604473 - Control 1908272084 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Job No.</source>
-          <target state="translated">Proyecto No.</target>
-          <note from="Developer" annotates="general" priority="2"/>
-          <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control Job No. - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 3769604473 - Control 3896244062 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>July</source>
@@ -4604,6 +4616,12 @@
           <target state="translated">Probabilidad</target>
           <note from="Developer" annotates="general" priority="2"/>
           <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control Probability - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3769604473 - Control 3190122413 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Project &amp; Description</source>
+          <target state="needs-translation"/>
+          <note from="Developer" annotates="general" priority="2"/>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control ProjectInfo - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 3769604473 - Control 1594031793 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>September</source>
@@ -4653,17 +4671,11 @@
           <note from="Developer" annotates="general" priority="2"/>
           <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Action Update - Property Caption</note>
         </trans-unit>
-        <trans-unit id="Page 3769604473 - Action 3383493608 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Process</source>
-          <target state="translated">Proceso</target>
-          <note from="Developer" annotates="general" priority="2">Generated from the PromotedActionCategories property index 1.</note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Action Category_Process - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Page 3769604473 - Action 3162358218 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Post/Print</source>
-          <target state="translated">Publicar/imprimir</target>
-          <note from="Developer" annotates="general" priority="2">Generated from the PromotedActionCategories property index 8.</note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Action Category_Category9 - Property Caption</note>
+        <trans-unit id="Page 3769604473 - Action 1385561196 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Actualizar cierres</source>
+          <target state="needs-translation"/>
+          <note from="Developer" annotates="general" priority="2"/>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Action UpdateClosedMonths - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 1126184009 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Job Ledger Entry Payroll Costs</source>

@@ -95,20 +95,6 @@ page 50731 "PS_EconomicMonitoring"
                     Caption = 'Project & Description';
                     Editable = false;
                     StyleExpr = ProjectStyleExpr;
-
-                    trigger OnDrillDown()
-                    begin
-                        // Capturar valor actual antes de abrir BC
-                        CurrentDrillDownMonth := 01;
-                        CurrentDrillDownJobNo := Rec."Job No.";
-                        LastBCValue := Rec."JanImport";
-
-                        // Abrir página de BC
-                        JobPlanningLines(01, YearFilter);
-
-                        // Sincronizar al regresar
-                        SyncMonthValueAfterDrillDown(01, Rec."Job No.");
-                    end;
                 }
 
                 field("Probability"; FormattedProbability)
@@ -142,13 +128,15 @@ page 50731 "PS_EconomicMonitoring"
                         // Capturar valor actual antes de abrir BC
                         CurrentDrillDownMonth := 01;
                         CurrentDrillDownJobNo := Rec."Job No.";
+                        CurrentDrillDownConcept := Rec.Concept;
+                        CurrentDrillDownType := Rec.Type;
                         LastBCValue := Rec."JanImport";
 
                         // Abrir página de BC
                         JobPlanningLines(01, YearFilter);
 
                         // Sincronizar al regresar
-                        SyncMonthValueAfterDrillDown(01, Rec."Job No.");
+                        SyncMonthValueAfterDrillDown(01, Rec."Job No.", Rec.Concept, Rec.Type);
                     end;
                 }
                 field("February"; Rec."FebImport")
@@ -163,13 +151,15 @@ page 50731 "PS_EconomicMonitoring"
                         // Capturar valor actual antes de abrir BC
                         CurrentDrillDownMonth := 02;
                         CurrentDrillDownJobNo := Rec."Job No.";
+                        CurrentDrillDownConcept := Rec.Concept;
+                        CurrentDrillDownType := Rec.Type;
                         LastBCValue := Rec."FebImport";
 
                         // Abrir página de BC
                         JobPlanningLines(02, YearFilter);
 
                         // Sincronizar al regresar
-                        SyncMonthValueAfterDrillDown(02, Rec."Job No.");
+                        SyncMonthValueAfterDrillDown(02, Rec."Job No.", Rec.Concept, Rec.Type);
                     end;
                 }
                 field("March"; Rec."MarImport")
@@ -184,13 +174,15 @@ page 50731 "PS_EconomicMonitoring"
                         // Capturar valor actual antes de abrir BC
                         CurrentDrillDownMonth := 03;
                         CurrentDrillDownJobNo := Rec."Job No.";
+                        CurrentDrillDownConcept := Rec.Concept;
+                        CurrentDrillDownType := Rec.Type;
                         LastBCValue := Rec."MarImport";
 
                         // Abrir página de BC
                         JobPlanningLines(03, YearFilter);
 
                         // Sincronizar al regresar
-                        SyncMonthValueAfterDrillDown(03, Rec."Job No.");
+                        SyncMonthValueAfterDrillDown(03, Rec."Job No.", Rec.Concept, Rec.Type);
                     end;
                 }
                 field("April"; Rec."AprImport")
@@ -205,13 +197,15 @@ page 50731 "PS_EconomicMonitoring"
                         // Capturar valor actual antes de abrir BC
                         CurrentDrillDownMonth := 04;
                         CurrentDrillDownJobNo := Rec."Job No.";
+                        CurrentDrillDownConcept := Rec.Concept;
+                        CurrentDrillDownType := Rec.Type;
                         LastBCValue := Rec."AprImport";
 
                         // Abrir página de BC
                         JobPlanningLines(04, YearFilter);
 
                         // Sincronizar al regresar
-                        SyncMonthValueAfterDrillDown(04, Rec."Job No.");
+                        SyncMonthValueAfterDrillDown(04, Rec."Job No.", Rec.Concept, Rec.Type);
                     end;
                 }
                 field("May"; Rec."MayImport")
@@ -226,13 +220,15 @@ page 50731 "PS_EconomicMonitoring"
                         // Capturar valor actual antes de abrir BC
                         CurrentDrillDownMonth := 05;
                         CurrentDrillDownJobNo := Rec."Job No.";
+                        CurrentDrillDownConcept := Rec.Concept;
+                        CurrentDrillDownType := Rec.Type;
                         LastBCValue := Rec."MayImport";
 
                         // Abrir página de BC
                         JobPlanningLines(05, YearFilter);
 
                         // Sincronizar al regresar
-                        SyncMonthValueAfterDrillDown(05, Rec."Job No.");
+                        SyncMonthValueAfterDrillDown(05, Rec."Job No.", Rec.Concept, Rec.Type);
                     end;
                 }
                 field("June"; Rec."JunImport")
@@ -247,13 +243,15 @@ page 50731 "PS_EconomicMonitoring"
                         // Capturar valor actual antes de abrir BC
                         CurrentDrillDownMonth := 06;
                         CurrentDrillDownJobNo := Rec."Job No.";
+                        CurrentDrillDownConcept := Rec.Concept;
+                        CurrentDrillDownType := Rec.Type;
                         LastBCValue := Rec."JunImport";
 
                         // Abrir página de BC
                         JobPlanningLines(06, YearFilter);
 
                         // Sincronizar al regresar
-                        SyncMonthValueAfterDrillDown(06, Rec."Job No.");
+                        SyncMonthValueAfterDrillDown(06, Rec."Job No.", Rec.Concept, Rec.Type);
                     end;
                 }
                 field("July"; Rec."JulImport")
@@ -268,13 +266,15 @@ page 50731 "PS_EconomicMonitoring"
                         // Capturar valor actual antes de abrir BC
                         CurrentDrillDownMonth := 07;
                         CurrentDrillDownJobNo := Rec."Job No.";
+                        CurrentDrillDownConcept := Rec.Concept;
+                        CurrentDrillDownType := Rec.Type;
                         LastBCValue := Rec."JulImport";
 
                         // Abrir página de BC
                         JobPlanningLines(07, YearFilter);
 
                         // Sincronizar al regresar
-                        SyncMonthValueAfterDrillDown(07, Rec."Job No.");
+                        SyncMonthValueAfterDrillDown(07, Rec."Job No.", Rec.Concept, Rec.Type);
                     end;
                 }
                 field("August"; Rec."AugImport")
@@ -289,13 +289,15 @@ page 50731 "PS_EconomicMonitoring"
                         // Capturar valor actual antes de abrir BC
                         CurrentDrillDownMonth := 08;
                         CurrentDrillDownJobNo := Rec."Job No.";
+                        CurrentDrillDownConcept := Rec.Concept;
+                        CurrentDrillDownType := Rec.Type;
                         LastBCValue := Rec."AugImport";
 
                         // Abrir página de BC
                         JobPlanningLines(08, YearFilter);
 
                         // Sincronizar al regresar
-                        SyncMonthValueAfterDrillDown(08, Rec."Job No.");
+                        SyncMonthValueAfterDrillDown(08, Rec."Job No.", Rec.Concept, Rec.Type);
                     end;
                 }
                 field("September"; Rec."SepImport")
@@ -310,13 +312,15 @@ page 50731 "PS_EconomicMonitoring"
                         // Capturar valor actual antes de abrir BC
                         CurrentDrillDownMonth := 09;
                         CurrentDrillDownJobNo := Rec."Job No.";
+                        CurrentDrillDownConcept := Rec.Concept;
+                        CurrentDrillDownType := Rec.Type;
                         LastBCValue := Rec."SepImport";
 
                         // Abrir página de BC
                         JobPlanningLines(09, YearFilter);
 
                         // Sincronizar al regresar
-                        SyncMonthValueAfterDrillDown(09, Rec."Job No.");
+                        SyncMonthValueAfterDrillDown(09, Rec."Job No.", Rec.Concept, Rec.Type);
                     end;
                 }
                 field("October"; Rec."OctImport")
@@ -331,13 +335,15 @@ page 50731 "PS_EconomicMonitoring"
                         // Capturar valor actual antes de abrir BC
                         CurrentDrillDownMonth := 10;
                         CurrentDrillDownJobNo := Rec."Job No.";
+                        CurrentDrillDownConcept := Rec.Concept;
+                        CurrentDrillDownType := Rec.Type;
                         LastBCValue := Rec."OctImport";
 
                         // Abrir página de BC
                         JobPlanningLines(10, YearFilter);
 
                         // Sincronizar al regresar
-                        SyncMonthValueAfterDrillDown(10, Rec."Job No.");
+                        SyncMonthValueAfterDrillDown(10, Rec."Job No.", Rec.Concept, Rec.Type);
                     end;
                 }
                 field("November"; Rec."NovImport")
@@ -352,13 +358,15 @@ page 50731 "PS_EconomicMonitoring"
                         // Capturar valor actual antes de abrir BC
                         CurrentDrillDownMonth := 11;
                         CurrentDrillDownJobNo := Rec."Job No.";
+                        CurrentDrillDownConcept := Rec.Concept;
+                        CurrentDrillDownType := Rec.Type;
                         LastBCValue := Rec."NovImport";
 
                         // Abrir página de BC
                         JobPlanningLines(11, YearFilter);
 
                         // Sincronizar al regresar
-                        SyncMonthValueAfterDrillDown(11, Rec."Job No.");
+                        SyncMonthValueAfterDrillDown(11, Rec."Job No.", Rec.Concept, Rec.Type);
                     end;
                 }
                 field("December"; Rec."DecImport")
@@ -373,13 +381,15 @@ page 50731 "PS_EconomicMonitoring"
                         // Capturar valor actual antes de abrir BC
                         CurrentDrillDownMonth := 12;
                         CurrentDrillDownJobNo := Rec."Job No.";
+                        CurrentDrillDownConcept := Rec.Concept;
+                        CurrentDrillDownType := Rec.Type;
                         LastBCValue := Rec."DecImport";
 
                         // Abrir página de BC
                         JobPlanningLines(12, YearFilter);
 
                         // Sincronizar al regresar
-                        SyncMonthValueAfterDrillDown(12, Rec."Job No.");
+                        SyncMonthValueAfterDrillDown(12, Rec."Job No.", Rec.Concept, Rec.Type);
                     end;
                 }
             }
@@ -477,6 +487,8 @@ page 50731 "PS_EconomicMonitoring"
         // Variables para sincronización BC ↔ Tabla Temporal
         CurrentDrillDownMonth: Integer;
         CurrentDrillDownJobNo: Code[20];
+        CurrentDrillDownConcept: Option;
+        CurrentDrillDownType: Enum "PS_JobTypeEnum";
         LastBCValue: Decimal;
 
     Procedure SetYear(Year: Integer; Departament: Code[20])
@@ -1549,7 +1561,7 @@ page 50731 "PS_EconomicMonitoring"
         exit(Rec."Job No." + ' - ' + Rec.Description);
     end;
 
-    local procedure SyncMonthValueAfterDrillDown(Month: Integer; JobNo: Code[20])
+    local procedure SyncMonthValueAfterDrillDown(Month: Integer; JobNo: Code[20]; Concept: Option; Type: Option)
     var
         JobPlanningLine: Record "Job Planning Line";
         FirstDay: Date;
@@ -1574,38 +1586,39 @@ page 50731 "PS_EconomicMonitoring"
         if BCValue <> LastBCValue then begin
             savedView := Rec.GetView();
             Rec.Reset();
+            // Buscar solo la línea específica por Job No., Concept, Type y Year
             Rec.SetRange("Job No.", JobNo);
+            Rec.SetRange(Concept, Concept);
+            Rec.SetRange(Type, Type);
             Rec.SetRange(Year, YearFilter);
-            if Rec.FindSet() then begin
-                repeat
-                    case Month of
-                        1:
-                            Rec."JanImport" := BCValue;
-                        2:
-                            Rec."FebImport" := BCValue;
-                        3:
-                            Rec."MarImport" := BCValue;
-                        4:
-                            Rec."AprImport" := BCValue;
-                        5:
-                            Rec."MayImport" := BCValue;
-                        6:
-                            Rec."JunImport" := BCValue;
-                        7:
-                            Rec."JulImport" := BCValue;
-                        8:
-                            Rec."AugImport" := BCValue;
-                        9:
-                            Rec."SepImport" := BCValue;
-                        10:
-                            Rec."OctImport" := BCValue;
-                        11:
-                            Rec."NovImport" := BCValue;
-                        12:
-                            Rec."DecImport" := BCValue;
-                    end;
-                    Rec.Modify(false);
-                until Rec.Next() = 0;
+            if Rec.FindFirst() then begin
+                case Month of
+                    1:
+                        Rec."JanImport" := BCValue;
+                    2:
+                        Rec."FebImport" := BCValue;
+                    3:
+                        Rec."MarImport" := BCValue;
+                    4:
+                        Rec."AprImport" := BCValue;
+                    5:
+                        Rec."MayImport" := BCValue;
+                    6:
+                        Rec."JunImport" := BCValue;
+                    7:
+                        Rec."JulImport" := BCValue;
+                    8:
+                        Rec."AugImport" := BCValue;
+                    9:
+                        Rec."SepImport" := BCValue;
+                    10:
+                        Rec."OctImport" := BCValue;
+                    11:
+                        Rec."NovImport" := BCValue;
+                    12:
+                        Rec."DecImport" := BCValue;
+                end;
+                Rec.Modify(false);
             end;
             Rec.SetView(savedView);
             CurrPage.Update(false);
