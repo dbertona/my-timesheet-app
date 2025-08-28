@@ -1645,6 +1645,11 @@ page 50731 "PS_EconomicMonitoring"
     begin
         // Obtener valor de BC para un mes específico
         GetMonthDateRange(Month, YearFilter, FirstDay, LastDay);
+
+        // Debug: Verificar fechas calculadas
+        Message('Debug Fechas:\nMes solicitado: %1\nPrimer día: %2\nÚltimo día: %3',
+            Month, FirstDay, LastDay);
+
         JobPlanningLine.SetRange("Job No.", JobNo);
         JobPlanningLine.SetRange("Planning Date", FirstDay, LastDay);
 
@@ -1681,8 +1686,28 @@ page 50731 "PS_EconomicMonitoring"
         LineCount := 0;
         if JobPlanningLine.FindSet() then begin
             repeat
-                MonthValue += JobPlanningLine."Line Amount (LCY)";
+                // Usar el campo correcto según el concepto
+                case Concept of
+                    Rec.Concept::Labour:
+                        // Para mano de obra, usar Total Cost (LCY)
+                        MonthValue += JobPlanningLine."Total Cost (LCY)";
+                    Rec.Concept::Cost:
+                        // Para costos, usar Total Cost (LCY)
+                        MonthValue += JobPlanningLine."Total Cost (LCY)";
+                    else
+                        // Para otros conceptos (Invoice, A), usar Line Amount (LCY)
+                        MonthValue += JobPlanningLine."Line Amount (LCY)";
+                end;
+                
                 LineCount += 1;
+
+                // Debug detallado de cada línea encontrada
+                if LineCount = 1 then begin
+                    Message('Debug Línea %1:\nJob No.: %2\nLine Type: %3\nLine Amount (LCY): %4\nTotal Cost (LCY): %5\nPlanning Date: %6\nDescription: %7',
+                        LineCount, JobPlanningLine."Job No.", JobPlanningLine."Line Type",
+                        JobPlanningLine."Line Amount (LCY)", JobPlanningLine."Total Cost (LCY)", 
+                        JobPlanningLine."Planning Date", JobPlanningLine.Description);
+                end;
             until JobPlanningLine.Next() = 0;
         end;
 
