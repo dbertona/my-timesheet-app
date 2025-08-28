@@ -367,6 +367,7 @@ page 50731 "PS_EconomicMonitoring"
         IsClosed: Boolean;
         FormattedProbability: Text[10];
 
+
     Procedure SetYear(Year: Integer; Departament: Code[20])
     begin
         YearFilter := Year;
@@ -384,6 +385,7 @@ page 50731 "PS_EconomicMonitoring"
         Visible10 := false;
         Visible11 := false;
         Visible12 := false;
+
         IsMonthOpen();
         Rec.DeleteAll();
         RecordCount := 0;
@@ -526,7 +528,7 @@ page 50731 "PS_EconomicMonitoring"
                     JobOrigenData.SetRange("Job No.", CurrentJobNo);
                     JobOrigenData.SetRange("Planning Date", FirstDayOfMonth, LastDayOfMonth);
                     JobOrigenData.SetRange("Line Type", JobOrigenData."Line Type"::Billable);
-                    JobOrigenData.SetLoadFields("Job No.", "Line Amount (LCY)");
+
                     if JobOrigenData.FindSet(false) then begin
                         repeat
                             JobRec.Get(CurrentJobNo);
@@ -604,7 +606,7 @@ page 50731 "PS_EconomicMonitoring"
                     JobOrigenData.SetRange("Job No.", CurrentJobNo);
                     JobOrigenData.SetRange("Planning Date", FirstDayOfMonth, LastDayOfMonth);
                     JobOrigenData.SetRange("Line Type", JobOrigenData."Line Type"::Budget);
-                    JobOrigenData.SetLoadFields("Job No.", "Total Cost (LCY)", Type);
+
                     if JobOrigenData.FindSet(false) then begin
                         repeat
                             JobRec.Get(CurrentJobNo);
@@ -698,7 +700,7 @@ page 50731 "PS_EconomicMonitoring"
                     JobOrigenData.SetRange("Job No.", CurrentJobNo);
                     JobOrigenData.SetRange("Document Date", FirstDayOfMonth, LastDayOfMonth);
                     JobOrigenData.SetRange("Entry Type", JobOrigenData."Entry Type"::Sale);
-                    JobOrigenData.SetLoadFields("Job No.", "Line Amount (LCY)");
+
                     if JobOrigenData.FindSet(false) then begin
                         repeat
                             JobRec.Get(CurrentJobNo);
