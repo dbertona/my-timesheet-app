@@ -9,6 +9,7 @@ page 50731 "PS_EconomicMonitoring"
     UsageCategory = Lists;
     SourceTable = "PS_EconomicMonitoringMatrix";
     SourceTableView = SORTING("Probability", "Job No.", Concept, Type) ORDER(DESCENDING);
+    SourceTableTemporary = true;
 
     layout
     {
@@ -25,7 +26,7 @@ page 50731 "PS_EconomicMonitoring"
                 Visible = true;
                 trigger OnValidate()
                 begin
-                    PS_EconomicMonitoringMatrix.DeleteAll();
+                    Rec.DeleteAll();
                     CurrPage.Update(false)
                 end;
             }
@@ -55,7 +56,7 @@ page 50731 "PS_EconomicMonitoring"
                         end;
                         CurrPage.Update(false); // ✅ Forza la actualización de la UI
                         CurrPage.SaveRecord(); // ✅ Guarda los cambios en la página
-                        PS_EconomicMonitoringMatrix.DeleteAll();
+                        Rec.DeleteAll();
                         CurrPage.Update(false);
                         SetYear(YearFilter, DepartamentFilter);
                     end;
@@ -341,7 +342,6 @@ page 50731 "PS_EconomicMonitoring"
         DepartamentFilter: Code[20];
         PS_UniqueJobPlanningRec: Record "PS_UniqueJobPlanningMatriz";
         SelectedDepartment: Code[20];
-        PS_EconomicMonitoringMatrix: Record "PS_EconomicMonitoringMatrix";
         UserDepartment: Code[10];
         NumOfRecords: Integer;
         RecordCount: Integer;
@@ -371,8 +371,22 @@ page 50731 "PS_EconomicMonitoring"
     begin
         YearFilter := Year;
         DepartamentFilter := Departament;
+        // Reiniciar flags de visibilidad antes de recalcular
+        Visible1 := false;
+        Visible2 := false;
+        Visible3 := false;
+        Visible4 := false;
+        Visible5 := false;
+        Visible6 := false;
+        Visible7 := false;
+        Visible8 := false;
+        Visible9 := false;
+        Visible10 := false;
+        Visible11 := false;
+        Visible12 := false;
         IsMonthOpen();
-        PS_EconomicMonitoringMatrix.DeleteAll();
+        Rec.DeleteAll();
+        RecordCount := 0;
         Progress.OPEN(ProgressMsg, RecordCount);
         PopulateMatrixInvoice();
         PopulateMatrixExpediente();
@@ -380,17 +394,15 @@ page 50731 "PS_EconomicMonitoring"
         PopulateMatrixRealInvoice();
         PopulateMatrixRealCost();
         PopulateMatrixRealCostLabour();
-        CurrPage.SetRecord(PS_EconomicMonitoringMatrix);
         CurrPage.Update(false); // Refrescar el ListPart para que muestre los datos actualizados
         SetClosedMonthsInMatrix();
-        CurrPage.SetRecord(PS_EconomicMonitoringMatrix);
+        Progress.CLOSE();
         CurrPage.Update(false);
     end;
 
     procedure PopulateMatrixExpediente();
     var
 
-        PS_EconomicMonitoringMatrix: Record "PS_EconomicMonitoringMatrix";
         PS_MonthClosingRec: Record "PS_MonthClosing";
         JobOrigenData: Record "ARBVRNJobUnitPlanning";
         JobRec: Record "Job";
@@ -419,7 +431,7 @@ page 50731 "PS_EconomicMonitoring"
             PS_MonthClosingRec.SetRange(PS_GlobalDimension1Code, DepartamentFilter);
         if not SinProjectTeamfilter THEN
             PS_MonthClosingRec.SetFilter(PS_JobNo, Filter);
-        if PS_MonthClosingRec.FindSet() then begin
+        if PS_MonthClosingRec.FindSet(false) then begin
             repeat
                 IsClosed := PS_MonthClosingRec.PS_Status = PS_MonthClosingRec.PS_Status::Close;
                 CurrentJobNo := PS_MonthClosingRec."PS_JobNo";
@@ -432,24 +444,25 @@ page 50731 "PS_EconomicMonitoring"
                 if JobRec.Get(CurrentJobNo) then begin
                     Probability := GetProbabilityFromJob(JobRec);
                     if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
-                        EnsureMatrixLine(PS_EconomicMonitoringMatrix, CurrentJobNo, YearFilter, PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, 1, JobRec.Description, IsClosed, JobRec."PS_% Probability");
+                        EnsureMatrixLine(Rec, CurrentJobNo, YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, JobRec."PS_% Probability");
                     end;
                 end;
                 JobOrigenData.SetRange("ARBVRNJobNo", CurrentJobNo);
                 JobOrigenData.SetRange("ARBVRNPlanningDate", FirstDayOfMonth, LastDayOfMonth);
                 JobOrigenData.SetRange("ARBVRNReal", FALSE);
                 RecordCount := RecordCount + 1;
-                Progress.Update(1, RecordCount);
+                if (RecordCount mod 100) = 0 then
+                    Progress.Update(1, RecordCount);
                 if JobOrigenData.FindSet() then begin
                     repeat
                         JobRec.Get(CurrentJobNo);
                         IF JobOrigenData.ARBVRNCertificationAmount <> 0 THEN BEGIN
                             if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
-                                EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."ARBVRNJobNo", YearFilter, PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, 1, JobRec.Description, IsClosed, Probability);
-                                EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."ARBVRNJobNo", YearFilter, PS_EconomicMonitoringMatrix.Concept::Invoice, PS_EconomicMonitoringMatrix.Type::A, 2, JobRec.Description, IsClosed, Probability);
-                                EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."ARBVRNJobNo", YearFilter, PS_EconomicMonitoringMatrix.Concept::Invoice, PS_EconomicMonitoringMatrix.Type::P, 3, JobRec.Description, IsClosed, Probability);
-                                UpdateMatrixMonthValue(PS_EconomicMonitoringMatrix, LocalMonth, JobOrigenData.ARBVRNCertificationAmount);
-                                PS_EconomicMonitoringMatrix.Modify(); // Guardar los cambios en el registro temporal
+                                EnsureMatrixLine(Rec, JobOrigenData."ARBVRNJobNo", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                                EnsureMatrixLine(Rec, JobOrigenData."ARBVRNJobNo", YearFilter, Rec.Concept::Invoice, Rec.Type::A, 2, JobRec.Description, IsClosed, Probability);
+                                EnsureMatrixLine(Rec, JobOrigenData."ARBVRNJobNo", YearFilter, Rec.Concept::Invoice, Rec.Type::P, 3, JobRec.Description, IsClosed, Probability);
+                                UpdateMatrixMonthValue(Rec, LocalMonth, JobOrigenData.ARBVRNCertificationAmount);
+                                Rec.Modify(false); // Guardar los cambios en el buffer temporal
                             END
                         end;
                     until JobOrigenData.Next() = 0;
@@ -489,19 +502,20 @@ page 50731 "PS_EconomicMonitoring"
             PS_MonthClosingRec.SetRange(PS_GlobalDimension1Code, DepartamentFilter);
         if not SinProjectTeamfilter THEN
             PS_MonthClosingRec.SetFilter(PS_JobNo, Filter);
-        if PS_MonthClosingRec.FindSet() then begin
+        if PS_MonthClosingRec.FindSet(false) then begin
             repeat
                 IsClosed := PS_MonthClosingRec.PS_Status = PS_MonthClosingRec.PS_Status::Close;
                 RecordCount := RecordCount + 1;
-                Progress.Update(1, RecordCount);
+                if (RecordCount mod 100) = 0 then
+                    Progress.Update(1, RecordCount);
                 CurrentJobNo := PS_MonthClosingRec."PS_JobNo";
                 LocalMonthStr := PS_MonthClosingRec."PS_Month";
                 LocalYearStr := PS_MonthClosingRec."PS_Year";
                 if JobRec.Get(CurrentJobNo) then begin
                     Probability := GetProbabilityFromJob(JobRec);
                     if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
-                        if not PS_EconomicMonitoringMatrix.Get(PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, CurrentJobNo, YearFilter) then begin
-                            EnsureMatrixLine(PS_EconomicMonitoringMatrix, CurrentJobNo, YearFilter, PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                        if not Rec.Get(Rec.Concept::A, Rec.Type::A, CurrentJobNo, YearFilter) then begin
+                            EnsureMatrixLine(Rec, CurrentJobNo, YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
                         end;
                     end;
                 end;
@@ -513,17 +527,18 @@ page 50731 "PS_EconomicMonitoring"
                     JobOrigenData.SetRange("Job No.", CurrentJobNo);
                     JobOrigenData.SetRange("Planning Date", FirstDayOfMonth, LastDayOfMonth);
                     JobOrigenData.SetRange("Line Type", JobOrigenData."Line Type"::Billable);
-                    if JobOrigenData.FindSet() then begin
+                    JobOrigenData.SetLoadFields("Job No.", "Line Amount (LCY)");
+                    if JobOrigenData.FindSet(false) then begin
                         repeat
                             JobRec.Get(CurrentJobNo);
                             IF JobOrigenData."Line Amount (LCY)" <> 0 THEN BEGIN
                                 Probability := GetProbabilityFromJob(JobRec);
                                 if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, 1, JobRec.Description, IsClosed, Probability);
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, PS_EconomicMonitoringMatrix.Concept::Invoice, PS_EconomicMonitoringMatrix.Type::A, 2, JobRec.Description, IsClosed, Probability);
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, PS_EconomicMonitoringMatrix.Concept::Invoice, PS_EconomicMonitoringMatrix.Type::P, 3, JobRec.Description, IsClosed, Probability);
-                                    UpdateMatrixMonthValue(PS_EconomicMonitoringMatrix, LocalMonth, (JobOrigenData."Line Amount (LCY)" * Probability) / 100);
-                                    PS_EconomicMonitoringMatrix.Modify();
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Invoice, Rec.Type::A, 2, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Invoice, Rec.Type::P, 3, JobRec.Description, IsClosed, Probability);
+                                    UpdateMatrixMonthValue(Rec, LocalMonth, (JobOrigenData."Line Amount (LCY)" * Probability) / 100);
+                                    Rec.Modify(false);
                                 end;
                             end;
                         until JobOrigenData.Next() = 0;
@@ -565,19 +580,20 @@ page 50731 "PS_EconomicMonitoring"
             PS_MonthClosingRec.SetRange(PS_GlobalDimension1Code, DepartamentFilter);
         if not SinProjectTeamfilter THEN
             PS_MonthClosingRec.SetFilter(PS_JobNo, Filter);
-        if PS_MonthClosingRec.FindSet() then begin
+        if PS_MonthClosingRec.FindSet(false) then begin
             repeat
                 IsClosed := PS_MonthClosingRec.PS_Status = PS_MonthClosingRec.PS_Status::Close;
                 RecordCount := RecordCount + 1;
-                Progress.Update(1, RecordCount);
+                if (RecordCount mod 100) = 0 then
+                    Progress.Update(1, RecordCount);
                 CurrentJobNo := PS_MonthClosingRec."PS_JobNo";
                 LocalMonthStr := PS_MonthClosingRec."PS_Month";
                 LocalYearStr := PS_MonthClosingRec."PS_Year";
                 if JobRec.Get(CurrentJobNo) then begin
                     Probability := GetProbabilityFromJob(JobRec);
                     if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
-                        if not PS_EconomicMonitoringMatrix.Get(PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, CurrentJobNo, YearFilter) then begin
-                            EnsureMatrixLine(PS_EconomicMonitoringMatrix, CurrentJobNo, YearFilter, PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                        if not Rec.Get(Rec.Concept::A, Rec.Type::A, CurrentJobNo, YearFilter) then begin
+                            EnsureMatrixLine(Rec, CurrentJobNo, YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
                         end;
                     end;
                 end;
@@ -589,28 +605,28 @@ page 50731 "PS_EconomicMonitoring"
                     JobOrigenData.SetRange("Job No.", CurrentJobNo);
                     JobOrigenData.SetRange("Planning Date", FirstDayOfMonth, LastDayOfMonth);
                     JobOrigenData.SetRange("Line Type", JobOrigenData."Line Type"::Budget);
-                    if JobOrigenData.FindSet() then begin
+                    JobOrigenData.SetLoadFields("Job No.", "Total Cost (LCY)", Type);
+                    if JobOrigenData.FindSet(false) then begin
                         repeat
                             JobRec.Get(CurrentJobNo);
                             IF JobOrigenData."Total Cost (LCY)" <> 0 THEN BEGIN
                                 Probability := GetProbabilityFromJob(JobRec);
                                 if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
-                                    PS_EconomicMonitoringMatrix.Init();
                                     if JobOrigenData.Type = JobOrigenData.Type::Resource then begin
-                                        ConceptValue := PS_EconomicMonitoringMatrix.Concept::Labour;
+                                        ConceptValue := Rec.Concept::Labour;
                                     end
                                     else begin
-                                        ConceptValue := PS_EconomicMonitoringMatrix.Concept::Cost;
+                                        ConceptValue := Rec.Concept::Cost;
                                     end;
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, 1, JobRec.Description, IsClosed, Probability);
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, ConceptValue, PS_EconomicMonitoringMatrix.Type::A, 2, JobRec.Description, IsClosed, Probability);
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, ConceptValue, PS_EconomicMonitoringMatrix.Type::P, 3, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, ConceptValue, Rec.Type::A, 2, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, ConceptValue, Rec.Type::P, 3, JobRec.Description, IsClosed, Probability);
                                     UpdateMatrixMonthValue(
-                                        PS_EconomicMonitoringMatrix,
+                                        Rec,
                                         LocalMonth,
                                         (JobOrigenData."Total Cost (LCY)" * Probability) / 100
                                     );
-                                    PS_EconomicMonitoringMatrix.Modify();
+                                    Rec.Modify(false);
                                 end;
                             end;
 
@@ -657,11 +673,12 @@ page 50731 "PS_EconomicMonitoring"
             PS_MonthClosingRec.SetRange(PS_GlobalDimension1Code, DepartamentFilter);
         if not SinProjectTeamfilter THEN
             PS_MonthClosingRec.SetFilter(PS_JobNo, Filter);
-        if PS_MonthClosingRec.FindSet() then begin
+        if PS_MonthClosingRec.FindSet(false) then begin
             repeat
                 IsClosed := PS_MonthClosingRec.PS_Status = PS_MonthClosingRec.PS_Status::Close;
                 RecordCount := RecordCount + 1;
-                Progress.Update(1, RecordCount);
+                if (RecordCount mod 100) = 0 then
+                    Progress.Update(1, RecordCount);
                 CurrentJobNo := PS_MonthClosingRec."PS_JobNo";
                 LocalMonthStr := PS_MonthClosingRec."PS_Month";
                 LocalYearStr := PS_MonthClosingRec."PS_Year";
@@ -669,8 +686,8 @@ page 50731 "PS_EconomicMonitoring"
                 if JobRec.Get(CurrentJobNo) then begin
                     Probability := GetProbabilityFromJob(JobRec);
                     if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
-                        if not PS_EconomicMonitoringMatrix.Get(PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, CurrentJobNo, YearFilter) then begin
-                            EnsureMatrixLine(PS_EconomicMonitoringMatrix, CurrentJobNo, YearFilter, PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                        if not Rec.Get(Rec.Concept::A, Rec.Type::A, CurrentJobNo, YearFilter) then begin
+                            EnsureMatrixLine(Rec, CurrentJobNo, YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
                         end;
                     end;
                 end;
@@ -682,17 +699,18 @@ page 50731 "PS_EconomicMonitoring"
                     JobOrigenData.SetRange("Job No.", CurrentJobNo);
                     JobOrigenData.SetRange("Document Date", FirstDayOfMonth, LastDayOfMonth);
                     JobOrigenData.SetRange("Entry Type", JobOrigenData."Entry Type"::Sale);
-                    if JobOrigenData.FindSet() then begin
+                    JobOrigenData.SetLoadFields("Job No.", "Line Amount (LCY)");
+                    if JobOrigenData.FindSet(false) then begin
                         repeat
                             JobRec.Get(CurrentJobNo);
                             Probability := GetProbabilityFromJob(JobRec);
                             IF JobOrigenData."Line Amount (LCY)" <> 0 THEN BEGIN
                                 if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, 1, JobRec.Description, IsClosed, Probability);
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, PS_EconomicMonitoringMatrix.Concept::Invoice, PS_EconomicMonitoringMatrix.Type::A, 2, JobRec.Description, IsClosed, Probability);
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, PS_EconomicMonitoringMatrix.Concept::Invoice, PS_EconomicMonitoringMatrix.Type::R, 3, JobRec.Description, IsClosed, Probability);
-                                    UpdateMatrixMonthValue(PS_EconomicMonitoringMatrix, LocalMonth, JobOrigenData."Line Amount (LCY)" * -1);
-                                    PS_EconomicMonitoringMatrix.Modify();
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Invoice, Rec.Type::A, 2, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Invoice, Rec.Type::R, 3, JobRec.Description, IsClosed, Probability);
+                                    UpdateMatrixMonthValue(Rec, LocalMonth, JobOrigenData."Line Amount (LCY)" * -1);
+                                    Rec.Modify(false);
                                 end;
                             end;
                         until JobOrigenData.Next() = 0;
@@ -735,19 +753,20 @@ page 50731 "PS_EconomicMonitoring"
             PS_MonthClosingRec.SetRange(PS_GlobalDimension1Code, DepartamentFilter);
         if not SinProjectTeamfilter THEN
             PS_MonthClosingRec.SetFilter(PS_JobNo, Filter);
-        if PS_MonthClosingRec.FindSet() then begin
+        if PS_MonthClosingRec.FindSet(false) then begin
             repeat
                 IsClosed := PS_MonthClosingRec.PS_Status = PS_MonthClosingRec.PS_Status::Close;
                 RecordCount := RecordCount + 1;
-                Progress.Update(1, RecordCount);
+                if (RecordCount mod 100) = 0 then
+                    Progress.Update(1, RecordCount);
                 CurrentJobNo := PS_MonthClosingRec."PS_JobNo";
                 LocalMonthStr := PS_MonthClosingRec."PS_Month";
                 LocalYearStr := PS_MonthClosingRec."PS_Year";
                 if JobRec.Get(CurrentJobNo) then begin
                     Probability := GetProbabilityFromJob(JobRec);
                     if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
-                        if not PS_EconomicMonitoringMatrix.Get(PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, CurrentJobNo, YearFilter) then begin
-                            EnsureMatrixLine(PS_EconomicMonitoringMatrix, CurrentJobNo, YearFilter, PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                        if not Rec.Get(Rec.Concept::A, Rec.Type::A, CurrentJobNo, YearFilter) then begin
+                            EnsureMatrixLine(Rec, CurrentJobNo, YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
                         end;
                     end;
                 end;
@@ -760,18 +779,18 @@ page 50731 "PS_EconomicMonitoring"
                     JobOrigenData.SetRange("Posting Date", FirstDayOfMonth, LastDayOfMonth);
                     JobOrigenData.SetRange("Entry Type", JobOrigenData."Entry Type"::Usage);
                     JobOrigenData.SetFilter("Type", '%1|%2', JobOrigenData."Type"::Item, JobOrigenData."Type"::"G/L Account");
-                    if JobOrigenData.FindSet() then begin
+                    JobOrigenData.SetLoadFields("Job No.", "Total Cost (LCY)");
+                    if JobOrigenData.FindSet(false) then begin
                         repeat
                             JobRec.Get(CurrentJobNo);
                             Probability := GetProbabilityFromJob(JobRec);
                             IF JobOrigenData."Total Cost (LCY)" <> 0 THEN BEGIN
                                 if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
-                                    PS_EconomicMonitoringMatrix.Init();
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, 1, JobRec.Description, IsClosed, Probability);
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, PS_EconomicMonitoringMatrix.Concept::Cost, PS_EconomicMonitoringMatrix.Type::A, 2, JobRec.Description, IsClosed, Probability);
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, PS_EconomicMonitoringMatrix.Concept::Cost, PS_EconomicMonitoringMatrix.Type::R, 3, JobRec.Description, IsClosed, Probability);
-                                    UpdateMatrixMonthValue(PS_EconomicMonitoringMatrix, LocalMonth, JobOrigenData."Total Cost (LCY)");
-                                    PS_EconomicMonitoringMatrix.Modify();
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Cost, Rec.Type::A, 2, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Cost, Rec.Type::R, 3, JobRec.Description, IsClosed, Probability);
+                                    UpdateMatrixMonthValue(Rec, LocalMonth, JobOrigenData."Total Cost (LCY)");
+                                    Rec.Modify(false);
                                 end;
                             end;
                         until JobOrigenData.Next() = 0;
@@ -820,15 +839,16 @@ page 50731 "PS_EconomicMonitoring"
             repeat
                 IsClosed := PS_MonthClosingRec.PS_Status = PS_MonthClosingRec.PS_Status::Close;
                 RecordCount := RecordCount + 1;
-                Progress.Update(1, RecordCount);
+                if (RecordCount mod 100) = 0 then
+                    Progress.Update(1, RecordCount);
                 CurrentJobNo := PS_MonthClosingRec."PS_JobNo";
                 LocalMonthStr := PS_MonthClosingRec."PS_Month";
                 LocalYearStr := PS_MonthClosingRec."PS_Year";
                 if JobRec.Get(CurrentJobNo) then begin
                     Probability := GetProbabilityFromJob(JobRec);
                     if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
-                        if not PS_EconomicMonitoringMatrix.Get(PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, CurrentJobNo, YearFilter) then begin
-                            EnsureMatrixLine(PS_EconomicMonitoringMatrix, CurrentJobNo, YearFilter, PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                        if not Rec.Get(Rec.Concept::A, Rec.Type::A, CurrentJobNo, YearFilter) then begin
+                            EnsureMatrixLine(Rec, CurrentJobNo, YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
                         end;
                     end;
                 end;
@@ -842,20 +862,19 @@ page 50731 "PS_EconomicMonitoring"
                     JobOrigenData.SetRange("ARBVRNTimesheetdate", FirstDayOfMonth, LastDayOfMonth);
                     JobOrigenData.SetRange("Entry Type", JobOrigenData."Entry Type"::Usage);
                     JobOrigenData.SetRange("Type", JobOrigenData."Type"::Resource);
-
-                    if JobOrigenData.FindSet() then begin
+                    JobOrigenData.SetLoadFields("Job No.", "Total Cost (LCY)");
+                    if JobOrigenData.FindSet(false) then begin
                         repeat
                             JobRec.Get(CurrentJobNo);
                             IF JobOrigenData."Total Cost (LCY)" <> 0 THEN BEGIN
                                 Probability := GetProbabilityFromJob(JobRec);
                                 if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
-                                    PS_EconomicMonitoringMatrix.Init();
-                                    ConceptValue := PS_EconomicMonitoringMatrix.Concept::Labour;
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, PS_EconomicMonitoringMatrix.Concept::A, PS_EconomicMonitoringMatrix.Type::A, 1, JobRec.Description, IsClosed, Probability);
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, PS_EconomicMonitoringMatrix.Concept::Labour, PS_EconomicMonitoringMatrix.Type::A, 2, JobRec.Description, IsClosed, Probability);
-                                    EnsureMatrixLine(PS_EconomicMonitoringMatrix, JobOrigenData."Job No.", YearFilter, PS_EconomicMonitoringMatrix.Concept::Labour, PS_EconomicMonitoringMatrix.Type::R, 3, JobRec.Description, IsClosed, Probability);
-                                    UpdateMatrixMonthValue(PS_EconomicMonitoringMatrix, LocalMonth, (JobOrigenData."Total Cost (LCY)" * Probability) / 100);
-                                    PS_EconomicMonitoringMatrix.Modify();
+                                    ConceptValue := Rec.Concept::Labour;
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Labour, Rec.Type::A, 2, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Labour, Rec.Type::R, 3, JobRec.Description, IsClosed, Probability);
+                                    UpdateMatrixMonthValue(Rec, LocalMonth, (JobOrigenData."Total Cost (LCY)" * Probability) / 100);
+                                    Rec.Modify(false);
                                 end;
                             end;
 
@@ -869,7 +888,7 @@ page 50731 "PS_EconomicMonitoring"
 
     trigger OnClosePage()
     begin
-        PS_EconomicMonitoringMatrix.DeleteAll();
+        Rec.DeleteAll();
     end;
 
     procedure JobPlanningLines(PostingMonth: Integer; PostingYear: Integer)
@@ -981,7 +1000,7 @@ page 50731 "PS_EconomicMonitoring"
         JobRec.FilterGroup(grp);
         Rec.FilterGroup(0);
         IsBusinessManagerUser := IsBusinessManager();
-        PS_EconomicMonitoringMatrix.DeleteAll();
+        Rec.DeleteAll();
         CurrPage.Editable(true);
         CurrPage.Update(false);
     end;
@@ -1295,8 +1314,8 @@ page 50731 "PS_EconomicMonitoring"
     procedure SetClosedMonthsInMatrix()
     var
         MonthClosing: Record "PS_MonthClosing";
-        MatrixRec: Record "PS_EconomicMonitoringMatrix";
         LocalMonth: Integer;
+        savedView: Text;
     begin
         MonthClosing.Reset();
         MonthClosing.SetRange("PS_Year", Format(YearFilter));
@@ -1310,41 +1329,42 @@ page 50731 "PS_EconomicMonitoring"
             repeat
                 Evaluate(LocalMonth, MonthClosing."PS_Month");
 
-                // 🔧 Aquí se filtra por Job No. específico
-                MatrixRec.Reset();
-                MatrixRec.SetRange("Job No.", MonthClosing.PS_JobNo); // ✅
-                MatrixRec.SetRange(Year, YearFilter);
-                if MatrixRec.FindSet() then begin
+                savedView := Rec.GetView();
+                Rec.Reset();
+                Rec.SetRange("Job No.", MonthClosing.PS_JobNo);
+                Rec.SetRange(Year, YearFilter);
+                if Rec.FindSet() then begin
                     repeat
                         case LocalMonth of
                             1:
-                                MatrixRec.IsJanClosed := true;
+                                Rec.IsJanClosed := true;
                             2:
-                                MatrixRec.IsFebClosed := true;
+                                Rec.IsFebClosed := true;
                             3:
-                                MatrixRec.IsMarClosed := true;
+                                Rec.IsMarClosed := true;
                             4:
-                                MatrixRec.IsAprClosed := true;
+                                Rec.IsAprClosed := true;
                             5:
-                                MatrixRec.IsMayClosed := true;
+                                Rec.IsMayClosed := true;
                             6:
-                                MatrixRec.IsJunClosed := true;
+                                Rec.IsJunClosed := true;
                             7:
-                                MatrixRec.IsJulClosed := true;
+                                Rec.IsJulClosed := true;
                             8:
-                                MatrixRec.IsAugClosed := true;
+                                Rec.IsAugClosed := true;
                             9:
-                                MatrixRec.IsSepClosed := true;
+                                Rec.IsSepClosed := true;
                             10:
-                                MatrixRec.IsOctClosed := true;
+                                Rec.IsOctClosed := true;
                             11:
-                                MatrixRec.IsNovClosed := true;
+                                Rec.IsNovClosed := true;
                             12:
-                                MatrixRec.IsDecClosed := true;
+                                Rec.IsDecClosed := true;
                         end;
-                        MatrixRec.Modify();
-                    until MatrixRec.Next() = 0;
+                        Rec.Modify(false);
+                    until Rec.Next() = 0;
                 end;
+                Rec.SetView(savedView);
             until MonthClosing.Next() = 0;
         end;
     end;

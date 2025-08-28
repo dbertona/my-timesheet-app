@@ -5938,6 +5938,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension PS_General_Journal - Action ImportForExcel - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 1073027341 - Control 166625255 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2097003905">
+          <source>Specifies the line type.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension PS_Job Planning Lines - Control PS Line Type - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1073027341 - Control 166625255 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2097003905">
+          <source>Line Type</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension PS_Job Planning Lines - Control PS Line Type - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 634157229 - Control 935069018 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 684274076">
           <source>Specifies the analytic concept.</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -5947,6 +5957,16 @@
           <source>Analytic Concept</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension PS_Job Planning Lines Part - Control ARBVRNAnaliticConcept - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 634157229 - Control 166625255 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 684274076">
+          <source>Specifies the line type.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension PS_Job Planning Lines Part - Control PS Line Type - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 634157229 - Control 166625255 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 684274076">
+          <source>Line Type</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension PS_Job Planning Lines Part - Control PS Line Type - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 2720260171 - Control 825115828 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2273701615">
           <source>Specifies the % probability for the project</source>
@@ -6172,6 +6192,16 @@
           <source>Profile</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension PS_RespourceExten - Field Perfil - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 1305550370 - EnumValue 2070807507 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Billable</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum PS_AuxLineType - EnumValue Billable - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 1305550370 - EnumValue 4030203231 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Budget</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum PS_AuxLineType - EnumValue Budget - Property Caption</note>
         </trans-unit>
         <trans-unit id="Enum 3609834516 - EnumValue 830817008 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Estructura</source>

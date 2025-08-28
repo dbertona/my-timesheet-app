@@ -20,6 +20,7 @@ pageextension 50922 "PS_Job Planning Lines Part" extends "Job Planning Lines Par
                 ApplicationArea = All;
                 Caption = 'Line Type';
                 ToolTip = 'Specifies the line type.';
+                // Enum captions serán localizables vía XLF
 
                 trigger OnValidate()
                 begin
@@ -74,7 +75,7 @@ pageextension 50922 "PS_Job Planning Lines Part" extends "Job Planning Lines Par
     var
         IsBudgetLine: Boolean;
         IsBillableLine: Boolean;
-        AuxLineType: Option Budget,Billable;
+        AuxLineType: Enum "PS_AuxLineType";
 
     trigger OnAfterGetRecord()
     begin
