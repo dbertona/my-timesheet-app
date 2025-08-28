@@ -369,6 +369,10 @@ page 50731 "PS_EconomicMonitoring"
 
 
     Procedure SetYear(Year: Integer; Departament: Code[20])
+    var
+        ChunkSize: Integer;
+        TotalRecords: Integer;
+        ProcessedRecords: Integer;
     begin
         YearFilter := Year;
         DepartamentFilter := Departament;
@@ -389,17 +393,133 @@ page 50731 "PS_EconomicMonitoring"
         IsMonthOpen();
         Rec.DeleteAll();
         RecordCount := 0;
-        Progress.OPEN(ProgressMsg, RecordCount);
-        PopulateMatrixInvoice();
-        PopulateMatrixExpediente();
-        PopulateMatrixCost();
-        PopulateMatrixRealInvoice();
-        PopulateMatrixRealCost();
-        PopulateMatrixRealCostLabour();
+        
+        // 🚀 OPTIMIZACIÓN: Carga por chunks para mejor rendimiento
+        ChunkSize := 1000; // Procesar en lotes de 1000 registros
+        TotalRecords := GetTotalRecordsToProcess();
+        ProcessedRecords := 0;
+        
+        Progress.OPEN(ProgressMsg, TotalRecords);
+        
+        // Procesar en chunks para evitar bloqueos de UI
+        while ProcessedRecords < TotalRecords do begin
+            PopulateMatrixInvoiceChunk(ChunkSize, ProcessedRecords);
+            PopulateMatrixExpedienteChunk(ChunkSize, ProcessedRecords);
+            PopulateMatrixCostChunk(ChunkSize, ProcessedRecords);
+            PopulateMatrixRealInvoiceChunk(ChunkSize, ProcessedRecords);
+            PopulateMatrixRealCostChunk(ChunkSize, ProcessedRecords);
+            PopulateMatrixRealCostLabourChunk(ChunkSize, ProcessedRecords);
+            
+            // Actualizar UI cada chunk para mantener responsividad
+            CurrPage.Update(false);
+            ProcessedRecords := ProcessedRecords + ChunkSize;
+        end;
+        
         CurrPage.Update(false); // Refrescar el ListPart para que muestre los datos actualizados
         SetClosedMonthsInMatrix();
         Progress.CLOSE();
         CurrPage.Update(false);
+    end;
+
+    // 🚀 FUNCIÓN AUXILIAR: Obtener total de registros a procesar
+    procedure GetTotalRecordsToProcess(): Integer
+    var
+        PS_MonthClosingRec: Record "PS_MonthClosing";
+        Count: Integer;
+    begin
+        Count := 0;
+        PS_MonthClosingRec.SetRange("PS_Year", Format(YearFilter));
+        if DepartamentFilter <> '' then
+            PS_MonthClosingRec.SetRange(PS_GlobalDimension1Code, DepartamentFilter);
+        if not SinProjectTeamfilter THEN
+            PS_MonthClosingRec.SetFilter(PS_JobNo, Filter);
+        
+        if PS_MonthClosingRec.FindSet() then
+            repeat
+                Count := Count + 1;
+            until PS_MonthClosingRec.Next() = 0;
+        
+        exit(Count);
+    end;
+
+    // 🚀 FUNCIÓN CHUNK: Procesar Expediente en lotes
+    procedure PopulateMatrixExpedienteChunk(ChunkSize: Integer; var ProcessedRecords: Integer)
+    var
+        PS_MonthClosingRec: Record "PS_MonthClosing";
+        JobOrigenData: Record "ARBVRNJobUnitPlanning";
+        JobRec: Record "Job";
+        LocalMonth: Integer;
+        LocalMonthStr: Code[2];
+        LocalYearStr: Code[4];
+        TotalImport: Decimal;
+        TotalCost: Decimal;
+        CurrentJobNo: Code[20];
+        PreviousJobNo: Code[20];
+        COUNTA: INTEGER;
+        FirstDayOfMonth: Date;
+        LastDayOfMonth: Date;
+        MONTH: INTEGER;
+        Probability: Integer;
+        RecordsInChunk: Integer;
+    begin
+        TotalImport := 0;
+        TotalCost := 0;
+        PreviousJobNo := '';
+        RecordsInChunk := 0;
+        
+        if YearFilter = 0 then begin
+            Message('Por favor seleccione un año.');
+            exit;
+        end;
+        
+        PS_MonthClosingRec.SetRange("PS_Year", Format(YearFilter));
+        if DepartamentFilter <> '' then
+            PS_MonthClosingRec.SetRange(PS_GlobalDimension1Code, DepartamentFilter);
+        if not SinProjectTeamfilter THEN
+            PS_MonthClosingRec.SetFilter(PS_JobNo, Filter);
+        
+        if PS_MonthClosingRec.FindSet() then begin
+            repeat
+                if RecordsInChunk >= ChunkSize then
+                    break; // Salir del chunk actual
+                    
+                IsClosed := PS_MonthClosingRec.PS_Status = PS_MonthClosingRec.PS_Status::Close;
+                CurrentJobNo := PS_MonthClosingRec."PS_JobNo";
+                LocalMonthStr := PS_MonthClosingRec."PS_Month";
+                LocalYearStr := PS_MonthClosingRec."PS_Year";
+                Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                LocalMonthStr := Format(LocalMonth);
+                Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                GetMonthDateRange(LocalMonth, YearFilter, FirstDayOfMonth, LastDayOfMonth);
+                if JobRec.Get(CurrentJobNo) then begin
+                    Probability := GetProbabilityFromJob(JobRec);
+                    if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
+                        EnsureMatrixLine(Rec, CurrentJobNo, YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, JobRec."PS_% Probability");
+                    end;
+                end;
+                JobOrigenData.SetRange("ARBVRNJobNo", CurrentJobNo);
+                JobOrigenData.SetRange("ARBVRNPlanningDate", FirstDayOfMonth, LastDayOfMonth);
+                JobOrigenData.SetRange("ARBVRNReal", FALSE);
+                RecordCount := RecordCount + 1;
+                if (RecordCount mod 100) = 0 then
+                    Progress.Update(1, RecordCount);
+                if JobOrigenData.FindSet() then begin
+                    repeat
+                        IF JobOrigenData.ARBVRNCertificationAmount <> 0 THEN BEGIN
+                            if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
+                                EnsureMatrixLine(Rec, JobOrigenData."ARBVRNJobNo", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                                EnsureMatrixLine(Rec, JobOrigenData."ARBVRNJobNo", YearFilter, Rec.Concept::Invoice, Rec.Type::A, 2, JobRec.Description, IsClosed, Probability);
+                                EnsureMatrixLine(Rec, JobOrigenData."ARBVRNJobNo", YearFilter, Rec.Concept::Invoice, Rec.Type::P, 3, JobRec.Description, IsClosed, Probability);
+                                UpdateMatrixMonthValue(Rec, LocalMonth, JobOrigenData.ARBVRNCertificationAmount);
+                                Rec.Modify(false); // Guardar los cambios en el buffer temporal
+                            END
+                        end;
+                    until JobOrigenData.Next() = 0;
+                end;
+                RecordsInChunk := RecordsInChunk + 1;
+                ProcessedRecords := ProcessedRecords + 1;
+            until PS_MonthClosingRec.Next() = 0;
+        end;
     end;
 
     procedure PopulateMatrixExpediente();
@@ -471,6 +591,86 @@ page 50731 "PS_EconomicMonitoring"
             until PS_MonthClosingRec.Next() = 0;
         end;
         CurrPage.Update(false); // Refrescar la página
+    end;
+
+    // 🚀 FUNCIÓN CHUNK: Procesar Invoice en lotes
+    procedure PopulateMatrixInvoiceChunk(ChunkSize: Integer; var ProcessedRecords: Integer)
+    var
+        PS_MonthClosingRec: Record "PS_MonthClosing";
+        JobOrigenData: Record "Job Planning Line";
+        JobRec: Record "Job";
+        LocalMonth: Integer;
+        LocalMonthStr: Code[2];
+        LocalYearStr: Code[4];
+        TotalImport: Decimal;
+        TotalCost: Decimal;
+        CurrentJobNo: Code[20];
+        PreviousJobNo: Code[20];
+        COUNTA: INTEGER;
+        FirstDayOfMonth: Date;
+        LastDayOfMonth: Date;
+        MONTH: INTEGER;
+        Probability: Integer;
+        RecordsInChunk: Integer;
+    begin
+        TotalImport := 0;
+        TotalCost := 0;
+        PreviousJobNo := '';
+        RecordsInChunk := 0;
+        
+        if YearFilter = 0 then begin
+            Message('Por favor seleccione un año.');
+            exit;
+        end;
+        
+        PS_MonthClosingRec.SetRange("PS_Year", Format(YearFilter));
+        if DepartamentFilter <> '' then
+            PS_MonthClosingRec.SetRange(PS_GlobalDimension1Code, DepartamentFilter);
+        if not SinProjectTeamfilter THEN
+            PS_MonthClosingRec.SetFilter(PS_JobNo, Filter);
+        
+        if PS_MonthClosingRec.FindSet() then begin
+            repeat
+                if RecordsInChunk >= ChunkSize then
+                    break; // Salir del chunk actual
+                    
+                IsClosed := PS_MonthClosingRec.PS_Status = PS_MonthClosingRec.PS_Status::Close;
+                CurrentJobNo := PS_MonthClosingRec."PS_JobNo";
+                LocalMonthStr := PS_MonthClosingRec."PS_Month";
+                LocalYearStr := PS_MonthClosingRec."PS_Year";
+                Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                LocalMonthStr := Format(LocalMonth);
+                Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                GetMonthDateRange(LocalMonth, YearFilter, FirstDayOfMonth, LastDayOfMonth);
+                if JobRec.Get(CurrentJobNo) then begin
+                    Probability := GetProbabilityFromJob(JobRec);
+                    if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
+                        EnsureMatrixLine(Rec, CurrentJobNo, YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                    end;
+                end;
+                JobOrigenData.SetRange("Job No.", CurrentJobNo);
+                JobOrigenData.SetRange("Planning Date", FirstDayOfMonth, LastDayOfMonth);
+                JobOrigenData.SetRange("Line Type", JobOrigenData."Line Type"::Billable);
+
+                if JobOrigenData.FindSet(false) then begin
+                    repeat
+                        // JobRec.Get(CurrentJobNo); // ❌ REDUNDANTE - ya tenemos Probability del bucle externo
+                        IF JobOrigenData."Line Amount (LCY)" <> 0 THEN BEGIN
+                            // Probability := GetProbabilityFromJob(JobRec); // ❌ REDUNDANTE - ya calculado
+                            if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
+                                EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                                EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Invoice, Rec.Type::A, 2, JobRec.Description, IsClosed, Probability);
+                                EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Invoice, Rec.Type::P, 3, JobRec.Description, IsClosed, Probability);
+                                UpdateMatrixMonthValue(Rec, LocalMonth, (JobOrigenData."Line Amount (LCY)" * Probability) / 100);
+                                Rec.Modify(false);
+                            end;
+                        end;
+                    until JobOrigenData.Next() = 0;
+                end;
+                RecordsInChunk := RecordsInChunk + 1;
+                ProcessedRecords := ProcessedRecords + 1;
+            until PS_MonthClosingRec.Next() = 0;
+        end;
     end;
 
     procedure PopulateMatrixInvoice();
@@ -548,6 +748,104 @@ page 50731 "PS_EconomicMonitoring"
             until PS_MonthClosingRec.Next() = 0;
         end;
         CurrPage.Update(false);
+    end;
+
+    // 🚀 FUNCIÓN CHUNK: Procesar Cost en lotes
+    procedure PopulateMatrixCostChunk(ChunkSize: Integer; var ProcessedRecords: Integer)
+    var
+        PS_MonthClosingRec: Record "PS_MonthClosing";
+        JobOrigenData: Record "Job Planning Line";
+        JobRec: Record "Job";
+        LocalMonth: Integer;
+        LocalMonthStr: Code[2];
+        LocalYearStr: Code[4];
+        TotalImport: Decimal;
+        TotalCost: Decimal;
+        CurrentJobNo: Code[20];
+        PreviousJobNo: Code[20];
+        COUNTA: INTEGER;
+        FirstDayOfMonth: Date;
+        LastDayOfMonth: Date;
+        MONTH: INTEGER;
+        Probability: Integer;
+        ConceptValue: Option;
+        RecordsInChunk: Integer;
+    begin
+        TotalImport := 0;
+        TotalCost := 0;
+        PreviousJobNo := '';
+        RecordsInChunk := 0;
+        
+        if YearFilter = 0 then begin
+            Message('Por favor seleccione un año.');
+            exit;
+        end;
+        
+        PS_MonthClosingRec.SetRange("PS_Year", Format(YearFilter));
+        if DepartamentFilter <> '' then
+            PS_MonthClosingRec.SetRange(PS_GlobalDimension1Code, DepartamentFilter);
+        if not SinProjectTeamfilter THEN
+            PS_MonthClosingRec.SetFilter(PS_JobNo, Filter);
+        
+        if PS_MonthClosingRec.FindSet(false) then begin
+            repeat
+                if RecordsInChunk >= ChunkSize then
+                    break; // Salir del chunk actual
+                    
+                IsClosed := PS_MonthClosingRec.PS_Status = PS_MonthClosingRec.PS_Status::Close;
+                RecordCount := RecordCount + 1;
+                if (RecordCount mod 100) = 0 then
+                    Progress.Update(1, RecordCount);
+                CurrentJobNo := PS_MonthClosingRec."PS_JobNo";
+                LocalMonthStr := PS_MonthClosingRec."PS_Month";
+                LocalYearStr := PS_MonthClosingRec."PS_Year";
+                if JobRec.Get(CurrentJobNo) then begin
+                    Probability := GetProbabilityFromJob(JobRec);
+                    if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
+                        if not Rec.Get(Rec.Concept::A, Rec.Type::A, CurrentJobNo, YearFilter) then begin
+                            EnsureMatrixLine(Rec, CurrentJobNo, YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                        end;
+                    end;
+                end;
+                IF PS_MonthClosingRec."PS_Month" <> '' THEN BEGIN
+                    Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                    LocalMonthStr := Format(LocalMonth);
+                    Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                    GetMonthDateRange(LocalMonth, YearFilter, FirstDayOfMonth, LastDayOfMonth);
+                    JobOrigenData.SetRange("Job No.", CurrentJobNo);
+                    JobOrigenData.SetRange("Planning Date", FirstDayOfMonth, LastDayOfMonth);
+                    JobOrigenData.SetRange("Line Type", JobOrigenData."Line Type"::Budget);
+
+                    if JobOrigenData.FindSet(false) then begin
+                        repeat
+                            // JobRec.Get(CurrentJobNo); // ❌ REDUNDANTE - ya tenemos Probability del bucle externo
+                            IF JobOrigenData."Total Cost (LCY)" <> 0 THEN BEGIN
+                                // Probability := GetProbabilityFromJob(JobRec); // ❌ REDUNDANTE - ya calculado
+                                if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
+                                    if JobOrigenData.Type = JobOrigenData.Type::Resource then begin
+                                        ConceptValue := Rec.Concept::Labour;
+                                    end
+                                    else begin
+                                        ConceptValue := Rec.Concept::Cost;
+                                    end;
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, ConceptValue, Rec.Type::A, 2, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, ConceptValue, Rec.Type::P, 3, JobRec.Description, IsClosed, Probability);
+                                    UpdateMatrixMonthValue(
+                                        Rec,
+                                        LocalMonth,
+                                        (JobOrigenData."Total Cost (LCY)" * Probability) / 100
+                                    );
+                                    Rec.Modify(false);
+                                end;
+                            end;
+                        until JobOrigenData.Next() = 0;
+                    end;
+                END;
+                RecordsInChunk := RecordsInChunk + 1;
+                ProcessedRecords := ProcessedRecords + 1;
+            until PS_MonthClosingRec.Next() = 0;
+        end;
     end;
 
     procedure PopulateMatrixCost();
@@ -640,6 +938,94 @@ page 50731 "PS_EconomicMonitoring"
     end;
 
 
+    // 🚀 FUNCIÓN CHUNK: Procesar Real Invoice en lotes
+    procedure PopulateMatrixRealInvoiceChunk(ChunkSize: Integer; var ProcessedRecords: Integer)
+    var
+        PS_MonthClosingRec: Record "PS_MonthClosing";
+        JobOrigenData: Record "Job Ledger Entry";
+        JobRec: Record "Job";
+        LocalMonth: Integer;
+        LocalMonthStr: Code[2];
+        LocalYearStr: Code[4];
+        TotalImport: Decimal;
+        TotalCost: Decimal;
+        CurrentJobNo: Code[20];
+        PreviousJobNo: Code[20];
+        COUNTA: INTEGER;
+        FirstDayOfMonth: Date;
+        LastDayOfMonth: Date;
+        MONTH: INTEGER;
+        Probability: Integer;
+        RecordsInChunk: Integer;
+    begin
+        TotalImport := 0;
+        TotalCost := 0;
+        PreviousJobNo := '';
+        RecordsInChunk := 0;
+        
+        if YearFilter = 0 then begin
+            Message('Por favor seleccione un año.');
+            exit;
+        end;
+        
+        PS_MonthClosingRec.SetRange("PS_Year", Format(YearFilter));
+        if DepartamentFilter <> '' then
+            PS_MonthClosingRec.SetRange(PS_GlobalDimension1Code, DepartamentFilter);
+        if not SinProjectTeamfilter THEN
+            PS_MonthClosingRec.SetFilter(PS_JobNo, Filter);
+        
+        if PS_MonthClosingRec.FindSet(false) then begin
+            repeat
+                if RecordsInChunk >= ChunkSize then
+                    break; // Salir del chunk actual
+                    
+                IsClosed := PS_MonthClosingRec.PS_Status = PS_MonthClosingRec.PS_Status::Close;
+                CurrentJobNo := PS_MonthClosingRec."PS_JobNo";
+                LocalMonthStr := PS_MonthClosingRec."PS_Month";
+                LocalYearStr := PS_MonthClosingRec."PS_Year";
+                Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                LocalMonthStr := Format(LocalMonth);
+                Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                GetMonthDateRange(LocalMonth, YearFilter, FirstDayOfMonth, LastDayOfMonth);
+                if JobRec.Get(CurrentJobNo) then begin
+                    Probability := GetProbabilityFromJob(JobRec);
+                    if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
+                        if not Rec.Get(Rec.Concept::A, Rec.Type::A, CurrentJobNo, YearFilter) then begin
+                            EnsureMatrixLine(Rec, CurrentJobNo, YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                        end;
+                    end;
+                end;
+                IF PS_MonthClosingRec."PS_Month" <> '' THEN BEGIN
+                    Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                    LocalMonthStr := Format(LocalMonth);
+                    Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                    GetMonthDateRange(LocalMonth, YearFilter, FirstDayOfMonth, LastDayOfMonth);
+                    JobOrigenData.SetRange("Job No.", CurrentJobNo);
+                    JobOrigenData.SetRange("Document Date", FirstDayOfMonth, LastDayOfMonth);
+                    JobOrigenData.SetRange("Entry Type", JobOrigenData."Entry Type"::Sale);
+
+                    if JobOrigenData.FindSet(false) then begin
+                        repeat
+                            // JobRec.Get(CurrentJobNo); // ❌ REDUNDANTE - ya tenemos Probability del bucle externo
+                            // Probability := GetProbabilityFromJob(JobRec); // ❌ REDUNDANTE - ya calculado
+                            IF JobOrigenData."Line Amount (LCY)" <> 0 THEN BEGIN
+                                if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Invoice, Rec.Type::A, 2, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Invoice, Rec.Type::R, 3, JobRec.Description, IsClosed, Probability);
+                                    UpdateMatrixMonthValue(Rec, LocalMonth, JobOrigenData."Line Amount (LCY)" * -1);
+                                    Rec.Modify(false);
+                                end;
+                            end;
+                        until JobOrigenData.Next() = 0;
+                    end;
+                END;
+                RecordsInChunk := RecordsInChunk + 1;
+                ProcessedRecords := ProcessedRecords + 1;
+            until PS_MonthClosingRec.Next() = 0;
+        end;
+    end;
+
     procedure PopulateMatrixRealInvoice();
     var
         JobOrigenData: Record "Job Ledger Entry";
@@ -723,6 +1109,99 @@ page 50731 "PS_EconomicMonitoring"
     end;
 
 
+    // 🚀 FUNCIÓN CHUNK: Procesar Real Cost en lotes
+    procedure PopulateMatrixRealCostChunk(ChunkSize: Integer; var ProcessedRecords: Integer)
+    var
+        PS_MonthClosingRec: Record "PS_MonthClosing";
+        JobOrigenData: Record "Job Ledger Entry";
+        JobRec: Record "Job";
+        LocalMonth: Integer;
+        LocalMonthStr: Code[2];
+        LocalYearStr: Code[4];
+        TotalImport: Decimal;
+        TotalCost: Decimal;
+        CurrentJobNo: Code[20];
+        PreviousJobNo: Code[20];
+        COUNTA: INTEGER;
+        FirstDayOfMonth: Date;
+        LastDayOfMonth: Date;
+        MONTH: INTEGER;
+        Probability: Integer;
+        ConceptValue: Option;
+        RecordsInChunk: Integer;
+    begin
+        TotalImport := 0;
+        TotalCost := 0;
+        PreviousJobNo := '';
+        RecordsInChunk := 0;
+        
+        if YearFilter = 0 then begin
+            Message('Por favor seleccione un año.');
+            exit;
+        end;
+        
+        PS_MonthClosingRec.SetRange("PS_Year", Format(YearFilter));
+        if DepartamentFilter <> '' then
+            PS_MonthClosingRec.SetRange(PS_GlobalDimension1Code, DepartamentFilter);
+        if not SinProjectTeamfilter THEN
+            PS_MonthClosingRec.SetFilter(PS_JobNo, Filter);
+        
+        if PS_MonthClosingRec.FindSet(false) then begin
+            repeat
+                if RecordsInChunk >= ChunkSize then
+                    break; // Salir del chunk actual
+                    
+                IsClosed := PS_MonthClosingRec.PS_Status = PS_MonthClosingRec.PS_Status::Close;
+                RecordCount := RecordCount + 1;
+                if (RecordCount mod 100) = 0 then
+                    Progress.Update(1, RecordCount);
+                CurrentJobNo := PS_MonthClosingRec."PS_JobNo";
+                LocalMonthStr := PS_MonthClosingRec."PS_Month";
+                LocalYearStr := PS_MonthClosingRec."PS_Year";
+                Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                LocalMonthStr := Format(LocalMonth);
+                Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                GetMonthDateRange(LocalMonth, YearFilter, FirstDayOfMonth, LastDayOfMonth);
+                if JobRec.Get(CurrentJobNo) then begin
+                    Probability := GetProbabilityFromJob(JobRec);
+                    if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
+                        if not Rec.Get(Rec.Concept::A, Rec.Type::A, CurrentJobNo, YearFilter) then begin
+                            EnsureMatrixLine(Rec, CurrentJobNo, YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                        end;
+                    end;
+                end;
+                IF PS_MonthClosingRec."PS_Month" <> '' THEN BEGIN
+                    Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                    LocalMonthStr := Format(LocalMonth);
+                    Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                    GetMonthDateRange(LocalMonth, YearFilter, FirstDayOfMonth, LastDayOfMonth);
+                    JobOrigenData.SetRange("Job No.", CurrentJobNo);
+                    JobOrigenData.SetRange("Posting Date", FirstDayOfMonth, LastDayOfMonth);
+                    JobOrigenData.SetRange("Entry Type", JobOrigenData."Entry Type"::Usage);
+                    JobOrigenData.SetFilter("Type", '%1|%2', JobOrigenData."Type"::Item, JobOrigenData."Type"::"G/L Account");
+                    JobOrigenData.SetLoadFields("Job No.", "Total Cost (LCY)");
+                    if JobOrigenData.FindSet(false) then begin
+                        repeat
+                            // JobRec.Get(CurrentJobNo); // ❌ REDUNDANTE - ya tenemos Probability del bucle externo
+                            // Probability := GetProbabilityFromJob(JobRec); // ❌ REDUNDANTE - ya calculado
+                            IF JobOrigenData."Total Cost (LCY)" <> 0 THEN BEGIN
+                                if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Cost, Rec.Type::A, 2, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Cost, Rec.Type::R, 3, JobRec.Description, IsClosed, Probability);
+                                    UpdateMatrixMonthValue(Rec, LocalMonth, JobOrigenData."Total Cost (LCY)");
+                                    Rec.Modify(false);
+                                end;
+                            end;
+                        until JobOrigenData.Next() = 0;
+                    end;
+                END;
+                RecordsInChunk := RecordsInChunk + 1;
+                ProcessedRecords := ProcessedRecords + 1;
+            until PS_MonthClosingRec.Next() = 0;
+        end;
+    end;
+
     procedure PopulateMatrixRealCost();
     var
         JobOrigenData: Record "Job Ledger Entry";
@@ -800,6 +1279,96 @@ page 50731 "PS_EconomicMonitoring"
             until PS_MonthClosingRec.Next() = 0;
         end;
         CurrPage.Update(false);
+    end;
+
+    // 🚀 FUNCIÓN CHUNK: Procesar Real Cost Labour en lotes
+    procedure PopulateMatrixRealCostLabourChunk(ChunkSize: Integer; var ProcessedRecords: Integer)
+    var
+        PS_MonthClosingRec: Record "PS_MonthClosing";
+        JobOrigenData: Record "Job Ledger Entry";
+        JobRec: Record "Job";
+        LocalMonth: Integer;
+        LocalMonthStr: Code[2];
+        LocalYearStr: Code[4];
+        TotalImport: Decimal;
+        TotalCost: Decimal;
+        CurrentJobNo: Code[20];
+        PreviousJobNo: Code[20];
+        COUNTA: INTEGER;
+        FirstDayOfMonth: Date;
+        LastDayOfMonth: Date;
+        MONTH: INTEGER;
+        Probability: Integer;
+        ConceptValue: Option;
+        RecordsInChunk: Integer;
+    begin
+        TotalImport := 0;
+        TotalCost := 0;
+        PreviousJobNo := '';
+        RecordsInChunk := 0;
+        
+        if YearFilter = 0 then begin
+            Message('Por favor seleccione un año.');
+            exit;
+        end;
+        
+        PS_MonthClosingRec.SetRange("PS_Year", Format(YearFilter));
+        if DepartamentFilter <> '' then
+            PS_MonthClosingRec.SetRange(PS_GlobalDimension1Code, DepartamentFilter);
+        if not SinProjectTeamfilter THEN
+            PS_MonthClosingRec.SetFilter(PS_JobNo, Filter);
+        
+        if PS_MonthClosingRec.FindSet(false) then begin
+            repeat
+                if RecordsInChunk >= ChunkSize then
+                    break; // Salir del chunk actual
+                    
+                IsClosed := PS_MonthClosingRec.PS_Status = PS_MonthClosingRec.PS_Status::Close;
+                CurrentJobNo := PS_MonthClosingRec."PS_JobNo";
+                LocalMonthStr := PS_MonthClosingRec."PS_Month";
+                LocalYearStr := PS_MonthClosingRec."PS_Year";
+                Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                LocalMonthStr := Format(LocalMonth);
+                Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                GetMonthDateRange(LocalMonth, YearFilter, FirstDayOfMonth, LastDayOfMonth);
+                if JobRec.Get(CurrentJobNo) then begin
+                    Probability := GetProbabilityFromJob(JobRec);
+                    if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
+                        if not Rec.Get(Rec.Concept::A, Rec.Type::A, CurrentJobNo, YearFilter) then begin
+                            EnsureMatrixLine(Rec, CurrentJobNo, YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                        end;
+                    end;
+                end;
+                IF PS_MonthClosingRec."PS_Month" <> '' THEN BEGIN
+                    Evaluate(LocalMonth, PS_MonthClosingRec."PS_Month");
+                    GetMonthDateRange(LocalMonth, YearFilter, FirstDayOfMonth, LastDayOfMonth);
+                    JobOrigenData.SetRange("Job No.", CurrentJobNo);
+                    JobOrigenData.SetRange("ARBVRNTimesheetdate", FirstDayOfMonth, LastDayOfMonth);
+                    JobOrigenData.SetRange("Entry Type", JobOrigenData."Entry Type"::Usage);
+                    JobOrigenData.SetRange("Type", JobOrigenData."Type"::Resource);
+                    JobOrigenData.SetLoadFields("Job No.", "Total Cost (LCY)");
+                    if JobOrigenData.FindSet(false) then begin
+                        repeat
+                            // JobRec.Get(CurrentJobNo); // ❌ REDUNDANTE - ya tenemos Probability del bucle externo
+                            IF JobOrigenData."Total Cost (LCY)" <> 0 THEN BEGIN
+                                // Probability := GetProbabilityFromJob(JobRec); // ❌ REDUNDANTE - ya calculado
+                                if (JobRec.Status <> JobRec.Status::Lost) and (JobRec.Status <> JobRec.Status::Completed) then begin
+                                    ConceptValue := Rec.Concept::Labour;
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::A, Rec.Type::A, 1, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Labour, Rec.Type::A, 2, JobRec.Description, IsClosed, Probability);
+                                    EnsureMatrixLine(Rec, JobOrigenData."Job No.", YearFilter, Rec.Concept::Labour, Rec.Type::R, 3, JobRec.Description, IsClosed, Probability);
+                                    UpdateMatrixMonthValue(Rec, LocalMonth, (JobOrigenData."Total Cost (LCY)" * Probability) / 100);
+                                    Rec.Modify(false);
+                                end;
+                            end;
+
+                        until JobOrigenData.Next() = 0;
+                    end;
+                END;
+                RecordsInChunk := RecordsInChunk + 1;
+                ProcessedRecords := ProcessedRecords + 1;
+            until PS_MonthClosingRec.Next() = 0;
+        end;
     end;
 
     procedure PopulateMatrixRealCostLabour();
