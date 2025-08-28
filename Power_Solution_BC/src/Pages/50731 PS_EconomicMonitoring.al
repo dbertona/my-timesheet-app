@@ -139,7 +139,12 @@ page 50731 "PS_EconomicMonitoring"
                     StyleExpr = Rec."JanStyleExpr";
                     trigger OnDrillDown()
                     begin
+                        CurrentDrillDownMonth := 01;
+                        CurrentDrillDownJobNo := Rec."Job No.";
+                        BCValuesBeforeDrillDown.Clear();
+                        CaptureBCValuesBeforeDrillDown(01, Rec."Job No.");
                         JobPlanningLines(01, YearFilter);
+                        SyncBCValuesAfterDrillDown(01, Rec."Job No.");
                     end;
                 }
                 field("February"; Rec."FebImport")
@@ -365,6 +370,9 @@ page 50731 "PS_EconomicMonitoring"
         Filter: Text;
         IsClosed: Boolean;
         FormattedProbability: Text[10];
+        BCValuesBeforeDrillDown: Dictionary of [Integer, Dictionary of [Code[20], Decimal]];
+        CurrentDrillDownMonth: Integer;
+        CurrentDrillDownJobNo: Code[20];
 
     Procedure SetYear(Year: Integer; Departament: Code[20])
     begin
