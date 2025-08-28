@@ -94,6 +94,7 @@ page 50731 "PS_EconomicMonitoring"
                     ApplicationArea = All;
                     Caption = 'Project & Description';
                     Editable = false;
+                    StyleExpr = BoldStyle;
 
                     trigger OnDrillDown()
                     var
