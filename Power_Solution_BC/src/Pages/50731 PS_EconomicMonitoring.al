@@ -97,17 +97,17 @@ page 50731 "PS_EconomicMonitoring"
                     StyleExpr = ProjectStyleExpr;
 
                     trigger OnDrillDown()
-                    var
-                        JobRec: Record Job; // Registro de la tabla Job
-                        JobCardPageID: Integer;
                     begin
-                        // Abrir la página Job Card con el registro correspondiente
-                        if JobRec.Get(Rec."Job No.") then begin
-                            JobCardPageID := PAGE::"PS_Job _Card_Operational";
-                            PAGE.Run(JobCardPageID, JobRec);
-                        end else begin
-                            Message('No se encontró el proyecto con el número %1', Rec."Job No.");
-                        end;
+                        // Capturar valor actual antes de abrir BC
+                        CurrentDrillDownMonth := 01;
+                        CurrentDrillDownJobNo := Rec."Job No.";
+                        LastBCValue := Rec."JanImport";
+                        
+                        // Abrir página de BC
+                        JobPlanningLines(01, YearFilter);
+                        
+                        // Sincronizar al regresar
+                        SyncMonthValueAfterDrillDown(01, Rec."Job No.");
                     end;
                 }
 
@@ -371,8 +371,10 @@ page 50731 "PS_EconomicMonitoring"
         IsClosed: Boolean;
         FormattedProbability: Text[10];
         BCValuesBeforeDrillDown: Dictionary of [Integer, Dictionary of [Code[20], Decimal]];
+        // Variables para sincronización BC ↔ Tabla Temporal
         CurrentDrillDownMonth: Integer;
         CurrentDrillDownJobNo: Code[20];
+        LastBCValue: Decimal;
 
     Procedure SetYear(Year: Integer; Departament: Code[20])
     begin
