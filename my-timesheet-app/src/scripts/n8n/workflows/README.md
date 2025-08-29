@@ -1,127 +1,91 @@
-# 📋 Workflows de n8n - My Timesheet App
+# Workflows n8n - Sincronización Business Central → Supabase
 
-Este directorio contiene todos los workflows de n8n utilizados para la sincronización entre Business Central y Supabase.
+## Workflow Oficial: 001_sincronizacion_completa.json
 
-## 🚀 Workflows Disponibles
+**Estado:** ✅ **ACTIVO Y FUNCIONANDO**  
+**Última actualización:** 29/08/2025  
+**Total de nodos:** 49  
+**ID en n8n:** 3fpaX4J2wc5DH054  
 
-### 1. **Sincronización Completa BC → Supabase**
+### 🎯 Entidades Sincronizadas (6 total)
 
-- **Archivo:** `001_sincronizacion_completa.json`
-- **ID en n8n:** `rDSrPE4U9zNGRaJi`
-- **Nombre en n8n:** `001_sincronizacion_completa`
-- **Estado:** Inactivo
-- **Descripción:** Workflow principal que sincroniza todos los datos de Business Central a Supabase
+1. **📅 Calendario** (`calendar_period_days`) - ✅ Completo
+   - Filtrado incremental con `lastModifiedDateTime`
+   - Batching de 300 registros
+   - Sincronización de estado en `sync_state`
 
-#### **Funcionalidades:**
+2. **🏗️ Proyectos** (`job`) - ✅ Completo
+   - Filtrado incremental con `lastModifiedDateTime`
+   - Batching de 300 registros
+   - Sincronización de estado en `sync_state`
 
-- **Proyectos:** Obtiene y sincroniza proyectos desde BC
-- **Tareas:** Obtiene y sincroniza tareas de proyectos desde BC
-- **Equipos:** Obtiene y sincroniza equipos asignados a proyectos desde BC
-- **Recursos:** Obtiene y sincroniza recursos (empleados) desde BC
-- **Costos:** Obtiene y sincroniza costos de recursos desde BC
-- **Calendario:** Obtiene y sincroniza días de calendario desde BC
+3. **📋 Tareas** (`job_task`) - ✅ Completo
+   - Filtrado incremental con `lastModifiedDateTime`
+   - Batching de 300 registros
+   - Sincronización de estado en `sync_state`
 
-#### **Nodos del Workflow:**
+4. **👥 Equipos** (`job_team`) - ✅ Completo
+   - Filtrado incremental con `lastModifiedDateTime`
+   - Batching de 300 registros
+   - Sincronización de estado en `sync_state`
 
-1. **Trigger Manual** - Inicia la sincronización
-2. **6 Nodos HTTP** - Obtienen datos de las APIs de BC
-3. **6 Nodos de Transformación** - Procesan y formatean los datos
-4. **6 Nodos Supabase** - Actualizan la base de datos
+5. **👨‍💼 Recursos** (`resource`) - ✅ Completo
+   - Filtrado incremental con `lastModifiedDateTime`
+   - Batching de 300 registros
+   - Sincronización de estado en `sync_state`
 
-## 🔧 Configuración Requerida
+6. **💰 Costos** (`resource_cost`) - ✅ Completo
+   - Filtrado incremental con `lastModifiedDateTime`
+   - Batching de 300 registros
+   - Sincronización de estado en `sync_state`
 
-### **Credenciales Business Central:**
+### 🔧 Características Implementadas
 
-- **OAuth2 API** configurado para acceder a las APIs de BC
-- **URLs de API** configuradas para cada entidad
+- ✅ **Sincronización Incremental** con `lastModifiedDateTime` desde BC
+- ✅ **Tabla sync_state** para tracking de última sincronización por entidad
+- ✅ **Batching de 300 registros** para evitar timeouts
+- ✅ **Campo company_name** en todas las transformaciones
+- ✅ **matchType=allFilters** en todas las actualizaciones de sync_state
+- ✅ **Conexiones en paralelo** para actualizar sync_state independientemente
+- ✅ **Filtros específicos** para cada entidad en Supabase
 
-### **Credenciales Supabase:**
+### 📊 Estructura del Workflow
 
-- **API Key** configurada para acceder a la base de datos
-- **Tablas** configuradas con la estructura correcta
+```
+Manual Trigger
+├── Get sync_state (jobs) → HTTP Proyectos → Transform → Batch → Update job
+├── Get sync_state (tasks) → HTTP ProyectosTareas → Transform → Batch → Update job_task  
+├── Get sync_state (calendar) → HTTP CalendaroPeriodosDias → Transform → Batch → Update calendar_period_days
+├── Get sync_state (team) → HTTP ProyectosEquipos → Transform → Batch → Update job_team
+├── Get sync_state (resource) → HTTP Recursos → Transform → Batch → Update resource
+└── Get sync_state (cost) → HTTP RecursosCostos → Transform → Batch → Update resource_cost
+```
 
-## 📊 Estructura de Datos
+### 🚀 Estado de Implementación
 
-### **Tablas Supabase:**
+- **Workflow 001:** ✅ **COMPLETO Y FUNCIONANDO** (49 nodos)
+- **Workflow 002:** 🔄 Versión de desarrollo (48 nodos)
+- **APIs BC:** ✅ CalendaroPeriodosDias, ⏳ Resto pendientes de publicar
 
-- `job` - Proyectos
-- `job_task` - Tareas de proyectos
-- `job_team` - Equipos asignados a proyectos
-- `resource` - Recursos/Empleados
-- `resource_cost` - Costos de recursos
-- `calendar_period_days` - Días de calendario
+### 📝 Próximos Pasos
 
-## 🚀 Uso
+1. **Publicar cambios AL en Business Central** para exponer `lastModifiedDateTime` en:
+   - PS_Proyectos_Tareas (Tareas)
+   - PS_Proyectos_Equipo (Equipos)
+   - PS_Recursos (Recursos)
+   - PS_RecursosCostos (Costos)
 
-### **Ejecutar Sincronización:**
+2. **Probar sincronización incremental** con datos reales
 
-1. Acceder a n8n: https://n8n.powersolution.es
-2. Ir al workflow "001_sincronizacion_completa"
-3. Hacer clic en "Execute workflow"
+3. **Configurar ejecución automática** con cron
 
-### **Programar Sincronización:**
+### 🔍 Archivos del Proyecto
 
-- Configurar trigger cron para ejecución automática
-- Recomendado: Cada hora o según necesidades del negocio
+- `001_sincronizacion_completa.json` - **WORKFLOW OFICIAL** ⭐
+- `002_sincronizacion_completa_company_fixed.json` - Versión de desarrollo
+- `README.md` - Esta documentación
+- Scripts de actualización y deployment
 
-## 📝 Notas de Desarrollo
+---
 
-### **Versiones:**
-
-- **v1.0** - Workflow inicial restaurado desde la base de datos
-- **v1.1** - Configuración de credenciales y pruebas
-
-### **Próximas Mejoras:**
-
-- [ ] Agregar campo `company_name` para soporte multi-empresa
-- [ ] Implementar manejo de errores y reintentos
-- [ ] Agregar logging y monitoreo
-- [ ] Optimizar rendimiento para grandes volúmenes de datos
-
-## 🔍 Troubleshooting
-
-### **Problemas Comunes:**
-
-1. **Error de autenticación OAuth2** - Verificar credenciales de BC
-2. **Error de conexión Supabase** - Verificar API key y configuración
-3. **Datos no sincronizados** - Verificar estructura de datos en BC
-
-### **Logs:**
-
-- Revisar logs de ejecución en n8n
-- Verificar respuestas de las APIs de BC
-- Monitorear actualizaciones en Supabase
-
-## 📚 Referencias
-
-- [Documentación n8n](https://docs.n8n.io/)
-- [API Business Central](https://docs.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/)
-- [API Supabase](https://supabase.com/docs/reference/javascript/introduction)
-
-## Actualización 29/08/2025 - 17:21
-
-### Workflow 002 - Sincronización Completa con 6 Entidades
-
-El workflow ahora incluye sincronización incremental para todas las entidades:
-
-1. **Calendario** (calendar_period_days) - ✅ Completo
-2. **Proyectos** (job) - ✅ Completo  
-3. **Tareas** (job_task) - ✅ Completo
-4. **Equipos** (job_team) - ✅ Completo
-5. **Recursos** (resource) - ✅ Completo
-6. **Costos** (resource_cost) - ✅ Completo
-
-### Características implementadas:
-
-- ✅ Filtrado incremental con `lastModifiedDateTime` 
-- ✅ Sincronización de estado en tabla `sync_state`
-- ✅ Batching de 300 registros para evitar timeouts
-- ✅ Campo `company_name` en todas las entidades
-- ✅ `matchType=allFilters` en todas las actualizaciones de sync_state
-
-### Total de nodos: 48
-
-### Pendiente:
-- Exponer `lastModifiedDateTime` en APIs BC para Tareas, Equipos, Recursos y Costos
-- Probar sincronización incremental con datos reales
-
+**Nota:** El workflow 001 es el oficial y está funcionando en n8n. El workflow 002 es para desarrollo y pruebas.
