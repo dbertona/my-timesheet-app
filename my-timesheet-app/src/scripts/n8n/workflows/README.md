@@ -97,3 +97,31 @@ Este directorio contiene todos los workflows de n8n utilizados para la sincroniz
 - [Documentación n8n](https://docs.n8n.io/)
 - [API Business Central](https://docs.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/)
 - [API Supabase](https://supabase.com/docs/reference/javascript/introduction)
+
+## Actualización 29/08/2025 - 17:21
+
+### Workflow 002 - Sincronización Completa con 6 Entidades
+
+El workflow ahora incluye sincronización incremental para todas las entidades:
+
+1. **Calendario** (calendar_period_days) - ✅ Completo
+2. **Proyectos** (job) - ✅ Completo  
+3. **Tareas** (job_task) - ✅ Completo
+4. **Equipos** (job_team) - ✅ Completo
+5. **Recursos** (resource) - ✅ Completo
+6. **Costos** (resource_cost) - ✅ Completo
+
+### Características implementadas:
+
+- ✅ Filtrado incremental con `lastModifiedDateTime` 
+- ✅ Sincronización de estado en tabla `sync_state`
+- ✅ Batching de 300 registros para evitar timeouts
+- ✅ Campo `company_name` en todas las entidades
+- ✅ `matchType=allFilters` en todas las actualizaciones de sync_state
+
+### Total de nodos: 48
+
+### Pendiente:
+- Exponer `lastModifiedDateTime` en APIs BC para Tareas, Equipos, Recursos y Costos
+- Probar sincronización incremental con datos reales
+
