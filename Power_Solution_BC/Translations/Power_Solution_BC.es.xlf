@@ -4619,7 +4619,7 @@
         </trans-unit>
         <trans-unit id="Page 3769604473 - Control 3190122413 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Project &amp; Description</source>
-          <target state="needs-translation"/>
+          <target state="translated">Proyecto y Descripción</target>
           <note from="Developer" annotates="general" priority="2"/>
           <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Control ProjectInfo - Property Caption</note>
         </trans-unit>
