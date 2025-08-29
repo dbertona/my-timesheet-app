@@ -476,7 +476,7 @@ page 50731 "PS_EconomicMonitoring"
         CurrentDrillDownMonth: Integer;
         CurrentDrillDownJobNo: Code[20];
         CurrentDrillDownConcept: Option;
-        CurrentDrillDownType: Enum "PS_JobTypeEnum";
+        CurrentDrillDownType: Option; // Cambiado de Enum a Option para ser compatible con Rec.Type
         LastBCValue: Decimal;
 
     Procedure SetYear(Year: Integer; Departament: Code[20])
@@ -1155,6 +1155,8 @@ page 50731 "PS_EconomicMonitoring"
         JobTypeFilter: Enum "PS_JobTypeEnum";
         UserSetupRec: Record "User Setup"; // Agregar referencia a la tabla User Setup
     begin
+        // Inicializar JobTypeFilter con valor por defecto para evitar conversión implícita
+        JobTypeFilter := JobTypeFilter::Todos;
         CurrPage.Editable := true;
         grp := JobRec.FilterGroup;
         Rec.FilterGroup(10);
@@ -1340,7 +1342,7 @@ page 50731 "PS_EconomicMonitoring"
                 repeat
                     if JobRec.Get(JobTeamRec.ARBVRNJobNo) and (not JobTeamRec.PS_SoloImputar) then begin
 
-                        if (JobTypeFilter = JobTypeFilter::Todos) or (FORMAT(JobRec.ARBVRNJobType) = JobTypeFilterText) then begin
+                        if (JobTypeFilter = JobTypeFilter::Todos) or IsJobTypeMatching(JobRec.ARBVRNJobType, JobTypeFilter) then begin
                             if FilterCount = 0 then
                                 FirstJobNo := JobTeamRec.ARBVRNJobNo;
                             FilterCount += 1;
@@ -1433,6 +1435,20 @@ page 50731 "PS_EconomicMonitoring"
                 exit(90);
             else
                 exit(0);
+        end;
+    end;
+
+    local procedure IsJobTypeMatching(ARBVRNJobType: Option; JobTypeFilter: Enum "PS_JobTypeEnum"): Boolean
+    begin
+        case JobTypeFilter of
+            JobTypeFilter::Todos:
+                exit(true);
+            JobTypeFilter::Operativo:
+                exit(ARBVRNJobType = 0); // Operativo = 0
+            JobTypeFilter::Estructura:
+                exit(ARBVRNJobType = 1); // Structure = 1
+            else
+                exit(false);
         end;
     end;
 
