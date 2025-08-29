@@ -57,3 +57,60 @@ Manual Trigger
 ---
 
 **Nota:** Este es el único workflow activo. Los archivos de desarrollo han sido eliminados para mantener el proyecto limpio.
+
+## 🔄 Workflow Bidireccional: 003_sync_supabase_to_bc.json
+
+**Estado:** 🔄 **NUEVO - Sincronización Supabase → BC**  
+**Funcionalidad:** Replica el script Python sync_supabase_to_bc.py  
+**Total de nodos:** 20  
+
+### 📋 Funcionalidad del Workflow
+
+Este workflow sincroniza timesheets desde Supabase hacia Business Central:
+
+1. **🔐 Autenticación OAuth2** con Business Central
+2. **📥 Lectura de cabeceras** desde Supabase (`synced_to_bc=false`)
+3. **📤 Inserción de cabeceras** en BC via API
+4. **📥 Lectura de líneas** de timesheet desde Supabase
+5. **📤 Inserción de líneas** en BC via API
+6. **✅ Marcado como sincronizado** en Supabase
+
+### 🔧 Nodos del Workflow
+
+- **Manual Trigger** → Inicio del proceso
+- **HTTP - Get BC Token** → OAuth2 authentication
+- **Extract BC Token** → Extrae token de respuesta
+- **Get Headers** → Lee cabeceras desde Supabase
+- **Prepare Headers** → Prepara datos para BC
+- **HTTP - Post Header to BC** → Inserta cabecera en BC
+- **Extract Document No** → Extrae número de documento
+- **Get Lines for Header** → Lee líneas del header
+- **Prepare Lines** → Prepara líneas para BC
+- **HTTP - Post Line to BC** → Inserta línea en BC
+- **Check Line Result** → Verifica resultado
+- **Mark Line as Synced** → Marca línea como sincronizada
+- **Mark Header as Synced** → Marca cabecera como sincronizada
+- **Sincronización Completada** → Confirmación final
+
+### 📊 Flujo de Datos
+
+```
+Supabase → Business Central
+├── resource_timesheet_header (synced_to_bc=false)
+│   ├── Insertar en BC: ResourceTimesheetHeaders
+│   └── Marcar como synced_to_bc=true
+└── timesheet (header_id + synced_to_bc=false)
+    ├── Insertar en BC: insertlines API
+    └── Marcar como synced_to_bc=true
+```
+
+### 🎯 Casos de Uso
+
+- **Sincronización manual** de timesheets pendientes
+- **Integración bidireccional** completa del sistema
+- **Reemplazo del script Python** con workflow n8n
+- **Monitoreo visual** del proceso de sincronización
+
+---
+
+**Nota:** Este workflow complementa el 001_sincronizacion_completa.json para tener sincronización bidireccional completa.

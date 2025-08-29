@@ -1,0 +1,550 @@
+{
+  "name": "003_sync_supabase_to_bc",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual_trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://login.microsoftonline.com/a18dc497-a8b8-4740-b723-65362ab7a3fb/oauth2/v2.0/token",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "64898aa0-1f14-46ab-8283-74161f5e3cb2"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        }
+      },
+      "id": "http_get_bc_token",
+      "name": "HTTP - Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const token = data.access_token; return [{ json: { bc_token: token } }]; } return [];"
+      },
+      "id": "code_extract_token",
+      "name": "Extract BC Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "resource_timesheet_header",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "synced_to_bc",
+              "condition": "eq",
+              "keyValue": false
+            }
+          ]
+        }
+      },
+      "id": "supabase_get_headers",
+      "name": "Get Headers (synced_to_bc=false)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        200,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const headers = input; const items = []; for (const header of headers) { items.push({ json: { header: header.json, bc_token: $('Extract BC Token').item.json.bc_token } }); } return items; } return [];"
+      },
+      "id": "code_prepare_headers",
+      "name": "Prepare Headers for BC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/ResourceTimesheetHeaders?company=' + encodeURIComponent('Power Solution Iberia') }}",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "If-Match",
+              "value": "*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "resourceNoJobNo",
+              "value": "={{ $json.header.resource_no }}"
+            },
+            {
+              "name": "description",
+              "value": "={{ $json.header.description }}"
+            },
+            {
+              "name": "postingDate",
+              "value": "={{ $json.header.posting_date }}"
+            },
+            {
+              "name": "postingDescription",
+              "value": "={{ $json.header.posting_description }}"
+            },
+            {
+              "name": "fromDate",
+              "value": "={{ $json.header.from_date }}"
+            },
+            {
+              "name": "toDate",
+              "value": "={{ $json.header.to_date }}"
+            },
+            {
+              "name": "allocationPeriod",
+              "value": "={{ $json.header.allocation_period }}"
+            },
+            {
+              "name": "userIDWeb",
+              "value": "={{ $json.header.user_email }}"
+            }
+          ]
+        }
+      },
+      "id": "http_post_header_bc",
+      "name": "HTTP - Post Header to BC",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        600,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const document_no = data.no; const header_id = $('Prepare Headers for BC').item.json.header.id; const bc_token = $('Prepare Headers for BC').item.json.bc_token; return [{ json: { document_no: document_no, header_id: header_id, bc_token: bc_token } }]; } return [];"
+      },
+      "id": "code_extract_document_no",
+      "name": "Extract Document No",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "timesheet",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "header_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.header_id }}"
+            },
+            {
+              "keyName": "synced_to_bc",
+              "condition": "eq",
+              "keyValue": false
+            }
+          ]
+        }
+      },
+      "id": "supabase_get_lines",
+      "name": "Get Lines for Header",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const lines = input; const items = []; for (let i = 0; i < lines.length; i++) { const line = lines[i].json; items.push({ json: { line: line, document_no: $('Extract Document No').item.json.document_no, bc_token: $('Extract Document No').item.json.bc_token, line_no: 1000 + (i * 1000) } }); } return items; } return [];"
+      },
+      "id": "code_prepare_lines",
+      "name": "Prepare Lines for BC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/powersolution/timesheet/v1.0/insertlines?company=' + encodeURIComponent('Power Solution Iberia') }}",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "documentNo",
+              "value": "={{ $json.document_no }}"
+            },
+            {
+              "name": "lineNo",
+              "value": "={{ $json.line_no }}"
+            },
+            {
+              "name": "resourceNo",
+              "value": "={{ $json.line.resource_no }}"
+            },
+            {
+              "name": "jobNo",
+              "value": "={{ $json.line.job_no }}"
+            },
+            {
+              "name": "jobTaskNo",
+              "value": "={{ $json.line.job_task_no }}"
+            },
+            {
+              "name": "description",
+              "value": "={{ $json.line.description }}"
+            },
+            {
+              "name": "timesheetDate",
+              "value": "={{ $json.line.date }}"
+            },
+            {
+              "name": "quantity",
+              "value": "={{ $json.line.quantity }}"
+            },
+            {
+              "name": "workTypeCode",
+              "value": "={{ $json.line.work_type || '' }}"
+            }
+          ]
+        }
+      },
+      "id": "http_post_line_bc",
+      "name": "HTTP - Post Line to BC",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1400,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const status = first.statusCode; const line_id = $('Prepare Lines for BC').item.json.line.id; if (status >= 200 && status < 300) { return [{ json: { line_id: line_id, success: true, status: status } }]; } else { return [{ json: { line_id: line_id, success: false, status: status, error: first.json } }]; } } return [];"
+      },
+      "id": "code_check_line_result",
+      "name": "Check Line Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "timesheet",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.line_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "synced_to_bc",
+              "fieldValue": true
+            }
+          ]
+        }
+      },
+      "id": "supabase_mark_line_synced",
+      "name": "Mark Line as Synced",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1800,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "resource_timesheet_header",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Prepare Headers for BC').item.json.header.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "synced_to_bc",
+              "fieldValue": true
+            }
+          ]
+        }
+      },
+      "id": "supabase_mark_header_synced",
+      "name": "Mark Header as Synced",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        800,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { message: 'Sincronización completada', timestamp: new Date().toISOString() } }];"
+      },
+      "id": "code_completion",
+      "name": "Sincronización Completada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        -100
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Get BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Get BC Token": {
+      "main": [
+        [
+          {
+            "node": "Extract BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract BC Token": {
+      "main": [
+        [
+          {
+            "node": "Get Headers (synced_to_bc=false)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Headers (synced_to_bc=false)": {
+      "main": [
+        [
+          {
+            "node": "Prepare Headers for BC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Headers for BC": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Post Header to BC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Post Header to BC": {
+      "main": [
+        [
+          {
+            "node": "Extract Document No",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Document No": {
+      "main": [
+        [
+          {
+            "node": "Get Lines for Header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Lines for Header": {
+      "main": [
+        [
+          {
+            "node": "Prepare Lines for BC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Lines for BC": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Post Line to BC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Post Line to BC": {
+      "main": [
+        [
+          {
+            "node": "Check Line Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Line Result": {
+      "main": [
+        [
+          {
+            "node": "Mark Line as Synced",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Line as Synced": {
+      "main": [
+        [
+          {
+            "node": "Mark Line as Synced",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Document No": {
+      "main": [
+        [
+          {
+            "node": "Mark Header as Synced",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Line as Synced": {
+      "main": [
+        [
+          {
+            "node": "Sincronización Completada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  ],
+  "active": false,
+  "settings": {},
+  "pinData": {}
+}
