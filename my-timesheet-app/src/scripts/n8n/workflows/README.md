@@ -4,11 +4,11 @@ Este directorio contiene todos los workflows de n8n utilizados para la sincroniz
 
 ## 🚀 Workflows Disponibles
 
-### 1. **Sincronización Completa BC → Supabase (TODAS) - RESTAURADO**
-- **Archivo:** `001_sincronizacion_completa_todas_RESTAURADO.json`
+### 1. **Sincronización Completa BC → Supabase**
+- **Archivo:** `001_sincronizacion_completa.json`
 - **ID en n8n:** `rDSrPE4U9zNGRaJi`
 - **Estado:** Activo
-- **Descripción:** Workflow maestro que sincroniza todos los datos de Business Central a Supabase
+- **Descripción:** Workflow principal que sincroniza todos los datos de Business Central a Supabase
 
 #### **Funcionalidades:**
 - **Proyectos:** Obtiene y sincroniza proyectos desde BC
@@ -24,11 +24,7 @@ Este directorio contiene todos los workflows de n8n utilizados para la sincroniz
 3. **6 Nodos de Transformación** - Procesan y formatean los datos
 4. **6 Nodos Supabase** - Actualizan la base de datos
 
-### 2. **Test Workflow**
-- **Archivo:** `002_test_workflow.json`
-- **ID en n8n:** `x1PZZchobxVIpg6t`
-- **Estado:** Inactivo
-- **Descripción:** Workflow de prueba para verificar la funcionalidad de n8n
+
 
 ## 🔧 Configuración Requerida
 
@@ -54,7 +50,7 @@ Este directorio contiene todos los workflows de n8n utilizados para la sincroniz
 
 ### **Ejecutar Sincronización:**
 1. Acceder a n8n: https://n8n.powersolution.es
-2. Ir al workflow "Sincronización Completa BC → Supabase (TODAS) - RESTAURADO"
+2. Ir al workflow "Sincronización Completa BC → Supabase"
 3. Hacer clic en "Execute workflow"
 
 ### **Programar Sincronización:**
