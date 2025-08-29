@@ -1,53 +1,29 @@
 # Workflows n8n - Sincronización Business Central → Supabase
 
-## Workflow Oficial: 001_sincronizacion_completa.json
+## 🎯 Workflow Oficial: 001_sincronizacion_completa.json
 
-**Estado:** ✅ **ACTIVO Y FUNCIONANDO**  
+**Estado:** ✅ **ACTIVO Y FUNCIONANDO** en n8n  
 **Última actualización:** 29/08/2025  
 **Total de nodos:** 49  
 **ID en n8n:** 3fpaX4J2wc5DH054  
 
-### 🎯 Entidades Sincronizadas (6 total)
+### 📋 Entidades Sincronizadas (6 total)
 
 1. **📅 Calendario** (`calendar_period_days`) - ✅ Completo
-   - Filtrado incremental con `lastModifiedDateTime`
-   - Batching de 300 registros
-   - Sincronización de estado en `sync_state`
-
-2. **🏗️ Proyectos** (`job`) - ✅ Completo
-   - Filtrado incremental con `lastModifiedDateTime`
-   - Batching de 300 registros
-   - Sincronización de estado en `sync_state`
-
+2. **🏗️ Proyectos** (`job`) - ✅ Completo  
 3. **📋 Tareas** (`job_task`) - ✅ Completo
-   - Filtrado incremental con `lastModifiedDateTime`
-   - Batching de 300 registros
-   - Sincronización de estado en `sync_state`
-
 4. **👥 Equipos** (`job_team`) - ✅ Completo
-   - Filtrado incremental con `lastModifiedDateTime`
-   - Batching de 300 registros
-   - Sincronización de estado en `sync_state`
-
 5. **👨‍💼 Recursos** (`resource`) - ✅ Completo
-   - Filtrado incremental con `lastModifiedDateTime`
-   - Batching de 300 registros
-   - Sincronización de estado en `sync_state`
-
 6. **💰 Costos** (`resource_cost`) - ✅ Completo
-   - Filtrado incremental con `lastModifiedDateTime`
-   - Batching de 300 registros
-   - Sincronización de estado en `sync_state`
 
 ### 🔧 Características Implementadas
 
-- ✅ **Sincronización Incremental** con `lastModifiedDateTime` desde BC
+- ✅ **Sincronización incremental** con `lastModifiedDateTime` desde BC
 - ✅ **Tabla sync_state** para tracking de última sincronización por entidad
 - ✅ **Batching de 300 registros** para evitar timeouts
 - ✅ **Campo company_name** en todas las transformaciones
 - ✅ **matchType=allFilters** en todas las actualizaciones de sync_state
 - ✅ **Conexiones en paralelo** para actualizar sync_state independientemente
-- ✅ **Filtros específicos** para cada entidad en Supabase
 
 ### 📊 Estructura del Workflow
 
@@ -63,8 +39,7 @@ Manual Trigger
 
 ### 🚀 Estado de Implementación
 
-- **Workflow 001:** ✅ **COMPLETO Y FUNCIONANDO** (49 nodos)
-- **Workflow 002:** 🔄 Versión de desarrollo (48 nodos)
+- **Workflow 001:** ✅ **OFICIAL Y FUNCIONANDO** (49 nodos)
 - **APIs BC:** ✅ CalendaroPeriodosDias, ⏳ Resto pendientes de publicar
 
 ### 📝 Próximos Pasos
@@ -79,13 +54,6 @@ Manual Trigger
 
 3. **Configurar ejecución automática** con cron
 
-### 🔍 Archivos del Proyecto
-
-- `001_sincronizacion_completa.json` - **WORKFLOW OFICIAL** ⭐
-- `002_sincronizacion_completa_company_fixed.json` - Versión de desarrollo
-- `README.md` - Esta documentación
-- Scripts de actualización y deployment
-
 ---
 
-**Nota:** El workflow 001 es el oficial y está funcionando en n8n. El workflow 002 es para desarrollo y pruebas.
+**Nota:** Este es el único workflow activo. Los archivos de desarrollo han sido eliminados para mantener el proyecto limpio.
