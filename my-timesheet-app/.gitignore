@@ -96,7 +96,7 @@ tmp/
 temp/
 
 # Credentials and sensitive files
-config/api-keys.md
+# config/api-keys.md  # Documentación de claves (permitida)
 secrets/
 *.key
 *.pem
