@@ -1,5 +1,6 @@
 {
   "name": "003_sync_supabase_to_bc",
+  "settings": {},
   "nodes": [
     {
       "parameters": {},
@@ -175,7 +176,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const document_no = data.no; const header_id = $('Prepare Headers for BC').item.json.header.id; const bc_token = $('Prepare Headers for BC').item.json.bc_token; return [{ json: { document_no: document_no, header_id: header_id, bc_token: bc_token } }]; } return [];"
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const document_no = data.no; const header_id = $('Prepare Headers for BC').item.json.header.id; const bc_token = $('Extract BC Token').item.json.bc_token; return [{ json: { document_no: document_no, header_id: header_id, bc_token: bc_token } }]; } return [];"
       },
       "id": "code_extract_document_no",
       "name": "Extract Document No",
@@ -514,7 +515,7 @@
       "main": [
         [
           {
-            "node": "Mark Line as Synced",
+            "node": "Sincronización Completada",
             "type": "main",
             "index": 0
           }
@@ -531,20 +532,6 @@
           }
         ]
       ]
-    },
-    "Mark Line as Synced": {
-      "main": [
-        [
-          {
-            "node": "Sincronización Completada",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
-  ],
-  "active": false,
-  "settings": {},
-  "pinData": {}
+  }
 }
