@@ -947,9 +947,9 @@
               "keyValue": "={{ $json.company_name }}"
             },
             {
-              "keyName": "no",
+              "keyName": "code",
               "condition": "eq",
-              "keyValue": "={{ $json.no }}"
+              "keyValue": "={{ $json.code }}"
             }
           ]
         },
