@@ -9,7 +9,7 @@
       "typeVersion": 1,
       "position": [
         -976,
-        320
+        608
       ]
     },
     {
@@ -21,14 +21,15 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        496,
-        576
+        -80,
+        512
       ]
     },
     {
       "parameters": {
         "operation": "getAll",
         "tableId": "sync_state",
+        "matchType": "allFilters",
         "filters": {
           "conditions": [
             {
@@ -49,7 +50,7 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -400,
+        -752,
         -352
       ],
       "credentials": {
@@ -68,7 +69,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -176,
+        -528,
         -352
       ]
     },
@@ -86,13 +87,13 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        48,
+        -304,
         -352
       ],
       "credentials": {
         "oAuth2Api": {
           "id": "5caHilW1m87Snw87",
-          "name": "Unnamed credential"
+          "name": "Business Central"
         }
       }
     },
@@ -105,7 +106,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        272,
+        -80,
         -256
       ]
     },
@@ -119,7 +120,7 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        496,
+        144,
         -256
       ]
     },
@@ -176,7 +177,7 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        720,
+        368,
         -256
       ],
       "credentials": {
@@ -219,7 +220,7 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        496,
+        144,
         -448
       ],
       "credentials": {
@@ -233,6 +234,7 @@
       "parameters": {
         "operation": "getAll",
         "tableId": "sync_state",
+        "matchType": "allFilters",
         "filters": {
           "conditions": [
             {
@@ -253,8 +255,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -400,
-        64
+        -752,
+        32
       ],
       "credentials": {
         "supabaseApi": {
@@ -272,8 +274,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -176,
-        64
+        -528,
+        32
       ]
     },
     {
@@ -290,13 +292,13 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        48,
-        64
+        -304,
+        32
       ],
       "credentials": {
         "oAuth2Api": {
           "id": "5caHilW1m87Snw87",
-          "name": "Unnamed credential"
+          "name": "Business Central"
         }
       }
     },
@@ -309,8 +311,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        272,
-        160
+        -80,
+        128
       ]
     },
     {
@@ -323,8 +325,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        496,
-        160
+        144,
+        128
       ]
     },
     {
@@ -377,8 +379,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        720,
-        160
+        368,
+        128
       ],
       "credentials": {
         "supabaseApi": {
@@ -396,8 +398,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        272,
-        -32
+        -80,
+        -64
       ]
     },
     {
@@ -433,8 +435,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        496,
-        -32
+        144,
+        -64
       ],
       "credentials": {
         "supabaseApi": {
@@ -467,8 +469,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -176,
-        480
+        -752,
+        416
       ],
       "credentials": {
         "supabaseApi": {
@@ -486,8 +488,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        48,
-        480
+        -528,
+        416
       ]
     },
     {
@@ -504,13 +506,13 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        272,
-        480
+        -304,
+        416
       ],
       "credentials": {
         "oAuth2Api": {
           "id": "5caHilW1m87Snw87",
-          "name": "Unnamed credential"
+          "name": "Business Central"
         }
       }
     },
@@ -523,8 +525,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        496,
-        384
+        -80,
+        320
       ]
     },
     {
@@ -537,8 +539,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        720,
-        384
+        144,
+        320
       ]
     },
     {
@@ -604,8 +606,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        944,
-        384
+        368,
+        320
       ],
       "credentials": {
         "supabaseApi": {
@@ -647,8 +649,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        720,
-        576
+        144,
+        512
       ],
       "credentials": {
         "supabaseApi": {
@@ -661,6 +663,7 @@
       "parameters": {
         "operation": "getAll",
         "tableId": "sync_state",
+        "matchType": "allFilters",
         "filters": {
           "conditions": [
             {
@@ -681,8 +684,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -400,
-        896
+        -752,
+        800
       ],
       "credentials": {
         "supabaseApi": {
@@ -700,8 +703,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -176,
-        896
+        -528,
+        800
       ]
     },
     {
@@ -718,13 +721,13 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        48,
-        896
+        -304,
+        800
       ],
       "credentials": {
         "oAuth2Api": {
           "id": "5caHilW1m87Snw87",
-          "name": "Unnamed credential"
+          "name": "Business Central"
         }
       }
     },
@@ -737,8 +740,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        272,
-        800
+        -80,
+        704
       ]
     },
     {
@@ -751,8 +754,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        496,
-        800
+        144,
+        704
       ]
     },
     {
@@ -801,8 +804,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        720,
-        800
+        368,
+        704
       ],
       "credentials": {
         "supabaseApi": {
@@ -820,8 +823,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        272,
-        992
+        -80,
+        896
       ]
     },
     {
@@ -857,42 +860,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        496,
-        992
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "tableId": "sync_state",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
-            },
-            {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "resource"
-            }
-          ]
-        }
-      },
-      "id": "supabase_get_sync_state_resource",
-      "name": "Get sync_state (resource)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        -400,
-        1312
+        144,
+        896
       ],
       "credentials": {
         "supabaseApi": {
@@ -910,8 +879,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -176,
-        1312
+        -528,
+        1184
       ]
     },
     {
@@ -928,27 +897,27 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        48,
-        1312
+        -304,
+        1184
       ],
       "credentials": {
         "oAuth2Api": {
           "id": "5caHilW1m87Snw87",
-          "name": "Unnamed credential"
+          "name": "Business Central"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const recursos = data.value || []; const items = []; for (const r of recursos) { items.push({ json: { no: r.no || '', name: r.name || '', type: r.type || '', company_name: 'Power Solution Iberia SL' } }); } return items; } return [];"
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const recursos = data.value || []; const items = []; for (const r of recursos) { items.push({ json: { code: r.no || '', name: r.name || '', type: r.type || '', email: r.arbvrneMail || '', department_code: r.globalDimension1Code || '', company_name: 'Power Solution Iberia SL' } }); } return items; } return [];"
       },
       "id": "transform_resource",
       "name": "Transformar Recursos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        272,
-        1216
+        -80,
+        1088
       ]
     },
     {
@@ -961,8 +930,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        496,
-        1216
+        144,
+        1088
       ]
     },
     {
@@ -1010,8 +979,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        720,
-        1216
+        368,
+        1088
       ],
       "credentials": {
         "supabaseApi": {
@@ -1029,8 +998,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        272,
-        1408
+        -80,
+        1280
       ]
     },
     {
@@ -1066,8 +1035,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        496,
-        1408
+        144,
+        1280
       ],
       "credentials": {
         "supabaseApi": {
@@ -1080,6 +1049,7 @@
       "parameters": {
         "operation": "getAll",
         "tableId": "sync_state",
+        "matchType": "allFilters",
         "filters": {
           "conditions": [
             {
@@ -1100,8 +1070,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -400,
-        1728
+        -752,
+        1568
       ],
       "credentials": {
         "supabaseApi": {
@@ -1119,8 +1089,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -176,
-        1728
+        -528,
+        1568
       ]
     },
     {
@@ -1137,13 +1107,13 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        48,
-        1728
+        -304,
+        1568
       ],
       "credentials": {
         "oAuth2Api": {
           "id": "5caHilW1m87Snw87",
-          "name": "Unnamed credential"
+          "name": "Business Central"
         }
       }
     },
@@ -1156,8 +1126,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        272,
-        1632
+        -80,
+        1472
       ]
     },
     {
@@ -1170,8 +1140,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        496,
-        1632
+        144,
+        1472
       ]
     },
     {
@@ -1224,8 +1194,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        720,
-        1632
+        368,
+        1472
       ],
       "credentials": {
         "supabaseApi": {
@@ -1243,8 +1213,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        272,
-        1824
+        -80,
+        1664
       ]
     },
     {
@@ -1280,8 +1250,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        496,
-        1824
+        144,
+        1664
       ],
       "credentials": {
         "supabaseApi": {
@@ -1299,9 +1269,44 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        272,
+        -80,
         -448
       ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "Power Solution Iberia SL"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "resource"
+            }
+          ]
+        }
+      },
+      "id": "eb8dddcb-c7f1-4d9e-bebf-42383bbfda22",
+      "name": "Get sync_state (team)1",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        1184
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -1311,6 +1316,61 @@
         [
           {
             "node": "Compute last_sync ISO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute last_sync ISO": {
+      "main": [
+        [
+          {
+            "node": "HTTP - CalendaroPeriodosDias (filtrado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - CalendarioPeriodosDias (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar CalendarioPeriodosDias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar CalendarioPeriodosDias": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (calendar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches (calendar)": {
+      "main": [
+        [
+          {
+            "node": "Upsert CalendarioPeriodosDias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert CalendarioPeriodosDias": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (calendar)",
             "type": "main",
             "index": 0
           }
@@ -1336,17 +1396,17 @@
             "index": 0
           },
           {
-            "node": "Get sync_state (resource)",
-            "type": "main",
-            "index": 0
-          },
-          {
             "node": "Get sync_state (cost)",
             "type": "main",
             "index": 0
           },
           {
             "node": "Get sync_state (jobs)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get sync_state (team)1",
             "type": "main",
             "index": 0
           }
@@ -1401,6 +1461,17 @@
         [
           {
             "node": "Split In Batches (tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert ProyectosTareas": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (tasks)",
             "type": "main",
             "index": 0
           }
@@ -1489,6 +1560,17 @@
         ]
       ]
     },
+    "Upsert Proyectos": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (jobs)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Split In Batches (jobs)": {
       "main": [
         [
@@ -1506,17 +1588,6 @@
         [
           {
             "node": "Split In Batches (jobs)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute last_sync ISO": {
-      "main": [
-        [
-          {
-            "node": "HTTP - CalendaroPeriodosDias (filtrado)",
             "type": "main",
             "index": 0
           }
@@ -1605,6 +1676,44 @@
         ]
       ]
     },
+    "HTTP - ProyectosEquipo (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar ProyectosEquipo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get sync_state (resourcenew)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar ProyectosEquipo": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert ProyectosEquipo": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "HTTP - ProyectosEquipos (filtrado)": {
       "main": [
         [
@@ -1665,17 +1774,6 @@
         ]
       ]
     },
-    "Get sync_state (resource)": {
-      "main": [
-        [
-          {
-            "node": "Compute last_sync ISO (resource)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Compute last_sync ISO (resource)": {
       "main": [
         [
@@ -1723,6 +1821,22 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "Upsert Recursos": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (resource)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (resource)": {
+      "main": [
+        []
       ]
     },
     "Update resource": {
@@ -1796,6 +1910,17 @@
         ]
       ]
     },
+    "Upsert RecursosCostos": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (cost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Split In Batches (cost)": {
       "main": [
         [
@@ -1839,11 +1964,22 @@
           }
         ]
       ]
+    },
+    "Get sync_state (team)1": {
+      "main": [
+        [
+          {
+            "node": "Compute last_sync ISO (resource)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {},
-  "versionId": "0b9c7aff-ab4b-471a-b78b-a7d04c197f85",
+  "versionId": "42b22cd9-24cf-4d44-b18c-f114349d8afb",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "5f4a76193498dfc211473f5de0a4e75faf68e0d1feb31e98054dc9c9b3f6aa8c"
