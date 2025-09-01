@@ -58,7 +58,7 @@ Manual Trigger
 
 **Nota:** Este es el único workflow activo. Los archivos de desarrollo han sido eliminados para mantener el proyecto limpio.
 
-## 🔥 Workflow de Warmup: 000_warmup_credentials_simple.json
+## 🔥 Workflow de Warmup: 000_warmup_credentials.json
 
 **Estado:** ✅ **ACTIVO - Calentamiento de credenciales OAuth2**
 **Funcionalidad:** Activa credenciales OAuth2 antes de los workflows principales
