@@ -922,19 +922,6 @@
     },
     {
       "parameters": {
-        "jsCode": "// Nodo inteligente para determinar si update o insert\nconst input = $input.all();\nconst items = [];\n\nfor (const item of input) {\n  const data = item.json;\n  \n  // Determinar operación basada en si el registro existe\n  // Por ahora, asumimos que si tiene email y department_code, es update\n  // Si no los tiene, es insert\n  const operation = (data.email && data.department_code) ? 'update' : 'insert';\n  \n  items.push({\n    json: {\n      ...data,\n      _operation: operation,\n      _needsInsert: operation === 'insert'\n    }\n  });\n}\n\nreturn items;"
-      },
-      "id": "code_smart_resource_operation",
-      "name": "Smart Resource Operation",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        32,
-        1088
-      ]
-    },
-    {
-      "parameters": {
         "batchSize": 300,
         "options": {}
       },
@@ -949,7 +936,7 @@
     },
     {
       "parameters": {
-        "operation": "={{ $json._operation || 'update' }}",
+        "operation": "upsert",
         "tableId": "resource",
         "matchType": "allFilters",
         "filters": {
@@ -992,7 +979,7 @@
         }
       },
       "id": "supabase_update_resource",
-      "name": "Smart Update/Insert resource",
+      "name": "Update resource",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
@@ -1822,17 +1809,6 @@
       "main": [
         [
           {
-            "node": "Smart Resource Operation",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Smart Resource Operation": {
-      "main": [
-        [
-          {
             "node": "Split In Batches (resource)",
             "type": "main",
             "index": 0
@@ -1844,7 +1820,7 @@
       "main": [
         [
           {
-            "node": "Update resource",
+            "node": "Smart Update/Insert resource",
             "type": "main",
             "index": 0
           }
