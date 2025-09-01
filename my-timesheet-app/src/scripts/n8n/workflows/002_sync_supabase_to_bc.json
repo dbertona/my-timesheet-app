@@ -1,5 +1,5 @@
 {
-  "name": "003_sync_supabase_to_bc_webhook",
+  "name": "002_sync_supabase_to_bc",
   "settings": {},
   "nodes": [
     {
@@ -21,57 +21,38 @@
     },
     {
       "parameters": {
-        "url": "https://login.microsoftonline.com/a18dc497-a8b8-4740-b723-65362ab7a3fb/oauth2/v2.0/token",
-        "method": "POST",
+        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/v2.0/companies",
+        "method": "GET",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/x-www-form-urlencoded"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "grant_type",
-              "value": "client_credentials"
-            },
-            {
-              "name": "client_id",
-              "value": "64898aa0-1f14-46ab-8283-74161f5e3cb2"
-            },
-            {
-              "name": "scope",
-              "value": "https://api.businesscentral.dynamics.com/.default"
-            }
-          ]
-        }
+        "options": {}
       },
-      "id": "http_get_bc_token",
-      "name": "HTTP - Get BC Token",
+      "id": "http_get_companies",
+      "name": "HTTP - Get Companies",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        -400,
-        0
-      ]
+        -416,
+        -128
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const token = data.access_token; return [{ json: { bc_token: token } }]; } return [];"
+        "jsCode": "const res = $input.first().json; const list = Array.isArray(res.value) ? res.value : []; const norm = (s) => (s||'').toString().trim(); const exact = list.find(c => norm(c.displayName) === 'Power Solution Iberia' || norm(c.name) === 'Power Solution Iberia'); const partial = list.find(c => norm(c.displayName).includes('Power Solution Iberia') || norm(c.name).includes('Power Solution Iberia')); const picked = exact || partial || list[0]; if (!picked) { return []; } return [{ json: { companyId: picked.id, companyName: 'Power Solution Iberia' } }];"
       },
-      "id": "code_extract_token",
-      "name": "Extract BC Token",
+      "id": "code_pick_company",
+      "name": "Pick Company",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -200,
-        0
+        -192,
+        -128
       ]
     },
     {
@@ -95,11 +76,17 @@
       "position": [
         0,
         -100
-      ]
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const headers = input; const items = []; for (const header of headers) { items.push({ json: { header: header.json, bc_token: $('Extract BC Token').item.json.bc_token } }); } return items; } return [];"
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const headers = input; const items = []; for (const header of headers) { items.push({ json: { header: header.json } }); } return items; } return [];"
       },
       "id": "code_prepare_headers",
       "name": "Prepare Headers for BC",
@@ -112,17 +99,13 @@
     },
     {
       "parameters": {
-        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Power_Solution_BC/ODataV4/Company('Power%20Solution%20Iberia%20SL')/ResourceTimesheetHeaders",
+        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ResourceTimesheetHeaders",
         "method": "POST",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer {{ $json.bc_token }}"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -133,23 +116,23 @@
         "bodyParameters": {
           "parameters": [
             {
-              "name": "ResourceNo",
+              "name": "resourceNoJobNo",
               "value": "={{ $json.header.resource_no }}"
             },
             {
-              "name": "StartingDate",
+              "name": "fromDate",
               "value": "={{ $json.header.starting_date }}"
             },
             {
-              "name": "EndingDate",
+              "name": "toDate",
               "value": "={{ $json.header.ending_date }}"
             },
             {
-              "name": "Status",
+              "name": "status",
               "value": "Open"
             },
             {
-              "name": "Description",
+              "name": "description",
               "value": "={{ $json.header.description || 'Timesheet from Supabase' }}"
             }
           ]
@@ -162,11 +145,17 @@
       "position": [
         400,
         -100
-      ]
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const response = input[0]; const header = $('Prepare Headers for BC').item.json.header; const bc_token = $('Extract BC Token').item.json.bc_token; return [{ json: { header: header, bc_response: response.json, bc_token: bc_token } }]; } return [];"
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const response = input[0]; const header = $('Prepare Headers for BC').item.json.header; return [{ json: { header: header, bc_response: response.json } }]; } return [];"
       },
       "id": "code_prepare_lines",
       "name": "Prepare for Lines Processing",
@@ -203,11 +192,17 @@
       "position": [
         800,
         -100
-      ]
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const lines = input; const header = $('Prepare for Lines Processing').item.json.header; const bc_response = $('Prepare for Lines Processing').item.json.bc_response; const bc_token = $('Prepare for Lines Processing').item.json.bc_token; const items = []; for (const line of lines) { items.push({ json: { line: line.json, header: header, bc_response: bc_response, bc_token: bc_token } }); } return items; } return [];"
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const lines = input; const header = $('Prepare for Lines Processing').item.json.header; const bc_response = $('Prepare for Lines Processing').item.json.bc_response; const items = []; for (const line of lines) { items.push({ json: { line: line.json, header: header, bc_response: bc_response } }); } return items; } return [];"
       },
       "id": "code_prepare_line",
       "name": "Prepare Line for BC",
@@ -220,17 +215,13 @@
     },
     {
       "parameters": {
-        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Power_Solution_BC/ODataV4/Company('Power%20Solution%20Iberia%20SL')/ResourceTimesheetHeaders({{ $json.bc_response.value[0].EntryNo }})/Microsoft.NAV.insertlines",
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ResourceTimesheetHeaders(' + $json.bc_response.value[0].EntryNo + ')/Microsoft.NAV.insertlines' }}",
         "method": "POST",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer {{ $json.bc_token }}"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -274,7 +265,13 @@
       "position": [
         1200,
         -100
-      ]
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
     },
     {
       "parameters": {
@@ -296,7 +293,13 @@
       "position": [
         1400,
         -100
-      ]
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
     },
     {
       "parameters": {
@@ -318,7 +321,13 @@
       "position": [
         1600,
         -100
-      ]
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
     },
     {
       "parameters": {
@@ -340,25 +349,25 @@
       "main": [
         [
           {
-            "node": "HTTP - Get BC Token",
+            "node": "HTTP - Get Companies",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP - Get BC Token": {
+    "HTTP - Get Companies": {
       "main": [
         [
           {
-            "node": "Extract BC Token",
+            "node": "Pick Company",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Extract BC Token": {
+    "Pick Company": {
       "main": [
         [
           {
@@ -476,4 +485,8 @@
   "id": "webhook-sync-bc",
   "tags": []
 }
+
+
+
+
 

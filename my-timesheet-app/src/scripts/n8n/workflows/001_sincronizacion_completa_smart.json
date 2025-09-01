@@ -3,26 +3,13 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "manual_trigger",
+      "id": "39aa407c-5cf0-46d8-8f93-44dc86d24750",
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -976,
-        608
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
-      },
-      "id": "code_now_calendar",
-      "name": "Compute now ISO (calendar)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -80,
-        512
+        0,
+        384
       ]
     },
     {
@@ -40,18 +27,18 @@
             {
               "keyName": "entity",
               "condition": "eq",
-              "keyValue": "job"
+              "keyValue": "resource"
             }
           ]
         }
       },
-      "id": "supabase_get_sync_state_jobs",
-      "name": "Get sync_state (jobs)",
+      "id": "49034a25-4970-44e4-b1d3-5383cce84974",
+      "name": "Get sync_state (resource)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -752,
-        -352
+        224,
+        384
       ],
       "credentials": {
         "supabaseApi": {
@@ -64,823 +51,13 @@
       "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
-      "id": "code_compute_last_sync_jobs",
-      "name": "Compute last_sync ISO (jobs)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -528,
-        -352
-      ]
-    },
-    {
-      "parameters": {
-        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/Proyectos?$filter=lastModifiedDateTime%20ge%20' + $json.lastSyncIso }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "id": "http_proyectos_filtered",
-      "name": "HTTP - Proyectos (filtrado)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        -304,
-        -352
-      ],
-      "credentials": {
-        "oAuth2Api": {
-          "id": "5caHilW1m87Snw87",
-          "name": "Business Central"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const proyectos = data.value || []; const items = []; for (const p of proyectos) { items.push({ json: { no: p.no || '', description: p.description || '', status: p.Estado || p.status || '', responsible: p.Responsible || p.responsible || '', departamento: p.departamento || p.GlobalDimension1Code || '', company_name: 'Power Solution Iberia SL' } }); } return items; } return [];"
-      },
-      "id": "transform_proyectos",
-      "name": "Transformar Proyectos",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -80,
-        -256
-      ]
-    },
-    {
-      "parameters": {
-        "batchSize": 300,
-        "options": {}
-      },
-      "id": "split_batches_proyectos",
-      "name": "Split In Batches (jobs)",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 1,
-      "position": [
-        144,
-        -256
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "tableId": "job",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "={{ $json.company_name }}"
-            },
-            {
-              "keyName": "no",
-              "condition": "eq",
-              "keyValue": "={{ $json.no }}"
-            }
-          ]
-        },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "no",
-              "fieldValue": "={{ $json.no }}"
-            },
-            {
-              "fieldId": "description",
-              "fieldValue": "={{ $json.description }}"
-            },
-            {
-              "fieldId": "status",
-              "fieldValue": "={{ $json.status }}"
-            },
-            {
-              "fieldId": "responsible",
-              "fieldValue": "={{ $json.responsible }}"
-            },
-            {
-              "fieldId": "departamento",
-              "fieldValue": "={{ $json.departamento }}"
-            },
-            {
-              "fieldId": "company_name",
-              "fieldValue": "={{ $json.company_name }}"
-            }
-          ]
-        }
-      },
-      "id": "supabase_update_job",
-      "name": "Update job",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        368,
-        -256
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
-            },
-            {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "job"
-            }
-          ]
-        },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "last_sync_at",
-              "fieldValue": "={{ new Date().toISOString() }}"
-            }
-          ]
-        }
-      },
-      "id": "supabase_update_sync_state_jobs",
-      "name": "Update sync_state (jobs)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        144,
-        -448
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
-            },
-            {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "job_task"
-            }
-          ]
-        }
-      },
-      "id": "supabase_get_sync_state_tasks",
-      "name": "Get sync_state (tasks)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        -752,
-        32
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
-      },
-      "id": "code_compute_last_sync_tasks",
-      "name": "Compute last_sync ISO (tasks)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -528,
-        32
-      ]
-    },
-    {
-      "parameters": {
-        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ProyectosTareas?$filter=lastModifiedDateTime%20ge%20' + $json.lastSyncIso }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "id": "http_tasks_filtered",
-      "name": "HTTP - ProyectosTareas (filtrado)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        -304,
-        32
-      ],
-      "credentials": {
-        "oAuth2Api": {
-          "id": "5caHilW1m87Snw87",
-          "name": "Business Central"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const tareas = data.value || []; const items = []; for (const t of tareas) { items.push({ json: { job_no: t.projectNo || t.jobNo || '', no: t.no || '', description: (t.description && t.description.trim()) ? t.description : 'Sin descripción', company_name: 'Power Solution Iberia SL' } }); } return items; } return [];"
-      },
-      "id": "transform_tasks",
-      "name": "Transformar ProyectosTareas",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -80,
-        128
-      ]
-    },
-    {
-      "parameters": {
-        "batchSize": 300,
-        "options": {}
-      },
-      "id": "split_batches_tasks",
-      "name": "Split In Batches (tasks)",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 1,
-      "position": [
-        144,
-        128
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "tableId": "job_task",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "={{ $json.company_name }}"
-            },
-            {
-              "keyName": "job_no",
-              "condition": "eq",
-              "keyValue": "={{ $json.job_no }}"
-            },
-            {
-              "keyName": "no",
-              "condition": "eq",
-              "keyValue": "={{ $json.no }}"
-            }
-          ]
-        },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "job_no",
-              "fieldValue": "={{ $json.job_no }}"
-            },
-            {
-              "fieldId": "no",
-              "fieldValue": "={{ $json.no }}"
-            },
-            {
-              "fieldId": "description",
-              "fieldValue": "={{ $json.description }}"
-            },
-            {
-              "fieldId": "company_name",
-              "fieldValue": "={{ $json.company_name }}"
-            }
-          ]
-        }
-      },
-      "id": "supabase_update_job_task",
-      "name": "Update job_task",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        368,
-        128
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
-      },
-      "id": "code_now_tasks",
-      "name": "Compute now ISO (tasks)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -80,
-        -64
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
-            },
-            {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "job_task"
-            }
-          ]
-        },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "last_sync_at",
-              "fieldValue": "={{ $json.nowIso }}"
-            }
-          ]
-        }
-      },
-      "id": "supabase_update_sync_state_tasks",
-      "name": "Update sync_state (tasks)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        144,
-        -64
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "tableId": "sync_state",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
-            },
-            {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "calendar_period_days"
-            }
-          ]
-        }
-      },
-      "id": "supabase_get_sync_state",
-      "name": "Get sync_state (calendar)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        -752,
-        416
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || row.lastSyncAt || row.last_sync || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
-      },
-      "id": "code_compute_last_sync",
-      "name": "Compute last_sync ISO",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -528,
-        416
-      ]
-    },
-    {
-      "parameters": {
-        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/CalendaroPeriodosDias?$filter=lastModifiedDateTime%20ge%20' + $json.lastSyncIso }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "id": "http_calendar_filtered",
-      "name": "HTTP - CalendaroPeriodosDias (filtrado)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        -304,
-        416
-      ],
-      "credentials": {
-        "oAuth2Api": {
-          "id": "5caHilW1m87Snw87",
-          "name": "Business Central"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const firstItem = input[0]; const jsonData = firstItem.json; const calendario = jsonData.value || []; const items = []; for (const cal of calendario) { items.push({ json: { allocation_period: cal.allocationPeriod || cal.allocation_period || '', calendar_code: cal.calendarCode || cal.calendar_code || '', day: cal.day || '', holiday: cal.holiday || false, hours_working: parseFloat(cal.hoursWorking || cal.hours_working || 0), company_name: 'Power Solution Iberia SL' } }); } return items; } return [];"
-      },
-      "id": "transform_calendar",
-      "name": "Transformar CalendaroPeriodosDias",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -80,
-        320
-      ]
-    },
-    {
-      "parameters": {
-        "batchSize": 300,
-        "options": {}
-      },
-      "id": "split_batches_calendar",
-      "name": "Split In Batches (300)",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 1,
-      "position": [
-        144,
-        320
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "tableId": "calendar_period_days",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "={{ $json.company_name }}"
-            },
-            {
-              "keyName": "allocation_period",
-              "condition": "eq",
-              "keyValue": "={{ $json.allocation_period }}"
-            },
-            {
-              "keyName": "calendar_code",
-              "condition": "eq",
-              "keyValue": "={{ $json.calendar_code }}"
-            },
-            {
-              "keyName": "day",
-              "condition": "eq",
-              "keyValue": "={{ $json.day }}"
-            }
-          ]
-        },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "allocation_period",
-              "fieldValue": "={{ $json.allocation_period }}"
-            },
-            {
-              "fieldId": "calendar_code",
-              "fieldValue": "={{ $json.calendar_code }}"
-            },
-            {
-              "fieldId": "day",
-              "fieldValue": "={{ $json.day }}"
-            },
-            {
-              "fieldId": "holiday",
-              "fieldValue": "={{ $json.holiday }}"
-            },
-            {
-              "fieldId": "hours_working",
-              "fieldValue": "={{ $json.hours_working }}"
-            },
-            {
-              "fieldId": "company_name",
-              "fieldValue": "={{ $json.company_name }}"
-            }
-          ]
-        }
-      },
-      "id": "supabase_update_calendar",
-      "name": "Update calendar_period_days",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        368,
-        320
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
-            },
-            {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "calendar_period_days"
-            }
-          ]
-        },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "last_sync_at",
-              "fieldValue": "={{ $json.nowIso }}"
-            }
-          ]
-        }
-      },
-      "id": "supabase_update_sync_state",
-      "name": "Update sync_state (calendar)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        144,
-        512
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
-            },
-            {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "job_team"
-            }
-          ]
-        }
-      },
-      "id": "supabase_get_sync_state_team",
-      "name": "Get sync_state (team)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        -752,
-        800
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
-      },
-      "id": "code_compute_last_sync_team",
-      "name": "Compute last_sync ISO (team)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -528,
-        800
-      ]
-    },
-    {
-      "parameters": {
-        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ProyectosEquipos?$filter=lastModifiedDateTime%20ge%20' + $json.lastSyncIso }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "id": "http_team_filtered",
-      "name": "HTTP - ProyectosEquipos (filtrado)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        -304,
-        800
-      ],
-      "credentials": {
-        "oAuth2Api": {
-          "id": "5caHilW1m87Snw87",
-          "name": "Business Central"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const equipos = data.value || []; const items = []; for (const e of equipos) { items.push({ json: { job_no: e.projectNo || e.jobNo || '', resource_no: e.resourceNo || e.resource_code || '', company_name: 'Power Solution Iberia SL' } }); } return items; } return [];"
-      },
-      "id": "transform_team",
-      "name": "Transformar ProyectosEquipos",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -80,
-        704
-      ]
-    },
-    {
-      "parameters": {
-        "batchSize": 300,
-        "options": {}
-      },
-      "id": "split_batches_team",
-      "name": "Split In Batches (team)",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 1,
-      "position": [
-        144,
-        704
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "tableId": "job_team",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "={{ $json.company_name }}"
-            },
-            {
-              "keyName": "job_no",
-              "condition": "eq",
-              "keyValue": "={{ $json.job_no }}"
-            },
-            {
-              "keyName": "resource_no",
-              "condition": "eq",
-              "keyValue": "={{ $json.resource_no }}"
-            }
-          ]
-        },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "job_no",
-              "fieldValue": "={{ $json.job_no }}"
-            },
-            {
-              "fieldId": "resource_no",
-              "fieldValue": "={{ $json.resource_no }}"
-            },
-            {
-              "fieldId": "company_name",
-              "fieldValue": "={{ $json.company_name }}"
-            }
-          ]
-        }
-      },
-      "id": "supabase_update_jobteam",
-      "name": "Update job_team",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        368,
-        704
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
-      },
-      "id": "code_now_team",
-      "name": "Compute now ISO (team)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -80,
-        896
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
-            },
-            {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "job_team"
-            }
-          ]
-        },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "last_sync_at",
-              "fieldValue": "={{ $json.nowIso }}"
-            }
-          ]
-        }
-      },
-      "id": "supabase_update_sync_state_team",
-      "name": "Update sync_state (team)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        144,
-        896
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
-      },
-      "id": "code_compute_last_sync_resource",
+      "id": "f423e88e-d9af-4621-8427-cf10d1b299ba",
       "name": "Compute last_sync ISO (resource)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -528,
-        1184
+        448,
+        384
       ]
     },
     {
@@ -892,13 +69,13 @@
           "timeout": 60000
         }
       },
-      "id": "http_resource_filtered",
+      "id": "d2bba2f0-c796-4bac-92a2-eb42d6c453c5",
       "name": "HTTP - Recursos (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        -304,
-        1184
+        672,
+        384
       ],
       "credentials": {
         "oAuth2Api": {
@@ -909,28 +86,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const recursos = data.value || []; const items = []; for (const r of recursos) { items.push({ json: { code: r.no || '', name: r.name || '', email: r.arbvrneMail || '', department_code: r.globalDimension1Code || '', company_name: 'Power Solution Iberia SL' } }); } return items; } return [];"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst first = input[0];\nconst data = first.json;\nconst recursos = data.value || [];\nconst items = [];\n\nfor (const r of recursos) {\n  const code = r.no || '';\n  const name = r.name || '';\n  const email = String(r.arbvrneMail ?? r.email ?? '').trim();\n  const department = String(r.globalDimension1Code ?? r.department ?? '').trim();\n  const company = 'Power Solution Iberia SL';\n\n  // DESCARTAR si no hay email válido o no hay departamento\n  if (!email || !email.includes('@')) continue;\n  if (!department) continue;\n\n\n  items.push({\n    json: {\n      code,\n      name,\n      email,\n      department_code: department,\n      company_name: company,\n    },\n  });\n}\n\nreturn items;"
       },
-      "id": "transform_resource",
+      "id": "86de82f9-5696-441c-851b-5a262e3f7cbf",
       "name": "Transformar Recursos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -80,
-        1088
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Nodo inteligente para determinar si update o insert\nconst input = $input.all();\nconst items = [];\n\nfor (const item of input) {\n  const data = item.json;\n  \n  // Determinar operación basada en si el registro existe\n  // Por ahora, asumimos que si tiene email y department_code, es update\n  // Si no los tiene, es insert\n  const operation = (data.email && data.department_code) ? 'update' : 'insert';\n  \n  items.push({\n    json: {\n      ...data,\n      _operation: operation,\n      _needsInsert: operation === 'insert'\n    }\n  });\n}\n\nreturn items;"
-      },
-      "id": "code_smart_resource_operation",
-      "name": "Smart Resource Operation",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        64,
-        1088
+        896,
+        192
       ]
     },
     {
@@ -938,361 +102,85 @@
         "batchSize": 300,
         "options": {}
       },
-      "id": "split_batches_resource",
-      "name": "Split In Batches (resource)",
+      "id": "27a6e960-a488-4084-ac80-bcf3ee3505a8",
+      "name": "Split In Batches (upsert)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        192,
-        1088
+        1120,
+        384
       ]
     },
     {
       "parameters": {
-        "operation": "={{ $json._operation || 'update' }}",
-        "tableId": "resource",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "={{ $json.company_name }}"
-            },
-            {
-              "keyName": "code",
-              "condition": "eq",
-              "keyValue": "={{ $json.code }}"
-            }
-          ]
-        },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "no",
-              "fieldValue": "={{ $json.no }}"
-            },
-            {
-              "fieldId": "name",
-              "fieldValue": "={{ $json.name }}"
-            },
-            {
-              "fieldId": "email",
-              "fieldValue": "={{ $json.email }}"
-            },
-            {
-              "fieldId": "department_code",
-              "fieldValue": "={{ $json.department_code }}"
-            },
-            {
-              "fieldId": "company_name",
-              "fieldValue": "={{ $json.company_name }}"
-            }
-          ]
-        }
+        "jsCode": "const rows = $input.all().map(i => {\n  const j = i.json || {};\n  return {\n    ...j,\n    calendar_type: (j.calendar_type && String(j.calendar_type).trim())\n      || (j.calendarType && String(j.calendarType).trim())\n      || 'DEFAULT' // valor por defecto\n  };\n});\nreturn [{ json: { payload: rows } }];"
       },
-      "id": "supabase_update_resource",
-      "name": "Smart Update/Insert resource",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        368,
-        1088
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
-      },
-      "id": "code_now_resource",
-      "name": "Compute now ISO (resource)",
+      "id": "d4f36369-b4e2-43d4-a61b-2dff015a940a",
+      "name": "Pack batch",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -80,
-        1280
+        1344,
+        384
       ]
     },
     {
       "parameters": {
-        "operation": "update",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
+        "method": "POST",
+        "url": "https://qfpswxjunoepznrpsltt.supabase.co/rest/v1/resource?on_conflict=company_name,code",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmcHN3eGp1bm9lcHpucnBzbHR0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg3MTA3OSwiZXhwIjoyMDY5NDQ3MDc5fQ.PxpfuFsfvpeEPHCEiWhRn0SD1WxngTAEppJ-65QTTOQ"
             },
             {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "resource"
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmcHN3eGp1bm9lcHpucnBzbHR0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg3MTA3OSwiZXhwIjoyMDY5NDQ3MDc5fQ.PxpfuFsfvpeEPHCEiWhRn0SD1WxngTAEppJ-65QTTOQ"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
             }
           ]
         },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "last_sync_at",
-              "fieldValue": "={{ $json.nowIso }}"
-            }
-          ]
-        }
-      },
-      "id": "supabase_update_sync_state_resource",
-      "name": "Update sync_state (resource)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        144,
-        1280
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
-            },
-            {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "resource_cost"
-            }
-          ]
-        }
-      },
-      "id": "supabase_get_sync_state_cost",
-      "name": "Get sync_state (cost)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        -752,
-        1568
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
-      },
-      "id": "code_compute_last_sync_cost",
-      "name": "Compute last_sync ISO (cost)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -528,
-        1568
-      ]
-    },
-    {
-      "parameters": {
-        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/RecursosCostos?$filter=lastModifiedDateTime%20ge%20' + $json.lastSyncIso }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
         "options": {
           "timeout": 60000
         }
       },
-      "id": "http_cost_filtered",
-      "name": "HTTP - RecursosCostos (filtrado)",
+      "id": "84da5688-0f8d-4895-a018-f68230787496",
+      "name": "HTTP - Upsert resource (Supabase REST)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        -304,
-        1568
-      ],
-      "credentials": {
-        "oAuth2Api": {
-          "id": "5caHilW1m87Snw87",
-          "name": "Business Central"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const costos = data.value || []; const items = []; for (const c of costos) { items.push({ json: { resource_no: c.resourceNo || c.resource_no || '', cost_type: c.costType || c.cost_type || '', direct_unit_cost: parseFloat(c.directUnitCost || c.direct_unit_cost || 0), company_name: 'Power Solution Iberia SL' } }); } return items; } return [];"
-      },
-      "id": "transform_cost",
-      "name": "Transformar RecursosCostos",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -80,
-        1472
+        1568,
+        384
       ]
-    },
-    {
-      "parameters": {
-        "batchSize": 300,
-        "options": {}
-      },
-      "id": "split_batches_cost",
-      "name": "Split In Batches (cost)",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 1,
-      "position": [
-        144,
-        1472
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "tableId": "resource_cost",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "={{ $json.company_name }}"
-            },
-            {
-              "keyName": "resource_no",
-              "condition": "eq",
-              "keyValue": "={{ $json.resource_no }}"
-            },
-            {
-              "keyName": "cost_type",
-              "condition": "eq",
-              "keyValue": "={{ $json.cost_type }}"
-            }
-          ]
-        },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "resource_no",
-              "fieldValue": "={{ $json.resource_no }}"
-            },
-            {
-              "fieldId": "cost_type",
-              "fieldValue": "={{ $json.cost_type }}"
-            },
-            {
-              "fieldId": "direct_unit_cost",
-              "fieldValue": "={{ $json.direct_unit_cost }}"
-            },
-            {
-              "fieldId": "company_name",
-              "fieldValue": "={{ $json.company_name }}"
-            }
-          ]
-        }
-      },
-      "id": "supabase_update_resourcecost",
-      "name": "Update resource_cost",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        368,
-        1472
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
     },
     {
       "parameters": {
         "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "code_now_cost",
-      "name": "Compute now ISO (cost)",
+      "id": "9868ece8-037c-40fd-8ccb-0c4e261c5357",
+      "name": "Compute now ISO (resource)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -80,
-        1664
+        896,
+        576
       ]
     },
     {
       "parameters": {
         "operation": "update",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
-            },
-            {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "resource_cost"
-            }
-          ]
-        },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "last_sync_at",
-              "fieldValue": "={{ $json.nowIso }}"
-            }
-          ]
-        }
-      },
-      "id": "supabase_update_sync_state_cost",
-      "name": "Update sync_state (cost)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        144,
-        1664
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
-      },
-      "id": "3c5d6edb-22ac-444a-8854-36399328678c",
-      "name": "Compute now ISO (Jobs)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -80,
-        -448
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
         "tableId": "sync_state",
         "matchType": "allFilters",
         "filters": {
@@ -1308,15 +196,23 @@
               "keyValue": "resource"
             }
           ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
         }
       },
-      "id": "eb8dddcb-c7f1-4d9e-bebf-42383bbfda22",
-      "name": "Get sync_state (team)1",
+      "id": "5bfadbb7-1885-4141-81b5-bb17bc3d7ce7",
+      "name": "Update sync_state (resource)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -752,
-        1184
+        1120,
+        576
       ],
       "credentials": {
         "supabaseApi": {
@@ -1328,463 +224,22 @@
   ],
   "pinData": {},
   "connections": {
-    "Get sync_state (calendar)": {
-      "main": [
-        [
-          {
-            "node": "Compute last_sync ISO",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute last_sync ISO": {
-      "main": [
-        [
-          {
-            "node": "HTTP - CalendaroPeriodosDias (filtrado)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - CalendarioPeriodosDias (filtrado)": {
-      "main": [
-        [
-          {
-            "node": "Transformar CalendarioPeriodosDias",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Transformar CalendarioPeriodosDias": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (calendar)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Split In Batches (calendar)": {
-      "main": [
-        [
-          {
-            "node": "Upsert CalendarioPeriodosDias",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Upsert CalendarioPeriodosDias": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (calendar)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Manual Trigger": {
       "main": [
         [
           {
-            "node": "Get sync_state (tasks)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get sync_state (calendar)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get sync_state (team)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get sync_state (cost)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get sync_state (jobs)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get sync_state (team)1",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [],
-        [],
-        [],
-        [],
-        []
-      ]
-    },
-    "Get sync_state (tasks)": {
-      "main": [
-        [
-          {
-            "node": "Compute last_sync ISO (tasks)",
+            "node": "Get sync_state (resource)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Compute last_sync ISO (tasks)": {
+    "Get sync_state (resource)": {
       "main": [
         [
           {
-            "node": "HTTP - ProyectosTareas (filtrado)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - ProyectosTareas (filtrado)": {
-      "main": [
-        [
-          {
-            "node": "Transformar ProyectosTareas",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Compute now ISO (tasks)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Transformar ProyectosTareas": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (tasks)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Upsert ProyectosTareas": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (tasks)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Split In Batches (tasks)": {
-      "main": [
-        [
-          {
-            "node": "Update job_task",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update job_task": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (tasks)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute now ISO (tasks)": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (tasks)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get sync_state (jobs)": {
-      "main": [
-        [
-          {
-            "node": "Compute last_sync ISO (jobs)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute last_sync ISO (jobs)": {
-      "main": [
-        [
-          {
-            "node": "HTTP - Proyectos (filtrado)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - Proyectos (filtrado)": {
-      "main": [
-        [
-          {
-            "node": "Transformar Proyectos",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Compute now ISO (Jobs)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Transformar Proyectos": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (jobs)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Upsert Proyectos": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (jobs)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Split In Batches (jobs)": {
-      "main": [
-        [
-          {
-            "node": "Update job",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
-      ]
-    },
-    "Update job": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (jobs)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - CalendaroPeriodosDias (filtrado)": {
-      "main": [
-        [
-          {
-            "node": "Transformar CalendaroPeriodosDias",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Compute now ISO (calendar)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Transformar CalendaroPeriodosDias": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (300)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Split In Batches (300)": {
-      "main": [
-        [
-          {
-            "node": "Update calendar_period_days",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute now ISO (calendar)": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (calendar)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update calendar_period_days": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (300)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get sync_state (team)": {
-      "main": [
-        [
-          {
-            "node": "Compute last_sync ISO (team)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute last_sync ISO (team)": {
-      "main": [
-        [
-          {
-            "node": "HTTP - ProyectosEquipos (filtrado)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - ProyectosEquipo (filtrado)": {
-      "main": [
-        [
-          {
-            "node": "Transformar ProyectosEquipo",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get sync_state (resourcenew)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Transformar ProyectosEquipo": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (team)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Upsert ProyectosEquipo": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (team)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - ProyectosEquipos (filtrado)": {
-      "main": [
-        [
-          {
-            "node": "Transformar ProyectosEquipos",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Compute now ISO (team)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Transformar ProyectosEquipos": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (team)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Split In Batches (team)": {
-      "main": [
-        [
-          {
-            "node": "Update job_team",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update job_team": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (team)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute now ISO (team)": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (team)",
+            "node": "Compute last_sync ISO (resource)",
             "type": "main",
             "index": 0
           }
@@ -1822,56 +277,29 @@
       "main": [
         [
           {
-            "node": "Smart Resource Operation",
+            "node": "Split In Batches (upsert)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Smart Resource Operation": {
+    "Split In Batches (upsert)": {
       "main": [
         [
           {
-            "node": "Split In Batches (resource)",
+            "node": "Pack batch",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Split In Batches (resource)": {
+    "Pack batch": {
       "main": [
         [
           {
-            "node": "Update resource",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Upsert Recursos": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (resource)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update sync_state (resource)": {
-      "main": [
-        []
-      ]
-    },
-    "Update resource": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (resource)",
+            "node": "HTTP - Upsert resource (Supabase REST)",
             "type": "main",
             "index": 0
           }
@@ -1888,129 +316,17 @@
           }
         ]
       ]
-    },
-    "Get sync_state (cost)": {
-      "main": [
-        [
-          {
-            "node": "Compute last_sync ISO (cost)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute last_sync ISO (cost)": {
-      "main": [
-        [
-          {
-            "node": "HTTP - RecursosCostos (filtrado)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - RecursosCostos (filtrado)": {
-      "main": [
-        [
-          {
-            "node": "Transformar RecursosCostos",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Compute now ISO (cost)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Transformar RecursosCostos": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (cost)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Upsert RecursosCostos": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (cost)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Split In Batches (cost)": {
-      "main": [
-        [
-          {
-            "node": "Update resource_cost",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update resource_cost": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (cost)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute now ISO (cost)": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (cost)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute now ISO (Jobs)": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (jobs)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get sync_state (team)1": {
-      "main": [
-        [
-          {
-            "node": "Compute last_sync ISO (resource)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
   "active": false,
-  "settings": {},
-  "versionId": "42e94e4e-4743-45cb-ac8e-dbbc85eaff7f",
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4c4283de-846e-42b3-8b84-c6bcdad1d90a",
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "5f4a76193498dfc211473f5de0a4e75faf68e0d1feb31e98054dc9c9b3f6aa8c"
   },
-  "id": "oa86JircNqb0aZc4",
+  "id": "kevXwxvjI9gmargP",
   "tags": []
 }
