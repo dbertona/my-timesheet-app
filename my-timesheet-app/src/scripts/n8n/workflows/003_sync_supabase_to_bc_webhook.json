@@ -1,0 +1,479 @@
+{
+  "name": "003_sync_supabase_to_bc_webhook",
+  "settings": {},
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ejecutar-sync-bc",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook_trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        0
+      ],
+      "webhookId": "ejecutar-sync-bc"
+    },
+    {
+      "parameters": {
+        "url": "https://login.microsoftonline.com/a18dc497-a8b8-4740-b723-65362ab7a3fb/oauth2/v2.0/token",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "64898aa0-1f14-46ab-8283-74161f5e3cb2"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.businesscentral.dynamics.com/.default"
+            }
+          ]
+        }
+      },
+      "id": "http_get_bc_token",
+      "name": "HTTP - Get BC Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const token = data.access_token; return [{ json: { bc_token: token } }]; } return [];"
+      },
+      "id": "code_extract_token",
+      "name": "Extract BC Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "resource_timesheet_header",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "synced_to_bc",
+              "condition": "eq",
+              "keyValue": false
+            }
+          ]
+        }
+      },
+      "id": "supabase_get_headers",
+      "name": "Get Headers (synced_to_bc=false)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const headers = input; const items = []; for (const header of headers) { items.push({ json: { header: header.json, bc_token: $('Extract BC Token').item.json.bc_token } }); } return items; } return [];"
+      },
+      "id": "code_prepare_headers",
+      "name": "Prepare Headers for BC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Power_Solution_BC/ODataV4/Company('Power%20Solution%20Iberia%20SL')/ResourceTimesheetHeaders",
+        "method": "POST",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $json.bc_token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ResourceNo",
+              "value": "={{ $json.header.resource_no }}"
+            },
+            {
+              "name": "StartingDate",
+              "value": "={{ $json.header.starting_date }}"
+            },
+            {
+              "name": "EndingDate",
+              "value": "={{ $json.header.ending_date }}"
+            },
+            {
+              "name": "Status",
+              "value": "Open"
+            },
+            {
+              "name": "Description",
+              "value": "={{ $json.header.description || 'Timesheet from Supabase' }}"
+            }
+          ]
+        }
+      },
+      "id": "http_post_header_bc",
+      "name": "HTTP - Post Header to BC",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        400,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const response = input[0]; const header = $('Prepare Headers for BC').item.json.header; const bc_token = $('Extract BC Token').item.json.bc_token; return [{ json: { header: header, bc_response: response.json, bc_token: bc_token } }]; } return [];"
+      },
+      "id": "code_prepare_lines",
+      "name": "Prepare for Lines Processing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "timesheet",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "header_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.header.id }}"
+            },
+            {
+              "keyName": "synced_to_bc",
+              "condition": "eq",
+              "keyValue": false
+            }
+          ]
+        }
+      },
+      "id": "supabase_get_lines",
+      "name": "Get Lines for Header",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        800,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const lines = input; const header = $('Prepare for Lines Processing').item.json.header; const bc_response = $('Prepare for Lines Processing').item.json.bc_response; const bc_token = $('Prepare for Lines Processing').item.json.bc_token; const items = []; for (const line of lines) { items.push({ json: { line: line.json, header: header, bc_response: bc_response, bc_token: bc_token } }); } return items; } return [];"
+      },
+      "id": "code_prepare_line",
+      "name": "Prepare Line for BC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Power_Solution_BC/ODataV4/Company('Power%20Solution%20Iberia%20SL')/ResourceTimesheetHeaders({{ $json.bc_response.value[0].EntryNo }})/Microsoft.NAV.insertlines",
+        "method": "POST",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $json.bc_token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "Type",
+              "value": "={{ $json.line.type || 'Job' }}"
+            },
+            {
+              "name": "JobNo",
+              "value": "={{ $json.line.job_no }}"
+            },
+            {
+              "name": "JobTaskNo",
+              "value": "={{ $json.line.job_task_no }}"
+            },
+            {
+              "name": "Date",
+              "value": "={{ $json.line.date }}"
+            },
+            {
+              "name": "Quantity",
+              "value": "={{ $json.line.quantity }}"
+            },
+            {
+              "name": "Description",
+              "value": "={{ $json.line.description || 'Timesheet line from Supabase' }}"
+            }
+          ]
+        }
+      },
+      "id": "http_post_line_bc",
+      "name": "HTTP - Post Line to BC",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1200,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "timesheet",
+        "updateKey": "id",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "synced_to_bc": true,
+            "synced_at": "={{ new Date().toISOString() }}"
+          }
+        }
+      },
+      "id": "supabase_mark_line_synced",
+      "name": "Mark Line as Synced",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "resource_timesheet_header",
+        "updateKey": "id",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "synced_to_bc": true,
+            "synced_at": "={{ new Date().toISOString() }}"
+          }
+        }
+      },
+      "id": "supabase_mark_header_synced",
+      "name": "Mark Header as Synced",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, message: 'Sincronización completada exitosamente', processed_headers: $('Get Headers (synced_to_bc=false)').all().length, processed_lines: $('Get Lines for Header').all().length } }}"
+      },
+      "id": "webhook_response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1800,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Get BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Get BC Token": {
+      "main": [
+        [
+          {
+            "node": "Extract BC Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract BC Token": {
+      "main": [
+        [
+          {
+            "node": "Get Headers (synced_to_bc=false)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Headers (synced_to_bc=false)": {
+      "main": [
+        [
+          {
+            "node": "Prepare Headers for BC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Headers for BC": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Post Header to BC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Post Header to BC": {
+      "main": [
+        [
+          {
+            "node": "Prepare for Lines Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare for Lines Processing": {
+      "main": [
+        [
+          {
+            "node": "Get Lines for Header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Lines for Header": {
+      "main": [
+        [
+          {
+            "node": "Prepare Line for BC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Line for BC": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Post Line to BC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Post Line to BC": {
+      "main": [
+        [
+          {
+            "node": "Mark Line as Synced",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Line as Synced": {
+      "main": [
+        [
+          {
+            "node": "Mark Header as Synced",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Header as Synced": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "meta": {
+    "instanceId": "webhook-sync-bc"
+  },
+  "id": "webhook-sync-bc",
+  "tags": []
+}
+
