@@ -1,5 +1,5 @@
 {
-  "name": "001_sincronizacion_completa",
+  "name": "001_sincronizacion_completa_smart",
   "nodes": [
     {
       "parameters": {},
@@ -922,6 +922,19 @@
     },
     {
       "parameters": {
+        "jsCode": "// Nodo inteligente para determinar si update o insert\nconst input = $input.all();\nconst items = [];\n\nfor (const item of input) {\n  const data = item.json;\n  \n  // Determinar operación basada en si el registro existe\n  // Por ahora, asumimos que si tiene email y department_code, es update\n  // Si no los tiene, es insert\n  const operation = (data.email && data.department_code) ? 'update' : 'insert';\n  \n  items.push({\n    json: {\n      ...data,\n      _operation: operation,\n      _needsInsert: operation === 'insert'\n    }\n  });\n}\n\nreturn items;"
+      },
+      "id": "code_smart_resource_operation",
+      "name": "Smart Resource Operation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        1088
+      ]
+    },
+    {
+      "parameters": {
         "batchSize": 300,
         "options": {}
       },
@@ -930,13 +943,13 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        144,
+        192,
         1088
       ]
     },
     {
       "parameters": {
-        "operation": "upsert",
+        "operation": "={{ $json._operation || 'update' }}",
         "tableId": "resource",
         "matchType": "allFilters",
         "filters": {
@@ -979,7 +992,7 @@
         }
       },
       "id": "supabase_update_resource",
-      "name": "Update resource",
+      "name": "Smart Update/Insert resource",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
@@ -1809,6 +1822,17 @@
       "main": [
         [
           {
+            "node": "Smart Resource Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Smart Resource Operation": {
+      "main": [
+        [
+          {
             "node": "Split In Batches (resource)",
             "type": "main",
             "index": 0
@@ -1820,7 +1844,7 @@
       "main": [
         [
           {
-            "node": "Smart Update/Insert resource",
+            "node": "Update resource",
             "type": "main",
             "index": 0
           }
@@ -1983,11 +2007,10 @@
   },
   "active": false,
   "settings": {},
-  "versionId": "42b22cd9-24cf-4d44-b18c-f114349d8afb",
+  "versionId": "42e94e4e-4743-45cb-ac8e-dbbc85eaff7f",
   "meta": {
-    "templateCredsSetupCompleted": true,
     "instanceId": "5f4a76193498dfc211473f5de0a4e75faf68e0d1feb31e98054dc9c9b3f6aa8c"
   },
-  "id": "3fpaX4J2wc5DH054",
+  "id": "oa86JircNqb0aZc4",
   "tags": []
 }
