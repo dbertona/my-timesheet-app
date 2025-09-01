@@ -909,7 +909,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const recursos = data.value || []; const items = []; for (const r of recursos) { items.push({ json: { code: r.no || '', name: r.name || '', type: r.type || '', email: r.arbvrneMail || '', department_code: r.globalDimension1Code || '', company_name: 'Power Solution Iberia SL' } }); } return items; } return [];"
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const first = input[0]; const data = first.json; const recursos = data.value || []; const items = []; for (const r of recursos) { items.push({ json: { code: r.no || '', name: r.name || '', email: r.arbvrneMail || '', department_code: r.globalDimension1Code || '', company_name: 'Power Solution Iberia SL' } }); } return items; } return [];"
       },
       "id": "transform_resource",
       "name": "Transformar Recursos",
@@ -964,8 +964,12 @@
               "fieldValue": "={{ $json.name }}"
             },
             {
-              "fieldId": "type",
-              "fieldValue": "={{ $json.type }}"
+              "fieldId": "email",
+              "fieldValue": "={{ $json.email }}"
+            },
+            {
+              "fieldId": "department_code",
+              "fieldValue": "={{ $json.department_code }}"
             },
             {
               "fieldId": "company_name",
