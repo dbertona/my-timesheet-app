@@ -266,7 +266,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json; const proyectos = data.value || []; const items = []; const allowed = new Set(['Open','Planning','Completed','Lost']); for (const p of proyectos) { const statusRaw = p.Estado ?? p.status ?? ''; const status = String(statusRaw).trim(); if (!allowed.has(status)) continue; items.push({ json: { no: p.no || '', description: p.description || '', status, responsible: p.Responsible || p.responsible || '', departamento: p.departamento || p.GlobalDimension1Code || '', company_name: 'Power Solution Iberia SL' } }); } return items;"
+        "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json; const proyectos = data.value || []; const items = []; const allowed = new Set(['Open','Planning','Completed','Lost']); for (const p of proyectos) { const statusRaw = p.Estado ?? p.status ?? ''; const status = String(statusRaw).trim(); if (!allowed.has(status)) continue; items.push({ json: { no: p.no || '', description: p.description || '', status, responsible: p.Responsible || p.responsible || '', departamento: p.departamento || p.GlobalDimension1Code || '', company_name: 'Power Solution Iberia SL' }, pairedItem: { item: 0 } }); } return items;"
       },
       "id": "0b4a7d2e-0c2a-4f39-9e0e-6f0c1a7b0004",
       "name": "Transformar Proyectos",
