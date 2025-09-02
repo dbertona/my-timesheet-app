@@ -65,11 +65,11 @@ function TimesheetHeader({ header, onHeaderChange }) {
               try {
                 const { data: lastHeader } = await supabaseClient
                   .from("resource_timesheet_header")
-                  .select("to_date")
+                  .select('"to_date"')
                   .eq("resource_no", resourceData.code)
                   .order("to_date", { ascending: false })
                   .limit(1)
-                  .single();
+                  .maybeSingle();
 
                 if (lastHeader?.to_date) {
                   suggestedDate = lastHeader.to_date;
@@ -92,11 +92,34 @@ function TimesheetHeader({ header, onHeaderChange }) {
                 calendar_period_days: "", // Se llenará cuando se seleccione la fecha
               };
 
-              setEditableHeader(newEditableHeader);
+              // Completar calendar_period_days inmediatamente si es posible
+              try {
+                let finalizedHeader = newEditableHeader;
+                if (
+                  newEditableHeader.calendar_type &&
+                  newEditableHeader.posting_date &&
+                  newEditableHeader.allocation_period
+                ) {
+                  const cpd = await getCalendarPeriodDays(
+                    newEditableHeader.posting_date,
+                    newEditableHeader.calendar_type,
+                    newEditableHeader.allocation_period,
+                  );
+                  finalizedHeader = {
+                    ...newEditableHeader,
+                    calendar_period_days: cpd || "",
+                  };
+                }
 
-              // 🆕 Notificar inmediatamente al componente padre
-              if (onHeaderChange) {
-                onHeaderChange(newEditableHeader);
+                setEditableHeader(finalizedHeader);
+                if (onHeaderChange) {
+                  onHeaderChange(finalizedHeader);
+                }
+              } catch {
+                setEditableHeader(newEditableHeader);
+                if (onHeaderChange) {
+                  onHeaderChange(newEditableHeader);
+                }
               }
             } else {
               // No encontrado por email: NO asumir nada ni buscar alternativas
