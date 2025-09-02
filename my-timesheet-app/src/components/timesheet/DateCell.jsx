@@ -23,10 +23,10 @@ export default function DateCell({
 }) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(
-    parseDate(editFormData[line.id]?.date) || new Date(),
+    parseDate(editFormData[line.id]?.date) || new Date()
   );
   const [currentMonth, setCurrentMonth] = useState(
-    parseDate(editFormData[line.id]?.date) || new Date(),
+    parseDate(editFormData[line.id]?.date) || new Date()
   );
   const calendarRef = useRef(null);
 
@@ -132,17 +132,30 @@ export default function DateCell({
     });
   };
 
-  // Verificar si una fecha está en el rango permitido
+    // Verificar si una fecha está en el rango permitido
   const isInRange = (date) => {
-    // Para nuevos partes (sin header), permitir cualquier fecha
-    if (!header) return true;
+    // Si hay header (edición), usar sus fechas
+    if (header && header.from_date && header.to_date) {
+      const fromDate = parse(header.from_date, "yyyy-MM-dd", new Date());
+      const toDate = parse(header.to_date, "yyyy-MM-dd", new Date());
+      return date >= fromDate && date <= toDate;
+    }
     
-    // Si no hay fechas definidas en el header, permitir cualquier fecha
-    if (!header.from_date || !header.to_date) return true;
+    // Para nuevos partes, usar el período del editableHeader
+    if (editableHeader?.allocation_period) {
+      const period = editableHeader.allocation_period;
+      const match = period.match(/M(\d{2})-M(\d{2})/);
+      if (match) {
+        const year = 2000 + parseInt(match[1]);
+        const month = parseInt(match[2]) - 1;
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0); // Último día del mes
+        return date >= firstDay && date <= lastDay;
+      }
+    }
     
-    const fromDate = parse(header.from_date, "yyyy-MM-dd", new Date());
-    const toDate = parse(header.to_date, "yyyy-MM-dd", new Date());
-    return date >= fromDate && date <= toDate;
+    // Fallback: permitir cualquier fecha
+    return true;
   };
 
   // Cambiar mes del calendario
@@ -164,30 +177,52 @@ export default function DateCell({
     setCalendarOpen(false);
   };
 
-  // Verificar si se puede navegar hacia atrás
+    // Verificar si se puede navegar hacia atrás
   const canGoBack = () => {
-    // Para nuevos partes (sin header), permitir navegación libre
-    if (!header) return true;
+    // Si hay header (edición), usar sus fechas
+    if (header && header.from_date) {
+      const fromDate = parse(header.from_date, "yyyy-MM-dd", new Date());
+      const fromMonth = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
+      return currentMonth > fromMonth;
+    }
     
-    // Si no hay fechas definidas, permitir navegación libre
-    if (!header.from_date) return true;
+    // Para nuevos partes, usar el período del editableHeader
+    if (editableHeader?.allocation_period) {
+      const period = editableHeader.allocation_period;
+      const match = period.match(/M(\d{2})-M(\d{2})/);
+      if (match) {
+        const year = 2000 + parseInt(match[1]);
+        const month = parseInt(match[2]) - 1;
+        const periodMonth = new Date(year, month, 1);
+        return currentMonth > periodMonth;
+      }
+    }
     
-    const fromDate = parse(header.from_date, "yyyy-MM-dd", new Date());
-    const fromMonth = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
-    return currentMonth > fromMonth;
+    return true;
   };
 
   // Verificar si se puede navegar hacia adelante
   const canGoForward = () => {
-    // Para nuevos partes (sin header), permitir navegación libre
-    if (!header) return true;
+    // Si hay header (edición), usar sus fechas
+    if (header && header.to_date) {
+      const toDate = parse(header.to_date, "yyyy-MM-dd", new Date());
+      const toMonth = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
+      return currentMonth < toMonth;
+    }
     
-    // Si no hay fechas definidas, permitir navegación libre
-    if (!header.to_date) return true;
+    // Para nuevos partes, usar el período del editableHeader
+    if (editableHeader?.allocation_period) {
+      const period = editableHeader.allocation_period;
+      const match = period.match(/M(\d{2})-M(\d{2})/);
+      if (match) {
+        const year = 2000 + parseInt(match[1]);
+        const month = parseInt(match[2]) - 1;
+        const periodMonth = new Date(year, month, 1);
+        return currentMonth < periodMonth;
+      }
+    }
     
-    const toDate = parse(header.to_date, "yyyy-MM-dd", new Date());
-    const toMonth = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
-    return currentMonth < toMonth;
+    return true;
   };
 
   const days = generateDays();
