@@ -2759,7 +2759,7 @@ function TimesheetEdit({ headerId }) {
         isOpen={showCalendarNotFoundModal}
         onClose={() => {
           setShowCalendarNotFoundModal(false);
-          navigate("/dashboard");
+          window.location.href = "http://localhost:5173/my-timesheet-app/#/";
         }}
         title="Datos de Calendario No Encontrados"
         confirmText="Entendido"
