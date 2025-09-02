@@ -306,7 +306,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return []; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } if (latest === '1970-01-01T00:00:00Z') return []; return [{ json: { nowIso: latest } }];"
+        "jsCode": "const input = $input.all(); if (input.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest, hasData: latest !== '1970-01-01T00:00:00Z' } }];"
       },
       "id": "0a55851e-f910-4cee-a93e-31f857c43927",
       "name": "Compute now ISO (resource)",
@@ -743,6 +743,134 @@
     },
     {
       "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition1",
+              "leftValue": "={{ $json.hasData }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-resource-data-002",
+      "name": "Check if resource has data",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition1",
+              "leftValue": "={{ $json.hasData }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-team-data-003",
+      "name": "Check if team has data",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3808,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition1",
+              "leftValue": "={{ $json.hasData }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-resource-cost-data-004",
+      "name": "Check if resource_cost has data",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        5152,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition1",
+              "leftValue": "={{ $json.hasData }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-calendar-data-005",
+      "name": "Check if calendar has data",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -96
+      ]
+    },
+    {
+      "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
       "id": "98629e33-cc62-42bf-8583-f03380b608ed",
@@ -861,7 +989,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return []; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } if (latest === '1970-01-01T00:00:00Z') return []; return [{ json: { nowIso: latest } }];"
+        "jsCode": "const input = $input.all(); if (input.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest, hasData: latest !== '1970-01-01T00:00:00Z' } }];"
       },
       "id": "82939602-1995-4b2c-9c15-b9a178b52421",
       "name": "Compute now ISO (team)",
@@ -1035,7 +1163,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return []; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } if (latest === '1970-01-01T00:00:00Z') return []; return [{ json: { nowIso: latest } }];"
+        "jsCode": "const input = $input.all(); if (input.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest, hasData: latest !== '1970-01-01T00:00:00Z' } }];"
       },
       "id": "8be5ecc7-0181-47a5-b9ca-9c703bd62759",
       "name": "Compute now ISO (resource_cost)",
@@ -1244,7 +1372,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return []; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } if (latest === '1970-01-01T00:00:00Z') return []; return [{ json: { nowIso: latest } }];"
+        "jsCode": "const input = $input.all(); if (input.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest, hasData: latest !== '1970-01-01T00:00:00Z' } }];"
       },
       "id": "3ff6c230-ce81-4298-8d03-cb98a0ac0263",
       "name": "Compute now ISO (calendar)",
