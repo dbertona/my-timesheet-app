@@ -1385,7 +1385,7 @@
       ]
     },
 
-    // RESOURCE
+    
     "Get sync_state (resource)": {
       "main": [
         [
@@ -1491,7 +1491,7 @@
       ]
     },
 
-    // TEAM
+    
     "Get sync_state (team)": {
       "main": [
         [
@@ -1597,7 +1597,7 @@
       ]
     },
 
-    // RESOURCE COST
+    
     "Get sync_state (resource_cost)": {
       "main": [
         [
@@ -1703,7 +1703,7 @@
       ]
     },
 
-    // TASKS
+    
     "Get sync_state (tasks)": {
       "main": [
         [
@@ -1809,7 +1809,7 @@
       ]
     },
 
-    // CALENDAR
+    
     "Get sync_state (calendar)": {
       "main": [
         [
