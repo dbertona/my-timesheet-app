@@ -31,6 +31,9 @@ query 50222 PS_Proyectos_Tareas
             {
                 DataItemLink = "No." = jobtask."Job No.";
                 DataItemTableFilter = Status = filter(Open | Planning | Completed | Lost);
+                column(job_status; Status)
+                {
+                }
             }
         }
     }
