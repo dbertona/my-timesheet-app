@@ -328,7 +328,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ $json.inList ? ('https://qfpswxjunoepznrpsltt.supabase.co/rest/v1/job?select=no&company_name=eq.Power%20Solution%20Iberia%20SL&no=in.(' + $json.inList + ')') : 'https://qfpswxjunoepznrpsltt.supabase.co/rest/v1/job?select=no&company_name=eq.Power%20Solution%20Iberia%20SL&no=eq.__never__' }}",
+        "url": "https://qfpswxjunoepznrpsltt.supabase.co/rest/v1/job?select=no&company_name=eq.Power%20Solution%20Iberia%20SL",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -556,7 +556,8 @@
     "Transformar ProyectosEquipos": {
       "main": [
         [
-          { "node": "Collect job nos (team)", "type": "main", "index": 0 }
+          { "node": "Supabase - Jobs existentes (IN)", "type": "main", "index": 0 },
+          { "node": "Compute now ISO (team)", "type": "main", "index": 0 }
         ]
       ]
     },
