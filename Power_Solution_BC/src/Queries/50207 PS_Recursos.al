@@ -41,7 +41,9 @@ query 50207 PS_Recursos
             column(Perfil; "Perfil")
             {
             }
-
+            column(lastModifiedDateTime; SystemModifiedAt)
+            {
+            }
         }
     }
 

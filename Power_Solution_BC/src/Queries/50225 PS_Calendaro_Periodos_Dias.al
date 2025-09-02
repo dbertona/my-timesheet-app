@@ -16,6 +16,7 @@ query 50225 PS_Calendaro_Periodos_Dias
             column(day; ARBVRNDay) { }
             column(holiday; ARBVRNHoliday) { }
             column(hours_working; ARBVRNHoursWorking) { }
+            column(lastModifiedDateTime; SystemModifiedAt) { }
         }
     }
 

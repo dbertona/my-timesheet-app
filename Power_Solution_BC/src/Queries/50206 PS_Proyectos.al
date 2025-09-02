@@ -41,6 +41,9 @@ query 50206 PS_Proyectos
             column(Responsible; "Person Responsible")
             {
             }
+            column(lastModifiedDateTime; SystemModifiedAt)
+            {
+            }
         }
     }
 
