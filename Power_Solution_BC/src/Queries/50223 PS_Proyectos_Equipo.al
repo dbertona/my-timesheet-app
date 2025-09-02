@@ -28,7 +28,6 @@ query 50223 PS_Proyectos_Equipo
             {
                 DataItemLink = "No." = jobtask."ARBVRNJobNo";
                 DataItemTableFilter = Status = filter(Open | Planning | Completed | Lost);
-                // No se exponen columnas adicionales; solo se usa para filtrar por estado válido
             }
         }
     }
