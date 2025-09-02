@@ -18,7 +18,7 @@ ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <MsalProvider instance={msalInstance}>
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
+        <RouterProvider router={router} basename="/my-timesheet-app" />
         <Toaster position="top-center" gutter={8} />
         {import.meta.env.DEV ? (
           <ReactQueryDevtools

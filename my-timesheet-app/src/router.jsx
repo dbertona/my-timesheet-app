@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React from "react";
-import { createHashRouter, Outlet, useParams } from "react-router-dom";
+import { createBrowserRouter, Outlet, useParams } from "react-router-dom";
 import AppError from "./components/ui/AppError";
 import LoginMicrosoft from "./components/LoginMicrosoft";
 import TimesheetHeaderList from "./components/TimesheetHeaderList";
@@ -25,7 +25,7 @@ function AppWrapper() {
   );
 }
 
-export const router = createHashRouter([
+export const router = createBrowserRouter([
   {
     path: "/",
     element: <AppWrapper />,
