@@ -772,17 +772,13 @@
     "Manual Trigger": {
       "main": [
         [
-          {
-            "node": "Get sync_state (resource)",
-            "type": "main",
-            "index": 0
-          },
+          { "node": "Get sync_state (resource)", "type": "main", "index": 0 },
           { "node": "Get sync_state (jobs)", "type": "main", "index": 0 },
-          { "node": "Get sync_state (tasks)", "type": "main", "index": 0 }
-        ],
-        [ { "node": "Get sync_state (team)", "type": "main", "index": 0 } ],
-        [ { "node": "Get sync_state (resource_cost)", "type": "main", "index": 0 } ],
-        [ { "node": "Get sync_state (calendar)", "type": "main", "index": 0 } ]
+          { "node": "Get sync_state (tasks)", "type": "main", "index": 0 },
+          { "node": "Get sync_state (team)", "type": "main", "index": 0 },
+          { "node": "Get sync_state (resource_cost)", "type": "main", "index": 0 },
+          { "node": "Get sync_state (calendar)", "type": "main", "index": 0 }
+        ]
       ]
     },
     "Get sync_state (resource)": {
@@ -867,11 +863,7 @@
         ]
       ]
     },
-    "Manual Trigger": {
-      "main": [
-        [ { "node": "Get sync_state (resource)", "type": "main", "index": 0 }, { "node": "Get sync_state (jobs)", "type": "main", "index": 0 } ]
-      ]
-    },
+
     "Get sync_state (jobs)": {
       "main": [ [ { "node": "Compute last_sync ISO (jobs)", "type": "main", "index": 0 } ] ]
     },
