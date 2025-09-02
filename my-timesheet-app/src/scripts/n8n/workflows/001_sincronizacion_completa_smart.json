@@ -132,7 +132,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+        "jsCode": "const prev = $('Compute last_sync ISO (jobs)').item.json.lastSyncIso || '1970-01-01T00:00:00Z'; const resp = $('HTTP - Proyectos (filtrado)').item.json || {}; const arr = Array.isArray(resp.value) ? resp.value : []; let latest = new Date(prev).toISOString(); const pickTs = (row) => row.lastModifiedDateTime || row.last_modified || row.LastModifiedDateTime || row.lastmodified || null; for (const r of arr) { const ts = pickTs(r); if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest } }];"
       },
       "id": "37f416e4-f3a6-4159-90e0-92ab2bff0f08",
       "name": "Compute now ISO (tasks)",
@@ -306,7 +306,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+        "jsCode": "const prev = $('Compute last_sync ISO (resource)').item.json.lastSyncIso || '1970-01-01T00:00:00Z'; const resp = $('HTTP - Recursos (filtrado)').item.json || {}; const arr = Array.isArray(resp.value) ? resp.value : []; let latest = new Date(prev).toISOString(); const pickTs = (row) => row.lastModifiedDateTime || row.last_modified || row.LastModifiedDateTime || row.lastmodified || null; for (const r of arr) { const ts = pickTs(r); if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest } }];"
       },
       "id": "0a55851e-f910-4cee-a93e-31f857c43927",
       "name": "Compute now ISO (resource)",
@@ -387,6 +387,146 @@
       "position": [
         16,
         384
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "Power Solution Iberia SL"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "resource"
+            }
+          ]
+        }
+      },
+      "id": "2b2d1f3c-1d2e-4c3b-9e2a-111111111001",
+      "name": "Get sync_state (resource)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1408,
+        496
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "Power Solution Iberia SL"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "job_task"
+            }
+          ]
+        }
+      },
+      "id": "2b2d1f3c-1d2e-4c3b-9e2a-111111111002",
+      "name": "Get sync_state (tasks)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        5616,
+        576
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "Power Solution Iberia SL"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "job_team"
+            }
+          ]
+        }
+      },
+      "id": "2b2d1f3c-1d2e-4c3b-9e2a-111111111003",
+      "name": "Get sync_state (team)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3152,
+        480
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "Power Solution Iberia SL"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "resource_cost"
+            }
+          ]
+        }
+      },
+      "id": "2b2d1f3c-1d2e-4c3b-9e2a-111111111004",
+      "name": "Get sync_state (resource_cost)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        4496,
+        576
       ],
       "credentials": {
         "supabaseApi": {
@@ -515,7 +655,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+        "jsCode": "const prev = $('Compute last_sync ISO (team)').item.json.lastSyncIso || '1970-01-01T00:00:00Z'; const resp = $('HTTP - ProyectosEquipos (filtrado)').item.json || {}; const arr = Array.isArray(resp.value) ? resp.value : []; let latest = new Date(prev).toISOString(); const pickTs = (row) => row.lastModifiedDateTime || row.last_modified || row.LastModifiedDateTime || row.lastmodified || null; for (const r of arr) { const ts = pickTs(r); if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest } }];"
       },
       "id": "12d1ed34-2412-4721-8818-c4c9b01929d5",
       "name": "Compute now ISO (jobs)",
@@ -689,7 +829,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+        "jsCode": "const prev = $('Compute last_sync ISO (resource_cost)').item.json.lastSyncIso || '1970-01-01T00:00:00Z'; const resp = $('HTTP - RecursosCostos (filtrado)').item.json || {}; const arr = Array.isArray(resp.value) ? resp.value : []; let latest = new Date(prev).toISOString(); const pickTs = (row) => row.lastModifiedDateTime || row.last_modified || row.LastModifiedDateTime || row.lastmodified || null; for (const r of arr) { const ts = pickTs(r); if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest } }];"
       },
       "id": "82939602-1995-4b2c-9c15-b9a178b52421",
       "name": "Compute now ISO (team)",
@@ -863,7 +1003,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+        "jsCode": "const prev = $('Compute last_sync ISO (tasks)').item.json.lastSyncIso || '1970-01-01T00:00:00Z'; const resp = $('HTTP - ProyectosTareas (filtrado)').item.json || {}; const arr = Array.isArray(resp.value) ? resp.value : []; let latest = new Date(prev).toISOString(); const pickTs = (row) => row.lastModifiedDateTime || row.last_modified || row.LastModifiedDateTime || row.lastmodified || null; for (const r of arr) { const ts = pickTs(r); if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest } }];"
       },
       "id": "8be5ecc7-0181-47a5-b9ca-9c703bd62759",
       "name": "Compute now ISO (resource_cost)",
@@ -1072,7 +1212,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+        "jsCode": "const prev = $('Compute last_sync ISO (calendar)').item.json.lastSyncIso || '1970-01-01T00:00:00Z'; const resp = $('HTTP - CalendarPeriodDays (filtrado)').item.json || {}; const arr = Array.isArray(resp.value) ? resp.value : []; let latest = new Date(prev).toISOString(); const pickTs = (row) => row.lastModifiedDateTime || row.last_modified || row.LastModifiedDateTime || row.lastmodified || null; for (const r of arr) { const ts = pickTs(r); if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest } }];"
       },
       "id": "3ff6c230-ce81-4298-8d03-cb98a0ac0263",
       "name": "Compute now ISO (calendar)",
@@ -1134,82 +1274,6 @@
         [
           {
             "node": "Get sync_state (jobs)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get sync_state (calendar)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute last_sync ISO (resource)": {
-      "main": [
-        [
-          {
-            "node": "HTTP - Recursos (filtrado)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - Recursos (filtrado)": {
-      "main": [
-        [
-          {
-            "node": "Transformar Recursos",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Compute now ISO (resource)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Transformar Recursos": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (upsert)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Split In Batches (upsert)": {
-      "main": [
-        [
-          {
-            "node": "Pack batch",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Pack batch": {
-      "main": [
-        [
-          {
-            "node": "HTTP - Upsert resource (Supabase REST)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute now ISO (resource)": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (resource)",
             "type": "main",
             "index": 0
           }
@@ -1287,6 +1351,17 @@
         ]
       ]
     },
+    "HTTP - Upsert job (Supabase REST)": {
+      "main": [
+        [
+          {
+            "node": "Get sync_state (resource)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Compute now ISO (jobs)": {
       "main": [
         [
@@ -1298,71 +1373,130 @@
         ]
       ]
     },
-    "Compute last_sync ISO (tasks)": {
+    "Update sync_state (jobs)": {
       "main": [
         [
           {
-            "node": "HTTP - ProyectosTareas (filtrado)",
+            "node": "Get sync_state (resource)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP - ProyectosTareas (filtrado)": {
+
+    // RESOURCE
+    "Get sync_state (resource)": {
       "main": [
         [
           {
-            "node": "Transformar ProyectosTareas",
+            "node": "Compute last_sync ISO (resource)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute last_sync ISO (resource)": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Recursos (filtrado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Recursos (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar Recursos",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Compute now ISO (tasks)",
+            "node": "Compute now ISO (resource)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Transformar ProyectosTareas": {
+    "Transformar Recursos": {
       "main": [
         [
           {
-            "node": "Split In Batches (upsert tasks)",
+            "node": "Split In Batches (upsert)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Split In Batches (upsert tasks)": {
+    "Split In Batches (upsert)": {
       "main": [
         [
           {
-            "node": "Pack batch (tasks)",
+            "node": "Pack batch",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Pack batch (tasks)": {
+    "Pack batch": {
       "main": [
         [
           {
-            "node": "HTTP - Upsert job_task (Supabase REST)",
+            "node": "HTTP - Upsert resource (Supabase REST)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Compute now ISO (tasks)": {
+    "HTTP - Upsert resource (Supabase REST)": {
       "main": [
         [
           {
-            "node": "Update sync_state (tasks)",
+            "node": "Get sync_state (team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (resource)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (resource)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (resource)": {
+      "main": [
+        [
+          {
+            "node": "Get sync_state (team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+
+    // TEAM
+    "Get sync_state (team)": {
+      "main": [
+        [
+          {
+            "node": "Compute last_sync ISO (team)",
             "type": "main",
             "index": 0
           }
@@ -1429,11 +1563,46 @@
         ]
       ]
     },
+    "HTTP - Upsert job_team (Supabase REST)": {
+      "main": [
+        [
+          {
+            "node": "Get sync_state (resource_cost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Compute now ISO (team)": {
       "main": [
         [
           {
             "node": "Update sync_state (team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (team)": {
+      "main": [
+        [
+          {
+            "node": "Get sync_state (resource_cost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+
+    // RESOURCE COST
+    "Get sync_state (resource_cost)": {
+      "main": [
+        [
+          {
+            "node": "Compute last_sync ISO (resource_cost)",
             "type": "main",
             "index": 0
           }
@@ -1500,6 +1669,17 @@
         ]
       ]
     },
+    "HTTP - Upsert resource_cost (Supabase REST)": {
+      "main": [
+        [
+          {
+            "node": "Get sync_state (tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Compute now ISO (resource_cost)": {
       "main": [
         [
@@ -1511,6 +1691,125 @@
         ]
       ]
     },
+    "Update sync_state (resource_cost)": {
+      "main": [
+        [
+          {
+            "node": "Get sync_state (tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+
+    // TASKS
+    "Get sync_state (tasks)": {
+      "main": [
+        [
+          {
+            "node": "Compute last_sync ISO (tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute last_sync ISO (tasks)": {
+      "main": [
+        [
+          {
+            "node": "HTTP - ProyectosTareas (filtrado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - ProyectosTareas (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar ProyectosTareas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compute now ISO (tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar ProyectosTareas": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches (upsert tasks)": {
+      "main": [
+        [
+          {
+            "node": "Pack batch (tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pack batch (tasks)": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert job_task (Supabase REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert job_task (Supabase REST)": {
+      "main": [
+        [
+          {
+            "node": "Get sync_state (calendar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (tasks)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (tasks)": {
+      "main": [
+        [
+          {
+            "node": "Get sync_state (calendar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+
+    // CALENDAR
     "Get sync_state (calendar)": {
       "main": [
         [
@@ -1582,6 +1881,12 @@
         ]
       ]
     },
+    "HTTP - Upsert calendar_period_days (Supabase REST)": {
+      "main": [
+        [
+        ]
+      ]
+    },
     "Compute now ISO (calendar)": {
       "main": [
         [
@@ -1593,90 +1898,9 @@
         ]
       ]
     },
-    "HTTP - Upsert job (Supabase REST)": {
+    "Update sync_state (calendar)": {
       "main": [
-        [
-          {
-            "node": "Compute last_sync ISO (resource)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Split In Batches (upsert jobs)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - Upsert resource (Supabase REST)": {
-      "main": [
-        [
-          {
-            "node": "Compute last_sync ISO (team)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Split In Batches (upsert)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - Upsert job_team (Supabase REST)": {
-      "main": [
-        [
-          {
-            "node": "Compute last_sync ISO (resource_cost)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Split In Batches (upsert team)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - Upsert resource_cost (Supabase REST)": {
-      "main": [
-        [
-          {
-            "node": "Compute last_sync ISO (tasks)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Split In Batches (upsert resource_cost)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - Upsert calendar_period_days (Supabase REST)": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (upsert calendar)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - Upsert job_task (Supabase REST)": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (upsert tasks)",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     }
   },
