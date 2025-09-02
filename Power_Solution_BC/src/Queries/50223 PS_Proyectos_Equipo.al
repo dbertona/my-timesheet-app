@@ -28,10 +28,10 @@ query 50223 PS_Proyectos_Equipo
             {
                 DataItemLink = "No." = jobtask."ARBVRNJobNo";
                 DataItemTableFilter = Status = filter(Open | Planning | Completed | Lost);
-            }
-            dataitem(resource; Resource)
-            {
-                DataItemLink = "No." = jobtask."ARBVRNResourceNo";
+                dataitem(resource; Resource)
+                {
+                    DataItemLink = "No." = jobtask."ARBVRNResourceNo";
+                }
             }
         }
     }
