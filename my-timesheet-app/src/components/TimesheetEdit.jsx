@@ -1324,10 +1324,14 @@ function TimesheetEdit({ headerId }) {
       setHeader(headerData);
       setResolvedHeaderId(headerIdResolved);
 
+      // 🆕 Si no se encontró header y no estamos en /nuevo-parte, 
+      // pero venimos de la tarjeta de horas pendientes, comportarse como nuevo parte
+      const isEffectivelyNewParte = isNewParte || (!headerData && !headerIdResolved);
+
       // 2) Las líneas ahora se cargan vía React Query (ver linesQuery)
       if (!headerIdResolved) {
-        // Si no encontramos cabecera, sólo limpiar líneas si NO estamos en nuevo parte
-        if (!isNewParte) {
+        // Si no encontramos cabecera, sólo limpiar líneas si NO estamos en nuevo parte efectivo
+        if (!isEffectivelyNewParte) {
           setLines([]);
         }
       }
@@ -1381,10 +1385,12 @@ function TimesheetEdit({ headerId }) {
     editableHeader?.posting_date,
   ]);
 
-  // 🆕 Fallback robusto: en /nuevo-parte garantizar período = mes actual si falta
+  // 🆕 Fallback robusto: en /nuevo-parte o sin header garantizar período = mes actual si falta
   useEffect(() => {
     const isNewParte = location.pathname === "/nuevo-parte";
-    if (!isNewParte) return;
+    const isEffectivelyNewParte = isNewParte || (!header && !effectiveHeaderId);
+    
+    if (!isEffectivelyNewParte) return;
     const hasAp = !!(editableHeader && editableHeader.allocation_period);
     if (hasAp) return;
     const now = new Date();
@@ -1398,7 +1404,7 @@ function TimesheetEdit({ headerId }) {
         (prev && prev.posting_date) || now.toISOString().split("T")[0],
       posting_description: `Parte de trabajo ${ap}`,
     }));
-  }, [location.pathname, editableHeader?.allocation_period]);
+  }, [location.pathname, editableHeader?.allocation_period, header, effectiveHeaderId]);
 
   // 🆕 Incrementar trigger cuando cambie el período
   useEffect(() => {
@@ -1410,7 +1416,9 @@ function TimesheetEdit({ headerId }) {
   // 🆕 Inicializar calendar_type del recurso en editableHeader
   useEffect(() => {
     const isNewParte = location.pathname === "/nuevo-parte";
-    if (!isNewParte) return;
+    const isEffectivelyNewParte = isNewParte || (!header && !effectiveHeaderId);
+    
+    if (!isEffectivelyNewParte) return;
     if (editableHeader?.calendar_type) return; // Ya tiene calendar_type
 
     const getResourceCalendarType = async () => {
@@ -1443,7 +1451,7 @@ function TimesheetEdit({ headerId }) {
     };
 
     getResourceCalendarType();
-  }, [location.pathname, editableHeader?.calendar_type, instance, accounts]);
+  }, [location.pathname, editableHeader?.calendar_type, instance, accounts, header, effectiveHeaderId]);
 
   // 🆕 Verificar datos de calendario cuando se inicialice editableHeader
   useEffect(() => {
@@ -1774,15 +1782,17 @@ function TimesheetEdit({ headerId }) {
     return newId;
   };
 
-  // Crear UNA línea vacía funcional al entrar en inserción ("/nuevo-parte")
+  // Crear UNA línea vacía funcional al entrar en inserción ("/nuevo-parte" o sin header)
   useEffect(() => {
     const isNewParte = location.pathname === "/nuevo-parte";
-    if (!isNewParte) return;
+    const isEffectivelyNewParte = isNewParte || (!header && !effectiveHeaderId);
+    
+    if (!isEffectivelyNewParte) return;
     if (createdInitialLineRef.current) return;
     if (Array.isArray(lines) && lines.length > 0) return;
     const id = addEmptyLine();
     if (id) createdInitialLineRef.current = true;
-  }, [location.pathname, lines]);
+  }, [location.pathname, lines, header, effectiveHeaderId]);
 
   // Crear UNA línea vacía funcional en edición si el parte no tiene líneas
   useEffect(() => {
