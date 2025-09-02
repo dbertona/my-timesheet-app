@@ -32,6 +32,12 @@ query 50223 PS_Proyectos_Equipo
                 {
                     DataItemLink = "No." = jobtask."ARBVRNResourceNo";
                     DataItemTableFilter = ARBVRNEMail = filter('*@*'), "Global Dimension 1 Code" = filter('<>''''');
+                    column(resource_email; ARBVRNEMail)
+                    {
+                    }
+                    column(resource_department; "Global Dimension 1 Code")
+                    {
+                    }
                 }
             }
         }
