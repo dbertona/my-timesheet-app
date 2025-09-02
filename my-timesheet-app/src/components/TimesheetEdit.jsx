@@ -955,7 +955,7 @@ function TimesheetEdit({ headerId }) {
           const { data: resourceData, error: resourceError } =
             await supabaseClient
               .from("resource")
-              .select("code, name, department_code, calendar_type")
+              .select("code, name, department_code, calendar_type, company_name")
               .eq("email", userEmail)
               .single();
 
@@ -981,6 +981,7 @@ function TimesheetEdit({ headerId }) {
             resource_name: resourceData.name,
             department_code: resourceData.department_code,
             calendar_type: resourceData.calendar_type,
+            company_name: resourceData.company_name || "Power Solution Iberia SL",
             allocation_period: ap,
             posting_date: new Date().toISOString().split("T")[0],
             posting_description: `Parte de trabajo ${ap}`,
@@ -1324,9 +1325,10 @@ function TimesheetEdit({ headerId }) {
       setHeader(headerData);
       setResolvedHeaderId(headerIdResolved);
 
-      // 🆕 Si no se encontró header y no estamos en /nuevo-parte, 
+      // 🆕 Si no se encontró header y no estamos en /nuevo-parte,
       // pero venimos de la tarjeta de horas pendientes, comportarse como nuevo parte
-      const isEffectivelyNewParte = isNewParte || (!headerData && !headerIdResolved);
+      const isEffectivelyNewParte =
+        isNewParte || (!headerData && !headerIdResolved);
 
       // 2) Las líneas ahora se cargan vía React Query (ver linesQuery)
       if (!headerIdResolved) {
@@ -1389,7 +1391,7 @@ function TimesheetEdit({ headerId }) {
   useEffect(() => {
     const isNewParte = location.pathname === "/nuevo-parte";
     const isEffectivelyNewParte = isNewParte || (!header && !effectiveHeaderId);
-    
+
     if (!isEffectivelyNewParte) return;
     const hasAp = !!(editableHeader && editableHeader.allocation_period);
     if (hasAp) return;
@@ -1404,7 +1406,12 @@ function TimesheetEdit({ headerId }) {
         (prev && prev.posting_date) || now.toISOString().split("T")[0],
       posting_description: `Parte de trabajo ${ap}`,
     }));
-  }, [location.pathname, editableHeader?.allocation_period, header, effectiveHeaderId]);
+  }, [
+    location.pathname,
+    editableHeader?.allocation_period,
+    header,
+    effectiveHeaderId,
+  ]);
 
   // 🆕 Incrementar trigger cuando cambie el período
   useEffect(() => {
@@ -1417,7 +1424,7 @@ function TimesheetEdit({ headerId }) {
   useEffect(() => {
     const isNewParte = location.pathname === "/nuevo-parte";
     const isEffectivelyNewParte = isNewParte || (!header && !effectiveHeaderId);
-    
+
     if (!isEffectivelyNewParte) return;
     if (editableHeader?.calendar_type) return; // Ya tiene calendar_type
 
@@ -1451,7 +1458,14 @@ function TimesheetEdit({ headerId }) {
     };
 
     getResourceCalendarType();
-  }, [location.pathname, editableHeader?.calendar_type, instance, accounts, header, effectiveHeaderId]);
+  }, [
+    location.pathname,
+    editableHeader?.calendar_type,
+    instance,
+    accounts,
+    header,
+    effectiveHeaderId,
+  ]);
 
   // 🆕 Verificar datos de calendario cuando se inicialice editableHeader
   useEffect(() => {
@@ -1719,7 +1733,7 @@ function TimesheetEdit({ headerId }) {
           // Consultar la tabla resource usando el campo email
           const { data: resourceData } = await supabaseClient
             .from("resource")
-            .select("code, department_code, calendar_type")
+            .select("code, department_code, calendar_type, company_name")
             .eq("email", userEmail)
             .single();
 
@@ -1728,6 +1742,7 @@ function TimesheetEdit({ headerId }) {
               user_email: userEmail,
               department_code: resourceData.department_code,
               calendar_type: resourceData.calendar_type,
+              company_name: resourceData.company_name || "Power Solution Iberia SL",
             };
           }
         }
@@ -1771,7 +1786,7 @@ function TimesheetEdit({ headerId }) {
           [newId]: {
             ...prev[newId],
             department_code: resourceInfo.department_code,
-            company: resourceInfo.company,
+            company: resourceInfo.company_name,
             resource_no: resourceInfo.code,
             resource_responsible: resourceInfo.code,
           },
@@ -1786,7 +1801,7 @@ function TimesheetEdit({ headerId }) {
   useEffect(() => {
     const isNewParte = location.pathname === "/nuevo-parte";
     const isEffectivelyNewParte = isNewParte || (!header && !effectiveHeaderId);
-    
+
     if (!isEffectivelyNewParte) return;
     if (createdInitialLineRef.current) return;
     if (Array.isArray(lines) && lines.length > 0) return;
@@ -1893,7 +1908,10 @@ function TimesheetEdit({ headerId }) {
       } else if (key === "header_id") {
         out.header_id = effectiveHeaderId;
       } else if (key === "company") {
-        out.company = header?.company ?? row.company ?? "";
+        // Obtener compañía del recurso actual
+        const currentResource = header || editableHeader;
+        const resourceCompany = currentResource?.company_name || currentResource?.company || "Power Solution Iberia SL";
+        out.company = resourceCompany;
       } else if (key === "creado") {
         out.creado = row.creado ?? new Date().toISOString();
       } else if (key === "job_no_and_description") {
