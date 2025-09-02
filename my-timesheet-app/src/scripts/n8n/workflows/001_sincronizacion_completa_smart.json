@@ -17,225 +17,6 @@
         "operation": "getAll",
         "tableId": "sync_state",
         "matchType": "allFilters",
-        "filters": { "conditions": [ { "keyName": "company_name", "condition": "eq", "keyValue": "Power Solution Iberia SL" }, { "keyName": "entity", "condition": "eq", "keyValue": "job_team" } ] }
-      },
-      "id": "4aa2bb33-cc44-55dd-66ee-77889900aa11",
-      "name": "Get sync_state (team)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [224, 1152],
-      "credentials": { "supabaseApi": { "id": "Qa0kL8CVFxjwQVZ5", "name": "Supabase account" } }
-    },
-    {
-      "parameters": { "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];" },
-      "id": "5bb3cc44-dd55-66ee-77ff-889900aabb22",
-      "name": "Compute last_sync ISO (team)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [448, 1152]
-    },
-    {
-      "parameters": {
-        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ProyectosEquipos?$filter=lastModifiedDateTime%20ge%20' + $json.lastSyncIso }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
-        "options": { "timeout": 60000 }
-      },
-      "id": "6cc4dd55-ee66-77ff-8800-99aabbccdd33",
-      "name": "HTTP - ProyectosEquipos (filtrado)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [672, 1152],
-      "credentials": { "oAuth2Api": { "id": "5caHilW1m87Snw87", "name": "Business Central" } }
-    },
-    {
-      "parameters": { "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json; const equipos = data.value || []; const items = []; for (const e of equipos) { const job_no = e.projectNo || e.jobNo || e.job_no || ''; const resource_no = e.resourceNo || e.resource_code || e.resource_no || ''; if (!job_no || !resource_no) continue; items.push({ json: { job_no, resource_no, company_name: 'Power Solution Iberia SL' }, pairedItem: { item: 0 } }); } return items;" },
-      "id": "7dd5ee66-ff77-8800-9911-aabbccddeeff",
-      "name": "Transformar ProyectosEquipos",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [896, 1152]
-    },
-    {
-      "parameters": { "batchSize": 1, "options": {} },
-      "id": "88ee77dd-66cc-55bb-44aa-33221100ffee",
-      "name": "Split In Batches (upsert team)",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 1,
-      "position": [1120, 1152]
-    },
-    {
-      "parameters": { "jsCode": "const rows = $input.all().map(i => i.json); return [{ json: { payload: rows } }];" },
-      "id": "99ff00ee-11dd-22cc-33bb-44aa55bb66cc",
-      "name": "Pack batch (team)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1344, 1152]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://qfpswxjunoepznrpsltt.supabase.co/rest/v1/job_team?on_conflict=company_name,job_no,resource_no",
-        "sendHeaders": true,
-        "headerParameters": { "parameters": [
-          { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmcHN3eGp1bm9lcHpucnBzbHR0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg3MTA3OSwiZXhwIjoyMDY5NDQ3MDc5fQ.PxpfuFsfvpeEPHCEiWhRn0SD1WxngTAEppJ-65QTTOQ" },
-          { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmcHN3eGp1bm9lcHpucnBzbHR0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg3MTA3OSwiZXhwIjoyMDY5NDQ3MDc5fQ.PxpfuFsfvpeEPHCEiWhRn0SD1WxngTAEppJ-65QTTOQ" },
-          { "name": "Content-Type", "value": "application/json" },
-          { "name": "Prefer", "value": "resolution=merge-duplicates,return=representation" }
-        ] },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ $json.payload }}",
-        "options": { "timeout": 60000 }
-      },
-      "id": "aa11bb22-cc33-dd44-ee55-ff6677889900",
-      "name": "HTTP - Upsert job_team (Supabase REST)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [1568, 1152]
-    },
-    {
-      "parameters": { "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];" },
-      "id": "bb22cc33-dd44-ee55-ff66-77889900aa11",
-      "name": "Compute now ISO (team)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [896, 1344]
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": { "conditions": [ { "keyName": "company_name", "condition": "eq", "keyValue": "Power Solution Iberia SL" }, { "keyName": "entity", "condition": "eq", "keyValue": "job_team" } ] },
-        "fieldsUi": { "fieldValues": [ { "fieldId": "last_sync_at", "fieldValue": "={{ $json.nowIso }}" } ] }
-      },
-      "id": "cc33dd44-ee55-ff66-7788-9900aa11bb22",
-      "name": "Update sync_state (team)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [1120, 1344],
-      "credentials": { "supabaseApi": { "id": "Qa0kL8CVFxjwQVZ5", "name": "Supabase account" } }
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            { "keyName": "company_name", "condition": "eq", "keyValue": "Power Solution Iberia SL" },
-            { "keyName": "entity", "condition": "eq", "keyValue": "job_task" }
-          ]
-        }
-      },
-      "id": "b2f1a7c3-0c4d-4e2a-9a1b-00aa11bbcc10",
-      "name": "Get sync_state (tasks)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [224, 864],
-      "credentials": { "supabaseApi": { "id": "Qa0kL8CVFxjwQVZ5", "name": "Supabase account" } }
-    },
-    {
-      "parameters": {
-        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
-      },
-      "id": "a1b2c3d4-e5f6-47a8-9b0c-112233445566",
-      "name": "Compute last_sync ISO (tasks)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [448, 864]
-    },
-    {
-      "parameters": {
-        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ProyectosTareas?$filter=lastModifiedDateTime%20ge%20' + $json.lastSyncIso }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
-        "options": { "timeout": 60000 }
-      },
-      "id": "c7d8e9f0-1234-4abc-9def-77889900aabb",
-      "name": "HTTP - ProyectosTareas (filtrado)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [672, 864],
-      "credentials": { "oAuth2Api": { "id": "5caHilW1m87Snw87", "name": "Business Central" } }
-    },
-    {
-      "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json; const tareas = data.value || []; const items = []; for (const t of tareas) { const job_no = t.projectNo || t.jobNo || t.job_no || ''; const no = t.no || ''; const description = (t.description && String(t.description).trim()) ? String(t.description).trim() : 'Sin descripción'; if (!job_no || !no) continue; items.push({ json: { job_no, no, description, company_name: 'Power Solution Iberia SL' }, pairedItem: { item: 0 } }); } return items;"
-      },
-      "id": "dd11ee22-33ff-44aa-88bb-ccddeeff0011",
-      "name": "Transformar ProyectosTareas",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [896, 864]
-    },
-    {
-      "parameters": { "batchSize": 300, "options": {} },
-      "id": "11223344-5566-7788-99aa-bbccddeeff00",
-      "name": "Split In Batches (upsert tasks)",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 1,
-      "position": [1120, 864]
-    },
-    {
-      "parameters": { "jsCode": "const rows = $input.all().map(i => i.json); return [{ json: { payload: rows } }];" },
-      "id": "99aa88bb-77cc-66dd-55ee-44ff33221100",
-      "name": "Pack batch (tasks)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1344, 864]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://qfpswxjunoepznrpsltt.supabase.co/rest/v1/job_task?on_conflict=company_name,job_no,no",
-        "sendHeaders": true,
-        "headerParameters": { "parameters": [
-          { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmcHN3eGp1bm9lcHpucnBzbHR0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg3MTA3OSwiZXhwIjoyMDY5NDQ3MDc5fQ.PxpfuFsfvpeEPHCEiWhRn0SD1WxngTAEppJ-65QTTOQ" },
-          { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmcHN3eGp1bm9lcHpucnBzbHR0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg3MTA3OSwiZXhwIjoyMDY5NDQ3MDc5fQ.PxpfuFsfvpeEPHCEiWhRn0SD1WxngTAEppJ-65QTTOQ" },
-          { "name": "Content-Type", "value": "application/json" },
-          { "name": "Prefer", "value": "resolution=merge-duplicates,return=representation" }
-        ] },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ $json.payload }}",
-        "options": { "timeout": 60000 }
-      },
-      "id": "ab12cd34-ef56-7890-ab12-cd34ef567890",
-      "name": "HTTP - Upsert job_task (Supabase REST)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [1568, 864]
-    },
-    {
-      "parameters": { "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];" },
-      "id": "0f1e2d3c-4b5a-6978-8091-a2b3c4d5e6f7",
-      "name": "Compute now ISO (tasks)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [896, 672]
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": { "conditions": [ { "keyName": "company_name", "condition": "eq", "keyValue": "Power Solution Iberia SL" }, { "keyName": "entity", "condition": "eq", "keyValue": "job_task" } ] },
-        "fieldsUi": { "fieldValues": [ { "fieldId": "last_sync_at", "fieldValue": "={{ $json.nowIso }}" } ] }
-      },
-      "id": "13579bdf-2468-ace0-1357-9bdf2468ace0",
-      "name": "Update sync_state (tasks)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [1120, 672],
-      "credentials": { "supabaseApi": { "id": "Qa0kL8CVFxjwQVZ5", "name": "Supabase account" } }
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
         "filters": {
           "conditions": [
             {
@@ -439,7 +220,8 @@
           "name": "Supabase account"
         }
       }
-    },
+    }
+    ,
     {
       "parameters": {
         "operation": "getAll",
@@ -447,72 +229,121 @@
         "matchType": "allFilters",
         "filters": {
           "conditions": [
-            { "keyName": "company_name", "condition": "eq", "keyValue": "Power Solution Iberia SL" },
-            { "keyName": "entity", "condition": "eq", "keyValue": "job" }
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "Power Solution Iberia SL"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "job_team"
+            }
           ]
         }
       },
-      "id": "a7f1c7a4-6f2e-4b12-9e9b-9d2e6d9a0001",
-      "name": "Get sync_state (jobs)",
+      "id": "f6c2f5c2-3c2a-4a08-9b7b-1e7e7a2c7a10",
+      "name": "Get sync_state (team)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [224, 96],
-      "credentials": { "supabaseApi": { "id": "Qa0kL8CVFxjwQVZ5", "name": "Supabase account" } }
-    },
+      "position": [
+        224,
+        768
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    }
+    ,
     {
       "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
-      "id": "f5bb24f2-1d5a-41f6-88a1-9f11a2d50002",
-      "name": "Compute last_sync ISO (jobs)",
+      "id": "6c51c6a7-0d3a-4f43-9c7c-0f3e7ccfd4b9",
+      "name": "Compute last_sync ISO (team)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [448, 96]
-    },
+      "position": [
+        448,
+        768
+      ]
+    }
+    ,
     {
       "parameters": {
-        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/Proyectos?$filter=lastModifiedDateTime%20ge%20' + $json.lastSyncIso }}",
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ProyectosEquipos?$filter=lastModifiedDateTime%20ge%20' + $json.lastSyncIso }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
-        "options": { "timeout": 60000 }
+        "options": {
+          "timeout": 60000
+        }
       },
-      "id": "8c5a2a2a-3c9c-47e8-9a7f-1e9a9f7b0003",
-      "name": "HTTP - Proyectos (filtrado)",
+      "id": "3a0c1a1f-0a6f-4c6b-9b79-6a2c6e0f7f22",
+      "name": "HTTP - ProyectosEquipos (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [672, 96],
-      "credentials": { "oAuth2Api": { "id": "5caHilW1m87Snw87", "name": "Business Central" } }
-    },
+      "position": [
+        672,
+        768
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    }
+    ,
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json; const proyectos = data.value || []; const items = []; const allowed = new Set(['Open','Planning','Completed','Lost']); for (const p of proyectos) { const statusRaw = p.estado ?? p.Estado ?? p.status ?? ''; const status = String(statusRaw).trim(); if (!allowed.has(status)) continue; items.push({ json: { no: p.no || '', description: p.description || '', status, responsible: p.Responsible || p.responsible || '', departamento: p.departamento || p.GlobalDimension1Code || '', company_name: 'Power Solution Iberia SL' }, pairedItem: { item: 0 } }); } return items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\nconst data = input[0].json;\nconst equipos = data.value || [];\nconst items = [];\nfor (const e of equipos) {\n  const job_no = String(e.job_no ?? '').trim();\n  const resource_no = String(e.resource_no ?? '').trim();\n  if (!job_no || !resource_no) continue;\n  items.push({ json: { company_name: 'Power Solution Iberia SL', job_no, resource_no } });\n}\nreturn items;"
       },
-      "id": "0b4a7d2e-0c2a-4f39-9e0e-6f0c1a7b0004",
-      "name": "Transformar Proyectos",
+      "id": "a8a73d2f-08c8-4f47-b7b9-0bb8e2d9d4a1",
+      "name": "Transformar ProyectosEquipos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [896, 96]
-    },
+      "position": [
+        896,
+        576
+      ]
+    }
+    ,
     {
-      "parameters": { "batchSize": 300, "options": {} },
-      "id": "f3a9c8b1-9d7f-4c1e-9a3a-1f2e3d4c0005",
-      "name": "Split In Batches (upsert jobs)",
+      "parameters": {
+        "batchSize": 300,
+        "options": {}
+      },
+      "id": "7e6e3a9a-3d88-4fbc-8c1a-6f8b8b7ce2f1",
+      "name": "Split In Batches (upsert team)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
-      "position": [1120, 96]
-    },
+      "position": [
+        1120,
+        768
+      ]
+    }
+    ,
     {
-      "parameters": { "jsCode": "const rows = $input.all().map(i => i.json); return [{ json: { payload: rows } }];" },
-      "id": "a2b3c4d5-e6f7-4a8b-9c0d-123456780006",
-      "name": "Pack batch (jobs)",
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json || {}); return [{ json: { payload: rows } }];"
+      },
+      "id": "6b7f7e1c-4f7b-4d3a-9c2b-3f7e6a1b2c3d",
+      "name": "Pack batch (team)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1344, 96]
-    },
+      "position": [
+        1344,
+        768
+      ]
+    }
+    ,
     {
       "parameters": {
         "method": "POST",
-        "url": "https://qfpswxjunoepznrpsltt.supabase.co/rest/v1/job?on_conflict=company_name,no",
+        "url": "https://qfpswxjunoepznrpsltt.supabase.co/rest/v1/job_team?on_conflict=company_name,job_no,resource_no",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -527,34 +358,57 @@
         "jsonBody": "={{ $json.payload }}",
         "options": { "timeout": 60000 }
       },
-      "id": "b7c8d9ea-0f1a-4b2c-9d3e-4567890a0007",
-      "name": "HTTP - Upsert job (Supabase REST)",
+      "id": "f2b6c8d6-3a7e-4a4c-9d1f-1a2b3c4d5e6f",
+      "name": "HTTP - Upsert job_team (Supabase REST)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [1568, 96]
-    },
+      "position": [
+        1568,
+        768
+      ]
+    }
+    ,
     {
-      "parameters": { "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];" },
-      "id": "c1d2e3f4-5a6b-7c8d-9e0f-112233440008",
-      "name": "Compute now ISO (jobs)",
+      "parameters": {
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+      },
+      "id": "d6f8a1c2-b3e4-4c5d-9e6f-7a8b9c0d1e2f",
+      "name": "Compute now ISO (team)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [896, -96]
-    },
+      "position": [
+        896,
+        960
+      ]
+    }
+    ,
     {
       "parameters": {
         "operation": "update",
         "tableId": "sync_state",
         "matchType": "allFilters",
-        "filters": { "conditions": [ { "keyName": "company_name", "condition": "eq", "keyValue": "Power Solution Iberia SL" }, { "keyName": "entity", "condition": "eq", "keyValue": "job" } ] },
+        "filters": {
+          "conditions": [
+            { "keyName": "company_name", "condition": "eq", "keyValue": "Power Solution Iberia SL" },
+            { "keyName": "entity", "condition": "eq", "keyValue": "job_team" }
+          ]
+        },
         "fieldsUi": { "fieldValues": [ { "fieldId": "last_sync_at", "fieldValue": "={{ $json.nowIso }}" } ] }
       },
-      "id": "d2e3f4a5-b6c7-8d9e-0f1a-223344550009",
-      "name": "Update sync_state (jobs)",
+      "id": "e4c5d6f7-a8b9-4c0d-9e1f-2a3b4c5d6e7f",
+      "name": "Update sync_state (team)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1120, -96],
-      "credentials": { "supabaseApi": { "id": "Qa0kL8CVFxjwQVZ5", "name": "Supabase account" } }
+      "position": [
+        1120,
+        960
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -566,10 +420,14 @@
             "node": "Get sync_state (resource)",
             "type": "main",
             "index": 0
-          },
-          { "node": "Get sync_state (jobs)", "type": "main", "index": 0 },
-          { "node": "Get sync_state (tasks)", "type": "main", "index": 0 },
-          { "node": "Get sync_state (team)", "type": "main", "index": 0 }
+          }
+        ],
+        [
+          {
+            "node": "Get sync_state (team)",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -595,6 +453,20 @@
         ]
       ]
     },
+    "Get sync_state (team)": {
+      "main": [
+        [
+          { "node": "Compute last_sync ISO (team)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Compute last_sync ISO (team)": {
+      "main": [
+        [
+          { "node": "HTTP - ProyectosEquipos (filtrado)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
     "HTTP - Recursos (filtrado)": {
       "main": [
         [
@@ -602,12 +474,20 @@
             "node": "Transformar Recursos",
             "type": "main",
             "index": 0
-    },
+          },
           {
             "node": "Compute now ISO (resource)",
             "type": "main",
             "index": 0
           }
+        ]
+      ]
+    },
+    "HTTP - ProyectosEquipos (filtrado)": {
+      "main": [
+        [
+          { "node": "Transformar ProyectosEquipos", "type": "main", "index": 0 },
+          { "node": "Compute now ISO (team)", "type": "main", "index": 0 }
         ]
       ]
     },
@@ -622,6 +502,13 @@
         ]
       ]
     },
+    "Transformar ProyectosEquipos": {
+      "main": [
+        [
+          { "node": "Split In Batches (upsert team)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
     "Split In Batches (upsert)": {
       "main": [
         [
@@ -630,6 +517,13 @@
             "type": "main",
             "index": 0
           }
+        ]
+      ]
+    },
+    "Split In Batches (upsert team)": {
+      "main": [
+        [
+          { "node": "Pack batch (team)", "type": "main", "index": 0 }
         ]
       ]
     },
@@ -644,6 +538,13 @@
         ]
       ]
     },
+    "Pack batch (team)": {
+      "main": [
+        [
+          { "node": "HTTP - Upsert job_team (Supabase REST)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
     "Compute now ISO (resource)": {
       "main": [
         [
@@ -654,77 +555,14 @@
           }
         ]
       ]
-    },
-    "Manual Trigger": {
-      "main": [
-        [ { "node": "Get sync_state (resource)", "type": "main", "index": 0 }, { "node": "Get sync_state (jobs)", "type": "main", "index": 0 } ]
-      ]
-    },
-    "Get sync_state (jobs)": {
-      "main": [ [ { "node": "Compute last_sync ISO (jobs)", "type": "main", "index": 0 } ] ]
-    },
-    "Compute last_sync ISO (jobs)": {
-      "main": [ [ { "node": "HTTP - Proyectos (filtrado)", "type": "main", "index": 0 } ] ]
-    },
-    "HTTP - Proyectos (filtrado)": {
-      "main": [ [ { "node": "Transformar Proyectos", "type": "main", "index": 0 }, { "node": "Compute now ISO (jobs)", "type": "main", "index": 0 } ] ]
-    },
-    "Transformar Proyectos": {
-      "main": [ [ { "node": "Split In Batches (upsert jobs)", "type": "main", "index": 0 } ] ]
-    },
-    "Split In Batches (upsert jobs)": {
-      "main": [ [ { "node": "Pack batch (jobs)", "type": "main", "index": 0 } ] ]
-    },
-    "Pack batch (jobs)": {
-      "main": [ [ { "node": "HTTP - Upsert job (Supabase REST)", "type": "main", "index": 0 } ] ]
-    },
-    "Compute now ISO (jobs)": {
-      "main": [ [ { "node": "Update sync_state (jobs)", "type": "main", "index": 0 } ] ]
-    },
-    "Get sync_state (tasks)": {
-      "main": [ [ { "node": "Compute last_sync ISO (tasks)", "type": "main", "index": 0 } ] ]
-    },
-    "Compute last_sync ISO (tasks)": {
-      "main": [ [ { "node": "HTTP - ProyectosTareas (filtrado)", "type": "main", "index": 0 } ] ]
-    },
-    "HTTP - ProyectosTareas (filtrado)": {
-      "main": [ [ { "node": "Transformar ProyectosTareas", "type": "main", "index": 0 }, { "node": "Compute now ISO (tasks)", "type": "main", "index": 0 } ] ]
-    },
-    "Transformar ProyectosTareas": {
-      "main": [ [ { "node": "Split In Batches (upsert tasks)", "type": "main", "index": 0 } ] ]
-    },
-    "Split In Batches (upsert tasks)": {
-      "main": [ [ { "node": "Pack batch (tasks)", "type": "main", "index": 0 } ] ]
-    },
-    "Pack batch (tasks)": {
-      "main": [ [ { "node": "HTTP - Upsert job_task (Supabase REST)", "type": "main", "index": 0 } ] ]
-    },
-    "Compute now ISO (tasks)": {
-      "main": [ [ { "node": "Update sync_state (tasks)", "type": "main", "index": 0 } ] ]
-    },
-    "Get sync_state (team)": {
-      "main": [ [ { "node": "Compute last_sync ISO (team)", "type": "main", "index": 0 } ] ]
-    },
-    "Compute last_sync ISO (team)": {
-      "main": [ [ { "node": "HTTP - ProyectosEquipos (filtrado)", "type": "main", "index": 0 } ] ]
-    },
-    "HTTP - ProyectosEquipos (filtrado)": {
-      "main": [ [ { "node": "Transformar ProyectosEquipos", "type": "main", "index": 0 }, { "node": "Compute now ISO (team)", "type": "main", "index": 0 } ] ]
-    },
-    "Transformar ProyectosEquipos": {
-      "main": [ [ { "node": "Split In Batches (upsert team)", "type": "main", "index": 0 } ] ]
-    },
-    "Split In Batches (upsert team)": {
-      "main": [ [ { "node": "Pack batch (team)", "type": "main", "index": 0 } ] ]
-    },
-    "Pack batch (team)": {
-      "main": [ [ { "node": "HTTP - Upsert job_team (Supabase REST)", "type": "main", "index": 0 } ] ]
-    },
-    "HTTP - Upsert job_team (Supabase REST)": {
-      "main": [ [ { "node": "Split In Batches (upsert team)", "type": "main", "index": 0 } ] ]
-    },
+    }
+    ,
     "Compute now ISO (team)": {
-      "main": [ [ { "node": "Update sync_state (team)", "type": "main", "index": 0 } ] ]
+      "main": [
+        [
+          { "node": "Update sync_state (team)", "type": "main", "index": 0 }
+        ]
+      ]
     }
   },
   "active": false,
