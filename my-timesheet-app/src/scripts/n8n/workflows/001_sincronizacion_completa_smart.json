@@ -313,7 +313,7 @@
     ,
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nconst set = new Set();\nfor (const it of items) { const j = it.json || {}; const v = String(j.job_no || '').trim(); if (v) set.add(v); }\nconst list = Array.from(set);\nconst esc = list.map(x => x.replace(/'/g, "''"));\nconst inList = esc.length ? esc.map(x => `"${x}"`).join(',') : '';\nreturn [{ json: { jobNos: list, inList } }];"
+        "jsCode": "const items = $input.all();\nconst set = new Set();\nfor (const it of items) { const j = it.json || {}; const v = String(j.job_no || '').trim(); if (v) set.add(v); }\nconst list = Array.from(set);\nconst quoted = list.map(x => '\\"' + String(x).replace(/\\\\/g,'\\\\\\\\').replace(/\"/g,'\\\\\"') + '\\"');\nconst inList = quoted.join(',');\nreturn [{ json: { jobNos: list, inList } }];"
       },
       "id": "b1d3c5e7-9a2b-4c6d-8e1f-2a3b4c5d7e9f",
       "name": "Collect job nos (team)",
