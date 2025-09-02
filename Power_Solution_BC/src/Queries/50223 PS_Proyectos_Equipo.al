@@ -20,6 +20,17 @@ query 50223 PS_Proyectos_Equipo
             column(resource_no; "ARBVRNResourceNo")
             {
             }
+            column(lastModifiedDateTime; SystemModifiedAt)
+            {
+            }
+
+            dataitem(job; Job)
+            {
+                DataItemLink = "No." = jobtask."ARBVRNJobNo";
+                DataItemLinkType = InnerJoin;
+                DataItemTableFilter = Status = filter(Open|Planning|Completed|Lost);
+                // No se exponen columnas adicionales; solo se usa para filtrar por estado válido
+            }
         }
     }
 
