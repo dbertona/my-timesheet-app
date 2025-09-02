@@ -23,6 +23,14 @@ query 50222 PS_Proyectos_Tareas
             column(description; Description)
             {
             }
+            column(lastModifiedDateTime; SystemModifiedAt)
+            {
+            }
+
+            dataitem(job; Job)
+            {
+                DataItemLink = "No." = jobtask."Job No.";
+            }
         }
     }
 
