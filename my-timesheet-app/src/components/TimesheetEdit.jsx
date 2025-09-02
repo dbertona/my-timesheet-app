@@ -2759,7 +2759,8 @@ function TimesheetEdit({ headerId }) {
         isOpen={showCalendarNotFoundModal}
         onClose={() => {
           setShowCalendarNotFoundModal(false);
-          window.location.href = "http://localhost:5173/my-timesheet-app/#/";
+          // Redirigir usando el hash router sin fijar host/basepath
+          window.location.hash = "#/";
         }}
         title="Datos de Calendario No Encontrados"
         confirmText="Entendido"
