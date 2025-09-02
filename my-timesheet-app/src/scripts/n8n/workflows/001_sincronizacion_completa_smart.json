@@ -313,6 +313,57 @@
     ,
     {
       "parameters": {
+        "jsCode": "const items = $input.all();\nconst set = new Set();\nfor (const it of items) { const j = it.json || {}; const v = String(j.job_no || '').trim(); if (v) set.add(v); }\nconst list = Array.from(set);\nconst esc = list.map(x => x.replace(/'/g, "''"));\nconst inList = esc.length ? esc.map(x => `"${x}"`).join(',') : '';\nreturn [{ json: { jobNos: list, inList } }];"
+      },
+      "id": "b1d3c5e7-9a2b-4c6d-8e1f-2a3b4c5d7e9f",
+      "name": "Collect job nos (team)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        576
+      ]
+    }
+    ,
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.inList ? ('https://qfpswxjunoepznrpsltt.supabase.co/rest/v1/job?select=no&company_name=eq.Power%20Solution%20Iberia%20SL&no=in.(' + $json.inList + ')') : 'https://qfpswxjunoepznrpsltt.supabase.co/rest/v1/job?select=no&company_name=eq.Power%20Solution%20Iberia%20SL&no=eq.__never__' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmcHN3eGp1bm9lcHpucnBzbHR0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg3MTA3OSwiZXhwIjoyMDY5NDQ3MDc5fQ.PxpfuFsfvpeEPHCEiWhRn0SD1WxngTAEppJ-65QTTOQ" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmcHN3eGp1bm9lcHpucnBzbHR0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg3MTA3OSwiZXhwIjoyMDY5NDQ3MDc5fQ.PxpfuFsfvpeEPHCEiWhRn0SD1WxngTAEppJ-65QTTOQ" }
+          ]
+        },
+        "options": { "timeout": 60000 }
+      },
+      "id": "c2d4e6f8-1a2b-4c3d-9e0f-1a2b3c4d5e6f",
+      "name": "Supabase - Jobs existentes (IN)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1344,
+        576
+      ]
+    }
+    ,
+    {
+      "parameters": {
+        "jsCode": "const existing = new Set($input.all().map(i => String(i.json.no || '').trim()).filter(Boolean));\nconst teamItems = $items('Transformar ProyectosEquipos', 0, 0);\nconst out = [];\nfor (const it of teamItems) { const jn = String((it.json||{}).job_no || '').trim(); if (existing.has(jn)) out.push(it); }\nreturn out;"
+      },
+      "id": "d3e5f7a9-2b3c-4d5e-8f0a-1b2c3d4e5f6a",
+      "name": "Filtrar team por job existente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        576
+      ]
+    }
+    ,
+    {
+      "parameters": {
         "batchSize": 300,
         "options": {}
       },
@@ -503,6 +554,27 @@
       ]
     },
     "Transformar ProyectosEquipos": {
+      "main": [
+        [
+          { "node": "Collect job nos (team)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Collect job nos (team)": {
+      "main": [
+        [
+          { "node": "Supabase - Jobs existentes (IN)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Supabase - Jobs existentes (IN)": {
+      "main": [
+        [
+          { "node": "Filtrar team por job existente", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Filtrar team por job existente": {
       "main": [
         [
           { "node": "Split In Batches (upsert team)", "type": "main", "index": 0 }
