@@ -61,7 +61,8 @@ function TimesheetEdit({ headerId }) {
   const [editFormData, setEditFormData] = useState({});
   const [errors, setErrors] = useState({});
   const [calendarHolidays, setCalendarHolidays] = useState([]);
-  const [showCalendarNotFoundModal, setShowCalendarNotFoundModal] = useState(false);
+  const [showCalendarNotFoundModal, setShowCalendarNotFoundModal] =
+    useState(false);
   const [calendarNotFoundData, setCalendarNotFoundData] = useState({});
   const [rightPad, setRightPad] = useState(234);
   const [editableHeader, setEditableHeader] = useState(null); // 🆕 Cabecera editable para nuevos partes
@@ -74,7 +75,7 @@ function TimesheetEdit({ headerId }) {
   const [resolvedHeaderId, setResolvedHeaderId] = useState(null);
   const effectiveHeaderId = useMemo(
     () => resolvedHeaderId ?? header?.id ?? headerId ?? null,
-    [resolvedHeaderId, header?.id, headerId],
+    [resolvedHeaderId, header?.id, headerId]
   );
 
   // === Calendario (estado + helpers) ahora en hook dedicado
@@ -175,7 +176,7 @@ function TimesheetEdit({ headerId }) {
       try {
         return format(
           new Date(Number(y), Number(m) - 1, Number(d)),
-          "dd/MM/yyyy",
+          "dd/MM/yyyy"
         );
       } catch {
         return "";
@@ -197,7 +198,7 @@ function TimesheetEdit({ headerId }) {
   const TotalsForMonth = ({ dailyRequired, editFormData }) => {
     const required = Object.values(dailyRequired || {}).reduce(
       (acc, v) => acc + (Number(v) || 0),
-      0,
+      0
     );
     let imputed = 0;
     for (const row of Object.values(editFormData || {})) {
@@ -238,7 +239,7 @@ function TimesheetEdit({ headerId }) {
     if (!isSaving) {
       // Resetear el estilo del botón cuando termine de guardar
       const saveButton = document.querySelector(
-        'button[onclick*="saveAllChanges"]',
+        'button[onclick*="saveAllChanges"]'
       );
       if (saveButton) {
         saveButton.style.backgroundColor = "#ffffff";
@@ -307,7 +308,7 @@ function TimesheetEdit({ headerId }) {
       }
       if (!userEmail) {
         toast.error(
-          "No se pudo obtener el email del usuario para importar Factorial",
+          "No se pudo obtener el email del usuario para importar Factorial"
         );
         return;
       }
@@ -370,7 +371,7 @@ function TimesheetEdit({ headerId }) {
         (line) =>
           ["VACACIONES", "BAJAS", "PERMISOS"].includes(line.work_type) &&
           line.date >= toDisplayDate(startDate) &&
-          line.date <= toDisplayDate(endDate),
+          line.date <= toDisplayDate(endDate)
       );
 
       // 🆕 MAPEO INTELIGENTE: Convertir tipo de Factorial a tarea del sistema
@@ -410,7 +411,7 @@ function TimesheetEdit({ headerId }) {
           if (dateStr >= startDate && dateStr <= endDate) {
             // Verificar si es día festivo
             const isHoliday = calendarHolidays.some(
-              (holiday) => holiday.day === dateStr,
+              (holiday) => holiday.day === dateStr
             );
             if (isHoliday) {
               continue; // Saltar este día
@@ -420,7 +421,7 @@ function TimesheetEdit({ headerId }) {
             const existingAbsenceLine = lines.find(
               (line) =>
                 line.date === toDisplayDate(dateStr) &&
-                ["VACACIONES", "BAJAS", "PERMISOS"].includes(line.work_type),
+                ["VACACIONES", "BAJAS", "PERMISOS"].includes(line.work_type)
             );
 
             if (existingAbsenceLine) {
@@ -431,7 +432,7 @@ function TimesheetEdit({ headerId }) {
             const existingServerLine = linesHook.data?.find(
               (line) =>
                 line.date === dateStr &&
-                ["VACACIONES", "BAJAS", "PERMISOS"].includes(line.work_type),
+                ["VACACIONES", "BAJAS", "PERMISOS"].includes(line.work_type)
             );
 
             if (existingServerLine) {
@@ -440,7 +441,7 @@ function TimesheetEdit({ headerId }) {
 
             // Buscar el día en el calendario para obtener las horas máximas permitidas
             const calendarDay = calendarDays?.find(
-              (day) => day.iso === dateStr,
+              (day) => day.iso === dateStr
             );
 
             if (calendarDay) {
@@ -523,7 +524,7 @@ function TimesheetEdit({ headerId }) {
 
         if (skippedDays > 0) {
           toast.success(
-            `Se importaron ${newLines.length} días de ausencias (${skippedDays} días omitidos por duplicados/festivos)`,
+            `Se importaron ${newLines.length} días de ausencias (${skippedDays} días omitidos por duplicados/festivos)`
           );
         } else {
           toast.success(`Se importaron ${newLines.length} días de ausencias`);
@@ -574,7 +575,7 @@ function TimesheetEdit({ headerId }) {
 
                 // Buscar el día en el calendario para obtener su estado real
                 const calendarDay = calendarDays.find(
-                  (day) => day.iso === dayKey,
+                  (day) => day.iso === dayKey
                 );
 
                 if (calendarDay) {
@@ -582,7 +583,7 @@ function TimesheetEdit({ headerId }) {
                   if (calendarDay.status === "completo") {
                     // Buscar el siguiente día con estado "parcial" o "cero"
                     const currentIndex = calendarDays.findIndex(
-                      (day) => day.iso === dayKey,
+                      (day) => day.iso === dayKey
                     );
                     let nextAvailableDay = null;
 
@@ -642,8 +643,8 @@ function TimesheetEdit({ headerId }) {
           // Encontrar la posición de la última línea seleccionada
           const lastSelectedIndex = Math.max(
             ...lineIds.map((lineId) =>
-              newLinesArray.findIndex((line) => line.id === lineId),
-            ),
+              newLinesArray.findIndex((line) => line.id === lineId)
+            )
           );
 
           if (lastSelectedIndex !== -1) {
@@ -659,7 +660,7 @@ function TimesheetEdit({ headerId }) {
         markAsChanged();
       }
     },
-    [lines, markAsChanged, calendarDays],
+    [lines, markAsChanged, calendarDays]
   );
 
   // Función para obtener el primer día del mes del período
@@ -709,7 +710,7 @@ function TimesheetEdit({ headerId }) {
       // Marcar que hay cambios no guardados
       markAsChanged();
     },
-    [markAsChanged],
+    [markAsChanged]
   );
 
   // ✅ MUTATION: Actualizar línea individual
@@ -735,8 +736,8 @@ function TimesheetEdit({ headerId }) {
       // ✅ Éxito: Actualizar cache local
       setLines((prev) =>
         prev.map((l) =>
-          l.id === variables.lineId ? { ...l, ...variables.changes } : l,
-        ),
+          l.id === variables.lineId ? { ...l, ...variables.changes } : l
+        )
       );
 
       // ✅ Mostrar toast de éxito solo si no es silencioso
@@ -808,7 +809,7 @@ function TimesheetEdit({ headerId }) {
         onConfirm: () => {
           // ✅ ELIMINACIÓN SOLO LOCAL: NO se elimina de la BD hasta guardar
           const updatedLines = lines.filter(
-            (line) => !lineIds.includes(line.id),
+            (line) => !lineIds.includes(line.id)
           );
           setLines(updatedLines);
 
@@ -829,7 +830,7 @@ function TimesheetEdit({ headerId }) {
         },
       });
     },
-    [lines, markAsChanged],
+    [lines, markAsChanged]
   );
 
   // ✅ MUTATION: Insertar línea nueva
@@ -867,35 +868,41 @@ function TimesheetEdit({ headerId }) {
   const queryClient = useQueryClient();
 
   // 🆕 Función para verificar datos de calendario y mostrar modal si no existen
-  const checkCalendarData = useCallback(async (allocationPeriod, calendarType) => {
-    if (!allocationPeriod || !calendarType) return;
+  const checkCalendarData = useCallback(
+    async (allocationPeriod, calendarType) => {
+      if (!allocationPeriod || !calendarType) return;
 
-    try {
-      const { data: existingCalendarDays, error: calendarQueryError } =
-        await supabaseClient
-          .from("calendar_period_days")
-          .select("allocation_period, calendar_code, day")
-          .eq("allocation_period", allocationPeriod)
-          .eq("calendar_code", calendarType)
-          .limit(1);
+      try {
+        const { data: existingCalendarDays, error: calendarQueryError } =
+          await supabaseClient
+            .from("calendar_period_days")
+            .select("allocation_period, calendar_code, day")
+            .eq("allocation_period", allocationPeriod)
+            .eq("calendar_code", calendarType)
+            .limit(1);
 
-      if (calendarQueryError) {
-        console.error("Error consultando calendar_period_days:", calendarQueryError);
-        return;
+        if (calendarQueryError) {
+          console.error(
+            "Error consultando calendar_period_days:",
+            calendarQueryError
+          );
+          return;
+        }
+
+        if (!existingCalendarDays || existingCalendarDays.length === 0) {
+          // Mostrar modal en lugar de lanzar excepción
+          setCalendarNotFoundData({
+            allocationPeriod,
+            calendarType,
+          });
+          setShowCalendarNotFoundModal(true);
+        }
+      } catch (error) {
+        console.error("Error verificando datos de calendario:", error);
       }
-
-      if (!existingCalendarDays || existingCalendarDays.length === 0) {
-        // Mostrar modal en lugar de lanzar excepción
-        setCalendarNotFoundData({
-          allocationPeriod,
-          calendarType
-        });
-        setShowCalendarNotFoundModal(true);
-      }
-    } catch (error) {
-      console.error("Error verificando datos de calendario:", error);
-    }
-  }, []);
+    },
+    []
+  );
 
   // 🆕 Función para guardar toda la tabla CON VALIDACIÓN
   const saveAllChanges = useCallback(async () => {
@@ -907,7 +914,7 @@ function TimesheetEdit({ headerId }) {
       editFormData,
       dailyRequired,
       calendarHolidays,
-      jobs,
+      jobs
     );
 
     // 🆕 PASO 2: Solo bloquear guardado si hay errores críticos (no campos requeridos)
@@ -954,7 +961,7 @@ function TimesheetEdit({ headerId }) {
 
           if (resourceError || !resourceData) {
             throw new Error(
-              `No se pudo obtener información del recurso: ${resourceError?.message || "Datos no encontrados"}`,
+              `No se pudo obtener información del recurso: ${resourceError?.message || "Datos no encontrados"}`
             );
           }
 
@@ -992,7 +999,7 @@ function TimesheetEdit({ headerId }) {
 
         if (calendarQueryError) {
           throw new Error(
-            `Error consultando calendar_period_days: ${calendarQueryError.message}`,
+            `Error consultando calendar_period_days: ${calendarQueryError.message}`
           );
         }
 
@@ -1000,7 +1007,7 @@ function TimesheetEdit({ headerId }) {
           // Mostrar modal en lugar de lanzar excepción
           setCalendarNotFoundData({
             allocationPeriod: headerData.allocation_period,
-            calendarType: headerData.calendar_type
+            calendarType: headerData.calendar_type,
           });
           setShowCalendarNotFoundModal(true);
           return; // Salir de la función sin crear el parte
@@ -1072,7 +1079,7 @@ function TimesheetEdit({ headerId }) {
       });
 
       console.log(
-        `📝 Procesando ${validLinesToProcess.length} de ${linesToProcess.length} líneas (filtradas por campos requeridos completos)`,
+        `📝 Procesando ${validLinesToProcess.length} de ${linesToProcess.length} líneas (filtradas por campos requeridos completos)`
       );
 
       for (const lineId of validLinesToProcess) {
@@ -1112,7 +1119,7 @@ function TimesheetEdit({ headerId }) {
 
             // Actualizar el ID temporal por el real
             setLines((prev) =>
-              prev.map((l) => (l.id === lineId ? createdLine : l)),
+              prev.map((l) => (l.id === lineId ? createdLine : l))
             );
             setEditFormData((prev) => {
               const newData = { ...prev };
@@ -1176,7 +1183,7 @@ function TimesheetEdit({ headerId }) {
       const filteredLines = linesToProcess.length - validLinesToProcess.length;
       if (filteredLines > 0) {
         toast.success(
-          `${TOAST.SUCCESS.SAVE_ALL} (${filteredLines} líneas con campos requeridos incompletos omitidas)`,
+          `${TOAST.SUCCESS.SAVE_ALL} (${filteredLines} líneas con campos requeridos incompletos omitidas)`
         );
       } else {
         toast.success(TOAST.SUCCESS.SAVE_ALL);
@@ -1301,7 +1308,7 @@ function TimesheetEdit({ headerId }) {
         if (headerErr) {
           console.error(
             "Error cargando cabecera por allocation_period:",
-            headerErr,
+            headerErr
           );
           toast.error("No se encontró cabecera para el período");
         }
@@ -1442,11 +1449,19 @@ function TimesheetEdit({ headerId }) {
   useEffect(() => {
     const isNewParte = location.pathname === "/nuevo-parte";
     if (!isNewParte) return;
-    
+
     if (editableHeader?.allocation_period && editableHeader?.calendar_type) {
-      checkCalendarData(editableHeader.allocation_period, editableHeader.calendar_type);
+      checkCalendarData(
+        editableHeader.allocation_period,
+        editableHeader.calendar_type
+      );
     }
-  }, [editableHeader?.allocation_period, editableHeader?.calendar_type, location.pathname, checkCalendarData]);
+  }, [
+    editableHeader?.allocation_period,
+    editableHeader?.calendar_type,
+    location.pathname,
+    checkCalendarData,
+  ]);
 
   // Cuando llegan las líneas, actualizar estado local y edición inicial con dos decimales
   useEffect(() => {
@@ -1457,7 +1472,7 @@ function TimesheetEdit({ headerId }) {
     const shouldPreserveChanges = hasUnsavedChanges;
 
     const sorted = (linesHook.data || []).sort(
-      (a, b) => new Date(a.date) - new Date(b.date),
+      (a, b) => new Date(a.date) - new Date(b.date)
     );
     const linesFormatted = sorted.map((line) => ({
       ...line,
@@ -1466,7 +1481,7 @@ function TimesheetEdit({ headerId }) {
     // Filtrar filas totalmente vacías provenientes del backend (sin datos y cantidad 0)
     const filtered = linesFormatted.filter((l) => {
       const hasData = Boolean(
-        l.job_no || l.job_task_no || l.description || l.work_type || l.date,
+        l.job_no || l.job_task_no || l.description || l.work_type || l.date
       );
       const qty = Number(l.quantity) || 0;
       return hasData || qty !== 0; // mantener solo si tiene datos o cantidad distinta de 0
@@ -1474,7 +1489,7 @@ function TimesheetEdit({ headerId }) {
 
     // 🆕 Conservar líneas temporales locales (tmp-) cuando actualizamos desde servidor
     const localTmp = (Array.isArray(lines) ? lines : []).filter((l) =>
-      String(l.id || "").startsWith("tmp-"),
+      String(l.id || "").startsWith("tmp-")
     );
     const merged = [...localTmp, ...filtered];
     setLines(merged);
@@ -1908,7 +1923,7 @@ function TimesheetEdit({ headerId }) {
   // -- Festivos: obtener lista de fechas ISO (YYYY-MM-DD) de los festivos
   const festivos = useMemo(
     () => (calendarHolidays || []).map((h) => (h.day || "").slice(0, 10)),
-    [calendarHolidays],
+    [calendarHolidays]
   );
 
   // -- Hook de edición (modificado para interceptar cambios de fecha/cantidad)
@@ -1995,7 +2010,7 @@ function TimesheetEdit({ headerId }) {
         },
       }));
     },
-    [markAsChanged, fetchJobInfo],
+    [markAsChanged, fetchJobInfo]
   );
 
   // -- Función unificada para validar rango de fechas
@@ -2052,12 +2067,12 @@ function TimesheetEdit({ headerId }) {
       const nextMonth = new Date(
         lastDate.getFullYear(),
         lastDate.getMonth() + 1,
-        1,
+        1
       );
       const lastDayOfNextMonth = new Date(
         nextMonth.getFullYear(),
         nextMonth.getMonth() + 1,
-        0,
+        0
       );
 
       return lastDayOfNextMonth.toISOString().split("T")[0];
@@ -2176,7 +2191,7 @@ function TimesheetEdit({ headerId }) {
     const toUpdateIds = ids.filter((id) => !String(id).startsWith("tmp-"));
 
     const allRowsToSave = [...toInsertIds, ...toUpdateIds].map(
-      (id) => editFormData[id] || {},
+      (id) => editFormData[id] || {}
     );
     const jobNosNeeded = allRowsToSave
       .filter((r) => r.job_no) // ✅ Obtener info de TODOS los proyectos para departamento
@@ -2187,7 +2202,7 @@ function TimesheetEdit({ headerId }) {
     // INSERT
     if (toInsertIds.length > 0) {
       const rowsToInsert = toInsertIds.map((id) =>
-        prepareRowForDb(editFormData[id], jobResponsibleMap),
+        prepareRowForDb(editFormData[id], jobResponsibleMap)
       );
       const { error: insertErr } = await supabaseClient
         .from("timesheet")
@@ -2380,7 +2395,7 @@ function TimesheetEdit({ headerId }) {
 
                     // Si ya existe esa fecha
                     const idx = lines.findIndex(
-                      (l) => toIsoFromInput(l.date) === iso,
+                      (l) => toIsoFromInput(l.date) === iso
                     );
                     if (idx !== -1) {
                       const id = lines[idx].id;
@@ -2410,8 +2425,8 @@ function TimesheetEdit({ headerId }) {
                       }));
                       setLines((prev) =>
                         prev.map((l) =>
-                          l.id === id ? { ...l, date: display } : l,
-                        ),
+                          l.id === id ? { ...l, date: display } : l
+                        )
                       );
                       focusFirstAvailable(id);
                       return;
@@ -2425,8 +2440,8 @@ function TimesheetEdit({ headerId }) {
                     }));
                     setLines((prev) =>
                       prev.map((l) =>
-                        l.id === newId ? { ...l, date: display } : l,
-                      ),
+                        l.id === newId ? { ...l, date: display } : l
+                      )
                     );
                     focusFirstAvailable(newId);
                   } catch {
@@ -2698,7 +2713,7 @@ function TimesheetEdit({ headerId }) {
           // Encontrar y enfocar la línea con error
           setTimeout(() => {
             const firstErrorField = Object.keys(
-              validationModal.validation?.errors[lineId] || {},
+              validationModal.validation?.errors[lineId] || {}
             )[0];
             if (
               firstErrorField &&
@@ -2742,7 +2757,10 @@ function TimesheetEdit({ headerId }) {
       {/* Modal para datos de calendario no encontrados */}
       <BcModal
         isOpen={showCalendarNotFoundModal}
-        onClose={() => setShowCalendarNotFoundModal(false)}
+        onClose={() => {
+          setShowCalendarNotFoundModal(false);
+          navigate("/dashboard");
+        }}
         title="Datos de Calendario No Encontrados"
         confirmText="Entendido"
         oneButton={true}
@@ -2750,7 +2768,8 @@ function TimesheetEdit({ headerId }) {
       >
         <div className="mb-4">
           <p className="text-sm text-gray-600 mb-3">
-            No se encontraron registros en <strong>calendar_period_days</strong> para los siguientes parámetros:
+            No se encontraron registros en <strong>calendar_period_days</strong>{" "}
+            para los siguientes parámetros:
           </p>
           <div className="bg-gray-50 p-3 rounded-md">
             <div className="text-sm">
@@ -2773,9 +2792,17 @@ function TimesheetEdit({ headerId }) {
         <div className="mb-4">
           <p className="text-sm text-gray-600">Esto puede ocurrir si:</p>
           <ul className="text-sm text-gray-600 mt-2 ml-4 list-disc">
-            <li>El período seleccionado no tiene datos de calendario configurados</li>
-            <li>El tipo de calendario del recurso no coincide con los datos disponibles</li>
-            <li>Los datos de calendario no se han sincronizado desde Business Central</li>
+            <li>
+              El período seleccionado no tiene datos de calendario configurados
+            </li>
+            <li>
+              El tipo de calendario del recurso no coincide con los datos
+              disponibles
+            </li>
+            <li>
+              Los datos de calendario no se han sincronizado desde Business
+              Central
+            </li>
           </ul>
         </div>
       </BcModal>
