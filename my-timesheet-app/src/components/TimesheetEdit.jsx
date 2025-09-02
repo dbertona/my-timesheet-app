@@ -955,7 +955,9 @@ function TimesheetEdit({ headerId }) {
           const { data: resourceData, error: resourceError } =
             await supabaseClient
               .from("resource")
-              .select("code, name, department_code, calendar_type, company_name")
+              .select(
+                "code, name, department_code, calendar_type, company_name"
+              )
               .eq("email", userEmail)
               .single();
 
@@ -981,7 +983,8 @@ function TimesheetEdit({ headerId }) {
             resource_name: resourceData.name,
             department_code: resourceData.department_code,
             calendar_type: resourceData.calendar_type,
-            company_name: resourceData.company_name || "Power Solution Iberia SL",
+            company_name:
+              resourceData.company_name || "Power Solution Iberia SL",
             allocation_period: ap,
             posting_date: new Date().toISOString().split("T")[0],
             posting_description: `Parte de trabajo ${ap}`,
@@ -1035,7 +1038,7 @@ function TimesheetEdit({ headerId }) {
           user_email: userEmail,
           created_at: now,
           updated_at: now,
-          Company: headerData.company || null, // Campo opcional con comillas
+          company_name: headerData.company_name || "Power Solution Iberia SL", // Campo requerido
           synced_to_bc: false, // Campo opcional
           department_code: headerData.department_code || "20", // Campo opcional con default
         };
@@ -1742,7 +1745,8 @@ function TimesheetEdit({ headerId }) {
               user_email: userEmail,
               department_code: resourceData.department_code,
               calendar_type: resourceData.calendar_type,
-              company_name: resourceData.company_name || "Power Solution Iberia SL",
+              company_name:
+                resourceData.company_name || "Power Solution Iberia SL",
             };
           }
         }
@@ -1910,7 +1914,10 @@ function TimesheetEdit({ headerId }) {
       } else if (key === "company") {
         // Obtener compañía del recurso actual
         const currentResource = header || editableHeader;
-        const resourceCompany = currentResource?.company_name || currentResource?.company || "Power Solution Iberia SL";
+        const resourceCompany =
+          currentResource?.company_name ||
+          currentResource?.company ||
+          "Power Solution Iberia SL";
         out.company = resourceCompany;
       } else if (key === "creado") {
         out.creado = row.creado ?? new Date().toISOString();
