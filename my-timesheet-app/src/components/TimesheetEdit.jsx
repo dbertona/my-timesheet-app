@@ -61,6 +61,8 @@ function TimesheetEdit({ headerId }) {
   const [editFormData, setEditFormData] = useState({});
   const [errors, setErrors] = useState({});
   const [calendarHolidays, setCalendarHolidays] = useState([]);
+  const [showCalendarNotFoundModal, setShowCalendarNotFoundModal] = useState(false);
+  const [calendarNotFoundData, setCalendarNotFoundData] = useState({});
   const [rightPad, setRightPad] = useState(234);
   const [editableHeader, setEditableHeader] = useState(null); // 🆕 Cabecera editable para nuevos partes
   const [periodChangeTrigger, setPeriodChangeTrigger] = useState(0); // 🆕 Trigger para forzar re-renderizado cuando cambie el período
@@ -964,9 +966,13 @@ function TimesheetEdit({ headerId }) {
         }
 
         if (!existingCalendarDays || existingCalendarDays.length === 0) {
-          throw new Error(
-            `No existen registros en calendar_period_days para período ${headerData.allocation_period} y calendario ${headerData.calendar_type}`,
-          );
+          // Mostrar modal en lugar de lanzar excepción
+          setCalendarNotFoundData({
+            allocationPeriod: headerData.allocation_period,
+            calendarType: headerData.calendar_type
+          });
+          setShowCalendarNotFoundModal(true);
+          return; // Salir de la función sin crear el parte
         }
 
         // Usar los valores exactos que existen en la base de datos
@@ -2652,6 +2658,47 @@ function TimesheetEdit({ headerId }) {
           {deleteConfirmModal.lineIds.length !== 1 ? "s" : ""}?
         </p>
         <p className="text-muted">Esta acción no se puede deshacer.</p>
+      </BcModal>
+
+      {/* Modal para datos de calendario no encontrados */}
+      <BcModal
+        isOpen={showCalendarNotFoundModal}
+        onClose={() => setShowCalendarNotFoundModal(false)}
+        title="Datos de Calendario No Encontrados"
+        confirmText="Entendido"
+        oneButton={true}
+        showActions={true}
+      >
+        <div className="mb-4">
+          <p className="text-sm text-gray-600 mb-3">
+            No se encontraron registros en <strong>calendar_period_days</strong> para los siguientes parámetros:
+          </p>
+          <div className="bg-gray-50 p-3 rounded-md">
+            <div className="text-sm">
+              <div className="mb-1">
+                <span className="font-medium">Período:</span>
+                <span className="ml-2 text-blue-600">
+                  {calendarNotFoundData.allocationPeriod || "No especificado"}
+                </span>
+              </div>
+              <div>
+                <span className="font-medium">Tipo de Calendario:</span>
+                <span className="ml-2 text-blue-600">
+                  {calendarNotFoundData.calendarType || "No especificado"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <p className="text-sm text-gray-600">Esto puede ocurrir si:</p>
+          <ul className="text-sm text-gray-600 mt-2 ml-4 list-disc">
+            <li>El período seleccionado no tiene datos de calendario configurados</li>
+            <li>El tipo de calendario del recurso no coincide con los datos disponibles</li>
+            <li>Los datos de calendario no se han sincronizado desde Business Central</li>
+          </ul>
+        </div>
       </BcModal>
     </div>
   );
