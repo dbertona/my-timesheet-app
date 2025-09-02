@@ -1650,7 +1650,25 @@
       "main": [
         [
           {
+            "node": "Check if resource has data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if resource has data": {
+      "main": [
+        [
+          {
             "node": "Update sync_state (resource)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get sync_state (team)",
             "type": "main",
             "index": 0
           }
@@ -1756,7 +1774,25 @@
       "main": [
         [
           {
+            "node": "Check if team has data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if team has data": {
+      "main": [
+        [
+          {
             "node": "Update sync_state (team)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get sync_state (resource_cost)",
             "type": "main",
             "index": 0
           }
@@ -1862,7 +1898,25 @@
       "main": [
         [
           {
+            "node": "Check if resource_cost has data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if resource_cost has data": {
+      "main": [
+        [
+          {
             "node": "Update sync_state (resource_cost)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get sync_state (tasks)",
             "type": "main",
             "index": 0
           }
@@ -2069,10 +2123,23 @@
       "main": [
         [
           {
+            "node": "Check if calendar has data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if calendar has data": {
+      "main": [
+        [
+          {
             "node": "Update sync_state (calendar)",
             "type": "main",
             "index": 0
           }
+        ],
+        [
         ]
       ]
     },
