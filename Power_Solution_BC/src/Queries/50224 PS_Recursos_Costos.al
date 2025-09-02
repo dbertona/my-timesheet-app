@@ -31,6 +31,12 @@ query 50224 PS_RecursosCostos
             {
                 DataItemLink = "No." = ResourceCost.Code;
                 DataItemTableFilter = ARBVRNEMail = filter('*@*'), "Global Dimension 1 Code" = filter('<>''''');
+                column(resource_email; ARBVRNEMail)
+                {
+                }
+                column(resource_department; "Global Dimension 1 Code")
+                {
+                }
             }
         }
     }
