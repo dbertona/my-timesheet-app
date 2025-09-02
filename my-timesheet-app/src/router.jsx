@@ -65,4 +65,6 @@ export const router = createBrowserRouter([
       },
     ],
   },
-]);
+], {
+  basename: "/my-timesheet-app"
+});
