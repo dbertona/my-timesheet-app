@@ -1,4 +1,5 @@
 // cspell:ignore msal useMsal
+/* global __APP_VERSION__ */
 import React, { useEffect, useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";

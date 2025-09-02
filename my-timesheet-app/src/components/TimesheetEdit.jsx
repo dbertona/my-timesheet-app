@@ -2803,8 +2803,8 @@ function TimesheetEdit({ headerId }) {
         isOpen={showCalendarNotFoundModal}
         onClose={() => {
           setShowCalendarNotFoundModal(false);
-          // Redirigir usando el hash router sin fijar host/basepath
-          window.location.hash = "#/";
+          // Redirigir usando React Router respetando basename
+          navigate("/");
         }}
         title="Datos de Calendario No Encontrados"
         confirmText="Entendido"
