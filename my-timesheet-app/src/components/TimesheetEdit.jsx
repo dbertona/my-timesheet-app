@@ -866,6 +866,37 @@ function TimesheetEdit({ headerId }) {
   // 🆕 Obtener queryClient para invalidar cache
   const queryClient = useQueryClient();
 
+  // 🆕 Función para verificar datos de calendario y mostrar modal si no existen
+  const checkCalendarData = useCallback(async (allocationPeriod, calendarType) => {
+    if (!allocationPeriod || !calendarType) return;
+
+    try {
+      const { data: existingCalendarDays, error: calendarQueryError } =
+        await supabaseClient
+          .from("calendar_period_days")
+          .select("allocation_period, calendar_code, day")
+          .eq("allocation_period", allocationPeriod)
+          .eq("calendar_code", calendarType)
+          .limit(1);
+
+      if (calendarQueryError) {
+        console.error("Error consultando calendar_period_days:", calendarQueryError);
+        return;
+      }
+
+      if (!existingCalendarDays || existingCalendarDays.length === 0) {
+        // Mostrar modal en lugar de lanzar excepción
+        setCalendarNotFoundData({
+          allocationPeriod,
+          calendarType
+        });
+        setShowCalendarNotFoundModal(true);
+      }
+    } catch (error) {
+      console.error("Error verificando datos de calendario:", error);
+    }
+  }, []);
+
   // 🆕 Función para guardar toda la tabla CON VALIDACIÓN
   const saveAllChanges = useCallback(async () => {
     if (!hasUnsavedChanges) return;
@@ -1368,6 +1399,54 @@ function TimesheetEdit({ headerId }) {
       setPeriodChangeTrigger((prev) => prev + 1);
     }
   }, [editableHeader?.allocation_period]);
+
+  // 🆕 Inicializar calendar_type del recurso en editableHeader
+  useEffect(() => {
+    const isNewParte = location.pathname === "/nuevo-parte";
+    if (!isNewParte) return;
+    if (editableHeader?.calendar_type) return; // Ya tiene calendar_type
+
+    const getResourceCalendarType = async () => {
+      try {
+        let userEmail = "";
+        try {
+          const acct = instance.getActiveAccount() || accounts[0];
+          userEmail = acct?.username || acct?.email || "";
+        } catch {
+          userEmail = "";
+        }
+
+        if (userEmail) {
+          const { data: resourceData } = await supabaseClient
+            .from("resource")
+            .select("calendar_type")
+            .eq("email", userEmail)
+            .maybeSingle();
+
+          if (resourceData?.calendar_type) {
+            setEditableHeader((prev) => ({
+              ...(prev || {}),
+              calendar_type: resourceData.calendar_type,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Error obteniendo calendar_type del recurso:", error);
+      }
+    };
+
+    getResourceCalendarType();
+  }, [location.pathname, editableHeader?.calendar_type, instance, accounts]);
+
+  // 🆕 Verificar datos de calendario cuando se inicialice editableHeader
+  useEffect(() => {
+    const isNewParte = location.pathname === "/nuevo-parte";
+    if (!isNewParte) return;
+    
+    if (editableHeader?.allocation_period && editableHeader?.calendar_type) {
+      checkCalendarData(editableHeader.allocation_period, editableHeader.calendar_type);
+    }
+  }, [editableHeader?.allocation_period, editableHeader?.calendar_type, location.pathname, checkCalendarData]);
 
   // Cuando llegan las líneas, actualizar estado local y edición inicial con dos decimales
   useEffect(() => {
