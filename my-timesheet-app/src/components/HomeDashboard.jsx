@@ -79,7 +79,7 @@ const HomeDashboard = () => {
           "https://graph.microsoft.com/v1.0/me/photos/64x64/$value",
           {
             headers: { Authorization: `Bearer ${result.accessToken}` },
-          },
+          }
         );
         if (!res.ok) return;
         const blob = await res.blob();
@@ -247,7 +247,8 @@ const HomeDashboard = () => {
               border: "1px solid #ddd",
             }}
           >
-            v0.1.2
+            v
+            {typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.0.0"}
           </div>
           <button
             aria-haspopup="menu"

@@ -1,5 +1,7 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from "vite";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 import react from "@vitejs/plugin-react";
 
 // https://vite.dev/config/
@@ -7,7 +9,10 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  base: '/my-timesheet-app/',
+  base: "/my-timesheet-app/",
+  define: {
+    __APP_VERSION__: JSON.stringify(require("./package.json").version),
+  },
   server: {
     proxy: {
       "/api": {

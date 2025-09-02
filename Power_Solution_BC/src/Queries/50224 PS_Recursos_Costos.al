@@ -1,5 +1,5 @@
 /// <summary>
-/// Query PS_Proyectos (ID 50006).
+/// Query PS_RecursosCostos (ID 50224).
 /// </summary>
 query 50224 PS_RecursosCostos
 {
@@ -14,6 +14,7 @@ query 50224 PS_RecursosCostos
     {
         dataitem(ResourceCost; "Resource Cost")
         {
+            DataItemTableFilter = Code = filter('<>'''');
             column(resource_no; Code)
             {
             }

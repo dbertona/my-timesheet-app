@@ -1,5 +1,5 @@
 /// <summary>
-/// Query PS_Proyectos (ID 50006).
+/// Query PS_Proyectos_Tareas (ID 50222).
 /// </summary>
 query 50222 PS_Proyectos_Tareas
 {
@@ -14,6 +14,7 @@ query 50222 PS_Proyectos_Tareas
     {
         dataitem(jobtask; "Job Task")
         {
+            DataItemTableFilter = "Job No." = filter('<>''''');
             column(job_no; "Job No.")
             {
             }

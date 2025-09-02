@@ -1,5 +1,5 @@
 /// <summary>
-/// Query PS_Proyectos (ID 50006).
+/// Query PS_Proyectos_Equipo (ID 50223).
 /// </summary>
 query 50223 PS_Proyectos_Equipo
 {
@@ -14,6 +14,7 @@ query 50223 PS_Proyectos_Equipo
     {
         dataitem(jobtask; "ARBVRNJobTeam")
         {
+            DataItemTableFilter = "ARBVRNJobNo" = filter('<>'''''), "ARBVRNResourceNo" = filter('<>'''');
             column(job_no; "ARBVRNJobNo")
             {
             }

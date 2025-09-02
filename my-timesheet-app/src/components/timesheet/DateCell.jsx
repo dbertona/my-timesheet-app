@@ -132,7 +132,7 @@ export default function DateCell({
     });
   };
 
-    // Verificar si una fecha está en el rango permitido
+  // Verificar si una fecha está en el rango permitido
   const isInRange = (date) => {
     // Si hay header (edición), usar sus fechas
     if (header && header.from_date && header.to_date) {
@@ -140,7 +140,7 @@ export default function DateCell({
       const toDate = parse(header.to_date, "yyyy-MM-dd", new Date());
       return date >= fromDate && date <= toDate;
     }
-    
+
     // Para nuevos partes, usar el período del editableHeader
     if (editableHeader?.allocation_period) {
       const period = editableHeader.allocation_period;
@@ -153,7 +153,7 @@ export default function DateCell({
         return date >= firstDay && date <= lastDay;
       }
     }
-    
+
     // Fallback: permitir cualquier fecha
     return true;
   };
@@ -177,15 +177,19 @@ export default function DateCell({
     setCalendarOpen(false);
   };
 
-    // Verificar si se puede navegar hacia atrás
+  // Verificar si se puede navegar hacia atrás
   const canGoBack = () => {
     // Si hay header (edición), usar sus fechas
     if (header && header.from_date) {
       const fromDate = parse(header.from_date, "yyyy-MM-dd", new Date());
-      const fromMonth = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
+      const fromMonth = new Date(
+        fromDate.getFullYear(),
+        fromDate.getMonth(),
+        1
+      );
       return currentMonth > fromMonth;
     }
-    
+
     // Para nuevos partes, usar el período del editableHeader
     if (editableHeader?.allocation_period) {
       const period = editableHeader.allocation_period;
@@ -197,7 +201,7 @@ export default function DateCell({
         return currentMonth > periodMonth;
       }
     }
-    
+
     return true;
   };
 
@@ -209,7 +213,7 @@ export default function DateCell({
       const toMonth = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
       return currentMonth < toMonth;
     }
-    
+
     // Para nuevos partes, usar el período del editableHeader
     if (editableHeader?.allocation_period) {
       const period = editableHeader.allocation_period;
@@ -221,7 +225,7 @@ export default function DateCell({
         return currentMonth < periodMonth;
       }
     }
-    
+
     return true;
   };
 
