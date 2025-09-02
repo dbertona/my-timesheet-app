@@ -236,6 +236,19 @@ const HomeDashboard = () => {
             gap: 12,
           }}
         >
+          {/* Versión de la aplicación */}
+          <div
+            style={{
+              fontSize: "0.8rem",
+              color: "#666",
+              backgroundColor: "#f5f5f5",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              border: "1px solid #ddd",
+            }}
+          >
+            v0.1.2
+          </div>
           <button
             aria-haspopup="menu"
             aria-expanded={menuOpen}
