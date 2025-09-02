@@ -574,7 +574,7 @@
     },
     "Compute now ISO (jobs)": {
       "main": [ [ { "node": "Update sync_state (jobs)", "type": "main", "index": 0 } ] ]
-    }
+    },
     "Get sync_state (tasks)": {
       "main": [ [ { "node": "Compute last_sync ISO (tasks)", "type": "main", "index": 0 } ] ]
     },
