@@ -28,6 +28,9 @@ query 50223 PS_Proyectos_Equipo
             {
                 DataItemLink = "No." = jobtask."ARBVRNJobNo";
                 DataItemTableFilter = Status = filter(Open | Planning | Completed | Lost);
+                column(job_status; Status)
+                {
+                }
                 dataitem(resource; Resource)
                 {
                     DataItemLink = "No." = jobtask."ARBVRNResourceNo";
