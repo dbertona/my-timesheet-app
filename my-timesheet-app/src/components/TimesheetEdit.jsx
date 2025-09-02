@@ -41,6 +41,7 @@ const SAFE_COLUMNS = [
   "date",
   "department_code",
   "company",
+  "company_name", // Campo requerido por la tabla timesheet
   "creado",
   "job_no_and_description",
   "job_responsible",
@@ -1919,6 +1920,14 @@ function TimesheetEdit({ headerId }) {
           currentResource?.company ||
           "Power Solution Iberia SL";
         out.company = resourceCompany;
+      } else if (key === "company_name") {
+        // Obtener compañía del recurso actual para company_name
+        const currentResource = header || editableHeader;
+        const resourceCompany =
+          currentResource?.company_name ||
+          currentResource?.company ||
+          "Power Solution Iberia SL";
+        out.company_name = resourceCompany;
       } else if (key === "creado") {
         out.creado = row.creado ?? new Date().toISOString();
       } else if (key === "job_no_and_description") {
