@@ -134,7 +134,12 @@ export default function DateCell({
 
   // Verificar si una fecha está en el rango permitido
   const isInRange = (date) => {
+    // Para nuevos partes (sin header), permitir cualquier fecha
     if (!header) return true;
+    
+    // Si no hay fechas definidas en el header, permitir cualquier fecha
+    if (!header.from_date || !header.to_date) return true;
+    
     const fromDate = parse(header.from_date, "yyyy-MM-dd", new Date());
     const toDate = parse(header.to_date, "yyyy-MM-dd", new Date());
     return date >= fromDate && date <= toDate;
@@ -161,7 +166,12 @@ export default function DateCell({
 
   // Verificar si se puede navegar hacia atrás
   const canGoBack = () => {
+    // Para nuevos partes (sin header), permitir navegación libre
     if (!header) return true;
+    
+    // Si no hay fechas definidas, permitir navegación libre
+    if (!header.from_date) return true;
+    
     const fromDate = parse(header.from_date, "yyyy-MM-dd", new Date());
     const fromMonth = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
     return currentMonth > fromMonth;
@@ -169,7 +179,12 @@ export default function DateCell({
 
   // Verificar si se puede navegar hacia adelante
   const canGoForward = () => {
+    // Para nuevos partes (sin header), permitir navegación libre
     if (!header) return true;
+    
+    // Si no hay fechas definidas, permitir navegación libre
+    if (!header.to_date) return true;
+    
     const toDate = parse(header.to_date, "yyyy-MM-dd", new Date());
     const toMonth = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
     return currentMonth < toMonth;
