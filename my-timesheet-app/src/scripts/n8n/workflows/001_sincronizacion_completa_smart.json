@@ -57,7 +57,7 @@
       "position": [896, 1152]
     },
     {
-      "parameters": { "batchSize": 300, "options": {} },
+      "parameters": { "batchSize": 1, "options": {} },
       "id": "88ee77dd-66cc-55bb-44aa-33221100ffee",
       "name": "Split In Batches (upsert team)",
       "type": "n8n-nodes-base.splitInBatches",
