@@ -23,6 +23,14 @@ query 50224 PS_RecursosCostos
             column(unit_cost; "Unit Cost")
             {
             }
+            column(lastModifiedDateTime; SystemModifiedAt)
+            {
+            }
+
+            dataitem(Resource; Resource)
+            {
+                DataItemLink = "No." = ResourceCost.Code;
+            }
         }
     }
 
