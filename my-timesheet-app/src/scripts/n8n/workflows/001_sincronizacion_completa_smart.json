@@ -132,7 +132,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const prev = $('Compute last_sync ISO (jobs)').item.json.lastSyncIso || '1970-01-01T00:00:00Z'; const resp = $('HTTP - Proyectos (filtrado)').item.json || {}; const arr = Array.isArray(resp.value) ? resp.value : []; let latest = new Date(prev).toISOString(); const pickTs = (row) => row.lastModifiedDateTime || row.last_modified || row.LastModifiedDateTime || row.lastmodified || null; for (const r of arr) { const ts = pickTs(r); if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest } }];"
+        "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return []; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } if (latest === '1970-01-01T00:00:00Z') return []; return [{ json: { nowIso: latest } }];"
       },
       "id": "37f416e4-f3a6-4159-90e0-92ab2bff0f08",
       "name": "Compute now ISO (tasks)",
@@ -306,7 +306,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const prev = $('Compute last_sync ISO (resource)').item.json.lastSyncIso || '1970-01-01T00:00:00Z'; const resp = $('HTTP - Recursos (filtrado)').item.json || {}; const arr = Array.isArray(resp.value) ? resp.value : []; let latest = new Date(prev).toISOString(); const pickTs = (row) => row.lastModifiedDateTime || row.last_modified || row.LastModifiedDateTime || row.lastmodified || null; for (const r of arr) { const ts = pickTs(r); if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest } }];"
+        "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return []; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } if (latest === '1970-01-01T00:00:00Z') return []; return [{ json: { nowIso: latest } }];"
       },
       "id": "0a55851e-f910-4cee-a93e-31f857c43927",
       "name": "Compute now ISO (resource)",
@@ -655,7 +655,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const prev = $('Compute last_sync ISO (team)').item.json.lastSyncIso || '1970-01-01T00:00:00Z'; const resp = $('HTTP - ProyectosEquipos (filtrado)').item.json || {}; const arr = Array.isArray(resp.value) ? resp.value : []; let latest = new Date(prev).toISOString(); const pickTs = (row) => row.lastModifiedDateTime || row.last_modified || row.LastModifiedDateTime || row.lastmodified || null; for (const r of arr) { const ts = pickTs(r); if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest } }];"
+        "jsCode": "const input = $input.all(); if (input.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest, hasData: latest !== '1970-01-01T00:00:00Z' } }];"
       },
       "id": "12d1ed34-2412-4721-8818-c4c9b01929d5",
       "name": "Compute now ISO (jobs)",
@@ -708,6 +708,38 @@
           "name": "Supabase account"
         }
       }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition1",
+              "leftValue": "={{ $json.hasData }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-jobs-data-001",
+      "name": "Check if jobs has data",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        800,
+        304
+      ]
     },
     {
       "parameters": {
@@ -829,7 +861,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const prev = $('Compute last_sync ISO (resource_cost)').item.json.lastSyncIso || '1970-01-01T00:00:00Z'; const resp = $('HTTP - RecursosCostos (filtrado)').item.json || {}; const arr = Array.isArray(resp.value) ? resp.value : []; let latest = new Date(prev).toISOString(); const pickTs = (row) => row.lastModifiedDateTime || row.last_modified || row.LastModifiedDateTime || row.lastmodified || null; for (const r of arr) { const ts = pickTs(r); if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest } }];"
+        "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return []; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } if (latest === '1970-01-01T00:00:00Z') return []; return [{ json: { nowIso: latest } }];"
       },
       "id": "82939602-1995-4b2c-9c15-b9a178b52421",
       "name": "Compute now ISO (team)",
@@ -1003,7 +1035,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const prev = $('Compute last_sync ISO (tasks)').item.json.lastSyncIso || '1970-01-01T00:00:00Z'; const resp = $('HTTP - ProyectosTareas (filtrado)').item.json || {}; const arr = Array.isArray(resp.value) ? resp.value : []; let latest = new Date(prev).toISOString(); const pickTs = (row) => row.lastModifiedDateTime || row.last_modified || row.LastModifiedDateTime || row.lastmodified || null; for (const r of arr) { const ts = pickTs(r); if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest } }];"
+        "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return []; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } if (latest === '1970-01-01T00:00:00Z') return []; return [{ json: { nowIso: latest } }];"
       },
       "id": "8be5ecc7-0181-47a5-b9ca-9c703bd62759",
       "name": "Compute now ISO (resource_cost)",
@@ -1212,7 +1244,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const prev = $('Compute last_sync ISO (calendar)').item.json.lastSyncIso || '1970-01-01T00:00:00Z'; const resp = $('HTTP - CalendarPeriodDays (filtrado)').item.json || {}; const arr = Array.isArray(resp.value) ? resp.value : []; let latest = new Date(prev).toISOString(); const pickTs = (row) => row.lastModifiedDateTime || row.last_modified || row.LastModifiedDateTime || row.lastmodified || null; for (const r of arr) { const ts = pickTs(r); if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest } }];"
+        "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return []; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } if (latest === '1970-01-01T00:00:00Z') return []; return [{ json: { nowIso: latest } }];"
       },
       "id": "3ff6c230-ce81-4298-8d03-cb98a0ac0263",
       "name": "Compute now ISO (calendar)",
@@ -1366,7 +1398,25 @@
       "main": [
         [
           {
+            "node": "Check if jobs has data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if jobs has data": {
+      "main": [
+        [
+          {
             "node": "Update sync_state (jobs)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get sync_state (resource)",
             "type": "main",
             "index": 0
           }
@@ -1385,7 +1435,7 @@
       ]
     },
 
-    
+
     "Get sync_state (resource)": {
       "main": [
         [
@@ -1491,7 +1541,7 @@
       ]
     },
 
-    
+
     "Get sync_state (team)": {
       "main": [
         [
@@ -1597,7 +1647,7 @@
       ]
     },
 
-    
+
     "Get sync_state (resource_cost)": {
       "main": [
         [
@@ -1703,7 +1753,7 @@
       ]
     },
 
-    
+
     "Get sync_state (tasks)": {
       "main": [
         [
@@ -1809,7 +1859,7 @@
       ]
     },
 
-    
+
     "Get sync_state (calendar)": {
       "main": [
         [
