@@ -602,7 +602,7 @@
             "node": "Transformar Recursos",
             "type": "main",
             "index": 0
-          },
+    },
           {
             "node": "Compute now ISO (resource)",
             "type": "main",
@@ -719,6 +719,9 @@
     },
     "Pack batch (team)": {
       "main": [ [ { "node": "HTTP - Upsert job_team (Supabase REST)", "type": "main", "index": 0 } ] ]
+    },
+    "HTTP - Upsert job_team (Supabase REST)": {
+      "main": [ [ { "node": "Split In Batches (upsert team)", "type": "main", "index": 0 } ] ]
     },
     "Compute now ISO (team)": {
       "main": [ [ { "node": "Update sync_state (team)", "type": "main", "index": 0 } ] ]
