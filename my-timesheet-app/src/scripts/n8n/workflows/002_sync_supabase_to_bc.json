@@ -113,6 +113,14 @@
             {
               "name": "Accept",
               "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=minimal"
+            },
+            {
+              "name": "OData-Version",
+              "value": "4.0"
             }
           ]
         },
