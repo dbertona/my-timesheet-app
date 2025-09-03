@@ -109,33 +109,18 @@
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
             }
           ]
         },
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "resourceNoJobNo",
-              "value": "={{ $json.header.resource_no }}"
-            },
-            {
-              "name": "fromDate",
-              "value": "={{ $json.header.starting_date }}"
-            },
-            {
-              "name": "toDate",
-              "value": "={{ $json.header.ending_date }}"
-            },
-            {
-              "name": "status",
-              "value": "Open"
-            },
-            {
-              "name": "description",
-              "value": "={{ $json.header.description || 'Timesheet from Supabase' }}"
-            }
-          ]
+        "specifyBody": "json",
+        "jsonBody": "={{ { resourceNoJobNo: $json.header.resource_no, fromDate: ($json.header.starting_date || '2025-09-01'), toDate: ($json.header.ending_date || '2025-09-30'), status: 'Open', description: ($json.header.description || 'Timesheet from Supabase') } }}",
+        "options": {
+          "timeout": 60000
         }
       },
       "id": "http_post_header_bc",
