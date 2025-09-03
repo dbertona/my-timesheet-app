@@ -1,8 +1,8 @@
 {
-  "name": "001_sincronizacion_completa_smart",
+  "name": "001_sincronizacion_completa_smart copy",
   "nodes": [
     {
-      "id": "webhook_trigger",
+      "id": "341d7757-c802-4550-99e8-139dff1b1d85",
       "name": "Webhook Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
