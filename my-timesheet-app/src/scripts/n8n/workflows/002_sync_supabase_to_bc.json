@@ -121,11 +121,11 @@
             },
             {
               "name": "fromDate",
-              "value": "={{ $json.header.starting_date }}"
+              "value": "={{ $json.header.starting_date || '2025-09-01' }}"
             },
             {
               "name": "toDate",
-              "value": "={{ $json.header.ending_date }}"
+              "value": "={{ $json.header.ending_date || '2025-09-30' }}"
             },
             {
               "name": "status",
