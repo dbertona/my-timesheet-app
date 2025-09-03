@@ -29,7 +29,7 @@ Este archivo documenta todas las claves API y credenciales utilizadas en el proy
 - **Recursos:** `/Recursos`
 - **Costos:** `/RecursosCostos`
 - **Calendario:** `/CalendaroPeriodosDias`
-- **Resource Timesheet Headers:** `/ResourceTimesheetHeaders` (API estándar de BC)
+- **Resource Timesheet Headers:** `/ResourceTimesheetHeaders` (Power Solution API - puede no estar disponible)
 
 ---
 
