@@ -100,7 +100,7 @@
     {
       "parameters": {
         "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ResourceTimesheetHeaders",
-        "method": "POST",
+        "method": "PUT",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
@@ -126,7 +126,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { resourceNoJobNo: $json.header.resource_no, fromDate: $json.header.from_date, toDate: $json.header.to_date, status: 'Open', description: ($json.header.description || 'Timesheet from Supabase') } }}"
+        "jsonBody": "={{ { no: '', resourceNoJobNo: $json.header.resource_no, fromDate: $json.header.from_date, toDate: $json.header.to_date, status: 'Open', description: ($json.header.description || 'Timesheet from Supabase') } }}"
       },
       "id": "http_post_header_bc",
       "name": "HTTP - Post Header to BC",
