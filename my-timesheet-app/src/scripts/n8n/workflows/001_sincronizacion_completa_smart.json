@@ -1,22 +1,16 @@
 {
-  "name": "001_sincronizacion_completa_smart copy",
+  "createdAt": "2025-09-03T06:05:09.789Z",
+  "updatedAt": "2025-09-03T06:08:46.000Z",
+  "id": "PQMdhhSF6HrGYUyQ",
+  "name": "001_sincronizacion_completa_smart copy copy",
+  "active": true,
+  "isArchived": false,
   "nodes": [
-    {
-      "parameters": {},
-      "id": "341d7757-c802-4550-99e8-139dff1b1d85",
-      "name": "Manual Trigger",
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
-      "position": [
-        -208,
-        192
-      ]
-    },
     {
       "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
-      "id": "46aba959-a501-4d2d-9e9f-e8234b67c274",
+      "id": "eb4dcc17-0f05-499b-804b-2634401f629a",
       "name": "Compute last_sync ISO (tasks)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -34,7 +28,7 @@
           "timeout": 60000
         }
       },
-      "id": "344918b7-eb8b-420c-9943-d73311905cad",
+      "id": "c2ce17d7-3407-4473-a9e6-f0b24c02f876",
       "name": "HTTP - ProyectosTareas (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -53,7 +47,7 @@
       "parameters": {
         "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json; const tareas = data.value || []; const items = []; for (const t of tareas) { const job_no = t.projectNo || t.jobNo || t.job_no || ''; const no = t.no || ''; const description = (t.description && String(t.description).trim()) ? String(t.description).trim() : 'Sin descripción'; if (!job_no || !no) continue; items.push({ json: { job_no, no, description, company_name: 'Power Solution Iberia SL' }, pairedItem: { item: 0 } }); } return items;"
       },
-      "id": "d26c91b1-2b8e-4d84-9d03-d4d6a1d22266",
+      "id": "b6356b59-a54a-4dc8-a508-b536f62cbc90",
       "name": "Transformar ProyectosTareas",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -67,7 +61,7 @@
         "batchSize": 300,
         "options": {}
       },
-      "id": "f3001fe1-1577-40aa-82a5-cd48ab80cb19",
+      "id": "60290e0e-e2f1-4c40-9c2e-b73349bc4c38",
       "name": "Split In Batches (upsert tasks)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
@@ -80,7 +74,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json); return [{ json: { payload: rows } }];"
       },
-      "id": "9eba6f8f-d8b0-4703-b3d9-186e796c96c9",
+      "id": "37ce95df-649d-412d-8782-ac4f01bb62f9",
       "name": "Pack batch (tasks)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -121,7 +115,7 @@
           "timeout": 60000
         }
       },
-      "id": "0c2be9f9-9cdb-4b96-9963-662fdb973d7b",
+      "id": "b83c5059-5026-44a8-bf53-d41ea7a6bccc",
       "name": "HTTP - Upsert job_task (Supabase REST)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -134,7 +128,7 @@
       "parameters": {
         "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "e47b59ab-2df5-4461-b544-7e98d45c44fe",
+      "id": "6a6c9a30-b497-4a09-a496-1865ad7ea9da",
       "name": "Compute now ISO (tasks)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -171,7 +165,7 @@
           ]
         }
       },
-      "id": "4d328e72-326e-48c4-909a-6c4861f38079",
+      "id": "12d65585-06e2-4f04-b671-41dbf6f0df19",
       "name": "Update sync_state (tasks)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -190,7 +184,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
-      "id": "56917267-d4f1-449c-a667-d4ec6536ec44",
+      "id": "b005434d-d84b-441f-a745-9b1d87ec2b4c",
       "name": "Compute last_sync ISO (resource)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -208,7 +202,7 @@
           "timeout": 60000
         }
       },
-      "id": "0ea9f4f8-0cc7-47cc-8736-ab1e81fa8199",
+      "id": "c18fcae4-ac8d-4ebd-a76d-88be966ee0f3",
       "name": "HTTP - Recursos (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -227,7 +221,7 @@
       "parameters": {
         "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst first = input[0];\nconst data = first.json;\nconst recursos = data.value || [];\nconst items = [];\n\nfor (const r of recursos) {\n  const code = r.no || '';\n  const name = r.name || '';\n  const email = String(r.arbvrneMail ?? r.email ?? '').trim();\n  const department = String(r.globalDimension1Code ?? r.department ?? '').trim();\n  // Intenta varias claves según BC/AL\n  const calendarRaw = r.calendar_type ?? r.calendarType ?? r.Calendario ?? r.calendario ?? '';\n  const calendar_type = String(calendarRaw).trim();\n  const company = 'Power Solution Iberia SL';\n\n  // DESCARTAR si no hay email válido o no hay departamento\n  if (!email || !email.includes('@')) continue;\n  if (!department) continue;\n\n  items.push({\n    json: {\n      code,\n      name,\n      email,\n      department_code: department,\n      company_name: company,\n      calendar_type, // si viene vacío, el Pack batch ya pone 'DEFAULT'\n    },\n  });\n}\n\nreturn items;"
       },
-      "id": "7105a3c9-d1a5-4188-8b7d-f122da88b328",
+      "id": "edb501a5-4b24-44a3-bcb8-091cabce1fb8",
       "name": "Transformar Recursos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -241,7 +235,7 @@
         "batchSize": 300,
         "options": {}
       },
-      "id": "00ff9b07-996c-4934-b879-31993bb2eec3",
+      "id": "05e21fd8-c9c6-49ef-95ec-714f746fae81",
       "name": "Split In Batches (upsert)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
@@ -254,7 +248,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => {\n  const j = i.json || {};\n  return {\n    ...j,\n    calendar_type: (j.calendar_type && String(j.calendar_type).trim())\n      || (j.calendarType && String(j.calendarType).trim())\n      || 'DEFAULT' // valor por defecto\n  };\n});\nreturn [{ json: { payload: rows } }];"
       },
-      "id": "c339e0c1-21f5-4b64-be72-71b89360aca0",
+      "id": "62ee85b6-e4a7-4aa0-a177-1cdb3c75acbe",
       "name": "Pack batch",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -295,7 +289,7 @@
           "timeout": 60000
         }
       },
-      "id": "e0f9e1a4-3e10-4a42-8cd9-12616e2ae0a7",
+      "id": "ac241fae-9089-4e4c-9310-d76d3fd9a7d4",
       "name": "HTTP - Upsert resource (Supabase REST)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -308,7 +302,7 @@
       "parameters": {
         "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "7b21b6c7-57db-4a61-98e9-e962e5eb79ea",
+      "id": "fca3927a-7821-430f-86e3-f2bdc001b65e",
       "name": "Compute now ISO (resource)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -345,7 +339,7 @@
           ]
         }
       },
-      "id": "03a37262-22be-4dce-8846-5a94b372c991",
+      "id": "adefb0db-efa8-492c-9dfd-f007e8125622",
       "name": "Update sync_state (resource)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -380,7 +374,7 @@
           ]
         }
       },
-      "id": "9e975723-ea65-443b-ac85-7f34903ada54",
+      "id": "89bc9758-0696-4901-933a-827520f1a37d",
       "name": "Get sync_state (jobs)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -399,7 +393,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
-      "id": "1c431d63-5b6c-4df2-a330-623b86c47dff",
+      "id": "cb93e424-9bfb-4b09-8b07-11867cde9eb6",
       "name": "Compute last_sync ISO (jobs)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -417,7 +411,7 @@
           "timeout": 60000
         }
       },
-      "id": "b49fdd03-0b33-4db6-91a1-9056de8bec2b",
+      "id": "8d9975a6-0bc3-4d90-b06c-1f3e0cf829e6",
       "name": "HTTP - Proyectos (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -436,7 +430,7 @@
       "parameters": {
         "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json; const proyectos = data.value || []; const items = []; const allowed = new Set(['Open','Planning','Completed','Lost']); for (const p of proyectos) { const statusRaw = p.estado ?? p.Estado ?? p.status ?? ''; const status = String(statusRaw).trim(); if (!allowed.has(status)) continue; items.push({ json: { no: p.no || '', description: p.description || '', status, responsible: p.Responsible || p.responsible || '', departamento: p.departamento || p.GlobalDimension1Code || '', company_name: 'Power Solution Iberia SL' }, pairedItem: { item: 0 } }); } return items;"
       },
-      "id": "7791b408-2455-47ed-9069-9494f69654f6",
+      "id": "644aaa08-dc46-4a62-885c-8a78259f5fec",
       "name": "Transformar Proyectos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -450,7 +444,7 @@
         "batchSize": 300,
         "options": {}
       },
-      "id": "764c3e52-7cdf-4d58-8f32-6dc64b791bb7",
+      "id": "edb7d51c-291e-4ae9-bec7-7480a793d282",
       "name": "Split In Batches (upsert jobs)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
@@ -463,7 +457,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json); return [{ json: { payload: rows } }];"
       },
-      "id": "6dcd9aac-f7a4-4fad-86a1-ff0cf01f21b4",
+      "id": "265c5678-f668-4a80-8185-f316841d4391",
       "name": "Pack batch (jobs)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -504,7 +498,7 @@
           "timeout": 60000
         }
       },
-      "id": "595c313c-038a-458b-bc56-19e564a088da",
+      "id": "77ac8a30-fd4b-473f-8be8-86c25c6fde1e",
       "name": "HTTP - Upsert job (Supabase REST)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -517,7 +511,7 @@
       "parameters": {
         "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "a8171f0e-f209-4141-9557-1a7515e5334f",
+      "id": "c39d1ad0-a9a0-4b3e-ae0c-bd84523a4b0e",
       "name": "Compute now ISO (jobs)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -554,7 +548,7 @@
           ]
         }
       },
-      "id": "7bc0466c-b0f0-499e-8370-de2bb89489da",
+      "id": "f1be6f3e-2441-4788-a4e5-8ab477594bfa",
       "name": "Update sync_state (jobs)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -573,7 +567,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
-      "id": "4d9903b2-2253-4fff-8586-3a197eaeb8a8",
+      "id": "bd152c6b-5e21-4e83-9967-3a0c4a60d810",
       "name": "Compute last_sync ISO (team)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -591,7 +585,7 @@
           "timeout": 60000
         }
       },
-      "id": "ed87a4cd-10ac-4498-a726-e8f19e629bd7",
+      "id": "3c2b4974-d559-42a8-b8fe-9b06ece8e740",
       "name": "HTTP - ProyectosEquipos (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -610,7 +604,7 @@
       "parameters": {
         "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json; const equipos = data.value || []; const items = []; for (const e of equipos) { const job_no = String(e.job_no ?? '').trim(); const resource_no = String(e.resource_no ?? '').trim(); if (!job_no || !resource_no) continue; items.push({ json: { company_name: 'Power Solution Iberia SL', job_no, resource_no } }); } return items;"
       },
-      "id": "cc412e6c-ffba-44a5-9ca6-966f7659e43c",
+      "id": "6c6ae049-2297-465f-aed0-e30591fcb383",
       "name": "Transformar ProyectosEquipos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -624,7 +618,7 @@
         "batchSize": 300,
         "options": {}
       },
-      "id": "41ef01e7-8f53-4b07-bdfc-aba0bf1d8e72",
+      "id": "252e38fd-3fa3-43bf-b976-5c1fd89e1527",
       "name": "Split In Batches (upsert team)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
@@ -637,7 +631,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json || {}); return [{ json: { payload: rows } }];"
       },
-      "id": "6fd0f51a-5a5c-49af-bd0c-c88d6458beef",
+      "id": "138cd986-e806-4066-ab61-f71f910152be",
       "name": "Pack batch (team)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -678,7 +672,7 @@
           "timeout": 60000
         }
       },
-      "id": "973d77c9-74d0-416d-a186-a890c4feb1ab",
+      "id": "aeb9692c-e7b5-4575-ae22-85471dfa9668",
       "name": "HTTP - Upsert job_team (Supabase REST)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -691,7 +685,7 @@
       "parameters": {
         "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "cde0bca9-8c0f-4c12-9483-4c4740147cc4",
+      "id": "660e0a19-b9cf-451f-a236-59402a0cc0b9",
       "name": "Compute now ISO (team)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -728,7 +722,7 @@
           ]
         }
       },
-      "id": "36e0abba-7b91-4c2b-bf61-0e9fb76bf1be",
+      "id": "5e95ae43-5b57-4626-a5a3-4c195ab311d6",
       "name": "Update sync_state (team)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -747,7 +741,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
-      "id": "1a41a75c-5943-45d8-80b8-b4da25efecdd",
+      "id": "5bc11406-764a-48fa-83f9-f89fe3b0f311",
       "name": "Compute last_sync ISO (resource_cost)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -765,7 +759,7 @@
           "timeout": 60000
         }
       },
-      "id": "1e856c0b-267b-43d4-a0d7-63226aa1e496",
+      "id": "d590e4a4-7330-407e-81bf-4ba74de1a89d",
       "name": "HTTP - RecursosCostos (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -784,7 +778,7 @@
       "parameters": {
         "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json; const rows = data.value || []; const items = []; for (const r of rows) { const resource_no = String(r.resource_no ?? '').trim(); const work_type = String(r.work_type ?? '').trim(); const unit_cost = Number(r.unit_cost ?? 0); if (!resource_no || !work_type) continue; items.push({ json: { company_name: 'Power Solution Iberia SL', resource_no, work_type, unit_cost } }); } return items;"
       },
-      "id": "df961b2b-1814-4687-806b-4263765ca39f",
+      "id": "f23f4764-cf5f-468e-8e70-a5fba4592265",
       "name": "Transformar RecursosCostos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -798,7 +792,7 @@
         "batchSize": 300,
         "options": {}
       },
-      "id": "d2287100-c0fe-4ed3-953b-5bbb24202abf",
+      "id": "413470ef-63bb-4b6d-9a5e-b67fa075d83f",
       "name": "Split In Batches (upsert resource_cost)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
@@ -811,7 +805,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json || {}); return [{ json: { payload: rows } }];"
       },
-      "id": "91c71277-8d66-4bc8-94df-6e6d06df4ab2",
+      "id": "187fddfe-000d-43f4-a820-e88fd15bdb17",
       "name": "Pack batch (resource_cost)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -852,7 +846,7 @@
           "timeout": 60000
         }
       },
-      "id": "94298fd6-ebc6-4403-a36e-ec80df61db9e",
+      "id": "0eebac28-a478-40c5-abee-d604186169ac",
       "name": "HTTP - Upsert resource_cost (Supabase REST)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -865,7 +859,7 @@
       "parameters": {
         "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "56b39ac6-338a-4707-8b9f-85083058566f",
+      "id": "236102e6-4f32-4ee8-96bd-173df3ddb0e6",
       "name": "Compute now ISO (resource_cost)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -902,7 +896,7 @@
           ]
         }
       },
-      "id": "2a9b7ab4-00d3-402d-98a8-c320efcf1035",
+      "id": "b7cb7537-6994-4446-872b-8abac3d35049",
       "name": "Update sync_state (resource_cost)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -937,7 +931,7 @@
           ]
         }
       },
-      "id": "a49c43f1-34fa-42f6-a4c9-b56e6d840706",
+      "id": "fe3a9c4f-92f7-4567-b07f-e9997d52c6fb",
       "name": "Get sync_state (calendar)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -956,7 +950,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
-      "id": "c9d3500a-f6f7-48ee-b50e-88e266813b4d",
+      "id": "bc237185-6371-4535-926b-5239c326a1a3",
       "name": "Compute last_sync ISO (calendar)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -974,7 +968,7 @@
           "timeout": 60000
         }
       },
-      "id": "0b3a7f11-cdd3-4b9d-9b41-6538bd3bb939",
+      "id": "45c846be-4a57-4f1e-9af2-8fa5b1a3210d",
       "name": "HTTP - CalendarPeriodDays (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -993,7 +987,7 @@
       "parameters": {
         "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst data = input[0].json;\nconst rows = Array.isArray(data.value) ? data.value : [];\nconst items = [];\n\nfor (const r of rows) {\n  const allocation_period = String(r.allocation_period ?? r.allocationPeriod ?? '').trim();\n  const calendar_code = String(r.calendar_code ?? r.calendarCode ?? '').trim();\n  const dayRaw = r.day ?? r.Day ?? r.date ?? '';\n  const dayStr = String(dayRaw).trim();\n\n  if (!allocation_period) continue;\n  if (!dayStr) continue; // acepta '2025-01-01' o '1'\n\n  const holiday = Boolean(r.holiday ?? r.Holiday ?? false);\n  const hours_working = Number(r.hours_working ?? r.hoursWorking ?? 0);\n\n  // Si es número válido, envía número; si es 'YYYY-MM-DD', envía string (fecha)\n  const dayNum = Number(dayStr);\n  const day = Number.isNaN(dayNum) ? dayStr : dayNum;\n\n  items.push({\n    json: {\n      company_name: 'Power Solution Iberia SL',\n      allocation_period,\n      calendar_code,\n      day,\n      holiday,\n      hours_working,\n    },\n  });\n}\n\nreturn items;"
       },
-      "id": "5916339a-e8ef-4d8b-947d-d25905d02c90",
+      "id": "16cf30f8-5f45-4f49-ae07-a25931b3dbdf",
       "name": "Transformar CalendarPeriodDays",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1007,7 +1001,7 @@
         "batchSize": 300,
         "options": {}
       },
-      "id": "75a8aa2d-1f6c-4d35-a303-35218bebe9ea",
+      "id": "27477836-81b0-4490-8bb0-940979f8ddb0",
       "name": "Split In Batches (upsert calendar)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
@@ -1020,7 +1014,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json || {}); return [{ json: { payload: rows } }];"
       },
-      "id": "8ae6c2cb-c42f-4812-abc5-f81bd4864169",
+      "id": "e80c8d5d-a745-40a7-81d1-317108d679f6",
       "name": "Pack batch (calendar)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1061,7 +1055,7 @@
           "timeout": 60000
         }
       },
-      "id": "43c5e762-7493-4321-b3e1-37ff068e0feb",
+      "id": "c6dd4d7d-ceeb-4e3c-b28a-eafc3812a384",
       "name": "HTTP - Upsert calendar_period_days (Supabase REST)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -1074,7 +1068,7 @@
       "parameters": {
         "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "8dc9b264-cc61-4468-a50a-88d1f9d73571",
+      "id": "fd48a07e-f0bc-4cce-93c6-c370b2d954ce",
       "name": "Compute now ISO (calendar)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1111,7 +1105,7 @@
           ]
         }
       },
-      "id": "564c90fb-7ac4-4125-97bc-daac497b42eb",
+      "id": "c15f78a0-31be-4e69-9a12-b445ee919742",
       "name": "Update sync_state (calendar)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -1125,26 +1119,26 @@
           "name": "Supabase account"
         }
       }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ejecutar-sync-bc-to-supabase",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -384,
+        192
+      ],
+      "id": "10b27845-f2a5-4b66-a580-049a17bb122a",
+      "name": "Webhook Trigger",
+      "webhookId": "daab7c5f-dbf9-43a5-a291-37c7715b2789"
     }
   ],
-  "pinData": {},
   "connections": {
-    "Manual Trigger": {
-      "main": [
-        [
-          {
-            "node": "Get sync_state (jobs)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get sync_state (calendar)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Compute last_sync ISO (resource)": {
       "main": [
         [
@@ -1636,17 +1630,92 @@
           }
         ]
       ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get sync_state (jobs)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get sync_state (calendar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "69ca9418-45d9-4a63-b908-116089cd718c",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "5f4a76193498dfc211473f5de0a4e75faf68e0d1feb31e98054dc9c9b3f6aa8c"
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "Webhook Trigger": [
+      {
+        "json": {
+          "name": "First item",
+          "code": 1
+        }
+      },
+      {
+        "json": {
+          "name": "Second item",
+          "code": 2
+        }
+      }
+    ]
   },
-  "id": "XRowXuysMNKZ84E5",
+  "versionId": "d57f35bc-865d-4256-8d7c-80c34bbbea8d",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "createdAt": "2025-09-03T06:05:09.791Z",
+      "updatedAt": "2025-09-03T06:05:09.791Z",
+      "role": "workflow:owner",
+      "workflowId": "PQMdhhSF6HrGYUyQ",
+      "projectId": "ijP8FvHt2ZVVaBt9",
+      "project": {
+        "createdAt": "2025-08-25T17:25:17.353Z",
+        "updatedAt": "2025-08-25T17:27:29.880Z",
+        "id": "ijP8FvHt2ZVVaBt9",
+        "name": "Daniel Bertona Sanchez <dbertona@powersolution.es>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-08-25T17:25:17.353Z",
+            "updatedAt": "2025-08-25T17:25:17.353Z",
+            "role": "project:personalOwner",
+            "userId": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
+            "projectId": "ijP8FvHt2ZVVaBt9",
+            "user": {
+              "createdAt": "2025-08-25T17:25:16.887Z",
+              "updatedAt": "2025-09-02T22:04:24.000Z",
+              "id": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
+              "email": "dbertona@powersolution.es",
+              "firstName": "Daniel",
+              "lastName": "Bertona Sanchez",
+              "personalizationAnswers": null,
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "71xpeeX1apKTpNe0",
+                "userActivatedAt": 1756717935545
+              },
+              "role": "global:owner",
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-09-02",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
   "tags": []
 }
