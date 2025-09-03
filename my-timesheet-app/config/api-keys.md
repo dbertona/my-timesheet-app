@@ -29,7 +29,7 @@ Este archivo documenta todas las claves API y credenciales utilizadas en el proy
 - **Recursos:** `/Recursos`
 - **Costos:** `/RecursosCostos`
 - **Calendario:** `/CalendaroPeriodosDias`
-- **Timesheet Headers:** `/TimesheetHeaders`
+- **Resource Timesheet Headers:** `/ResourceTimesheetHeaders`
 
 ---
 
