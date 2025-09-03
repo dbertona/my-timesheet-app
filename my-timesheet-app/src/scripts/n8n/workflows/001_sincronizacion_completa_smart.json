@@ -2,15 +2,20 @@
   "name": "001_sincronizacion_completa_smart copy",
   "nodes": [
     {
-      "parameters": {},
-      "id": "341d7757-c802-4550-99e8-139dff1b1d85",
-      "name": "Manual Trigger",
-      "type": "n8n-nodes-base.manualTrigger",
+      "id": "webhook_trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
         -208,
         192
-      ]
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ejecutar-sync-bc-to-supabase",
+        "responseMode": "responseNode",
+        "options": {}
+      }
     },
     {
       "parameters": {
@@ -1129,7 +1134,7 @@
   ],
   "pinData": {},
   "connections": {
-    "Manual Trigger": {
+    "Webhook Trigger": {
       "main": [
         [
           {
