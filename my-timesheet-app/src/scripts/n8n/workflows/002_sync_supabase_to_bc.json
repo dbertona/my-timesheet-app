@@ -99,7 +99,7 @@
     },
     {
       "parameters": {
-        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ResourceTimesheetHeaders",
+        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/TimesheetHeaders",
         "method": "POST",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
@@ -215,7 +215,7 @@
     },
     {
       "parameters": {
-        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ResourceTimesheetHeaders(' + $json.bc_response.value[0].EntryNo + ')/Microsoft.NAV.insertlines' }}",
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/TimesheetHeaders(' + $json.bc_response.value[0].EntryNo + ')/Microsoft.NAV.insertlines' }}",
         "method": "POST",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
