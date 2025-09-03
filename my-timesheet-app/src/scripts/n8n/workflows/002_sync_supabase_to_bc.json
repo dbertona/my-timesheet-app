@@ -234,7 +234,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { DocumentNo: $json.bc_response.value[0].no, LineNo: 10000, ResourceNo: $json.header.resource_no, JobNo: $json.line.job_no, JobTaskNo: $json.line.job_task_no, Description: ($json.line.description || 'Timesheet line from Supabase'), TimesheetDate: $json.line.date, Quantity: $json.line.quantity, WorkTypeCode: '' } }}",
+        "jsonBody": "={{ JSON.stringify({ DocumentNo: $json.bc_response.value[0].no, LineNo: 10000, ResourceNo: $json.header.resource_no, JobNo: $json.line.job_no, JobTaskNo: $json.line.job_task_no, Description: ($json.line.description || 'Timesheet line from Supabase'), TimesheetDate: $json.line.date, Quantity: $json.line.quantity, WorkTypeCode: '' }) }}",
         "options": {
           "timeout": 60000
         }
