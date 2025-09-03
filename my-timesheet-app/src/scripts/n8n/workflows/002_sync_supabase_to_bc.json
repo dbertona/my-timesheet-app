@@ -99,7 +99,7 @@
     },
     {
       "parameters": {
-        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ResourceTimesheetHeaders",
+        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ResourceTimesheetHeaders",
         "method": "POST",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
@@ -113,30 +113,8 @@
           ]
         },
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "resourceNoJobNo",
-              "value": "={{ $json.header.resource_no }}"
-            },
-            {
-              "name": "fromDate",
-              "value": "={{ $json.header.starting_date || '2025-09-01' }}"
-            },
-            {
-              "name": "toDate",
-              "value": "={{ $json.header.ending_date || '2025-09-30' }}"
-            },
-            {
-              "name": "status",
-              "value": "Open"
-            },
-            {
-              "name": "description",
-              "value": "={{ $json.header.description || 'Timesheet from Supabase' }}"
-            }
-          ]
-        }
+        "specifyBody": "json",
+        "jsonBody": "={{ { resourceNoJobNo: $json.header.resource_no, fromDate: ($json.header.starting_date || '2025-09-01'), toDate: ($json.header.ending_date || '2025-09-30'), status: 'Open', description: ($json.header.description || 'Timesheet from Supabase') } }}"
       },
       "id": "http_post_header_bc",
       "name": "HTTP - Post Header to BC",
@@ -215,7 +193,7 @@
     },
     {
       "parameters": {
-        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ResourceTimesheetHeaders(' + $json.bc_response.value[0].EntryNo + ')/Microsoft.NAV.insertlines' }}",
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ResourceTimesheetHeaders(' + $json.bc_response.value[0].EntryNo + ')/Microsoft.NAV.insertlines' }}",
         "method": "POST",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
@@ -229,34 +207,8 @@
           ]
         },
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "Type",
-              "value": "={{ $json.line.type || 'Job' }}"
-            },
-            {
-              "name": "JobNo",
-              "value": "={{ $json.line.job_no }}"
-            },
-            {
-              "name": "JobTaskNo",
-              "value": "={{ $json.line.job_task_no }}"
-            },
-            {
-              "name": "Date",
-              "value": "={{ $json.line.date }}"
-            },
-            {
-              "name": "Quantity",
-              "value": "={{ $json.line.quantity }}"
-            },
-            {
-              "name": "Description",
-              "value": "={{ $json.line.description || 'Timesheet line from Supabase' }}"
-            }
-          ]
-        }
+        "specifyBody": "json",
+        "jsonBody": "={{ { Type: ($json.line.type || 'Job'), JobNo: $json.line.job_no, JobTaskNo: $json.line.job_task_no, Date: $json.line.date, Quantity: $json.line.quantity, Description: ($json.line.description || 'Timesheet line from Supabase') } }}"
       },
       "id": "http_post_line_bc",
       "name": "HTTP - Post Line to BC",
