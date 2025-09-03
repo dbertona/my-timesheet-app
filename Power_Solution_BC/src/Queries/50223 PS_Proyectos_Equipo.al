@@ -12,9 +12,8 @@ query 50223 PS_Proyectos_Equipo
 
     elements
     {
-        dataitem(jobtask; "ARBVRNJobTeam")
+        dataitem(jobteam; "ARBVRNJobTeam")
         {
-            DataItemTableFilter = "ARBVRNJobNo" = filter('<>'''''), "ARBVRNResourceNo" = filter('<>'''');
             column(job_no; "ARBVRNJobNo")
             {
             }
@@ -27,14 +26,14 @@ query 50223 PS_Proyectos_Equipo
 
             dataitem(job; Job)
             {
-                DataItemLink = "No." = jobtask."ARBVRNJobNo";
+                DataItemLink = "No." = jobteam."ARBVRNJobNo";
                 DataItemTableFilter = Status = filter(Open | Planning | Completed | Lost);
                 column(job_status; Status)
                 {
                 }
                 dataitem(resource; Resource)
                 {
-                    DataItemLink = "No." = jobtask."ARBVRNResourceNo";
+                    DataItemLink = "No." = jobteam."ARBVRNResourceNo";
                     DataItemTableFilter = ARBVRNEMail = filter('*@*'), "Global Dimension 1 Code" = filter('<>''''');
                     column(resource_email; ARBVRNEMail)
                     {

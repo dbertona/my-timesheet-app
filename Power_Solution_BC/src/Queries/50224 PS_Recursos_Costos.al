@@ -14,7 +14,7 @@ query 50224 PS_RecursosCostos
     {
         dataitem(ResourceCost; "Resource Cost")
         {
-            DataItemTableFilter = Code = filter('<>'''');
+            DataItemTableFilter = "Code" = filter('<>''''');
             column(resource_no; Code)
             {
             }
