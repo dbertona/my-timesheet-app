@@ -109,18 +109,33 @@
             {
               "name": "Content-Type",
               "value": "application/json"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json"
             }
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { resourceNoJobNo: $json.header.resource_no, fromDate: ($json.header.starting_date || '2025-09-01'), toDate: ($json.header.ending_date || '2025-09-30'), status: 'Open', description: ($json.header.description || 'Timesheet from Supabase') } }}",
-        "options": {
-          "timeout": 60000
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "resourceNoJobNo",
+              "value": "={{ $json.header.resource_no }}"
+            },
+            {
+              "name": "fromDate",
+              "value": "={{ $json.header.starting_date }}"
+            },
+            {
+              "name": "toDate",
+              "value": "={{ $json.header.ending_date }}"
+            },
+            {
+              "name": "status",
+              "value": "Open"
+            },
+            {
+              "name": "description",
+              "value": "={{ $json.header.description || 'Timesheet from Supabase' }}"
+            }
+          ]
         }
       },
       "id": "http_post_header_bc",
@@ -210,18 +225,37 @@
             {
               "name": "Content-Type",
               "value": "application/json"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json"
             }
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { Type: ($json.line.type || 'Job'), JobNo: $json.line.job_no, JobTaskNo: $json.line.job_task_no, Date: $json.line.date, Quantity: $json.line.quantity, Description: ($json.line.description || 'Timesheet line from Supabase') } }}",
-        "options": {
-          "timeout": 60000
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "Type",
+              "value": "={{ $json.line.type || 'Job' }}"
+            },
+            {
+              "name": "JobNo",
+              "value": "={{ $json.line.job_no }}"
+            },
+            {
+              "name": "JobTaskNo",
+              "value": "={{ $json.line.job_task_no }}"
+            },
+            {
+              "name": "Date",
+              "value": "={{ $json.line.date }}"
+            },
+            {
+              "name": "Quantity",
+              "value": "={{ $json.line.quantity }}"
+            },
+            {
+              "name": "Description",
+              "value": "={{ $json.line.description || 'Timesheet line from Supabase' }}"
+            }
+          ]
         }
       },
       "id": "http_post_line_bc",
@@ -298,7 +332,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { success: true, message: 'Sincronización completada exitosamente', timestamp: new Date().toISOString() } }}"
+        "responseBody": "={{ { success: true, message: 'Sincronización completada exitosamente', processed_headers: $('Get Headers (synced_to_bc=false)').all().length, processed_lines: $('Get Lines for Header').all().length } }}"
       },
       "id": "webhook_response",
       "name": "Webhook Response",
