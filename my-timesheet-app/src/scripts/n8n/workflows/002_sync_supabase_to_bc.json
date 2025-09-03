@@ -88,7 +88,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const headers = input; const items = []; for (const header of headers) { items.push({ json: { header: header.json } }); } return items; } return [];"
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const headers = input; const items = []; for (const header of headers) { const h = { ...header.json }; delete h.id; items.push({ json: { header: h } }); } return items; } return [];"
       },
       "id": "code_prepare_headers",
       "name": "Prepare Headers for BC",
