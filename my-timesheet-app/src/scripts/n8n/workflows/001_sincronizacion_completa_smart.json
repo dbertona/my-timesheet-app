@@ -1,9 +1,9 @@
 {
-  "name": "001_sincronizacion_completa_smart",
+  "name": "001_sincronizacion_completa_smart copy",
   "nodes": [
     {
       "parameters": {},
-      "id": "cb81e362-8d2d-4538-84f0-31ec42067b3d",
+      "id": "341d7757-c802-4550-99e8-139dff1b1d85",
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -16,7 +16,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
-      "id": "1499ba47-b6c2-490a-acf5-2b1e18650b02",
+      "id": "46aba959-a501-4d2d-9e9f-e8234b67c274",
       "name": "Compute last_sync ISO (tasks)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -34,7 +34,7 @@
           "timeout": 60000
         }
       },
-      "id": "f35849c2-52d0-4e7f-b755-3bb56977292d",
+      "id": "344918b7-eb8b-420c-9943-d73311905cad",
       "name": "HTTP - ProyectosTareas (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -53,7 +53,7 @@
       "parameters": {
         "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json; const tareas = data.value || []; const items = []; for (const t of tareas) { const job_no = t.projectNo || t.jobNo || t.job_no || ''; const no = t.no || ''; const description = (t.description && String(t.description).trim()) ? String(t.description).trim() : 'Sin descripción'; if (!job_no || !no) continue; items.push({ json: { job_no, no, description, company_name: 'Power Solution Iberia SL' }, pairedItem: { item: 0 } }); } return items;"
       },
-      "id": "e33efce1-4513-44a1-9227-f21d2a3d4507",
+      "id": "d26c91b1-2b8e-4d84-9d03-d4d6a1d22266",
       "name": "Transformar ProyectosTareas",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -67,7 +67,7 @@
         "batchSize": 300,
         "options": {}
       },
-      "id": "558d1ae2-77bd-40c3-8230-4a91f104334d",
+      "id": "f3001fe1-1577-40aa-82a5-cd48ab80cb19",
       "name": "Split In Batches (upsert tasks)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
@@ -80,7 +80,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json); return [{ json: { payload: rows } }];"
       },
-      "id": "1a38729b-a85e-4d38-b195-160fbe794a61",
+      "id": "9eba6f8f-d8b0-4703-b3d9-186e796c96c9",
       "name": "Pack batch (tasks)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -121,7 +121,7 @@
           "timeout": 60000
         }
       },
-      "id": "0fdeb327-6dc9-4cc9-84b2-76dbcfa9fe81",
+      "id": "0c2be9f9-9cdb-4b96-9963-662fdb973d7b",
       "name": "HTTP - Upsert job_task (Supabase REST)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -132,9 +132,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return []; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } if (latest === '1970-01-01T00:00:00Z') return []; return [{ json: { nowIso: latest } }];"
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "37f416e4-f3a6-4159-90e0-92ab2bff0f08",
+      "id": "e47b59ab-2df5-4461-b544-7e98d45c44fe",
       "name": "Compute now ISO (tasks)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -171,7 +171,7 @@
           ]
         }
       },
-      "id": "de616ef1-f366-46c4-899b-0d19db337301",
+      "id": "4d328e72-326e-48c4-909a-6c4861f38079",
       "name": "Update sync_state (tasks)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -190,7 +190,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
-      "id": "1c5618c1-be1e-495b-91ac-e53e696badb3",
+      "id": "56917267-d4f1-449c-a667-d4ec6536ec44",
       "name": "Compute last_sync ISO (resource)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -208,7 +208,7 @@
           "timeout": 60000
         }
       },
-      "id": "6b590881-165b-45ce-8c76-55b6f9ab4e69",
+      "id": "0ea9f4f8-0cc7-47cc-8736-ab1e81fa8199",
       "name": "HTTP - Recursos (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -227,7 +227,7 @@
       "parameters": {
         "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst first = input[0];\nconst data = first.json;\nconst recursos = data.value || [];\nconst items = [];\n\nfor (const r of recursos) {\n  const code = r.no || '';\n  const name = r.name || '';\n  const email = String(r.arbvrneMail ?? r.email ?? '').trim();\n  const department = String(r.globalDimension1Code ?? r.department ?? '').trim();\n  // Intenta varias claves según BC/AL\n  const calendarRaw = r.calendar_type ?? r.calendarType ?? r.Calendario ?? r.calendario ?? '';\n  const calendar_type = String(calendarRaw).trim();\n  const company = 'Power Solution Iberia SL';\n\n  // DESCARTAR si no hay email válido o no hay departamento\n  if (!email || !email.includes('@')) continue;\n  if (!department) continue;\n\n  items.push({\n    json: {\n      code,\n      name,\n      email,\n      department_code: department,\n      company_name: company,\n      calendar_type, // si viene vacío, el Pack batch ya pone 'DEFAULT'\n    },\n  });\n}\n\nreturn items;"
       },
-      "id": "557c5cbd-3e88-4920-acd5-d6242db4cb09",
+      "id": "7105a3c9-d1a5-4188-8b7d-f122da88b328",
       "name": "Transformar Recursos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -241,7 +241,7 @@
         "batchSize": 300,
         "options": {}
       },
-      "id": "fc59d33e-485b-48b1-aa8d-22afee013ee4",
+      "id": "00ff9b07-996c-4934-b879-31993bb2eec3",
       "name": "Split In Batches (upsert)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
@@ -254,7 +254,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => {\n  const j = i.json || {};\n  return {\n    ...j,\n    calendar_type: (j.calendar_type && String(j.calendar_type).trim())\n      || (j.calendarType && String(j.calendarType).trim())\n      || 'DEFAULT' // valor por defecto\n  };\n});\nreturn [{ json: { payload: rows } }];"
       },
-      "id": "0a30ff07-ee6b-4903-8e91-0a85d85e9de4",
+      "id": "c339e0c1-21f5-4b64-be72-71b89360aca0",
       "name": "Pack batch",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -295,7 +295,7 @@
           "timeout": 60000
         }
       },
-      "id": "179239c7-b3e3-4be4-9cfc-7d0ee385af14",
+      "id": "e0f9e1a4-3e10-4a42-8cd9-12616e2ae0a7",
       "name": "HTTP - Upsert resource (Supabase REST)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -306,9 +306,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest, hasData: latest !== '1970-01-01T00:00:00Z' } }];"
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "0a55851e-f910-4cee-a93e-31f857c43927",
+      "id": "7b21b6c7-57db-4a61-98e9-e962e5eb79ea",
       "name": "Compute now ISO (resource)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -345,7 +345,7 @@
           ]
         }
       },
-      "id": "f5df6f8d-f2e8-4486-ade0-f796983a5889",
+      "id": "03a37262-22be-4dce-8846-5a94b372c991",
       "name": "Update sync_state (resource)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -380,7 +380,7 @@
           ]
         }
       },
-      "id": "8ad4e855-acb0-4fe3-8e26-383fbcf58e6a",
+      "id": "9e975723-ea65-443b-ac85-7f34903ada54",
       "name": "Get sync_state (jobs)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -397,149 +397,9 @@
     },
     {
       "parameters": {
-        "operation": "getAll",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
-            },
-            {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "resource"
-            }
-          ]
-        }
-      },
-      "id": "2b2d1f3c-1d2e-4c3b-9e2a-111111111001",
-      "name": "Get sync_state (resource)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        1408,
-        496
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
-            },
-            {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "job_task"
-            }
-          ]
-        }
-      },
-      "id": "2b2d1f3c-1d2e-4c3b-9e2a-111111111002",
-      "name": "Get sync_state (tasks)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        5616,
-        576
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
-            },
-            {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "job_team"
-            }
-          ]
-        }
-      },
-      "id": "2b2d1f3c-1d2e-4c3b-9e2a-111111111003",
-      "name": "Get sync_state (team)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        3152,
-        480
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "tableId": "sync_state",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "company_name",
-              "condition": "eq",
-              "keyValue": "Power Solution Iberia SL"
-            },
-            {
-              "keyName": "entity",
-              "condition": "eq",
-              "keyValue": "resource_cost"
-            }
-          ]
-        }
-      },
-      "id": "2b2d1f3c-1d2e-4c3b-9e2a-111111111004",
-      "name": "Get sync_state (resource_cost)",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        4496,
-        576
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
-      "id": "e007eac0-d003-4502-a044-fe45c211625b",
+      "id": "1c431d63-5b6c-4df2-a330-623b86c47dff",
       "name": "Compute last_sync ISO (jobs)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -557,7 +417,7 @@
           "timeout": 60000
         }
       },
-      "id": "2b4df65a-ba8b-4cda-aaf3-c6f6b325006b",
+      "id": "b49fdd03-0b33-4db6-91a1-9056de8bec2b",
       "name": "HTTP - Proyectos (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -576,7 +436,7 @@
       "parameters": {
         "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json; const proyectos = data.value || []; const items = []; const allowed = new Set(['Open','Planning','Completed','Lost']); for (const p of proyectos) { const statusRaw = p.estado ?? p.Estado ?? p.status ?? ''; const status = String(statusRaw).trim(); if (!allowed.has(status)) continue; items.push({ json: { no: p.no || '', description: p.description || '', status, responsible: p.Responsible || p.responsible || '', departamento: p.departamento || p.GlobalDimension1Code || '', company_name: 'Power Solution Iberia SL' }, pairedItem: { item: 0 } }); } return items;"
       },
-      "id": "005e5138-16bb-4d33-91ba-4a02affcdbaf",
+      "id": "7791b408-2455-47ed-9069-9494f69654f6",
       "name": "Transformar Proyectos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -590,7 +450,7 @@
         "batchSize": 300,
         "options": {}
       },
-      "id": "ccf9fd94-452b-438f-922c-ea2cafa253a6",
+      "id": "764c3e52-7cdf-4d58-8f32-6dc64b791bb7",
       "name": "Split In Batches (upsert jobs)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
@@ -603,7 +463,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json); return [{ json: { payload: rows } }];"
       },
-      "id": "10468c15-4382-4df6-bf7c-a13c3b774afa",
+      "id": "6dcd9aac-f7a4-4fad-86a1-ff0cf01f21b4",
       "name": "Pack batch (jobs)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -644,7 +504,7 @@
           "timeout": 60000
         }
       },
-      "id": "e17149f1-9143-4714-b4d5-4e3766090efb",
+      "id": "595c313c-038a-458b-bc56-19e564a088da",
       "name": "HTTP - Upsert job (Supabase REST)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -655,9 +515,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest, hasData: latest !== '1970-01-01T00:00:00Z' } }];"
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "12d1ed34-2412-4721-8818-c4c9b01929d5",
+      "id": "a8171f0e-f209-4141-9557-1a7515e5334f",
       "name": "Compute now ISO (jobs)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -694,7 +554,7 @@
           ]
         }
       },
-      "id": "2eeab672-c849-4524-91cd-31a0e63aab8c",
+      "id": "7bc0466c-b0f0-499e-8370-de2bb89489da",
       "name": "Update sync_state (jobs)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -711,169 +571,9 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "condition1",
-              "leftValue": "={{ $json.hasData }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equal"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "check-jobs-data-001",
-      "name": "Check if jobs has data",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        800,
-        304
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "condition1",
-              "leftValue": "={{ $json.hasData }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equal"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "check-resource-data-002",
-      "name": "Check if resource has data",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        2240,
-        576
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "condition1",
-              "leftValue": "={{ $json.hasData }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equal"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "check-team-data-003",
-      "name": "Check if team has data",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        3808,
-        288
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "condition1",
-              "leftValue": "={{ $json.hasData }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equal"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "check-resource-cost-data-004",
-      "name": "Check if resource_cost has data",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        5152,
-        384
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "condition1",
-              "leftValue": "={{ $json.hasData }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equal"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "check-calendar-data-005",
-      "name": "Check if calendar has data",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        896,
-        -96
-      ]
-    },
-    {
-      "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
-      "id": "98629e33-cc62-42bf-8583-f03380b608ed",
+      "id": "4d9903b2-2253-4fff-8586-3a197eaeb8a8",
       "name": "Compute last_sync ISO (team)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -891,7 +591,7 @@
           "timeout": 60000
         }
       },
-      "id": "b77c825d-8e76-4253-a958-3039c5ed5b71",
+      "id": "ed87a4cd-10ac-4498-a726-e8f19e629bd7",
       "name": "HTTP - ProyectosEquipos (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -910,7 +610,7 @@
       "parameters": {
         "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json; const equipos = data.value || []; const items = []; for (const e of equipos) { const job_no = String(e.job_no ?? '').trim(); const resource_no = String(e.resource_no ?? '').trim(); if (!job_no || !resource_no) continue; items.push({ json: { company_name: 'Power Solution Iberia SL', job_no, resource_no } }); } return items;"
       },
-      "id": "f046f3f8-de32-4e4b-ba58-5a60e98934fa",
+      "id": "cc412e6c-ffba-44a5-9ca6-966f7659e43c",
       "name": "Transformar ProyectosEquipos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -924,7 +624,7 @@
         "batchSize": 300,
         "options": {}
       },
-      "id": "7eb8092b-1f24-4527-af1e-f5997b27428f",
+      "id": "41ef01e7-8f53-4b07-bdfc-aba0bf1d8e72",
       "name": "Split In Batches (upsert team)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
@@ -937,7 +637,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json || {}); return [{ json: { payload: rows } }];"
       },
-      "id": "4941e127-9e96-4c85-9a21-006a627dc33a",
+      "id": "6fd0f51a-5a5c-49af-bd0c-c88d6458beef",
       "name": "Pack batch (team)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -978,7 +678,7 @@
           "timeout": 60000
         }
       },
-      "id": "d56e11b1-7a8b-4357-9b09-07a176630c6f",
+      "id": "973d77c9-74d0-416d-a186-a890c4feb1ab",
       "name": "HTTP - Upsert job_team (Supabase REST)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -989,9 +689,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest, hasData: latest !== '1970-01-01T00:00:00Z' } }];"
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "82939602-1995-4b2c-9c15-b9a178b52421",
+      "id": "cde0bca9-8c0f-4c12-9483-4c4740147cc4",
       "name": "Compute now ISO (team)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1028,7 +728,7 @@
           ]
         }
       },
-      "id": "6b15f19e-0609-49a2-adb5-c8a3aedd2951",
+      "id": "36e0abba-7b91-4c2b-bf61-0e9fb76bf1be",
       "name": "Update sync_state (team)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -1047,7 +747,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
-      "id": "2a687646-8b74-4325-944d-c9e295d12817",
+      "id": "1a41a75c-5943-45d8-80b8-b4da25efecdd",
       "name": "Compute last_sync ISO (resource_cost)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1065,7 +765,7 @@
           "timeout": 60000
         }
       },
-      "id": "cb55e215-3f56-4747-bd88-74efed742f99",
+      "id": "1e856c0b-267b-43d4-a0d7-63226aa1e496",
       "name": "HTTP - RecursosCostos (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -1084,7 +784,7 @@
       "parameters": {
         "jsCode": "const input = $input.all(); if (input.length === 0) return []; const data = input[0].json; const rows = data.value || []; const items = []; for (const r of rows) { const resource_no = String(r.resource_no ?? '').trim(); const work_type = String(r.work_type ?? '').trim(); const unit_cost = Number(r.unit_cost ?? 0); if (!resource_no || !work_type) continue; items.push({ json: { company_name: 'Power Solution Iberia SL', resource_no, work_type, unit_cost } }); } return items;"
       },
-      "id": "5e54450c-3079-4edc-9d6f-dd169d9cf8fb",
+      "id": "df961b2b-1814-4687-806b-4263765ca39f",
       "name": "Transformar RecursosCostos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1098,7 +798,7 @@
         "batchSize": 300,
         "options": {}
       },
-      "id": "c09c4af1-d94d-4271-b9a0-39d6b3af8c88",
+      "id": "d2287100-c0fe-4ed3-953b-5bbb24202abf",
       "name": "Split In Batches (upsert resource_cost)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
@@ -1111,7 +811,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json || {}); return [{ json: { payload: rows } }];"
       },
-      "id": "13fcc709-b905-4893-9c2e-a599f3b5681d",
+      "id": "91c71277-8d66-4bc8-94df-6e6d06df4ab2",
       "name": "Pack batch (resource_cost)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1152,7 +852,7 @@
           "timeout": 60000
         }
       },
-      "id": "fbfa0132-0c13-4dbe-a040-10c0804983b7",
+      "id": "94298fd6-ebc6-4403-a36e-ec80df61db9e",
       "name": "HTTP - Upsert resource_cost (Supabase REST)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -1163,9 +863,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest, hasData: latest !== '1970-01-01T00:00:00Z' } }];"
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "8be5ecc7-0181-47a5-b9ca-9c703bd62759",
+      "id": "56b39ac6-338a-4707-8b9f-85083058566f",
       "name": "Compute now ISO (resource_cost)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1202,7 +902,7 @@
           ]
         }
       },
-      "id": "d48c2bda-1da5-4cee-aa2f-93fb008b5b71",
+      "id": "2a9b7ab4-00d3-402d-98a8-c320efcf1035",
       "name": "Update sync_state (resource_cost)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -1237,7 +937,7 @@
           ]
         }
       },
-      "id": "a3161586-674c-454e-a9ec-b5b63a83282c",
+      "id": "a49c43f1-34fa-42f6-a4c9-b56e6d840706",
       "name": "Get sync_state (calendar)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -1256,7 +956,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]); if (rows.length === 0) { return [{ json: { lastSyncIso: '1970-01-01T00:00:00Z' } }]; } const row = rows[0]; const last = row.last_sync_at || '1970-01-01T00:00:00Z'; const iso = new Date(last).toISOString(); return [{ json: { lastSyncIso: iso } }];"
       },
-      "id": "415a4860-6265-4e9e-9e51-e78bc61d6fcd",
+      "id": "c9d3500a-f6f7-48ee-b50e-88e266813b4d",
       "name": "Compute last_sync ISO (calendar)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1274,7 +974,7 @@
           "timeout": 60000
         }
       },
-      "id": "2ae3b8dd-7672-4cd2-88e1-50823c27f95b",
+      "id": "0b3a7f11-cdd3-4b9d-9b41-6538bd3bb939",
       "name": "HTTP - CalendarPeriodDays (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -1293,7 +993,7 @@
       "parameters": {
         "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst data = input[0].json;\nconst rows = Array.isArray(data.value) ? data.value : [];\nconst items = [];\n\nfor (const r of rows) {\n  const allocation_period = String(r.allocation_period ?? r.allocationPeriod ?? '').trim();\n  const calendar_code = String(r.calendar_code ?? r.calendarCode ?? '').trim();\n  const dayRaw = r.day ?? r.Day ?? r.date ?? '';\n  const dayStr = String(dayRaw).trim();\n\n  if (!allocation_period) continue;\n  if (!dayStr) continue; // acepta '2025-01-01' o '1'\n\n  const holiday = Boolean(r.holiday ?? r.Holiday ?? false);\n  const hours_working = Number(r.hours_working ?? r.hoursWorking ?? 0);\n\n  // Si es número válido, envía número; si es 'YYYY-MM-DD', envía string (fecha)\n  const dayNum = Number(dayStr);\n  const day = Number.isNaN(dayNum) ? dayStr : dayNum;\n\n  items.push({\n    json: {\n      company_name: 'Power Solution Iberia SL',\n      allocation_period,\n      calendar_code,\n      day,\n      holiday,\n      hours_working,\n    },\n  });\n}\n\nreturn items;"
       },
-      "id": "064769da-30e8-427e-b85c-ef7b918e219c",
+      "id": "5916339a-e8ef-4d8b-947d-d25905d02c90",
       "name": "Transformar CalendarPeriodDays",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1307,7 +1007,7 @@
         "batchSize": 300,
         "options": {}
       },
-      "id": "c1ba4063-0bf0-4d33-8586-19bbda11abef",
+      "id": "75a8aa2d-1f6c-4d35-a303-35218bebe9ea",
       "name": "Split In Batches (upsert calendar)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
@@ -1320,7 +1020,7 @@
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json || {}); return [{ json: { payload: rows } }];"
       },
-      "id": "7e56bcab-54d4-46e1-b080-079536c64b93",
+      "id": "8ae6c2cb-c42f-4812-abc5-f81bd4864169",
       "name": "Pack batch (calendar)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1361,7 +1061,7 @@
           "timeout": 60000
         }
       },
-      "id": "62118790-6873-4697-a7a6-fa2a9d75fcf5",
+      "id": "43c5e762-7493-4321-b3e1-37ff068e0feb",
       "name": "HTTP - Upsert calendar_period_days (Supabase REST)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
@@ -1372,9 +1072,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; const data = input[0].json || {}; const arr = Array.isArray(data.value) ? data.value : []; if (arr.length === 0) return [{ json: { nowIso: '1970-01-01T00:00:00Z', hasData: false } }]; let latest = '1970-01-01T00:00:00Z'; for (const r of arr) { const ts = r.lastModifiedDateTime || r.last_modified || r.LastModifiedDateTime || r.lastmodified; if (!ts) continue; const iso = new Date(ts).toISOString(); if (iso > latest) latest = iso; } return [{ json: { nowIso: latest, hasData: latest !== '1970-01-01T00:00:00Z' } }];"
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "3ff6c230-ce81-4298-8d03-cb98a0ac0263",
+      "id": "8dc9b264-cc61-4468-a50a-88d1f9d73571",
       "name": "Compute now ISO (calendar)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1411,7 +1111,7 @@
           ]
         }
       },
-      "id": "736793ed-fde0-4202-ba36-f6f85a567bda",
+      "id": "564c90fb-7ac4-4125-97bc-daac497b42eb",
       "name": "Update sync_state (calendar)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -1434,6 +1134,82 @@
         [
           {
             "node": "Get sync_state (jobs)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get sync_state (calendar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute last_sync ISO (resource)": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Recursos (filtrado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Recursos (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar Recursos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compute now ISO (resource)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar Recursos": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches (upsert)": {
+      "main": [
+        [
+          {
+            "node": "Pack batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pack batch": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert resource (Supabase REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (resource)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (resource)",
             "type": "main",
             "index": 0
           }
@@ -1511,436 +1287,11 @@
         ]
       ]
     },
-    "HTTP - Upsert job (Supabase REST)": {
-      "main": [
-        [
-          {
-            "node": "Get sync_state (resource)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Compute now ISO (jobs)": {
       "main": [
         [
           {
-            "node": "Check if jobs has data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check if jobs has data": {
-      "main": [
-        [
-          {
             "node": "Update sync_state (jobs)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Get sync_state (tasks)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update sync_state (jobs)": {
-      "main": [
-        [
-          {
-            "node": "Get sync_state (tasks)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-
-
-    "Get sync_state (resource)": {
-      "main": [
-        [
-          {
-            "node": "Compute last_sync ISO (resource)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute last_sync ISO (resource)": {
-      "main": [
-        [
-          {
-            "node": "HTTP - Recursos (filtrado)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - Recursos (filtrado)": {
-      "main": [
-        [
-          {
-            "node": "Transformar Recursos",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Compute now ISO (resource)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Transformar Recursos": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (upsert)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Split In Batches (upsert)": {
-      "main": [
-        [
-          {
-            "node": "Pack batch",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Pack batch": {
-      "main": [
-        [
-          {
-            "node": "HTTP - Upsert resource (Supabase REST)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - Upsert resource (Supabase REST)": {
-      "main": [
-        [
-          {
-            "node": "Get sync_state (team)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute now ISO (resource)": {
-      "main": [
-        [
-          {
-            "node": "Check if resource has data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check if resource has data": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (resource)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Get sync_state (team)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update sync_state (resource)": {
-      "main": [
-        [
-          {
-            "node": "Get sync_state (team)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-
-
-    "Get sync_state (team)": {
-      "main": [
-        [
-          {
-            "node": "Compute last_sync ISO (team)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute last_sync ISO (team)": {
-      "main": [
-        [
-          {
-            "node": "HTTP - ProyectosEquipos (filtrado)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - ProyectosEquipos (filtrado)": {
-      "main": [
-        [
-          {
-            "node": "Transformar ProyectosEquipos",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Compute now ISO (team)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Transformar ProyectosEquipos": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (upsert team)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Split In Batches (upsert team)": {
-      "main": [
-        [
-          {
-            "node": "Pack batch (team)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Pack batch (team)": {
-      "main": [
-        [
-          {
-            "node": "HTTP - Upsert job_team (Supabase REST)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - Upsert job_team (Supabase REST)": {
-      "main": [
-        [
-          {
-            "node": "Get sync_state (resource_cost)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute now ISO (team)": {
-      "main": [
-        [
-          {
-            "node": "Check if team has data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check if team has data": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (team)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Get sync_state (resource_cost)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update sync_state (team)": {
-      "main": [
-        [
-          {
-            "node": "Get sync_state (resource_cost)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-
-
-    "Get sync_state (resource_cost)": {
-      "main": [
-        [
-          {
-            "node": "Compute last_sync ISO (resource_cost)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute last_sync ISO (resource_cost)": {
-      "main": [
-        [
-          {
-            "node": "HTTP - RecursosCostos (filtrado)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - RecursosCostos (filtrado)": {
-      "main": [
-        [
-          {
-            "node": "Transformar RecursosCostos",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Compute now ISO (resource_cost)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Transformar RecursosCostos": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches (upsert resource_cost)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Split In Batches (upsert resource_cost)": {
-      "main": [
-        [
-          {
-            "node": "Pack batch (resource_cost)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Pack batch (resource_cost)": {
-      "main": [
-        [
-          {
-            "node": "HTTP - Upsert resource_cost (Supabase REST)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP - Upsert resource_cost (Supabase REST)": {
-      "main": [
-        [
-          {
-            "node": "Get sync_state (calendar)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Compute now ISO (resource_cost)": {
-      "main": [
-        [
-          {
-            "node": "Check if resource_cost has data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check if resource_cost has data": {
-      "main": [
-        [
-          {
-            "node": "Update sync_state (resource_cost)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Get sync_state (calendar)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update sync_state (resource_cost)": {
-      "main": [
-        [
-          {
-            "node": "Get sync_state (calendar)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-
-
-    "Get sync_state (tasks)": {
-      "main": [
-        [
-          {
-            "node": "Compute last_sync ISO (tasks)",
             "type": "main",
             "index": 0
           }
@@ -2007,17 +1358,6 @@
         ]
       ]
     },
-    "HTTP - Upsert job_task (Supabase REST)": {
-      "main": [
-        [
-          {
-            "node": "Get sync_state (resource)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Compute now ISO (tasks)": {
       "main": [
         [
@@ -2029,19 +1369,148 @@
         ]
       ]
     },
-    "Update sync_state (tasks)": {
+    "Compute last_sync ISO (team)": {
       "main": [
         [
           {
-            "node": "Get sync_state (resource)",
+            "node": "HTTP - ProyectosEquipos (filtrado)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-
-
+    "HTTP - ProyectosEquipos (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar ProyectosEquipos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compute now ISO (team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar ProyectosEquipos": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches (upsert team)": {
+      "main": [
+        [
+          {
+            "node": "Pack batch (team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pack batch (team)": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert job_team (Supabase REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (team)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute last_sync ISO (resource_cost)": {
+      "main": [
+        [
+          {
+            "node": "HTTP - RecursosCostos (filtrado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - RecursosCostos (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar RecursosCostos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compute now ISO (resource_cost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar RecursosCostos": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert resource_cost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches (upsert resource_cost)": {
+      "main": [
+        [
+          {
+            "node": "Pack batch (resource_cost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pack batch (resource_cost)": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert resource_cost (Supabase REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (resource_cost)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (resource_cost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Get sync_state (calendar)": {
       "main": [
         [
@@ -2113,24 +1582,7 @@
         ]
       ]
     },
-    "HTTP - Upsert calendar_period_days (Supabase REST)": {
-      "main": [
-        [
-        ]
-      ]
-    },
     "Compute now ISO (calendar)": {
-      "main": [
-        [
-          {
-            "node": "Check if calendar has data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check if calendar has data": {
       "main": [
         [
           {
@@ -2138,14 +1590,51 @@
             "type": "main",
             "index": 0
           }
-        ],
-        [
         ]
       ]
     },
-    "Update sync_state (calendar)": {
+    "HTTP - Upsert job (Supabase REST)": {
       "main": [
-        []
+        [
+          {
+            "node": "Compute last_sync ISO (resource)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert resource (Supabase REST)": {
+      "main": [
+        [
+          {
+            "node": "Compute last_sync ISO (team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert job_team (Supabase REST)": {
+      "main": [
+        [
+          {
+            "node": "Compute last_sync ISO (resource_cost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert resource_cost (Supabase REST)": {
+      "main": [
+        [
+          {
+            "node": "Compute last_sync ISO (tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
@@ -2153,11 +1642,11 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "e1fc7993-44a1-44c7-9bb6-0fe503a39890",
+  "versionId": "69ca9418-45d9-4a63-b908-116089cd718c",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "5f4a76193498dfc211473f5de0a4e75faf68e0d1feb31e98054dc9c9b3f6aa8c"
   },
-  "id": "OZqH757Z0M6kEAda",
+  "id": "XRowXuysMNKZ84E5",
   "tags": []
 }
