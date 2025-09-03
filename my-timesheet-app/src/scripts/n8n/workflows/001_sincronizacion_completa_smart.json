@@ -1124,7 +1124,7 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "ejecutar-sync-bc-to-supabase",
-        "responseMode": "onReceived",
+        "responseMode": "responseNode",
         "options": {}
       },
       "type": "n8n-nodes-base.webhook",
@@ -1136,6 +1136,21 @@
       "id": "10b27845-f2a5-4b66-a580-049a17bb122a",
       "name": "Webhook Trigger",
       "webhookId": "daab7c5f-dbf9-43a5-a291-37c7715b2789"
+    },
+    {
+      "id": "webhook_response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        8000,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, message: \"Sincronización BC a Supabase completada exitosamente\", timestamp: new Date().toISOString() } }}",
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -1641,6 +1656,72 @@
           },
           {
             "node": "Get sync_state (calendar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (jobs)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (calendar)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (resource)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (team)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (resource_cost)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (tasks)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
             "type": "main",
             "index": 0
           }
