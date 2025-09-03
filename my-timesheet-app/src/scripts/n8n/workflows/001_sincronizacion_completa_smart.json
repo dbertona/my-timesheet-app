@@ -1544,7 +1544,7 @@
         ],
         [
           {
-            "node": "Get sync_state (resource)",
+            "node": "Get sync_state (tasks)",
             "type": "main",
             "index": 0
           }
@@ -1555,7 +1555,7 @@
       "main": [
         [
           {
-            "node": "Get sync_state (resource)",
+            "node": "Get sync_state (tasks)",
             "type": "main",
             "index": 0
           }
@@ -1887,7 +1887,7 @@
       "main": [
         [
           {
-            "node": "Get sync_state (tasks)",
+            "node": "Get sync_state (calendar)",
             "type": "main",
             "index": 0
           }
@@ -1916,7 +1916,7 @@
         ],
         [
           {
-            "node": "Get sync_state (tasks)",
+            "node": "Get sync_state (calendar)",
             "type": "main",
             "index": 0
           }
@@ -1927,7 +1927,7 @@
       "main": [
         [
           {
-            "node": "Get sync_state (tasks)",
+            "node": "Get sync_state (calendar)",
             "type": "main",
             "index": 0
           }
@@ -2011,7 +2011,7 @@
       "main": [
         [
           {
-            "node": "Get sync_state (calendar)",
+            "node": "Get sync_state (resource)",
             "type": "main",
             "index": 0
           }
@@ -2033,7 +2033,7 @@
       "main": [
         [
           {
-            "node": "Get sync_state (calendar)",
+            "node": "Get sync_state (resource)",
             "type": "main",
             "index": 0
           }
