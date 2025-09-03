@@ -1,5 +1,5 @@
 {
-  "name": "001_sincronizacion_completa_smart copy",
+  "name": "001_sincronizacion_completa_smart",
   "nodes": [
     {
       "id": "webhook_trigger",
