@@ -31,6 +31,7 @@
       "name": "HTTP - Get Companies",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
+      "disabled": true,
       "position": [
         -416,
         -128
@@ -50,6 +51,7 @@
       "name": "Pick Company",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
+      "disabled": true,
       "position": [
         -192,
         -128
@@ -100,7 +102,7 @@
     {
       "parameters": {
         "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ResourceTimesheetHeaders",
-        "method": "PUT",
+        "method": "POST",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
@@ -126,7 +128,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { no: '', resourceNoJobNo: $json.header.resource_no, fromDate: $json.header.from_date, toDate: $json.header.to_date, status: 'Open', description: ($json.header.description || 'Timesheet from Supabase') } }}"
+        "jsonBody": "={{ { resourceNoJobNo: $json.header.resource_no, fromDate: $json.header.from_date, toDate: $json.header.to_date, status: 'Open', description: ($json.header.description || 'Timesheet from Supabase') } }}"
       },
       "id": "http_post_header_bc",
       "name": "HTTP - Post Header to BC",
@@ -165,7 +167,7 @@
             {
               "keyName": "header_id",
               "condition": "eq",
-              "keyValue": "={{ $json.header.id }}"
+              "keyValue": "={{ $json.header?.id || $('Prepare Headers for BC').item.json.header.id }}"
             },
             {
               "keyName": "synced_to_bc",
@@ -339,7 +341,7 @@
       "main": [
         [
           {
-            "node": "HTTP - Get Companies",
+            "node": "Get Headers (synced_to_bc=false)",
             "type": "main",
             "index": 0
           }
@@ -347,26 +349,10 @@
       ]
     },
     "HTTP - Get Companies": {
-      "main": [
-        [
-          {
-            "node": "Pick Company",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": []
     },
     "Pick Company": {
-      "main": [
-        [
-          {
-            "node": "Get Headers (synced_to_bc=false)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": []
     },
     "Get Headers (synced_to_bc=false)": {
       "main": [
