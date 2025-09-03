@@ -109,12 +109,20 @@
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
             }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
+            {
+              "name": "no",
+              "value": ""
+            },
             {
               "name": "resourceNoJobNo",
               "value": "={{ $json.header.resource_no }}"
