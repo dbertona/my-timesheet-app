@@ -109,10 +109,6 @@
             {
               "name": "Content-Type",
               "value": "application/json"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json"
             }
           ]
         },
@@ -120,20 +116,16 @@
         "bodyParameters": {
           "parameters": [
             {
-              "name": "no",
-              "value": ""
-            },
-            {
               "name": "resourceNoJobNo",
               "value": "={{ $json.header.resource_no }}"
             },
             {
               "name": "fromDate",
-              "value": "={{ $json.header.starting_date || '2025-09-01' }}"
+              "value": "={{ $json.header.starting_date }}"
             },
             {
               "name": "toDate",
-              "value": "={{ $json.header.ending_date || '2025-09-30' }}"
+              "value": "={{ $json.header.ending_date }}"
             },
             {
               "name": "status",
@@ -223,7 +215,7 @@
     },
     {
       "parameters": {
-        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/powersolution/timesheet/v1.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/insertlines",
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ResourceTimesheetHeaders(' + $json.bc_response.value[0].EntryNo + ')/Microsoft.NAV.insertlines' }}",
         "method": "POST",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
@@ -233,10 +225,6 @@
             {
               "name": "Content-Type",
               "value": "application/json"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json"
             }
           ]
         },
@@ -244,16 +232,8 @@
         "bodyParameters": {
           "parameters": [
             {
-              "name": "DocumentNo",
-              "value": "={{ $json.bc_response.value[0].no }}"
-            },
-            {
-              "name": "LineNo",
-              "value": "10000"
-            },
-            {
-              "name": "ResourceNo",
-              "value": "={{ $json.header.resource_no }}"
+              "name": "Type",
+              "value": "={{ $json.line.type || 'Job' }}"
             },
             {
               "name": "JobNo",
@@ -264,11 +244,7 @@
               "value": "={{ $json.line.job_task_no }}"
             },
             {
-              "name": "Description",
-              "value": "={{ $json.line.description || 'Timesheet line from Supabase' }}"
-            },
-            {
-              "name": "TimesheetDate",
+              "name": "Date",
               "value": "={{ $json.line.date }}"
             },
             {
@@ -276,13 +252,10 @@
               "value": "={{ $json.line.quantity }}"
             },
             {
-              "name": "WorkTypeCode",
-              "value": ""
+              "name": "Description",
+              "value": "={{ $json.line.description || 'Timesheet line from Supabase' }}"
             }
           ]
-        },
-        "options": {
-          "timeout": 60000
         }
       },
       "id": "http_post_line_bc",
