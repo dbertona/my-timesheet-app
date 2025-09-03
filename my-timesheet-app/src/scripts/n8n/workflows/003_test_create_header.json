@@ -15,7 +15,7 @@
     },
     {
       "parameters": {
-        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/ResourceTimesheetHeaders",
+        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/power_solution/ps_api/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/resourcetimesheetheaders",
         "method": "POST",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
@@ -23,7 +23,7 @@
         "headerParameters": {
           "parameters": [
             { "name": "Content-Type", "value": "application/json" },
-            { "name": "Accept", "value": "application/json" },
+            { "name": "Accept", "value": "application/json;odata.metadata=minimal" },
             { "name": "OData-Version", "value": "4.0" },
             { "name": "Prefer", "value": "return=representation" }
           ]
