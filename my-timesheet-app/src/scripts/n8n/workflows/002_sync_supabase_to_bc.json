@@ -101,6 +101,19 @@
     },
     {
       "parameters": {
+        "jsCode": "const input = $input.all(); if (!input.length) return []; const { header } = input[0].json; const iso = (d) => { if (!d) return undefined; const s = (d||'').toString().slice(0,10); return /^\\d{4}-\\d{2}-\\d{2}$/.test(s) ? s : undefined; }; const today = new Date().toISOString().slice(0,10); const body = { timeSheetDate: iso(header?.from_date) || today, description: header?.description || 'Timesheet from Supabase' }; return [{ json: { header, body } }];"
+      },
+      "id": "code_build_header_body",
+      "name": "Build Header Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        -100
+      ]
+    },
+    {
+      "parameters": {
         "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/power_solution/ps_api/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/resourcetimesheetheaders",
         "method": "POST",
         "authentication": "genericCredentialType",
@@ -128,7 +141,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { resourceNoJobNo: $json.header.resource_no, fromDate: $json.header.from_date, toDate: $json.header.to_date, timeSheetDate: $json.header.from_date, status: 'Open', description: ($json.header.description || 'Timesheet from Supabase') } }}"
+        "jsonBody": "={{ $json.body }}"
       },
       "id": "http_post_header_bc",
       "name": "HTTP - Post Header to BC",
@@ -340,6 +353,17 @@
       ]
     },
     "Prepare Headers for BC": {
+      "main": [
+        [
+          {
+            "node": "Build Header Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Header Body": {
       "main": [
         [
           {
