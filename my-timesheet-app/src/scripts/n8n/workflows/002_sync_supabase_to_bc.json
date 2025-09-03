@@ -128,7 +128,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { resourceNoJobNo: $json.header.resource_no, fromDate: $json.header.from_date, toDate: $json.header.to_date, status: 'Open', description: ($json.header.description || 'Timesheet from Supabase') } }}"
+        "jsonBody": "={{ { resourceNoJobNo: $json.header.resource_no, fromDate: $json.header.from_date, toDate: $json.header.to_date, timeSheetDate: $json.header.from_date, status: 'Open', description: ($json.header.description || 'Timesheet from Supabase') } }}"
       },
       "id": "http_post_header_bc",
       "name": "HTTP - Post Header to BC",
