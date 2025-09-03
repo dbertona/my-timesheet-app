@@ -233,8 +233,46 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ DocumentNo: $json.bc_response.value[0].no, LineNo: 10000, ResourceNo: $json.header.resource_no, JobNo: $json.line.job_no, JobTaskNo: $json.line.job_task_no, Description: ($json.line.description || 'Timesheet line from Supabase'), TimesheetDate: $json.line.date, Quantity: $json.line.quantity, WorkTypeCode: '' }) }}",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "DocumentNo",
+              "value": "={{ $json.bc_response.value[0].no }}"
+            },
+            {
+              "name": "LineNo",
+              "value": "10000"
+            },
+            {
+              "name": "ResourceNo",
+              "value": "={{ $json.header.resource_no }}"
+            },
+            {
+              "name": "JobNo",
+              "value": "={{ $json.line.job_no }}"
+            },
+            {
+              "name": "JobTaskNo",
+              "value": "={{ $json.line.job_task_no }}"
+            },
+            {
+              "name": "Description",
+              "value": "={{ $json.line.description || 'Timesheet line from Supabase' }}"
+            },
+            {
+              "name": "TimesheetDate",
+              "value": "={{ $json.line.date }}"
+            },
+            {
+              "name": "Quantity",
+              "value": "={{ $json.line.quantity }}"
+            },
+            {
+              "name": "WorkTypeCode",
+              "value": ""
+            }
+          ]
+        },
         "options": {
           "timeout": 60000
         }
