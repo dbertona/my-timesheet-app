@@ -332,7 +332,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { success: true, message: 'Sincronización completada exitosamente', processed_headers: $('Get Headers (synced_to_bc=false)').all().length, processed_lines: $('Get Lines for Header').all().length } }}"
+        "responseBody": "={{ { success: true, message: 'Sincronización completada exitosamente', timestamp: new Date().toISOString() } }}"
       },
       "id": "webhook_response",
       "name": "Webhook Response",
