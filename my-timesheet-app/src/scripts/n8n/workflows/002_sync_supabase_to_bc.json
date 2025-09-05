@@ -101,7 +101,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (!input.length) return []; const { header } = input[0].json; const iso = (d) => { if (!d) return undefined; const s = (d||'').toString().slice(0,10); return /^\\d{4}-\\d{2}-\\d{2}$/.test(s) ? s : undefined; }; const today = new Date().toISOString().slice(0,10); const body = { timeSheetDate: iso(header?.from_date) || today, description: header?.description || 'Timesheet from Supabase' }; return [{ json: { header, body } }];"
+        "jsCode": "const input = $input.all(); if (!input.length) return []; const payload = input[0].json || {}; const header = payload.header || $('Prepare Headers for BC').item.json.header; const nextNo = payload.nextNo; const fmtDate = (d) => { if (!d) return new Date().toISOString().slice(0,10); const s = d.toString().slice(0,10).replace(/\\//g,'-'); return s; }; const timeSheetDate = fmtDate(header?.date || header?.from_date); const body = { no: nextNo, resourceNoJobNo: header?.resource_no, shortcutDimension1Code: header?.department_code, timeSheetDate, description: header?.description || 'Timesheet from Supabase', noSeries: 'PT+' }; return [{ json: { header, body } }];"
       },
       "id": "code_build_header_body",
       "name": "Build Header Body",
@@ -110,6 +110,51 @@
       "position": [
         400,
         -100
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/ODataV4/Company(\'Power%20Solution%20Iberia\')/L%C3%ADneas_n_x00BA__serie_Excel?$filter=Series_Code eq \'PT%2B\' and Starting_Date le ' + (($('Prepare Headers for BC').item.json.header?.date || $('Prepare Headers for BC').item.json.header?.from_date || '').toString().replace(/\\//g,'-').slice(0,10)) + '&$orderby=Starting_Date desc&$top=1' }}",
+        "method": "GET",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json;odata.metadata=minimal"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http_get_next_number",
+      "name": "HTTP - Get Next Number",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        400,
+        -200
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const value = $input.first()?.json?.value || []; const line = value[0] || {}; const starting = String(line.Starting_No || ''); const inc = Number(line.Increment_by_No || 1); const prefix = starting.replace(/\\d+$/,''); const startDigitsStr = (starting.match(/\\d+$/)?.[0] || '0'); const digits = startDigitsStr.length; const last = String(line.Last_No_Used || starting); const lastNumStr = (last.match(/\\d+$/)?.[0] || startDigitsStr); const baseNum = parseInt(lastNumStr, 10) || 0; const next = baseNum + inc; const nextNo = prefix + String(next).padStart(digits, '0'); const header = $('Prepare Headers for BC').item.json.header; return [{ json: { header, nextNo, seriesLine: line } }];"
+      },
+      "id": "code_compute_next_no",
+      "name": "Code - Compute Next No",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        -150
       ]
     },
     {
@@ -353,6 +398,28 @@
       ]
     },
     "Prepare Headers for BC": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Get Next Number",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Get Next Number": {
+      "main": [
+        [
+          {
+            "node": "Code - Compute Next No",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Compute Next No": {
       "main": [
         [
           {
