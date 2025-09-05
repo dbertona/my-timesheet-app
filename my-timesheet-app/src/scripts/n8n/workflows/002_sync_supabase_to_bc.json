@@ -114,7 +114,7 @@
     },
     {
       "parameters": {
-        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/ODataV4/Company('Power%20Solution%20Iberia')/L%C3%ADneas_n_x00BA__serie_Excel?$filter=Series_Code eq ' + '\'' + 'PT%2B' + '\'' + ' and Starting_Date le ' + (($('Prepare Headers for BC').item.json.header?.date || $('Prepare Headers for BC').item.json.header?.from_date || '').toString().replace(/\\//g,'-').slice(0,10)) + '&$orderby=Starting_Date desc&$top=1' }}",
+        "url": "={{ (() => { const date = (($('Prepare Headers for BC').item.json.header?.date || $('Prepare Headers for BC').item.json.header?.from_date || '')).toString().replace(/\\//g,'-').slice(0,10); const base = 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/ODataV4/Company(' + encodeURIComponent('Power Solution Iberia') + ')/L%C3%ADneas_n_x00BA__serie_Excel'; const filter = "Series_Code eq 'PT+' and Starting_Date le " + date; return base + '?$filter=' + encodeURIComponent(filter) + '&$orderby=Starting_Date desc&$top=1'; })() }}",
         "method": "GET",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
