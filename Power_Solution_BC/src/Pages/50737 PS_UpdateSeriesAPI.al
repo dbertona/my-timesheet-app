@@ -43,17 +43,17 @@ page 50737 "PS_UpdateSeriesAPI"
         NoSeriesLine.SetRange("Series Code", Rec."Series Code");
         NoSeriesLine.SetRange("Line No.", Rec."Line No.");
         NoSeriesLine.SetRange("Starting Date", Rec."Starting Date");
-        
+
         if NoSeriesLine.FindFirst() then begin
             // Actualizar solo el Last No. Used
             NoSeriesLine."Last No. Used" := Rec."Last No. Used";
             NoSeriesLine."Last Date Used" := Rec."Last Date Used";
             NoSeriesLine.Modify(true);
-            
+
             // Copiar el registro actualizado de vuelta
             Rec := NoSeriesLine;
         end;
-        
+
         exit(true);
     end;
 }
