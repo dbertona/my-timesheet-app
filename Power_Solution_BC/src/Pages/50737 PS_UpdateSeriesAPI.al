@@ -21,7 +21,6 @@ page 50737 "PS_UpdateSeriesAPI"
                 field(seriesCode; Rec."Series Code") { Editable = true; }
                 field(lineNo; Rec."Line No.") { Editable = true; }
                 field(startingDate; Rec."Starting Date") { Editable = true; }
-                field(endingDate; Rec."Ending Date") { Editable = true; }
                 field(startingNo; Rec."Starting No.") { Editable = true; }
                 field(endingNo; Rec."Ending No.") { Editable = true; }
                 field(lastDateUsed; Rec."Last Date Used") { Editable = true; }
