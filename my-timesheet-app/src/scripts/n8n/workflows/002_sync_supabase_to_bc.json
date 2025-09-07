@@ -1,5 +1,5 @@
 {
-  "name": "002_sync_supabase_to_bc",
+  "name": "My workflow 2",
   "nodes": [
     {
       "parameters": {
@@ -8,13 +8,13 @@
         "genericAuthType": "oAuth2Api",
         "options": {}
       },
-      "id": "http_get_companies",
+      "id": "1668da93-4430-4299-9540-fb23dc5e05fc",
       "name": "HTTP - Get Companies",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        -608,
-        -128
+        -1600,
+        -368
       ],
       "credentials": {
         "oAuth2Api": {
@@ -28,26 +28,26 @@
       "parameters": {
         "jsCode": "const value = $input.first()?.json?.value || []; const line = value[0] || {}; const starting = String(line.Starting_No || ''); const inc = Number(line.Increment_by_No || 1); const prefix = starting.replace(/\\d+$/,''); const startDigitsStr = (starting.match(/\\d+$/)?.[0] || '0'); const digits = startDigitsStr.length; const last = String(line.Last_No_Used || starting); const lastNumStr = (last.match(/\\d+$/)?.[0] || startDigitsStr); const baseNum = parseInt(lastNumStr, 10) || 0; const next = baseNum + inc; const nextNo = prefix + String(next).padStart(digits, '0'); const header = $('Prepare Headers for BC').item.json.header; return [{ json: { header, nextNo, seriesLine: line } }];"
       },
-      "id": "code_compute_next_no",
+      "id": "23d2343b-1997-4fd6-9d79-b73aab4af195",
       "name": "Code - Compute Next No",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        512,
-        320
+        -1600,
+        304
       ]
     },
     {
       "parameters": {
         "jsCode": "const res = $input.first().json; const list = Array.isArray(res.value) ? res.value : []; const norm = (s) => (s||'').toString().trim(); const exact = list.find(c => norm(c.displayName) === 'Power Solution Iberia' || norm(c.name) === 'Power Solution Iberia'); const partial = list.find(c => norm(c.displayName).includes('Power Solution Iberia') || norm(c.name).includes('Power Solution Iberia')); const picked = exact || partial || list[0]; if (!picked) { return []; } return [{ json: { companyId: picked.id, companyName: 'Power Solution Iberia' } }];"
       },
-      "id": "code_pick_company",
+      "id": "d4919775-5ad8-416c-a5d9-8f1d72b5610f",
       "name": "Pick Company",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -608,
-        96
+        -1600,
+        -144
       ],
       "disabled": true
     },
@@ -65,13 +65,13 @@
           ]
         }
       },
-      "id": "supabase_get_headers",
+      "id": "2f90d909-7993-4715-9351-1a0ac8552f66",
       "name": "Get Headers (synced_to_bc=false)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -384,
-        320
+        -1376,
+        80
       ],
       "credentials": {
         "supabaseApi": {
@@ -82,54 +82,41 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const headers = input; const items = []; for (const header of headers) { const h = { ...header.json }; delete h.id; items.push({ json: { header: h } }); } return items; } return [];"
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const headers = input; const items = []; for (const header of headers) { const h = { ...header.json }; items.push({ json: { header: h } }); } return items; } return [];"
       },
-      "id": "code_prepare_headers",
+      "id": "8e920ed3-70a9-4370-a233-8450404090b5",
       "name": "Prepare Headers for BC",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -160,
-        320
+        -1152,
+        80
       ]
     },
     {
       "parameters": {
         "jsCode": "const input = $input.all(); if (!input.length) return []; const payload = input[0].json || {}; const header = payload.header || $('Prepare Headers for BC').item.json.header; const nextNo = payload.nextNo; const fmt = (d)=> (d||'').toString().replace(/\\//g,'-').slice(0,10); const timeSheetDate = fmt(header?.posting_date || header?.date || header?.from_date); const body = { no: nextNo, resourceNoJobNo: header?.resource_no, shortcutDimension1Code: header?.department_code, timeSheetDate, description: header?.description || 'Timesheet from Supabase', noSeries: 'PT' }; return [{ json: { header, nextNo, body } }];"
       },
-      "id": "code_build_header_body",
+      "id": "eb6eb806-954e-4c96-932a-2f2533aa4538",
       "name": "Build Header Body",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        64,
-        320
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const value = $input.first()?.json?.value || []; const line = value[0] || {}; const starting = String(line.Starting_No || ''); const inc = Number(line.Increment_by_No || 1); const prefix = starting.replace(/\\d+$/,''); const startDigitsStr = (starting.match(/\\d+$/)?.[0] || '0'); const digits = startDigitsStr.length; const last = String(line.Last_No_Used || starting); const lastNumStr = (last.match(/\\d+$/)?.[0] || startDigitsStr); const baseNum = parseInt(lastNumStr, 10) || 0; const next = baseNum + inc; const nextNo = prefix + String(next).padStart(digits, '0'); const header = $('Prepare Headers for BC').item.json.header; return [{ json: { header, nextNo, seriesLine: line } }];"
-      },
-      "id": "code_compute_next_no",
-      "name": "Code - Compute Next No",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        512,
-        320
+        -928,
+        80
       ]
     },
     {
       "parameters": {
         "jsCode": "const input = $input.all(); if (!input.length) return []; const bcHeader = input[0].json; const header = $('Prepare Headers for BC').item.json.header; return [{ json: { header: header, bc_header: bcHeader } }];"
       },
-      "id": "code_prepare_lines",
+      "id": "b572974f-a960-4020-9dac-a8e16c3a669c",
       "name": "Prepare for Lines Processing",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        960,
-        320
+        -256,
+        80
       ]
     },
     {
@@ -151,13 +138,13 @@
           ]
         }
       },
-      "id": "supabase_get_lines",
+      "id": "a0b515a0-c0ae-4f79-b3d2-2641d1e6852c",
       "name": "Get Lines for Header",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        1184,
-        320
+        -32,
+        80
       ],
       "credentials": {
         "supabaseApi": {
@@ -168,15 +155,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all(); if (input.length > 0) { const lines = input; const header = $('Prepare for Lines Processing').item.json.header; const bc_response = $('Prepare for Lines Processing').item.json.bc_response; const items = []; for (const line of lines) { items.push({ json: { line: line.json, header: header, bc_response: bc_response } }); } return items; } return [];"
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const lines = input; const header = $('Prepare for Lines Processing').item.json.header; const bc_header = $('Prepare for Lines Processing').item.json.bc_header; const items = []; for (const line of lines) { items.push({ json: { line: line.json, header, bc_header, bc_response: bc_header } }); } return items; } return [];"
       },
-      "id": "code_prepare_line",
+      "id": "4c98ad2f-b5ff-433b-a2db-f0469a21a4c7",
       "name": "Prepare Line for BC",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1408,
-        320
+        192,
+        80
       ]
     },
     {
@@ -199,13 +186,13 @@
         "jsonBody": "={{ { DocumentNo: ($json.bc_header?.no || $json.bc_header?.No || $json.bc_header['No.']), ResourceNo: ($json.line.resource_no || $json.header.resource_no), JobNo: $json.line.job_no, JobTaskNo: $json.line.job_task_no, Description: ($json.line.description || 'Timesheet line from Supabase'), TimesheetDate: $json.line.date, Quantity: $json.line.quantity, WorkTypeCode: $json.line.work_type_code } }}",
         "options": {}
       },
-      "id": "http_post_line_bc",
+      "id": "eb48dcc8-5c71-4cb2-bc17-5c60c5533a86",
       "name": "HTTP - Post Line to BC",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        1632,
-        320
+        416,
+        80
       ],
       "credentials": {
         "oAuth2Api": {
@@ -217,15 +204,33 @@
     {
       "parameters": {
         "operation": "update",
-        "tableId": "timesheet"
+        "tableId": "timesheet",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "header_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Prepare Headers for BC').item.json.header.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "synced_to_bc",
+              "fieldValue": "={{ true }}"
+            }
+          ]
+        }
       },
-      "id": "supabase_mark_line_synced",
+      "id": "cfe0051c-ce14-47eb-b7d6-d96d4b233d24",
       "name": "Mark Line as Synced",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        1856,
-        320
+        640,
+        80
       ],
       "credentials": {
         "supabaseApi": {
@@ -237,15 +242,41 @@
     {
       "parameters": {
         "operation": "update",
-        "tableId": "resource_timesheet_header"
+        "tableId": "resource_timesheet_header",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Prepare Headers for BC').item.json.header.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "synced_to_bc",
+              "fieldValue": "={{ true }}"
+            },
+            {
+              "fieldId": "updated_at",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            },
+            {
+              "fieldId": "bc_document_no",
+              "fieldValue": "={{ $('HTTP - Post Line to BC').item.json.DocumentNo }}"
+            }
+          ]
+        }
       },
-      "id": "supabase_mark_header_synced",
+      "id": "b6b86c60-4134-4d76-a74b-4696bda70dfb",
       "name": "Mark Header as Synced",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        2080,
-        320
+        864,
+        80
       ],
       "credentials": {
         "supabaseApi": {
@@ -259,10 +290,10 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -608,
-        320
+        -1600,
+        80
       ],
-      "id": "bd48d707-d9a1-4ac6-b2b5-d1138e06b9a3",
+      "id": "5769d2d8-f96b-40a9-82e3-32dc5e8c0683",
       "name": "When clicking ‘Execute workflow’"
     },
     {
@@ -297,13 +328,13 @@
         "jsonBody": "={{ { no: '', timeSheetDate: ($('Build Header Body').item.json.header.posting_date || $('Build Header Body').item.json.header.date || $('Build Header Body').item.json.header.from_date).toString().replace(/\\//g,'-').slice(0,10), noSeries: 'PT' } }}",
         "options": {}
       },
-      "id": "http_post_header_bc",
+      "id": "5c79b170-ca6d-456d-8aa3-b1067a97c0cd",
       "name": "HTTP - Post Header to BC",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        736,
-        320
+        -704,
+        80
       ],
       "credentials": {
         "oAuth2Api": {
@@ -348,13 +379,13 @@
         "jsonBody": "={{ { resourceNoJobNo: $('Build Header Body').item.json.header.resource_no, description: ($('Build Header Body').item.json.header.description || 'Timesheet from Supabase'), status: 'Open', fromDate: ($('Build Header Body').item.json.header.posting_date || $('Build Header Body').item.json.header.date || $('Build Header Body').item.json.header.from_date).toString().replace(/\\//g,'-').slice(0,10), toDate: ($('Build Header Body').item.json.header.posting_date || $('Build Header Body').item.json.header.date || $('Build Header Body').item.json.header.from_date).toString().replace(/\\//g,'-').slice(0,10) } }}",
         "options": {}
       },
-      "id": "http_update_header_bc",
+      "id": "f68ee44a-03a1-45df-aa38-d24b3318d814",
       "name": "HTTP - Update Header to BC",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        736,
-        320
+        -480,
+        80
       ],
       "credentials": {
         "oAuth2Api": {
@@ -366,12 +397,6 @@
   ],
   "pinData": {},
   "connections": {
-    "HTTP - Get Companies": {
-      "main": []
-    },
-    "Pick Company": {
-      "main": []
-    },
     "Get Headers (synced_to_bc=false)": {
       "main": [
         [
@@ -460,11 +485,6 @@
         ]
       ]
     },
-    "Mark Header as Synced": {
-      "main": [
-        []
-      ]
-    },
     "When clicking ‘Execute workflow’": {
       "main": [
         [
@@ -500,12 +520,13 @@
     }
   },
   "active": false,
-  "settings": {},
-  "versionId": "fd5dd891-2741-447e-8a3c-cf04cf7b0af6",
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "425cd6e1-de99-43e8-8aea-9a49bf7a68bc",
   "meta": {
-    "templateCredsSetupCompleted": true,
     "instanceId": "5f4a76193498dfc211473f5de0a4e75faf68e0d1feb31e98054dc9c9b3f6aa8c"
   },
-  "id": "71xpeeX1apKTpNe0",
+  "id": "mOgCMI55W3AdIUaG",
   "tags": []
 }
