@@ -26,8 +26,7 @@ page 50737 "PS_UpdateSeriesAPI"
                 field(lastDateUsed; Rec."Last Date Used") { Editable = true; }
                 field(lastNoUsed; Rec."Last No. Used") { Editable = true; }
                 field(warningNo; Rec."Warning No.") { Editable = true; }
-                field(incrementByNo; Rec."Increment-by-No.") { Editable = true; }
-                field(allowGapsInNos; Rec."Allow Gaps in Nos.") { Editable = true; }
+                field(incrementByNo; Rec."Increment-by No.") { Editable = true; }
                 field(implementation; Rec."Implementation") { Editable = true; }
                 field(open; Rec.Open) { Editable = true; }
             }
