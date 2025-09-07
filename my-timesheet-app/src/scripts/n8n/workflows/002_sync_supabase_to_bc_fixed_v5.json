@@ -1,0 +1,511 @@
+{
+  "name": "002_sync_supabase_to_bc",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/v2.0/companies",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "http_get_companies",
+      "name": "HTTP - Get Companies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -608,
+        -128
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const value = $input.first()?.json?.value || []; const line = value[0] || {}; const starting = String(line.Starting_No || ''); const inc = Number(line.Increment_by_No || 1); const prefix = starting.replace(/\\d+$/,''); const startDigitsStr = (starting.match(/\\d+$/)?.[0] || '0'); const digits = startDigitsStr.length; const last = String(line.Last_No_Used || starting); const lastNumStr = (last.match(/\\d+$/)?.[0] || startDigitsStr); const baseNum = parseInt(lastNumStr, 10) || 0; const next = baseNum + inc; const nextNo = prefix + String(next).padStart(digits, '0'); const header = $('Prepare Headers for BC').item.json.header; return [{ json: { header, nextNo, seriesLine: line } }];"
+      },
+      "id": "code_compute_next_no",
+      "name": "Code - Compute Next No",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const res = $input.first().json; const list = Array.isArray(res.value) ? res.value : []; const norm = (s) => (s||'').toString().trim(); const exact = list.find(c => norm(c.displayName) === 'Power Solution Iberia' || norm(c.name) === 'Power Solution Iberia'); const partial = list.find(c => norm(c.displayName).includes('Power Solution Iberia') || norm(c.name).includes('Power Solution Iberia')); const picked = exact || partial || list[0]; if (!picked) { return []; } return [{ json: { companyId: picked.id, companyName: 'Power Solution Iberia' } }];"
+      },
+      "id": "code_pick_company",
+      "name": "Pick Company",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -608,
+        96
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "resource_timesheet_header",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "synced_to_bc",
+              "condition": "eq",
+              "keyValue": false
+            }
+          ]
+        }
+      },
+      "id": "supabase_get_headers",
+      "name": "Get Headers (synced_to_bc=false)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -384,
+        320
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const headers = input; const items = []; for (const header of headers) { const h = { ...header.json }; delete h.id; items.push({ json: { header: h } }); } return items; } return [];"
+      },
+      "id": "code_prepare_headers",
+      "name": "Prepare Headers for BC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all(); if (!input.length) return []; const payload = input[0].json || {}; const header = payload.header || $('Prepare Headers for BC').item.json.header; const nextNo = payload.nextNo; const fmt = (d)=> (d||'').toString().replace(/\\//g,'-').slice(0,10); const timeSheetDate = fmt(header?.posting_date || header?.date || header?.from_date); const body = { no: nextNo, resourceNoJobNo: header?.resource_no, shortcutDimension1Code: header?.department_code, timeSheetDate, description: header?.description || 'Timesheet from Supabase', noSeries: 'PT' }; return [{ json: { header, nextNo, body } }];"
+      },
+      "id": "code_build_header_body",
+      "name": "Build Header Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const value = $input.first()?.json?.value || []; const line = value[0] || {}; const starting = String(line.Starting_No || ''); const inc = Number(line.Increment_by_No || 1); const prefix = starting.replace(/\\d+$/,''); const startDigitsStr = (starting.match(/\\d+$/)?.[0] || '0'); const digits = startDigitsStr.length; const last = String(line.Last_No_Used || starting); const lastNumStr = (last.match(/\\d+$/)?.[0] || startDigitsStr); const baseNum = parseInt(lastNumStr, 10) || 0; const next = baseNum + inc; const nextNo = prefix + String(next).padStart(digits, '0'); const header = $('Prepare Headers for BC').item.json.header; return [{ json: { header, nextNo, seriesLine: line } }];"
+      },
+      "id": "code_compute_next_no",
+      "name": "Code - Compute Next No",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all(); if (!input.length) return []; const bcHeader = input[0].json; const header = $('Prepare Headers for BC').item.json.header; return [{ json: { header: header, bc_header: bcHeader } }];"
+      },
+      "id": "code_prepare_lines",
+      "name": "Prepare for Lines Processing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "timesheet",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "header_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Prepare Headers for BC').item.json.header.id }}"
+            },
+            {
+              "keyName": "synced_to_bc",
+              "condition": "eq",
+              "keyValue": false
+            }
+          ]
+        }
+      },
+      "id": "supabase_get_lines",
+      "name": "Get Lines for Header",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        320
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all(); if (input.length > 0) { const lines = input; const header = $('Prepare for Lines Processing').item.json.header; const bc_response = $('Prepare for Lines Processing').item.json.bc_response; const items = []; for (const line of lines) { items.push({ json: { line: line.json, header: header, bc_response: bc_response } }); } return items; } return [];"
+      },
+      "id": "code_prepare_line",
+      "name": "Prepare Line for BC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1408,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/powersolution/timesheet/v1.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/insertlines",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { DocumentNo: ($json.bc_header?.no || $json.bc_header?.No || $json.bc_header['No.']), ResourceNo: ($json.line.resource_no || $json.header.resource_no), JobNo: $json.line.job_no, JobTaskNo: $json.line.job_task_no, Description: ($json.line.description || 'Timesheet line from Supabase'), TimesheetDate: $json.line.date, Quantity: $json.line.quantity, WorkTypeCode: $json.line.work_type_code } }}",
+        "options": {}
+      },
+      "id": "http_post_line_bc",
+      "name": "HTTP - Post Line to BC",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1632,
+        320
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "timesheet"
+      },
+      "id": "supabase_mark_line_synced",
+      "name": "Mark Line as Synced",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        320
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "resource_timesheet_header"
+      },
+      "id": "supabase_mark_header_synced",
+      "name": "Mark Header as Synced",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        320
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -608,
+        320
+      ],
+      "id": "bd48d707-d9a1-4ac6-b2b5-d1138e06b9a3",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/power_solution/ps_api/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/resourcetimesheetheaders",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "OData-Version",
+              "value": "4.0"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { no: '', timeSheetDate: ($('Build Header Body').item.json.header.posting_date || $('Build Header Body').item.json.header.date || $('Build Header Body').item.json.header.from_date).toString().replace(/\\//g,'-').slice(0,10), noSeries: 'PT' } }}",
+        "options": {}
+      },
+      "id": "http_post_header_bc",
+      "name": "HTTP - Post Header to BC",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        736,
+        320
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/power_solution/ps_api/v2.0/companies(ca9dc1bf-54ee-ed11-884a-000d3a455d5b)/resourcetimesheetheaders(no=\\'' + $node[\"HTTP - Post Header to BC\"].json[\"no\"] + '\\')' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "OData-Version",
+              "value": "4.0"
+            },
+            {
+              "name": "If-Match",
+              "value": "*"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { resourceNoJobNo: $('Build Header Body').item.json.header.resource_no, description: ($('Build Header Body').item.json.header.description || 'Timesheet from Supabase'), status: 'Open', fromDate: ($('Build Header Body').item.json.header.posting_date || $('Build Header Body').item.json.header.date || $('Build Header Body').item.json.header.from_date).toString().replace(/\\//g,'-').slice(0,10), toDate: ($('Build Header Body').item.json.header.posting_date || $('Build Header Body').item.json.header.date || $('Build Header Body').item.json.header.from_date).toString().replace(/\\//g,'-').slice(0,10) } }}",
+        "options": {}
+      },
+      "id": "http_update_header_bc",
+      "name": "HTTP - Update Header to BC",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        736,
+        320
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP - Get Companies": {
+      "main": []
+    },
+    "Pick Company": {
+      "main": []
+    },
+    "Get Headers (synced_to_bc=false)": {
+      "main": [
+        [
+          {
+            "node": "Prepare Headers for BC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Headers for BC": {
+      "main": [
+        [
+          {
+            "node": "Build Header Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Header Body": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Post Header to BC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare for Lines Processing": {
+      "main": [
+        [
+          {
+            "node": "Get Lines for Header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Lines for Header": {
+      "main": [
+        [
+          {
+            "node": "Prepare Line for BC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Line for BC": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Post Line to BC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Post Line to BC": {
+      "main": [
+        [
+          {
+            "node": "Mark Line as Synced",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Line as Synced": {
+      "main": [
+        [
+          {
+            "node": "Mark Header as Synced",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Header as Synced": {
+      "main": [
+        []
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get Headers (synced_to_bc=false)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Post Header to BC": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Update Header to BC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Update Header to BC": {
+      "main": [
+        [
+          {
+            "node": "Prepare for Lines Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "fd5dd891-2741-447e-8a3c-cf04cf7b0af6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f4a76193498dfc211473f5de0a4e75faf68e0d1feb31e98054dc9c9b3f6aa8c"
+  },
+  "id": "71xpeeX1apKTpNe0",
+  "tags": []
+}
