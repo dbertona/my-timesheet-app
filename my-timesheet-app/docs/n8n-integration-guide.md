@@ -138,7 +138,7 @@ curl -X DELETE "http://192.168.88.68:5678/api/v1/workflows/WORKFLOW_ID" \
 | ID                 | Nombre                              | Estado    | Descripción                                  |
 | ------------------ | ----------------------------------- | --------- | -------------------------------------------- |
 | `XSYOmZ8mRuaXl6sg` | `001_sincronizacion_completa_smart` | ✅ Activo | Sincronización BC → Supabase (multi-empresa) |
-| `DAZUg4e3Yuv160sa` | `002_sync_supabase_to_bc`           | ✅ Activo | Sincronización Supabase → BC                 |
+| `DAZUg4e3Yuv160sa` | `002_sync_supabase_to_bc_multi`    | ✅ Activo | Sincronización Supabase → BC (multi-empresa) |
 | `n9ipjJzVhD2iFVzD` | `000_warmup_credentials`            | ✅ Activo | Warmup de credenciales OAuth2                |
 
 ---
@@ -214,12 +214,39 @@ curl -X POST "https://n8n.powersolution.es/webhook/ejecutar-sync-bc-to-supabase?
 https://n8n.powersolution.es/webhook/sync-supabase-to-bc
 ```
 
-#### **Comando de Ejecución:**
+#### **Parámetros Disponibles:**
+
+| Parámetro       | Valor                    | Empresa                                | Company ID |
+| --------------- | ------------------------ | -------------------------------------- | ---------- |
+| `company=psi`   | Power Solution Iberia SL | `ca9dc1bf-54ee-ed11-884a-000d3a455d5b` |
+| `company=pslab` | PS LAB CONSULTING SL     | `656f8f0e-2bf4-ed11-8848-000d3a4baf18` |
+
+#### **Comandos de Ejecución:**
 
 ```bash
-curl -X POST "https://n8n.powersolution.es/webhook/sync-supabase-to-bc" \
+# Ejecutar para PSI (Power Solution Iberia)
+curl -X POST "https://n8n.powersolution.es/webhook/sync-supabase-to-bc?company=psi" \
   -H "Content-Type: application/json" \
   -d '{}'
+
+# Ejecutar para PSLAB (PS LAB CONSULTING)
+curl -X POST "https://n8n.powersolution.es/webhook/sync-supabase-to-bc?company=pslab" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+# Usando el script de utilidades
+./scripts/n8n-utils.sh webhook "sync-supabase-to-bc?company=psi"
+```
+
+#### **Respuesta Exitosa:**
+
+```json
+{
+  "success": true,
+  "message": "Sincronización Supabase a BC completada exitosamente",
+  "timestamp": "2025-09-09T16:00:00.000Z",
+  "company": "Power Solution Iberia SL"
+}
 ```
 
 ### **Monitoreo de Ejecuciones**
