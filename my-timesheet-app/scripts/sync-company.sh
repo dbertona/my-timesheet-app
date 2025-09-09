@@ -51,48 +51,48 @@ log_warning() {
 # Función para verificar dependencias
 check_dependencies() {
     log "Verificando dependencias..."
-    
+
     if ! command -v curl &> /dev/null; then
         log_error "curl no está instalado"
         exit 1
     fi
-    
+
     if ! command -v jq &> /dev/null; then
         log_error "jq no está instalado"
         exit 1
     fi
-    
+
     if [ ! -f "./scripts/n8n-utils.sh" ]; then
         log_error "Script n8n-utils.sh no encontrado"
         exit 1
     fi
-    
+
     log_success "Dependencias verificadas"
 }
 
 # Función para verificar estado del servidor n8n
 check_n8n_status() {
     log "Verificando estado del servidor n8n..."
-    
+
     if ! ./scripts/n8n-utils.sh status > /dev/null 2>&1; then
         log_error "Servidor n8n no está disponible"
         exit 1
     fi
-    
+
     log_success "Servidor n8n funcionando correctamente"
 }
 
 # Función para verificar que el workflow esté activo
 check_workflow_status() {
     log "Verificando estado del workflow de sincronización..."
-    
+
     if ! ./scripts/n8n-utils.sh list | grep -q "001_sincronizacion_completa_smart.*✅ Activo"; then
         log_error "Workflow de sincronización no está activo"
         log "Workflows disponibles:"
         ./scripts/n8n-utils.sh list
         exit 1
     fi
-    
+
     log_success "Workflow de sincronización está activo"
 }
 
@@ -101,9 +101,9 @@ execute_sync() {
     local company="$1"
     local verbose="$2"
     local dry_run="$3"
-    
+
     local webhook_url="https://n8n.powersolution.es/webhook/ejecutar-sync-bc-to-supabase?company=$company"
-    
+
     if [ "$dry_run" = "true" ]; then
         log_warning "Modo dry-run: Simulando ejecución"
         log "URL del webhook: $webhook_url"
@@ -111,33 +111,33 @@ execute_sync() {
         echo "curl -X POST \"$webhook_url\" -H \"Content-Type: application/json\" -d '{}'"
         return 0
     fi
-    
+
     log "Ejecutando sincronización para $company..."
-    
+
     if [ "$verbose" = "true" ]; then
         log "URL del webhook: $webhook_url"
         log "Enviando request..."
     fi
-    
+
     local response
     response=$(curl -s -X POST "$webhook_url" \
         -H "Content-Type: application/json" \
         -d '{}' 2>&1)
-    
+
     local curl_exit_code=$?
-    
+
     if [ $curl_exit_code -ne 0 ]; then
         log_error "Error en la conexión con el webhook"
         log_error "Código de salida de curl: $curl_exit_code"
         log_error "Respuesta: $response"
         exit 1
     fi
-    
+
     if [ "$verbose" = "true" ]; then
         log "Respuesta recibida:"
         echo "$response" | jq '.' 2>/dev/null || echo "$response"
     fi
-    
+
     # Verificar si la respuesta indica éxito
     if echo "$response" | jq -e '.success' > /dev/null 2>&1; then
         log_success "Sincronización completada exitosamente"
@@ -158,7 +158,7 @@ main() {
     local company=""
     local verbose="false"
     local dry_run="false"
-    
+
     # Parsear argumentos
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -185,14 +185,14 @@ main() {
                 ;;
         esac
     done
-    
+
     # Verificar que se haya especificado una empresa
     if [ -z "$company" ]; then
         log_error "Debe especificar una empresa"
         show_help
         exit 1
     fi
-    
+
     # Mostrar información de la empresa
     case $company in
         psi)
@@ -202,13 +202,13 @@ main() {
             log "Empresa: PS LAB CONSULTING SL (PSLAB)"
             ;;
     esac
-    
+
     # Ejecutar verificaciones y sincronización
     check_dependencies
     check_n8n_status
     check_workflow_status
     execute_sync "$company" "$verbose" "$dry_run"
-    
+
     log_success "Proceso completado"
 }
 
