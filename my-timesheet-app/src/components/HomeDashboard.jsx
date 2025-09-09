@@ -6,6 +6,7 @@ import { useMsal } from "@azure/msal-react";
 import "../styles/HomeDashboard.css";
 import { supabaseClient } from "../supabaseClient";
 import BcModal from "./ui/BcModal";
+import { getServerDate, generateAllocationPeriod } from "../api/date";
 
 // Helper utilities removidos por no uso para cumplir lint
 
@@ -16,6 +17,27 @@ const HomeDashboard = () => {
 
   const [showMissingModal, setShowMissingModal] = useState(false);
   const [missingEmail, setMissingEmail] = useState("");
+  const [serverDate, setServerDate] = useState(null);
+  const [allocationPeriod, setAllocationPeriod] = useState(null);
+
+  // Cargar fecha del servidor al montar el componente
+  useEffect(() => {
+    const loadServerDate = async () => {
+      try {
+        const date = await getServerDate();
+        setServerDate(date);
+        setAllocationPeriod(generateAllocationPeriod(date));
+      } catch (error) {
+        console.error("Error cargando fecha del servidor:", error);
+        // Fallback a fecha local
+        const now = new Date();
+        setServerDate(now);
+        setAllocationPeriod(generateAllocationPeriod(now));
+      }
+    };
+
+    loadServerDate();
+  }, []);
 
   useEffect(() => {
     if (location.state && location.state.modal === "resource-missing") {
@@ -130,18 +152,19 @@ const HomeDashboard = () => {
     };
   }, [userEmail]);
 
-  const now = new Date();
-  const yy = String(now.getFullYear()).slice(-2); // e.g. "25"
-  const mm = String(now.getMonth() + 1).padStart(2, "0"); // e.g. "08"
-  const allocationPeriod = `M${yy}-M${mm}`; // e.g. M25-M08
+  // allocationPeriod ahora viene del servidor via useState
   const goToEditParte = () => {
+    if (!allocationPeriod) return;
     navigate(`/editar-parte?allocation_period=${allocationPeriod}`);
   };
   const goToNuevoParte = () => {
+    if (!allocationPeriod) return;
     navigate(`/nuevo-parte?allocation_period=${allocationPeriod}`);
   };
 
   const navigateToParteActual = async () => {
+    if (!allocationPeriod) return;
+
     try {
       // Determinar recurso del usuario
       let email = "";
