@@ -11,6 +11,8 @@ page 50734 "PS_TimesheetHeaderAPI"
     InsertAllowed = true;
     ModifyAllowed = true;
     DeleteAllowed = false;
+    ODataKeyFields = "ARBVRNNo";
+
 
     layout
     {
