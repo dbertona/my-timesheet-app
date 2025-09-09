@@ -55,8 +55,9 @@ El script incluye todas las funcionalidades necesarias para gestionar n8n:
 1. [Configuración de Acceso](#configuración-de-acceso)
 2. [Comandos Básicos](#comandos-básicos)
 3. [Gestión de Workflows](#gestión-de-workflows)
-4. [Troubleshooting](#troubleshooting)
-5. [Mejores Prácticas](#mejores-prácticas)
+4. [Ejecución de Webhooks](#ejecución-de-webhooks)
+5. [Troubleshooting](#troubleshooting)
+6. [Mejores Prácticas](#mejores-prácticas)
 
 ---
 
@@ -139,6 +140,176 @@ curl -X DELETE "http://192.168.88.68:5678/api/v1/workflows/WORKFLOW_ID" \
 | `XSYOmZ8mRuaXl6sg` | `001_sincronizacion_completa_smart` | ✅ Activo | Sincronización BC → Supabase (multi-empresa) |
 | `DAZUg4e3Yuv160sa` | `002_sync_supabase_to_bc`           | ✅ Activo | Sincronización Supabase → BC                 |
 | `n9ipjJzVhD2iFVzD` | `000_warmup_credentials`            | ✅ Activo | Warmup de credenciales OAuth2                |
+
+---
+
+## 🚀 Ejecución de Webhooks
+
+### **Webhook de Sincronización BC → Supabase**
+
+#### **URL del Webhook:**
+```
+https://n8n.powersolution.es/webhook/ejecutar-sync-bc-to-supabase
+```
+
+#### **Parámetros Disponibles:**
+
+| Parámetro | Valor | Empresa | Company ID |
+|-----------|-------|---------|------------|
+| `company=psi` | Power Solution Iberia SL | `ca9dc1bf-54ee-ed11-884a-000d3a455d5b` |
+| `company=pslab` | PS LAB CONSULTING SL | `656f8f0e-2bf4-ed11-8848-000d3a4baf18` |
+
+#### **Comandos de Ejecución:**
+
+```bash
+# Ejecutar para PSI (Power Solution Iberia)
+curl -X POST "https://n8n.powersolution.es/webhook/ejecutar-sync-bc-to-supabase?company=psi" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+# Ejecutar para PSLAB (PS LAB CONSULTING)
+curl -X POST "https://n8n.powersolution.es/webhook/ejecutar-sync-bc-to-supabase?company=pslab" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+# Usando el script de utilidades
+./scripts/n8n-utils.sh webhook "ejecutar-sync-bc-to-supabase?company=psi"
+```
+
+#### **Respuesta Exitosa:**
+```json
+{
+  "success": true,
+  "message": "Sincronización completada",
+  "company": "Power Solution Iberia SL",
+  "entities_synced": [
+    "job",
+    "job_task", 
+    "resource",
+    "resource_cost",
+    "calendar_period_days",
+    "job_team"
+  ],
+  "timestamp": "2025-01-09T08:30:00Z"
+}
+```
+
+#### **Verificar Estado del Workflow:**
+```bash
+# Verificar que esté activo
+./scripts/n8n-utils.sh list
+
+# Ver logs de ejecución
+./scripts/n8n-utils.sh logs "001_sincronizacion_completa_smart"
+```
+
+### **Webhook de Sincronización Supabase → BC**
+
+#### **URL del Webhook:**
+```
+https://n8n.powersolution.es/webhook/sync-supabase-to-bc
+```
+
+#### **Comando de Ejecución:**
+```bash
+curl -X POST "https://n8n.powersolution.es/webhook/sync-supabase-to-bc" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+### **Monitoreo de Ejecuciones**
+
+```bash
+# Verificar estado del servidor
+./scripts/n8n-utils.sh status
+
+# Listar workflows activos
+./scripts/n8n-utils.sh list
+
+# Ver logs de un workflow específico
+./scripts/n8n-utils.sh logs "WORKFLOW_ID"
+```
+
+### **Ejemplos Prácticos de Ejecución**
+
+#### **Ejemplo 1: Sincronizar datos de PSI**
+```bash
+# Ejecutar sincronización completa para Power Solution Iberia
+curl -X POST "https://n8n.powersolution.es/webhook/ejecutar-sync-bc-to-supabase?company=psi" \
+  -H "Content-Type: application/json" \
+  -d '{}' | jq '.'
+```
+
+#### **Ejemplo 2: Sincronizar datos de PSLAB**
+```bash
+# Ejecutar sincronización completa para PS LAB CONSULTING
+curl -X POST "https://n8n.powersolution.es/webhook/ejecutar-sync-bc-to-supabase?company=pslab" \
+  -H "Content-Type: application/json" \
+  -d '{}' | jq '.'
+```
+
+#### **Ejemplo 3: Verificar estado antes de ejecutar**
+```bash
+# Verificar que el workflow esté activo
+./scripts/n8n-utils.sh list | grep "001_sincronizacion_completa_smart"
+
+# Ejecutar solo si está activo
+if ./scripts/n8n-utils.sh list | grep -q "001_sincronizacion_completa_smart.*✅ Activo"; then
+  echo "✅ Workflow activo, ejecutando sincronización..."
+  curl -X POST "https://n8n.powersolution.es/webhook/ejecutar-sync-bc-to-supabase?company=psi" \
+    -H "Content-Type: application/json" \
+    -d '{}'
+else
+  echo "❌ Workflow no está activo, no se puede ejecutar"
+fi
+```
+
+#### **Ejemplo 4: Ejecutar con monitoreo**
+```bash
+# Ejecutar y monitorear en tiempo real
+echo "🚀 Iniciando sincronización para PSI..."
+curl -X POST "https://n8n.powersolution.es/webhook/ejecutar-sync-bc-to-supabase?company=psi" \
+  -H "Content-Type: application/json" \
+  -d '{}' | jq '.'
+
+echo "📊 Verificando estado del workflow..."
+./scripts/n8n-utils.sh list | grep "001_sincronizacion_completa_smart"
+```
+
+### **Script de Ejecución Automática**
+
+```bash
+#!/bin/bash
+# Script para ejecutar sincronización automática
+
+COMPANY="$1"
+if [ -z "$COMPANY" ]; then
+  echo "Uso: $0 <psi|pslab>"
+  exit 1
+fi
+
+echo "🔍 Verificando estado del servidor n8n..."
+if ! ./scripts/n8n-utils.sh status > /dev/null 2>&1; then
+  echo "❌ Servidor n8n no está disponible"
+  exit 1
+fi
+
+echo "✅ Servidor n8n funcionando"
+echo "🚀 Ejecutando sincronización para $COMPANY..."
+
+RESPONSE=$(curl -s -X POST "https://n8n.powersolution.es/webhook/ejecutar-sync-bc-to-supabase?company=$COMPANY" \
+  -H "Content-Type: application/json" \
+  -d '{}')
+
+if echo "$RESPONSE" | jq -e '.success' > /dev/null 2>&1; then
+  echo "✅ Sincronización completada exitosamente"
+  echo "$RESPONSE" | jq '.'
+else
+  echo "❌ Error en la sincronización"
+  echo "$RESPONSE"
+  exit 1
+fi
+```
 
 ### **Comandos de Gestión**
 
