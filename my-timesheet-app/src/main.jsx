@@ -28,5 +28,5 @@ ReactDOM.createRoot(root).render(
         ) : null}
       </QueryClientProvider>
     </MsalProvider>
-  </React.StrictMode>,
+  </React.StrictMode>
 );
