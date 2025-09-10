@@ -1622,12 +1622,12 @@ page 50731 "PS_EconomicMonitoring"
     local procedure RefreshProjectMonthAfterClose(JobNo: Code[20]; Month: Integer)
     var
         savedView: Text;
-        SavedRec: Record "PS_EconomicMonitoringMatrix";
+        savedPosition: Text;
         NewValue: Decimal;
     begin
-        // Guardar vista y registro actual para restaurar foco
+        // Guardar vista y posición actual para restaurar foco
         savedView := Rec.GetView();
-        SavedRec := Rec;
+        savedPosition := Rec.GetPosition();
 
         // Actualizar directamente el buffer de la página (Rec)
         Rec.Reset();
@@ -1639,28 +1639,40 @@ page 50731 "PS_EconomicMonitoring"
                 if Rec.Type <> Rec.Type::A then begin
                     NewValue := GetMonthValueFromBC(Month, JobNo, Rec.Concept, Rec.Type);
                     case Month of
-                        1: Rec."JanImport" := NewValue;
-                        2: Rec."FebImport" := NewValue;
-                        3: Rec."MarImport" := NewValue;
-                        4: Rec."AprImport" := NewValue;
-                        5: Rec."MayImport" := NewValue;
-                        6: Rec."JunImport" := NewValue;
-                        7: Rec."JulImport" := NewValue;
-                        8: Rec."AugImport" := NewValue;
-                        9: Rec."SepImport" := NewValue;
-                        10: Rec."OctImport" := NewValue;
-                        11: Rec."NovImport" := NewValue;
-                        12: Rec."DecImport" := NewValue;
+                        1:
+                            Rec."JanImport" := NewValue;
+                        2:
+                            Rec."FebImport" := NewValue;
+                        3:
+                            Rec."MarImport" := NewValue;
+                        4:
+                            Rec."AprImport" := NewValue;
+                        5:
+                            Rec."MayImport" := NewValue;
+                        6:
+                            Rec."JunImport" := NewValue;
+                        7:
+                            Rec."JulImport" := NewValue;
+                        8:
+                            Rec."AugImport" := NewValue;
+                        9:
+                            Rec."SepImport" := NewValue;
+                        10:
+                            Rec."OctImport" := NewValue;
+                        11:
+                            Rec."NovImport" := NewValue;
+                        12:
+                            Rec."DecImport" := NewValue;
                     end;
                     Rec.Modify(false);
                 end;
             until Rec.Next() = 0;
         end;
 
-        // Restaurar vista y volver explícitamente al registro anterior
+        // Restaurar vista y posición anterior
         Rec.SetView(savedView);
+        Rec.SetPosition(savedPosition);
         CurrPage.Update(false);
-        CurrPage.GotoRecord(SavedRec);
     end;
 
     local procedure GetCurrentMonthValue(var Matrix: Record "PS_EconomicMonitoringMatrix"; Month: Integer): Decimal
