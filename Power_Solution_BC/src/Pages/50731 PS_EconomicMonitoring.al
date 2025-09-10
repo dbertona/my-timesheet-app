@@ -1597,18 +1597,21 @@ page 50731 "PS_EconomicMonitoring"
         LocalRec.SetRange(Year, YearFilter);
         if LocalRec.FindSet() then begin
             repeat
-                // Verificar cada mes para ver si hay cambios
-                for Month := 1 to 12 do begin
-                    CurrentValue := GetCurrentMonthValue(LocalRec, Month);
-                    BCValue := GetMonthValueFromBC(Month, JobNo, LocalRec.Concept, LocalRec.Type);
+                // Omitir filas de encabezado (Type::A)
+                if LocalRec.Type <> LocalRec.Type::A then begin
+                    // Verificar cada mes para ver si hay cambios
+                    for Month := 1 to 12 do begin
+                        CurrentValue := GetCurrentMonthValue(LocalRec, Month);
+                        BCValue := GetMonthValueFromBC(Month, JobNo, LocalRec.Concept, LocalRec.Type);
 
-                    // Solo actualizar si hay diferencias
-                    if BCValue <> CurrentValue then begin
-                        UpdateMatrixMonthValue(LocalRec, Month, BCValue - CurrentValue);
+                        // Solo actualizar si hay diferencias
+                        if BCValue <> CurrentValue then begin
+                            UpdateMatrixMonthValue(LocalRec, Month, BCValue - CurrentValue);
+                        end;
                     end;
-                end;
 
-                LocalRec.Modify(false);
+                    LocalRec.Modify(false);
+                end;
             until LocalRec.Next() = 0;
         end;
 
@@ -1628,22 +1631,25 @@ page 50731 "PS_EconomicMonitoring"
         Rec.SetRange(Year, YearFilter);
         if Rec.FindSet() then begin
             repeat
-                NewValue := GetMonthValueFromBC(Month, JobNo, Rec.Concept, Rec.Type);
-                case Month of
-                    1: Rec."JanImport" := NewValue;
-                    2: Rec."FebImport" := NewValue;
-                    3: Rec."MarImport" := NewValue;
-                    4: Rec."AprImport" := NewValue;
-                    5: Rec."MayImport" := NewValue;
-                    6: Rec."JunImport" := NewValue;
-                    7: Rec."JulImport" := NewValue;
-                    8: Rec."AugImport" := NewValue;
-                    9: Rec."SepImport" := NewValue;
-                    10: Rec."OctImport" := NewValue;
-                    11: Rec."NovImport" := NewValue;
-                    12: Rec."DecImport" := NewValue;
+                // Omitir filas de encabezado (Type::A)
+                if Rec.Type <> Rec.Type::A then begin
+                    NewValue := GetMonthValueFromBC(Month, JobNo, Rec.Concept, Rec.Type);
+                    case Month of
+                        1: Rec."JanImport" := NewValue;
+                        2: Rec."FebImport" := NewValue;
+                        3: Rec."MarImport" := NewValue;
+                        4: Rec."AprImport" := NewValue;
+                        5: Rec."MayImport" := NewValue;
+                        6: Rec."JunImport" := NewValue;
+                        7: Rec."JulImport" := NewValue;
+                        8: Rec."AugImport" := NewValue;
+                        9: Rec."SepImport" := NewValue;
+                        10: Rec."OctImport" := NewValue;
+                        11: Rec."NovImport" := NewValue;
+                        12: Rec."DecImport" := NewValue;
+                    end;
+                    Rec.Modify(false);
                 end;
-                Rec.Modify(false);
             until Rec.Next() = 0;
         end;
         Rec.SetView(savedView);
@@ -1687,6 +1693,9 @@ page 50731 "PS_EconomicMonitoring"
         CurrentValue: Decimal;
         BCValue: Decimal;
     begin
+        // Evitar sincronizar encabezados
+        if Type = Rec.Type::A then
+            exit;
         // Recargar toda la línea desde BC cuando se detecta un cambio
         // Esto asegura que todos los meses se sincronicen correctamente
 
