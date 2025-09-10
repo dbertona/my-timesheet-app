@@ -1,6 +1,6 @@
 codeunit 50419 "PS_MonthlyClosingHelper"
 {
-    procedure CerrarProyectosMes(var Local_PS_MonthClosing: Record "PS_MonthClosing")
+    procedure CerrarProyectosMes(var Local_PS_MonthClosing: Record "PS_MonthClosing"): Boolean
     var
         OrigenRec: Record "Job Planning Line";
         ExpOrigenRec: Record "ARBVRNJobUnitPlanning";
@@ -19,7 +19,9 @@ codeunit 50419 "PS_MonthlyClosingHelper"
         Probabilidad: Integer;
         Factor: Decimal;
         EntryNo: Integer;
+        DidClose: Boolean;
     begin
+        DidClose := false;
         if Local_PS_MonthClosing.FINDSET then begin
             if Local_PS_MonthClosing.COUNT > 1 then
                 ConfirmClosure := CONFIRM('¿Está seguro de que desea cerrar ' + FORMAT(Local_PS_MonthClosing.COUNT) + ' Proyectos/Mes ?')
@@ -27,12 +29,12 @@ codeunit 50419 "PS_MonthlyClosingHelper"
                 ConfirmClosure := CONFIRM('¿Está seguro de que desea cerrar el proyecto ' + Local_PS_MonthClosing.PS_JobNo + ' Mes ' + Local_PS_MonthClosing.PS_Month + '?');
 
             if not ConfirmClosure then
-                exit;
+                exit(false);
 
             repeat
                 if Local_PS_MonthClosing.PS_Status = Local_PS_MonthClosing.PS_Status::Close then begin
                     MESSAGE('Ha seleccionado Proyectos/Mes cerrados. Se cancela la operación.');
-                    exit;
+                    exit(false);
                 end;
 
                 TotalCost := 0;
@@ -176,12 +178,15 @@ codeunit 50419 "PS_MonthlyClosingHelper"
                     Error('Error no existe MonthClosing');
 
                 UpdateNextOpenMonth(Local_PS_MonthClosing.PS_JobNo);
+                DidClose := true;
             until Local_PS_MonthClosing.Next() = 0;
             // Asegurar persistencia antes de que la página intente leer nuevos valores
             COMMIT;
+            exit(DidClose);
         end;
+        exit(false);
     end;
-
+    
     procedure UpdateNextOpenMonth(JobNo: Code[20])
     var
         PSProjectResourceHoursRec: Record "PSProjectResourceHours";

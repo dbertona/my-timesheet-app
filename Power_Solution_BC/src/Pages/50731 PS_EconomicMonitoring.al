@@ -422,14 +422,13 @@ page 50731 "PS_EconomicMonitoring"
                         Evaluate(LocalMonth, PS_MonthClosing.PS_Month);
                     TempSelectedRecords.TransferFields(PS_MonthClosing);
                     TempSelectedRecords.Insert();
-                    MonthlyClosingHelper.CerrarProyectosMes(TempSelectedRecords);
-                    // Actualizar flags de cierre en la tabla temporal para este proyecto
-                    UpdateClosedMonthsForJob(Rec."Job No.");
-                    MarkProjectRecentlyClosed(Rec."Job No.");
-
-                    // Refrescar únicamente el mes cerrado para este proyecto
-                    if LocalMonth <> 0 then
-                        RefreshProjectMonthAfterClose(Rec."Job No.", LocalMonth);
+                    if MonthlyClosingHelper.CerrarProyectosMes(TempSelectedRecords) then begin
+                        // Solo si realmente se cerró, actualizar flags y refrescar
+                        UpdateClosedMonthsForJob(Rec."Job No.");
+                        MarkProjectRecentlyClosed(Rec."Job No.");
+                        if LocalMonth <> 0 then
+                            RefreshProjectMonthAfterClose(Rec."Job No.", LocalMonth);
+                    end;
                 end;
             }
             action(UpdateClosedMonths)
@@ -1669,10 +1668,10 @@ page 50731 "PS_EconomicMonitoring"
             until Rec.Next() = 0;
         end;
 
-        // Restaurar vista y posición anterior
+        // Restaurar vista y posición anterior (primero actualizar, luego posicionar)
         Rec.SetView(savedView);
-        Rec.SetPosition(savedPosition);
         CurrPage.Update(false);
+        Rec.SetPosition(savedPosition);
     end;
 
     local procedure GetCurrentMonthValue(var Matrix: Record "PS_EconomicMonitoringMatrix"; Month: Integer): Decimal
