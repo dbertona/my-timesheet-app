@@ -177,6 +177,8 @@ codeunit 50419 "PS_MonthlyClosingHelper"
 
                 UpdateNextOpenMonth(Local_PS_MonthClosing.PS_JobNo);
             until Local_PS_MonthClosing.Next() = 0;
+            // Asegurar persistencia antes de que la página intente leer nuevos valores
+            COMMIT;
         end;
     end;
 

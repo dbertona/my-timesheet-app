@@ -412,18 +412,24 @@ page 50731 "PS_EconomicMonitoring"
                     MonthlyClosingHelper: Codeunit "PS_MonthlyClosingHelper";
                     TempSelectedRecords: Record "PS_MonthClosing" temporary;
                     PS_MonthClosing: Record PS_MonthClosing;
+                    LocalMonth: Integer;
                 begin
+                    // Solo ejecutar el cierre (la confirmación se maneja en MonthlyClosingHelper)
                     TempSelectedRecords.Init();
                     PS_MonthClosing.SetRange(PS_JobNo, Rec."Job No.");
                     PS_MonthClosing.SetRange(PS_Status, TempSelectedRecords.PS_Status::Open);
-                    PS_MonthClosing.FindFirst();
+                    if PS_MonthClosing.FindFirst() then
+                        Evaluate(LocalMonth, PS_MonthClosing.PS_Month);
                     TempSelectedRecords.TransferFields(PS_MonthClosing);
                     TempSelectedRecords.Insert();
                     MonthlyClosingHelper.CerrarProyectosMes(TempSelectedRecords);
                     // Actualizar flags de cierre en la tabla temporal para este proyecto
                     UpdateClosedMonthsForJob(Rec."Job No.");
                     MarkProjectRecentlyClosed(Rec."Job No.");
-                    CurrPage.Update(false);
+                    
+                    // Refrescar únicamente el mes cerrado para este proyecto
+                    if LocalMonth <> 0 then
+                        RefreshProjectMonthAfterClose(Rec."Job No.", LocalMonth);
                 end;
             }
             action(UpdateClosedMonths)
@@ -1132,12 +1138,21 @@ page 50731 "PS_EconomicMonitoring"
             JobLedgerEntry.SetFilter(Type, '<>%1', JobLedgerEntry.Type::Resource);
             JobLedgerEntry.SetRange("Posting Date", FirstDay, LastDay);
         end;
-        if (rec.Type = rec.Type::P) and IsAdminFileGestion then
-            PAGE.RunModal(AdminFileGestionID, ARBVRNJobUnitPlanning)
-        else if rec.Type = rec.Type::P then
-            PAGE.RunModal(JobLedgerPageID, JobPlanningLine)
-        else if rec.Type = rec.Type::R then
+        if (rec.Type = rec.Type::P) and IsAdminFileGestion then begin
+            PAGE.RunModal(AdminFileGestionID, ARBVRNJobUnitPlanning);
+            // Sincronizar al regresar de expedientes
+            SyncMonthValueAfterDrillDown(CurrentDrillDownMonth, Rec."Job No.", Rec.Concept, Rec.Type);
+        end
+        else if rec.Type = rec.Type::P then begin
+            PAGE.RunModal(JobLedgerPageID, JobPlanningLine);
+            // Sincronizar al regresar de planificados
+            SyncMonthValueAfterDrillDown(CurrentDrillDownMonth, Rec."Job No.", Rec.Concept, Rec.Type);
+        end
+        else if rec.Type = rec.Type::R then begin
             PAGE.RunModal(JobLedgerEntryID, JobLedgerEntry);
+            // Sincronizar al regresar de reales
+            SyncMonthValueAfterDrillDown(CurrentDrillDownMonth, Rec."Job No.", Rec.Concept, Rec.Type);
+        end;
     end;
 
     trigger OnOpenPage()
@@ -1565,6 +1580,108 @@ page 50731 "PS_EconomicMonitoring"
         exit(Rec."Job No." + ' - ' + Rec.Description);
     end;
 
+    local procedure RefreshProjectValuesAfterClose(JobNo: Code[20])
+    var
+        savedView: Text;
+        LocalRec: Record "PS_EconomicMonitoringMatrix";
+        CurrentValue: Decimal;
+        BCValue: Decimal;
+        Month: Integer;
+    begin
+        // Guardar la vista actual
+        savedView := Rec.GetView();
+
+        // Actualizar solo los valores que cambiaron, usando la lógica de SyncMonthValueAfterDrillDown
+        LocalRec.Reset();
+        LocalRec.SetRange("Job No.", JobNo);
+        LocalRec.SetRange(Year, YearFilter);
+        if LocalRec.FindSet() then begin
+            repeat
+                // Verificar cada mes para ver si hay cambios
+                for Month := 1 to 12 do begin
+                    CurrentValue := GetCurrentMonthValue(LocalRec, Month);
+                    BCValue := GetMonthValueFromBC(Month, JobNo, LocalRec.Concept, LocalRec.Type);
+
+                    // Solo actualizar si hay diferencias
+                    if BCValue <> CurrentValue then begin
+                        UpdateMatrixMonthValue(LocalRec, Month, BCValue - CurrentValue);
+                    end;
+                end;
+
+                LocalRec.Modify(false);
+            until LocalRec.Next() = 0;
+        end;
+
+        // Restaurar la vista original
+        Rec.SetView(savedView);
+    end;
+
+    local procedure RefreshProjectMonthAfterClose(JobNo: Code[20]; Month: Integer)
+    var
+        savedView: Text;
+        LocalRec: Record "PS_EconomicMonitoringMatrix";
+        NewValue: Decimal;
+    begin
+        savedView := Rec.GetView();
+        LocalRec.Reset();
+        LocalRec.SetRange("Job No.", JobNo);
+        LocalRec.SetRange(Year, YearFilter);
+        if LocalRec.FindSet() then begin
+            repeat
+                NewValue := GetMonthValueFromBC(Month, JobNo, LocalRec.Concept, LocalRec.Type);
+                // Poner directamente el valor del mes sin tocar estilos ni otras columnas
+                case Month of
+                    1: LocalRec."JanImport" := NewValue;
+                    2: LocalRec."FebImport" := NewValue;
+                    3: LocalRec."MarImport" := NewValue;
+                    4: LocalRec."AprImport" := NewValue;
+                    5: LocalRec."MayImport" := NewValue;
+                    6: LocalRec."JunImport" := NewValue;
+                    7: LocalRec."JulImport" := NewValue;
+                    8: LocalRec."AugImport" := NewValue;
+                    9: LocalRec."SepImport" := NewValue;
+                    10: LocalRec."OctImport" := NewValue;
+                    11: LocalRec."NovImport" := NewValue;
+                    12: LocalRec."DecImport" := NewValue;
+                end;
+                LocalRec.Modify(false);
+            until LocalRec.Next() = 0;
+        end;
+        Rec.SetView(savedView);
+        CurrPage.Update(false);
+    end;
+
+    local procedure GetCurrentMonthValue(var Matrix: Record "PS_EconomicMonitoringMatrix"; Month: Integer): Decimal
+    begin
+        case Month of
+            1:
+                exit(Matrix."JanImport");
+            2:
+                exit(Matrix."FebImport");
+            3:
+                exit(Matrix."MarImport");
+            4:
+                exit(Matrix."AprImport");
+            5:
+                exit(Matrix."MayImport");
+            6:
+                exit(Matrix."JunImport");
+            7:
+                exit(Matrix."JulImport");
+            8:
+                exit(Matrix."AugImport");
+            9:
+                exit(Matrix."SepImport");
+            10:
+                exit(Matrix."OctImport");
+            11:
+                exit(Matrix."NovImport");
+            12:
+                exit(Matrix."DecImport");
+        end;
+    end;
+
+
     local procedure SyncMonthValueAfterDrillDown(Month: Integer; JobNo: Code[20]; Concept: Option; Type: Option)
     var
         savedView: Text;
@@ -1641,6 +1758,8 @@ page 50731 "PS_EconomicMonitoring"
     local procedure GetMonthValueFromBC(Month: Integer; JobNo: Code[20]; Concept: Option; Type: Option): Decimal
     var
         JobPlanningLine: Record "Job Planning Line";
+        JobLedgerEntry: Record "Job Ledger Entry";
+        ARBVRNJobUnitPlanning: Record ARBVRNJobUnitPlanning;
         FirstDay: Date;
         LastDay: Date;
         MonthValue: Decimal;
@@ -1648,6 +1767,56 @@ page 50731 "PS_EconomicMonitoring"
     begin
         // Obtener valor de BC para un mes específico
         GetMonthDateRange(Month, YearFilter, FirstDay, LastDay);
+
+        // Para números reales, usar JobLedgerEntry
+        if Type = Rec.Type::R then begin
+            JobLedgerEntry.SetRange("Job No.", JobNo);
+            case Concept of
+                Rec.Concept::Invoice:
+                    begin
+                        JobLedgerEntry.SetRange("Document Date", FirstDay, LastDay);
+                        JobLedgerEntry.SetRange("Entry Type", JobLedgerEntry."Entry Type"::Sale);
+                    end;
+                Rec.Concept::Labour:
+                    begin
+                        JobLedgerEntry.SetRange("ARBVRNTimesheetdate", FirstDay, LastDay);
+                        JobLedgerEntry.SetRange("Entry Type", JobLedgerEntry."Entry Type"::Usage);
+                        JobLedgerEntry.SetRange(Type, JobLedgerEntry.Type::Resource);
+                    end;
+                Rec.Concept::Cost:
+                    begin
+                        JobLedgerEntry.SetRange("Posting Date", FirstDay, LastDay);
+                        JobLedgerEntry.SetRange("Entry Type", JobLedgerEntry."Entry Type"::Usage);
+                        JobLedgerEntry.SetFilter(Type, '<>%1', JobLedgerEntry.Type::Resource);
+                    end;
+            end;
+
+            if JobLedgerEntry.FindSet() then begin
+                repeat
+                    case Concept of
+                        Rec.Concept::Invoice:
+                            MonthValue += JobLedgerEntry."Line Amount (LCY)" * -1; // Negativo para ventas
+                        Rec.Concept::Labour, Rec.Concept::Cost:
+                            MonthValue += JobLedgerEntry."Total Cost (LCY)";
+                    end;
+                until JobLedgerEntry.Next() = 0;
+                exit(MonthValue); // Devolver valor real
+            end;
+        end;
+
+        // Para facturación planificada, verificar si hay expedientes primero
+        if (Concept = Rec.Concept::Invoice) and (Type = Rec.Type::P) then begin
+            ARBVRNJobUnitPlanning.SetRange(ARBVRNJobNo, JobNo);
+            ARBVRNJobUnitPlanning.SetRange(ARBVRNPlanningDate, FirstDay, LastDay);
+            ARBVRNJobUnitPlanning.SetRange(ARBVRNReal, FALSE);
+            if ARBVRNJobUnitPlanning.FindSet() then begin
+                repeat
+                    if ARBVRNJobUnitPlanning.ARBVRNCertificationAmount <> 0 then
+                        MonthValue += ARBVRNJobUnitPlanning.ARBVRNCertificationAmount;
+                until ARBVRNJobUnitPlanning.Next() = 0;
+                exit(MonthValue); // Si hay expedientes, devolver su valor
+            end;
+        end;
 
         JobPlanningLine.SetRange("Job No.", JobNo);
         JobPlanningLine.SetRange("Planning Date", FirstDay, LastDay);

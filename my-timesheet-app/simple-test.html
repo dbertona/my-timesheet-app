@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple React Test</title>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.development.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"
+    ></script>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script>
+      const { useState } = React;
+
+      function App() {
+        const [count, setCount] = useState(0);
+
+        return React.createElement(
+          "div",
+          { style: { padding: "20px", fontFamily: "Arial" } },
+          [
+            React.createElement("h1", { key: "title" }, "Simple React Test"),
+            React.createElement("p", { key: "count" }, `Contador: ${count}`),
+            React.createElement(
+              "button",
+              {
+                key: "button",
+                onClick: () => setCount(count + 1),
+                style: { padding: "10px 20px", fontSize: "16px" },
+              },
+              "Incrementar"
+            ),
+          ]
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(React.createElement(App));
+
+      console.log("Simple React app loaded");
+    </script>
+  </body>
+</html>

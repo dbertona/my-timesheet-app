@@ -42,6 +42,8 @@ git push origin feat/n8n-smart-delta-upsert
 npm run build
 ```
 
+**Nota:** La aplicación ahora incluye un servidor Node.js para la API de fecha del servidor. El servidor debe ejecutarse en el puerto 3001 para que la funcionalidad de fecha del servidor funcione correctamente.
+
 ### 5. Empaquetado
 
 ```bash

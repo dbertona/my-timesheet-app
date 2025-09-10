@@ -269,6 +269,26 @@ const HomeDashboard = () => {
               padding: "4px 8px",
               borderRadius: "4px",
               border: "1px solid #ddd",
+              marginRight: "8px",
+            }}
+          >
+            {serverDate
+              ? serverDate.toLocaleDateString("es-ES", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })
+              : "Cargando..."}
+          </div>
+          <div
+            style={{
+              fontSize: "0.8rem",
+              color: "#666",
+              backgroundColor: "#f5f5f5",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              border: "1px solid #ddd",
             }}
           >
             v

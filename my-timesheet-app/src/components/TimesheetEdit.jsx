@@ -22,6 +22,7 @@ import BcModal from "./ui/BcModal";
 import ValidationErrorsModal from "./ui/ValidationErrorsModal";
 import { TOAST, PLACEHOLDERS, VALIDATION, LABELS } from "../constants/i18n";
 import { format } from "date-fns";
+import { getServerDate } from "../api/date";
 import {
   buildHolidaySet,
   computeTotalsByIso,
@@ -1782,6 +1783,35 @@ function TimesheetEdit({ headerId }) {
       ...prev,
       [newId]: { ...newLine },
     }));
+
+    // Establecer por defecto la fecha del servidor si cae dentro del rango permitido
+    (async () => {
+      try {
+        const srv = await getServerDate();
+        const iso = srv.toISOString().split("T")[0];
+        const headerForValidation = header || editableHeader;
+        const rangeValidation = validateDateRange(iso, headerForValidation);
+        if (rangeValidation.isValid) {
+          const display = toDisplayDate(iso);
+          setEditFormData((prev) => ({
+            ...prev,
+            [newId]: {
+              ...prev[newId],
+              date: prev[newId]?.date ? prev[newId].date : display,
+            },
+          }));
+          setLines((prev) =>
+            prev.map((l) =>
+              l.id === newId
+                ? { ...l, date: l.date && l.date !== "" ? l.date : display }
+                : l
+            )
+          );
+        }
+      } catch {
+        // ignorar: si falla, el usuario completará manualmente
+      }
+    })();
 
     // Obtener información del recurso en background y actualizar si es necesario
     getResourceInfo().then((resourceInfo) => {

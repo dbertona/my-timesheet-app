@@ -17,9 +17,18 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "dist")));
 
 // Endpoint para obtener la fecha del servidor
+// Si existe FORCE_SERVER_DATE se usa como fecha forzada (útil para testing)
 app.get("/api/server-date", (req, res) => {
   try {
-    const serverDate = new Date();
+    const forced = process.env.FORCE_SERVER_DATE;
+    const serverDate = forced ? new Date(forced) : new Date();
+
+    if (Number.isNaN(serverDate.getTime())) {
+      throw new Error(
+        `Valor inválido en FORCE_SERVER_DATE: ${forced}. Formatos válidos: ISO 8601, p.ej. 2025-08-15T12:00:00Z`
+      );
+    }
+
     res.json({
       date: serverDate.toISOString(),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

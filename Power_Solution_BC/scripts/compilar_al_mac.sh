@@ -8,7 +8,7 @@ set -e
 PROJECT_DIR="/Users/marcelodanielbertona/POWER-SOLUTION-PROJECTS/Power_Solution_BC"
 APP_JSON="$PROJECT_DIR/app.json"
 
-echo "[1/4] Abriendo Cursor y activando workspace AL…"
+echo "[1/4] Activando Cursor y ejecutando comandos AL…"
 osascript -l AppleScript <<'APPLESCRIPT'
 on run
     set projectFile to POSIX file "/Users/marcelodanielbertona/POWER-SOLUTION-PROJECTS/Power_Solution_BC/app.json"
@@ -17,13 +17,13 @@ on run
     try
         tell application editorApp
             activate
-            open projectFile
+            -- No abrir archivos automáticamente, solo activar el editor
         end tell
     on error
         set editorApp to "Visual Studio Code"
         tell application editorApp
             activate
-            open projectFile
+            -- No abrir archivos automáticamente, solo activar el editor
         end tell
     end try
     delay 0.8
