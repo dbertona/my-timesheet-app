@@ -426,7 +426,7 @@ page 50731 "PS_EconomicMonitoring"
                     // Actualizar flags de cierre en la tabla temporal para este proyecto
                     UpdateClosedMonthsForJob(Rec."Job No.");
                     MarkProjectRecentlyClosed(Rec."Job No.");
-                    
+
                     // Refrescar únicamente el mes cerrado para este proyecto
                     if LocalMonth <> 0 then
                         RefreshProjectMonthAfterClose(Rec."Job No.", LocalMonth);
@@ -1619,33 +1619,32 @@ page 50731 "PS_EconomicMonitoring"
     local procedure RefreshProjectMonthAfterClose(JobNo: Code[20]; Month: Integer)
     var
         savedView: Text;
-        LocalRec: Record "PS_EconomicMonitoringMatrix";
         NewValue: Decimal;
     begin
+        // Trabajar directamente sobre el buffer de la página (Rec)
         savedView := Rec.GetView();
-        LocalRec.Reset();
-        LocalRec.SetRange("Job No.", JobNo);
-        LocalRec.SetRange(Year, YearFilter);
-        if LocalRec.FindSet() then begin
+        Rec.Reset();
+        Rec.SetRange("Job No.", JobNo);
+        Rec.SetRange(Year, YearFilter);
+        if Rec.FindSet() then begin
             repeat
-                NewValue := GetMonthValueFromBC(Month, JobNo, LocalRec.Concept, LocalRec.Type);
-                // Poner directamente el valor del mes sin tocar estilos ni otras columnas
+                NewValue := GetMonthValueFromBC(Month, JobNo, Rec.Concept, Rec.Type);
                 case Month of
-                    1: LocalRec."JanImport" := NewValue;
-                    2: LocalRec."FebImport" := NewValue;
-                    3: LocalRec."MarImport" := NewValue;
-                    4: LocalRec."AprImport" := NewValue;
-                    5: LocalRec."MayImport" := NewValue;
-                    6: LocalRec."JunImport" := NewValue;
-                    7: LocalRec."JulImport" := NewValue;
-                    8: LocalRec."AugImport" := NewValue;
-                    9: LocalRec."SepImport" := NewValue;
-                    10: LocalRec."OctImport" := NewValue;
-                    11: LocalRec."NovImport" := NewValue;
-                    12: LocalRec."DecImport" := NewValue;
+                    1: Rec."JanImport" := NewValue;
+                    2: Rec."FebImport" := NewValue;
+                    3: Rec."MarImport" := NewValue;
+                    4: Rec."AprImport" := NewValue;
+                    5: Rec."MayImport" := NewValue;
+                    6: Rec."JunImport" := NewValue;
+                    7: Rec."JulImport" := NewValue;
+                    8: Rec."AugImport" := NewValue;
+                    9: Rec."SepImport" := NewValue;
+                    10: Rec."OctImport" := NewValue;
+                    11: Rec."NovImport" := NewValue;
+                    12: Rec."DecImport" := NewValue;
                 end;
-                LocalRec.Modify(false);
-            until LocalRec.Next() = 0;
+                Rec.Modify(false);
+            until Rec.Next() = 0;
         end;
         Rec.SetView(savedView);
         CurrPage.Update(false);
