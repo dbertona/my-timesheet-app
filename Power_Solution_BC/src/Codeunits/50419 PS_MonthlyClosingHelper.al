@@ -186,7 +186,7 @@ codeunit 50419 "PS_MonthlyClosingHelper"
         end;
         exit(false);
     end;
-    
+
     procedure UpdateNextOpenMonth(JobNo: Code[20])
     var
         PSProjectResourceHoursRec: Record "PSProjectResourceHours";
