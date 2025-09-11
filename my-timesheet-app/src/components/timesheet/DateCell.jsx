@@ -15,6 +15,7 @@ export default function DateCell({
   error,
   header,
   editableHeader,
+  serverDate,
   calendarHolidays,
   disabled = false,
   align = "inherit", // 🆕 Prop para alineación
@@ -22,13 +23,24 @@ export default function DateCell({
   handleKeyDown,
 }) {
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const baseToday = serverDate || new Date();
   const [selectedDate, setSelectedDate] = useState(
-    parseDate(editFormData[line.id]?.date) || new Date()
+    parseDate(editFormData[line.id]?.date) || baseToday
   );
   const [currentMonth, setCurrentMonth] = useState(
-    parseDate(editFormData[line.id]?.date) || new Date()
+    parseDate(editFormData[line.id]?.date) || baseToday
   );
   const calendarRef = useRef(null);
+
+  // Si llega serverDate y no hay fecha en la línea, ajustar selección/mes
+  useEffect(() => {
+    const hasDate = Boolean(editFormData[line.id]?.date);
+    if (serverDate && !hasDate) {
+      setSelectedDate(serverDate);
+      setCurrentMonth(serverDate);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverDate, line.id]);
 
   // Cerrar calendario al hacer clic fuera
   useEffect(() => {
@@ -335,6 +347,7 @@ export default function DateCell({
             ref={hasRefs ? (el) => setSafeRef(line.id, "date", el) : null}
             className={`ts-input pr-icon ${disabled ? "ts-input-factorial" : ""}`}
             autoComplete="off"
+            placeholder={serverDate ? formatDate(serverDate) : ""}
             disabled={disabled}
             style={{
               textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
@@ -398,7 +411,7 @@ export default function DateCell({
                       selectedDate &&
                       date.toDateString() === selectedDate.toDateString();
                     const isToday =
-                      date.toDateString() === new Date().toDateString();
+                      date.toDateString() === baseToday.toDateString();
                     const isHolidayDate = isHoliday(date);
                     const inRange = isInRange(date);
                     const canSelect = inRange && !isHolidayDate;

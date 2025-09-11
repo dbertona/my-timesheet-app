@@ -72,6 +72,24 @@ function TimesheetEdit({ headerId }) {
   const [selectedLines, setSelectedLines] = useState([]); // 🆕 Líneas seleccionadas para acciones múltiples
   const [deletedLineIds, setDeletedLineIds] = useState([]); // 🆕 IDs de líneas eliminadas pendientes de borrar en BD
 
+  // 🆕 Fecha del servidor para unificar comportamiento con el dashboard
+  const [serverDate, setServerDate] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const d = await getServerDate();
+        if (mounted) setServerDate(d);
+      } catch {
+        if (mounted) setServerDate(new Date());
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // IDs de cabecera resueltos antes de usar hooks que dependen de ello
   // debugInfo eliminado por no uso
   const [resolvedHeaderId, setResolvedHeaderId] = useState(null);
@@ -973,10 +991,10 @@ function TimesheetEdit({ headerId }) {
           const params = new URLSearchParams(location.search);
           let ap = params.get("allocation_period");
           if (!ap) {
-            const now = new Date();
-            const yy = String(now.getFullYear()).slice(-2);
+            const base = serverDate || new Date();
+            const yy = String(base.getFullYear()).slice(-2);
             // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
-            const mm = String(now.getMonth() + 1).padStart(2, "0");
+            const mm = String(base.getMonth() + 1).padStart(2, "0");
             ap = `M${yy}-M${mm}`;
           }
 
@@ -988,54 +1006,114 @@ function TimesheetEdit({ headerId }) {
             company_name:
               resourceData.company_name || "Power Solution Iberia SL",
             allocation_period: ap,
-            posting_date: new Date().toISOString().split("T")[0],
+            posting_date: (serverDate || new Date())
+              .toISOString()
+              .split("T")[0],
             posting_description: `Parte de trabajo ${ap}`,
             calendar_period_days: "", // Se llenará cuando se seleccione la fecha
           };
         }
 
-        // PASO 1: Verificar qué valores exactos existen en calendar_period_days
-        const { data: existingCalendarDays, error: calendarQueryError } =
-          await supabaseClient
+        // PASO 1: Elegir día del período: preferir el día del servidor; fallback al primer día del período
+        const desiredIso = (serverDate || new Date())
+          .toISOString()
+          .split("T")[0];
+
+        console.log("🔍 DEBUG - Creando nuevo parte:");
+        console.log("  - serverDate:", serverDate?.toISOString());
+        console.log("  - desiredIso:", desiredIso);
+        console.log(
+          "  - headerData.allocation_period:",
+          headerData.allocation_period
+        );
+        console.log("  - headerData.calendar_type:", headerData.calendar_type);
+        console.log("  - ap (parámetro):", ap);
+
+        // 1.a) Intentar encontrar registro para el día exacto del servidor
+        const { data: dayRecord, error: dayError } = await supabaseClient
+          .from("calendar_period_days")
+          .select("allocation_period, calendar_code, day")
+          .eq("allocation_period", headerData.allocation_period)
+          .eq("calendar_code", headerData.calendar_type)
+          .eq("day", desiredIso)
+          .maybeSingle();
+
+        if (dayError) {
+          throw new Error(
+            `Error consultando calendar_period_days (día exacto): ${dayError.message}`
+          );
+        }
+
+        console.log("  - dayRecord encontrado:", dayRecord);
+        let existingRecord = dayRecord || null;
+
+        // 1.b) Si no existe ese día exacto, intentar con el primer día del período
+        if (!existingRecord) {
+          const firstDayIso = getFirstDayOfPeriod(headerData.allocation_period);
+          const { data: firstRecord, error: firstError } = await supabaseClient
             .from("calendar_period_days")
             .select("allocation_period, calendar_code, day")
             .eq("allocation_period", headerData.allocation_period)
             .eq("calendar_code", headerData.calendar_type)
+            .eq("day", firstDayIso)
+            .maybeSingle();
+          if (firstError) {
+            throw new Error(
+              `Error consultando calendar_period_days (primer día): ${firstError.message}`
+            );
+          }
+          existingRecord = firstRecord || null;
+          console.log("  - firstRecord encontrado:", firstRecord);
+        }
+
+        // 1.c) Último fallback: cualquier día del período, ordenado por fecha ascendente
+        if (!existingRecord) {
+          const { data: anyRecordList, error: anyError } = await supabaseClient
+            .from("calendar_period_days")
+            .select("allocation_period, calendar_code, day")
+            .eq("allocation_period", headerData.allocation_period)
+            .eq("calendar_code", headerData.calendar_type)
+            .order("day", { ascending: true })
             .limit(1);
+          if (anyError) {
+            throw new Error(
+              `Error consultando calendar_period_days (fallback): ${anyError.message}`
+            );
+          }
+          if (anyRecordList && anyRecordList.length > 0) {
+            existingRecord = anyRecordList[0];
+          }
+        }
 
-        if (calendarQueryError) {
-          throw new Error(
-            `Error consultando calendar_period_days: ${calendarQueryError.message}`
+        if (!existingRecord) {
+          // Si no hay registros en calendar_period_days, usar la fecha del servidor directamente
+          console.log(
+            "⚠️  No se encontraron registros en calendar_period_days, usando fecha del servidor"
           );
+          existingRecord = {
+            allocation_period: headerData.allocation_period,
+            calendar_code: headerData.calendar_type,
+            day: desiredIso,
+          };
         }
 
-        if (!existingCalendarDays || existingCalendarDays.length === 0) {
-          // Mostrar modal en lugar de lanzar excepción
-          setCalendarNotFoundData({
-            allocationPeriod: headerData.allocation_period,
-            calendarType: headerData.calendar_type,
-          });
-          setShowCalendarNotFoundModal(true);
-          return; // Salir de la función sin crear el parte
-        }
-
-        // Usar los valores exactos que existen en la base de datos
-        const existingRecord = existingCalendarDays[0];
+        console.log("✅ existingRecord final:", existingRecord);
 
         // PASO 2: Crear header con valores exactos que existen en calendar_period_days
-        const now = new Date().toISOString();
+        const now = (serverDate || new Date()).toISOString();
         const newHeader = {
           id: crypto.randomUUID(), // Generar ID único manualmente
           resource_no: headerData.resource_no,
           posting_date:
-            headerData.posting_date || new Date().toISOString().split("T")[0],
+            headerData.posting_date ||
+            (serverDate || new Date()).toISOString().split("T")[0],
           description: headerData.resource_name, // Nombre del recurso
           posting_description:
             headerData.posting_description ||
             `Parte de trabajo ${headerData.allocation_period}`,
           from_date: existingRecord.day, // ✅ Usar día exacto que existe en calendar_period_days
           to_date: existingRecord.day, // ✅ Usar día exacto que existe en calendar_period_days
-          allocation_period: existingRecord.allocation_period, // ✅ Usar período exacto que existe
+          allocation_period: headerData.allocation_period, // ✅ Usar período del servidor (M25-M08)
           resource_calendar: existingRecord.calendar_code, // ✅ Usar calendario exacto que existe
           user_email: userEmail,
           created_at: now,
@@ -1044,6 +1122,47 @@ function TimesheetEdit({ headerId }) {
           synced_to_bc: false, // Campo opcional
           department_code: headerData.department_code || "20", // Campo opcional con default
         };
+
+        console.log("🚀 newHeader creado:", {
+          allocation_period: newHeader.allocation_period,
+          posting_date: newHeader.posting_date,
+          from_date: newHeader.from_date,
+          to_date: newHeader.to_date,
+          resource_calendar: newHeader.resource_calendar,
+        });
+
+        // 🆕 Regla explícita: si NO hay partes previos del recurso, usar SIEMPRE la fecha/período del servidor
+        try {
+          const { count, error: countErr } = await supabaseClient
+            .from("resource_timesheet_header")
+            .select("id", { count: "exact", head: true })
+            .eq("resource_no", headerData.resource_no);
+          if (!countErr && (count === 0 || count == null)) {
+            const serverIso = (serverDate || new Date())
+              .toISOString()
+              .split("T")[0];
+            const yy = String((serverDate || new Date()).getFullYear()).slice(
+              -2
+            );
+            const mm = String(
+              (serverDate || new Date()).getMonth() + 1
+            ).padStart(2, "0");
+            const serverAp = `M${yy}-M${mm}`;
+            newHeader.posting_date = serverIso;
+            newHeader.from_date = serverIso;
+            newHeader.to_date = serverIso;
+            newHeader.allocation_period = serverAp;
+            console.log(
+              "🛡️ Sin partes previos: forzando período del servidor",
+              serverAp,
+              serverIso
+            );
+          }
+        } catch (e) {
+          console.warn(
+            "No se pudo verificar partes previos, se continúa con valores actuales"
+          );
+        }
 
         const { data: createdHeader, error: headerError } = await supabaseClient
           .from("resource_timesheet_header")
@@ -1249,10 +1368,10 @@ function TimesheetEdit({ headerId }) {
       const params = new URLSearchParams(location.search);
       let ap = params.get("allocation_period");
       if (!ap) {
-        const now = new Date();
-        const yy = String(now.getFullYear()).slice(-2); // "25"
+        const base = serverDate || new Date();
+        const yy = String(base.getFullYear()).slice(-2); // "25"
         // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
-        const mm = String(now.getMonth() + 1).padStart(2, "0"); // "08"
+        const mm = String(base.getMonth() + 1).padStart(2, "0"); // "08"
         ap = `M${yy}-M${mm}`; // p.ej. M25-M08
       }
 
@@ -1400,15 +1519,16 @@ function TimesheetEdit({ headerId }) {
     if (!isEffectivelyNewParte) return;
     const hasAp = !!(editableHeader && editableHeader.allocation_period);
     if (hasAp) return;
-    const now = new Date();
-    const yy = String(now.getFullYear()).slice(-2);
-    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    if (!serverDate) return; // Esperar a serverDate para evitar caer en la fecha local
+    const base = serverDate;
+    const yy = String(base.getFullYear()).slice(-2);
+    const mm = String(base.getMonth() + 1).padStart(2, "0");
     const ap = `M${yy}-M${mm}`;
     setEditableHeader((prev) => ({
       ...(prev || {}),
       allocation_period: ap,
       posting_date:
-        (prev && prev.posting_date) || now.toISOString().split("T")[0],
+        (prev && prev.posting_date) || base.toISOString().split("T")[0],
       posting_description: `Parte de trabajo ${ap}`,
     }));
   }, [
@@ -1416,6 +1536,7 @@ function TimesheetEdit({ headerId }) {
     editableHeader?.allocation_period,
     header,
     effectiveHeaderId,
+    serverDate,
   ]);
 
   // 🆕 Incrementar trigger cuando cambie el período
@@ -1785,33 +1906,28 @@ function TimesheetEdit({ headerId }) {
     }));
 
     // Establecer por defecto la fecha del servidor si cae dentro del rango permitido
-    (async () => {
-      try {
-        const srv = await getServerDate();
-        const iso = srv.toISOString().split("T")[0];
-        const headerForValidation = header || editableHeader;
-        const rangeValidation = validateDateRange(iso, headerForValidation);
-        if (rangeValidation.isValid) {
-          const display = toDisplayDate(iso);
-          setEditFormData((prev) => ({
-            ...prev,
-            [newId]: {
-              ...prev[newId],
-              date: prev[newId]?.date ? prev[newId].date : display,
-            },
-          }));
-          setLines((prev) =>
-            prev.map((l) =>
-              l.id === newId
-                ? { ...l, date: l.date && l.date !== "" ? l.date : display }
-                : l
-            )
-          );
-        }
-      } catch {
-        // ignorar: si falla, el usuario completará manualmente
+    if (serverDate) {
+      const iso = serverDate.toISOString().split("T")[0];
+      const headerForValidation = header || editableHeader;
+      const rangeValidation = validateDateRange(iso, headerForValidation);
+      if (rangeValidation.isValid) {
+        const display = toDisplayDate(iso);
+        setEditFormData((prev) => ({
+          ...prev,
+          [newId]: {
+            ...prev[newId],
+            date: prev[newId]?.date ? prev[newId].date : display,
+          },
+        }));
+        setLines((prev) =>
+          prev.map((l) =>
+            l.id === newId
+              ? { ...l, date: l.date && l.date !== "" ? l.date : display }
+              : l
+          )
+        );
       }
-    })();
+    }
 
     // Obtener información del recurso en background y actualizar si es necesario
     getResourceInfo().then((resourceInfo) => {
@@ -2119,7 +2235,8 @@ function TimesheetEdit({ headerId }) {
 
   // -- Obtener fecha sugerida para nuevo parte (último día del mes siguiente al último)
   const getSuggestedPartDate = async (resourceNo) => {
-    if (!resourceNo) return new Date().toISOString().split("T")[0];
+    if (!resourceNo)
+      return (serverDate || new Date()).toISOString().split("T")[0];
 
     try {
       // Obtener el último timesheet del recurso
@@ -2129,30 +2246,40 @@ function TimesheetEdit({ headerId }) {
         .eq("resource_no", resourceNo)
         .order("to_date", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error || !lastHeader?.to_date) {
-        // Si no hay timesheets previos, usar fecha actual
-        return new Date().toISOString().split("T")[0];
+        // Si no hay timesheets previos, usar fecha del servidor
+        return (serverDate || new Date()).toISOString().split("T")[0];
       }
 
-      // ✅ Obtener el ÚLTIMO día del mes siguiente al último timesheet
+      // ✅ Regla: si el último parte es del mismo mes que el del servidor, proponer mes siguiente
       const lastDate = new Date(lastHeader.to_date);
-      const nextMonth = new Date(
-        lastDate.getFullYear(),
-        lastDate.getMonth() + 1,
-        1
-      );
-      const lastDayOfNextMonth = new Date(
-        nextMonth.getFullYear(),
-        nextMonth.getMonth() + 1,
-        0
-      );
+      const baseServer = serverDate || new Date();
+      const sameMonth =
+        lastDate.getFullYear() === baseServer.getFullYear() &&
+        lastDate.getMonth() === baseServer.getMonth();
 
-      return lastDayOfNextMonth.toISOString().split("T")[0];
-    } catch (error) {
-      console.error("Error obteniendo fecha sugerida:", error);
-      return new Date().toISOString().split("T")[0];
+      if (sameMonth) {
+        // Último día del mes siguiente
+        const startNext = new Date(
+          lastDate.getFullYear(),
+          lastDate.getMonth() + 1,
+          1
+        );
+        const endNext = new Date(
+          startNext.getFullYear(),
+          startNext.getMonth() + 1,
+          0
+        );
+        return endNext.toISOString().split("T")[0];
+      }
+
+      // Si el último parte NO es del mes del servidor, usar la fecha del servidor
+      return baseServer.toISOString().split("T")[0];
+    } catch {
+      // En error, usar fecha del servidor
+      return (serverDate || new Date()).toISOString().split("T")[0];
     }
   };
 
@@ -2325,7 +2452,8 @@ function TimesheetEdit({ headerId }) {
       const params = new URLSearchParams(location.search);
       const ap = params.get("allocation_period");
       if (!ap) {
-        const now = new Date();
+        if (!serverDate) return; // Esperar a serverDate para evitar usar la fecha local
+        const now = serverDate;
         const yy = String(now.getFullYear()).slice(-2);
         const mm = String(now.getMonth() + 1).padStart(2, "0");
         const newAp = `M${yy}-M${mm}`;
@@ -2335,7 +2463,7 @@ function TimesheetEdit({ headerId }) {
         });
       }
     }
-  }, [location.pathname, location.search, navigate]);
+  }, [location.pathname, location.search, navigate, serverDate]);
 
   if (isLoadingView) {
     return <div>Cargando datos...</div>;
@@ -2430,11 +2558,34 @@ function TimesheetEdit({ headerId }) {
               <TimesheetHeader
                 header={header}
                 onHeaderChange={setEditableHeader}
+                serverDate={serverDate}
               />
             </div>
 
             {/* Panel derecho con resumen y calendario - fijo a la derecha */}
             <div style={{ marginLeft: 24, flexShrink: 0 }}>
+              {/* 🆕 Chip con fecha del servidor, igual al dashboard */}
+              <div
+                style={{
+                  fontSize: "0.8rem",
+                  color: "#666",
+                  backgroundColor: "#f5f5f5",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  border: "1px solid #ddd",
+                  marginBottom: 8,
+                  textAlign: "right",
+                }}
+              >
+                {serverDate
+                  ? serverDate.toLocaleDateString("es-ES", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : "Cargando..."}
+              </div>
               <CalendarPanel
                 calRange={calRange}
                 firstOffset={firstOffset}
@@ -2735,6 +2886,7 @@ function TimesheetEdit({ headerId }) {
               header={header}
               editableHeader={editableHeader}
               periodChangeTrigger={periodChangeTrigger} // 🆕 Pasar trigger para forzar re-renderizado
+              serverDate={serverDate}
               calendarHolidays={calendarHolidays}
               scheduleAutosave={() => {}} // Eliminado
               saveLineNow={() => {}} // Eliminado

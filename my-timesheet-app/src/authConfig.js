@@ -5,15 +5,24 @@ export const msalConfig = {
       "https://login.microsoftonline.com/a18dc497-a8b8-4740-b723-65362ab7a3fb",
     redirectUri:
       typeof window !== "undefined"
-        ? window.location.origin
+        ? window.location.origin.startsWith("https://")
+          ? window.location.origin
+          : `https://${window.location.host}`
         : "http://localhost:5173",
     postLogoutRedirectUri:
       typeof window !== "undefined"
-        ? window.location.origin
+        ? window.location.origin.startsWith("https://")
+          ? window.location.origin
+          : `https://${window.location.host}`
         : "http://localhost:5173",
   },
   cache: {
     cacheLocation: "localStorage",
     storeAuthStateInCookie: false,
+  },
+  system: {
+    iframeHashTimeout: 10000,
+    loadFrameTimeout: 10000,
+    allowNativeBroker: false,
   },
 };

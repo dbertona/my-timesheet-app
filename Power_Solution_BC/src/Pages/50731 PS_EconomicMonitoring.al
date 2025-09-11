@@ -1673,6 +1673,7 @@ page 50731 "PS_EconomicMonitoring"
 
     local procedure GetCurrentMonthValue(var Matrix: Record "PS_EconomicMonitoringMatrix"; Month: Integer): Decimal
     begin
+        
         case Month of
             1:
                 exit(Matrix."JanImport");

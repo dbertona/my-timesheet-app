@@ -33,6 +33,7 @@ export default function TimesheetLines({
   header,
   editableHeader,
   periodChangeTrigger, // 🆕 Recibir trigger para forzar re-renderizado
+  serverDate, // 🆕 Fecha del servidor para fallback de hoy y default
   calendarHolidays,
   scheduleAutosave,
   saveLineNow,
@@ -52,7 +53,7 @@ export default function TimesheetLines({
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
     TIMESHEET_FIELDS,
     "timesheet_column_widths",
-    DEFAULT_COL_WIDTH,
+    DEFAULT_COL_WIDTH
   );
 
   // Filtrar líneas "vacías" que puedan venir desde el servidor (todas las celdas vacías y cantidad 0)
@@ -60,7 +61,7 @@ export default function TimesheetLines({
     ? lines.filter((l) => {
         const isTmp = String(l.id || "").startsWith("tmp-");
         const hasData = Boolean(
-          l.job_no || l.job_task_no || l.description || l.work_type || l.date,
+          l.job_no || l.job_task_no || l.description || l.work_type || l.date
         );
         const qty = Number(l.quantity) || 0;
         // Mostrar siempre las temporales; ocultar las totalmente vacías del backend
@@ -133,7 +134,7 @@ export default function TimesheetLines({
     return jobs.filter(
       (j) =>
         j.no?.toLowerCase().includes(q) ||
-        j.description?.toLowerCase().includes(q),
+        j.description?.toLowerCase().includes(q)
     );
   };
 
@@ -144,7 +145,7 @@ export default function TimesheetLines({
     return list.filter(
       (t) =>
         t.no?.toLowerCase().includes(q) ||
-        t.description?.toLowerCase().includes(q),
+        t.description?.toLowerCase().includes(q)
     );
   };
 
@@ -227,7 +228,7 @@ export default function TimesheetLines({
     maxContent = Math.max(maxContent, measureWithSpan(th, thText));
 
     const tds = table.querySelectorAll(
-      `tbody tr td:nth-child(${colIndex + 1})`,
+      `tbody tr td:nth-child(${colIndex + 1})`
     );
     tds.forEach((td) => {
       const input = td.querySelector("input");
@@ -259,7 +260,7 @@ export default function TimesheetLines({
       // Para otros campos, comportamiento normal
       onLinesChange(lineId, { [name]: value });
     },
-    [onLinesChange, parentHandleInputChange],
+    [onLinesChange, parentHandleInputChange]
   );
 
   const handleInputFocus = (lineId, field, event) => {
@@ -280,7 +281,7 @@ export default function TimesheetLines({
 
   // 🆕 Estado para selección de líneas
   const [localSelectedLines, setLocalSelectedLines] = useState(
-    selectedLines || [],
+    selectedLines || []
   );
 
   // 🆕 Sincronizar selección local con props
@@ -490,7 +491,7 @@ export default function TimesheetLines({
                       handleKeyDown(
                         e,
                         lineIndex,
-                        TIMESHEET_FIELDS.indexOf("description"),
+                        TIMESHEET_FIELDS.indexOf("description")
                       )
                     }
                     ref={
@@ -553,7 +554,7 @@ export default function TimesheetLines({
                             setFieldError(
                               line.id,
                               "work_type",
-                              "Servicio inválido. Debe seleccionar uno de la lista.",
+                              "Servicio inválido. Debe seleccionar uno de la lista."
                             );
                             const el =
                               inputRefs?.current?.[line.id]?.["work_type"];
@@ -595,7 +596,7 @@ export default function TimesheetLines({
                               handleKeyDown(
                                 e,
                                 lineIndex,
-                                TIMESHEET_FIELDS.indexOf("work_type"),
+                                TIMESHEET_FIELDS.indexOf("work_type")
                               );
                               return;
                             }
@@ -616,7 +617,7 @@ export default function TimesheetLines({
                               handleKeyDown(
                                 e,
                                 lineIndex,
-                                TIMESHEET_FIELDS.indexOf("work_type"),
+                                TIMESHEET_FIELDS.indexOf("work_type")
                               );
                               return;
                             }
@@ -641,7 +642,7 @@ export default function TimesheetLines({
                               handleKeyDown(
                                 e,
                                 lineIndex,
-                                TIMESHEET_FIELDS.indexOf("work_type"),
+                                TIMESHEET_FIELDS.indexOf("work_type")
                               );
                               return;
                             }
@@ -650,7 +651,7 @@ export default function TimesheetLines({
                             setFieldError(
                               line.id,
                               "work_type",
-                              "Servicio inválido. Debe seleccionar uno de la lista.",
+                              "Servicio inválido. Debe seleccionar uno de la lista."
                             );
                             const el =
                               inputRefs?.current?.[line.id]?.["work_type"];
@@ -668,7 +669,7 @@ export default function TimesheetLines({
                           // Alt + ArrowDown: abrir dropdown de servicios
                           if (e.altKey && e.key === "ArrowDown") {
                             setWtOpenFor((prev) =>
-                              prev === line.id ? null : line.id,
+                              prev === line.id ? null : line.id
                             );
                             e.preventDefault();
                             return;
@@ -676,7 +677,7 @@ export default function TimesheetLines({
                           handleKeyDown(
                             e,
                             lineIndex,
-                            TIMESHEET_FIELDS.indexOf("work_type"),
+                            TIMESHEET_FIELDS.indexOf("work_type")
                           );
                         }}
                         ref={
@@ -694,7 +695,7 @@ export default function TimesheetLines({
                         onMouseDown={(e) => {
                           e.preventDefault();
                           setWtOpenFor((prev) =>
-                            prev === line.id ? null : line.id,
+                            prev === line.id ? null : line.id
                           );
                         }}
                         className="ts-icon ts-icon--chevron"
@@ -796,6 +797,7 @@ export default function TimesheetLines({
                 error={errors[line.id]?.date}
                 header={header}
                 editableHeader={editableHeader} // 🆕 Pasar editableHeader para validación en inserción
+                serverDate={serverDate}
                 calendarHolidays={calendarHolidays}
                 disabled={!isLineEditable(line)} // 🆕 Deshabilitar para líneas de Factorial
                 align={getAlign("date")} // 🆕 Pasar alineación correcta
@@ -888,7 +890,7 @@ export default function TimesheetLines({
                         handleKeyDown(
                           e,
                           lineIndex,
-                          TIMESHEET_FIELDS.indexOf("quantity"),
+                          TIMESHEET_FIELDS.indexOf("quantity")
                         );
                       }}
                       inputRef={

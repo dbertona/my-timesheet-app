@@ -1,5 +1,11 @@
 // API para obtener la fecha actual del servidor
 export async function getServerDate() {
+  // En desarrollo, usar fecha local directamente para evitar errores 500
+  if (import.meta.env.DEV) {
+    console.log("🔧 Modo desarrollo: usando fecha local");
+    return new Date();
+  }
+
   try {
     const response = await fetch("/api/server-date", {
       method: "GET",

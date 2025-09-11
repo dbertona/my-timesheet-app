@@ -3,7 +3,7 @@ import { useMsal } from "@azure/msal-react";
 import { supabaseClient } from "../supabaseClient";
 import "../styles/TimesheetHeader.css";
 
-function TimesheetHeader({ header, onHeaderChange }) {
+function TimesheetHeader({ header, onHeaderChange, serverDate }) {
   const { instance, accounts } = useMsal();
   // Eliminado allocationPeriod sin uso para cumplir lint
   const [editableHeader, setEditableHeader] = useState({
@@ -22,7 +22,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
 
   // 🆕 Estado para effectiveHeader (debe estar aquí para mantener orden de hooks)
   const [effectiveHeader, setEffectiveHeader] = useState(
-    header || editableHeader,
+    header || editableHeader
   );
 
   useEffect(() => {
@@ -52,16 +52,17 @@ function TimesheetHeader({ header, onHeaderChange }) {
               const params = new URLSearchParams(window.location.search);
               let ap = params.get("allocation_period");
               if (!ap) {
-                const now = new Date();
-                const yy = String(now.getFullYear()).slice(-2);
-                // 🆕 CORREGIR: getMonth() devuelve 0-11, donde 0=enero, 7=agosto
-                const mm = String(now.getMonth() + 1).padStart(2, "0");
+                const base = serverDate || new Date();
+                const yy = String(base.getFullYear()).slice(-2);
+                const mm = String(base.getMonth() + 1).padStart(2, "0");
                 ap = `M${yy}-M${mm}`;
               }
               // allocationPeriod local eliminado; se usa directamente en editableHeader
 
               // Establecer valores por defecto
-              let suggestedDate = new Date().toISOString().split("T")[0]; // Fallback a fecha actual
+              let suggestedDate = (serverDate || new Date())
+                .toISOString()
+                .split("T")[0]; // Fallback a fecha del servidor
               try {
                 const { data: lastHeader } = await supabaseClient
                   .from("resource_timesheet_header")
@@ -69,7 +70,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
                   .eq("resource_no", resourceData.code)
                   .order("to_date", { ascending: false })
                   .limit(1)
-                  .single();
+                  .maybeSingle();
 
                 if (lastHeader?.to_date) {
                   suggestedDate = lastHeader.to_date;
@@ -102,7 +103,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
               // No encontrado por email: NO asumir nada ni buscar alternativas
               setResourceNotFound(true);
               setNotFoundMsg(
-                `Recurso no encontrado para el email ${userEmail}. Comprueba la tabla 'resource'.`,
+                `Recurso no encontrado para el email ${userEmail}. Comprueba la tabla 'resource'.`
               );
               // Limpiar cualquier cabecera editable previa
               setEditableHeader({
@@ -120,7 +121,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
           } else {
             setResourceNotFound(true);
             setNotFoundMsg(
-              "No se pudo obtener el email del usuario desde MSAL.",
+              "No se pudo obtener el email del usuario desde MSAL."
             );
           }
         } catch {
@@ -131,7 +132,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
 
       getResourceInfo();
     }
-  }, [header, onHeaderChange, instance, accounts]);
+  }, [header, onHeaderChange, instance, accounts, serverDate]);
 
   // 🆕 Segundo useEffect para actualizar effectiveHeader (debe estar aquí para mantener orden)
   useEffect(() => {
@@ -180,7 +181,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
   const getCalendarPeriodDays = async (
     postingDate,
     calendarType,
-    allocationPeriod,
+    allocationPeriod
   ) => {
     if (!postingDate || !calendarType || !allocationPeriod) return "";
 
@@ -221,7 +222,7 @@ function TimesheetHeader({ header, onHeaderChange }) {
         const calendarPeriodDays = await getCalendarPeriodDays(
           value,
           newHeader.calendar_type,
-          newPeriod,
+          newPeriod
         );
         newHeader.calendar_period_days = calendarPeriodDays;
       }
