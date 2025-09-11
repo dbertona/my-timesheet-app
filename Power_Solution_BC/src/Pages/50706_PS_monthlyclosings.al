@@ -177,7 +177,7 @@ page 50706 PS_monthlyclosings
                     JobRec.Next();
                     continue;
                 end;
-                
+
                 for i := 1 to 12 do begin
                     PS_MonthClosing.Init();
                     PS_MonthClosing."PS_JobNo" := JobRec."No."; // Assign the Job No. from the project

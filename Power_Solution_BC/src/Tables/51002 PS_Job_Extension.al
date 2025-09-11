@@ -80,8 +80,13 @@ tableextension 51002 PS_Job_Extension extends Job
         end;
 
         // Establecer la 'Probabilidad' a cero si el 'Status' ha cambiado
-        if (Rec."PS_OriginalStatus" <> Rec.Status) AND (Rec.Status = Rec.Status::Open) then
+        if (Rec."PS_OriginalStatus" <> Rec.Status) AND (Rec.Status = Rec.Status::Open) then begin
             Rec."PS_% Probability" := 0;
+            
+            // Limpiar dimensión OFERTA cuando el proyecto pasa de Planning a Open
+            if (RecBeforeModification.Status = RecBeforeModification.Status::Planning) AND (Rec.Status = Rec.Status::Open) then
+                Rec."Shortcut Dimension 3 Code" := '';
+        end;
     end;
 
     trigger OnAfterModify()
@@ -106,7 +111,7 @@ tableextension 51002 PS_Job_Extension extends Job
             // Validar que el proyecto NO tenga marcado "Imputación por desglose"
             if RecJob."ARBVRNAllocationBreakdown" then
                 exit; // No crear períodos si tiene marcado el desglose
-                
+
             if (RecJob.Description <> '') AND (RecJob."Global Dimension 1 Code" <> '') then
                 for i := 1 to 12 do begin
                     PS_MonthClosing.INIT;

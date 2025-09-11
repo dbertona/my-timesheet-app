@@ -17,6 +17,51 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "dist")));
 
 // Helpers
+function normalizeEmail(value) {
+  if (!value && value !== 0) return "";
+  try {
+    return String(value).trim().toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+async function fetchAllEmployees(apiBase, apiKey) {
+  const aggregated = [];
+  const perPage = 200;
+  let currentPage = 1;
+  const maxPages = 50; // salvaguarda
+
+  while (currentPage <= maxPages) {
+    const url = `${apiBase}/resources/employees/employees?per_page=${perPage}&page=${currentPage}&include=user`;
+    const response = await fetch(url, { headers: { "x-api-key": apiKey } });
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new Error(
+        `Employees error ${response.status}: ${response.statusText} - ${text}`
+      );
+    }
+    const json = await response.json().catch(() => ({}));
+    const pageData = Array.isArray(json?.data) ? json.data : [];
+    if (pageData.length === 0) break;
+    aggregated.push(...pageData);
+    currentPage += 1;
+  }
+
+  return aggregated;
+}
+
+function generateEmailVariants(inputEmail) {
+  // Reglas: usar el email de login; si no coincide, probar local-part@ps-grupo.net
+  const normalized = normalizeEmail(inputEmail);
+  if (!normalized) return [];
+  const [localPart] = normalized.split("@");
+  const variants = new Set();
+  variants.add(normalized);
+  if (localPart) variants.add(`${localPart}@ps-grupo.net`);
+  return Array.from(variants).filter(Boolean);
+}
+
 async function getResourceCompanyByEmail(email) {
   try {
     const baseUrl = process.env.SUPABASE_PROJECT_URL;
@@ -110,33 +155,28 @@ app.post("/api/factorial/vacations", async (req, res) => {
       });
     }
 
-    // 1) Buscar employee_id por email (se comparan múltiples campos)
-    const employeesUrl = `${apiBase}/resources/employees/employees?per_page=1000&include=user`;
-    const empResp = await fetch(employeesUrl, {
-      headers: { "x-api-key": apiKey },
-    });
-    if (!empResp.ok) {
-      const text = await empResp.text().catch(() => "");
-      console.error(
-        `Factorial Employees error ${empResp.status}: ${empResp.statusText} - ${text}`
-      );
-      return res.status(empResp.status).json({
-        error: `Error obteniendo empleados (${empResp.status})`,
-      });
+    // 1) Buscar employee_id por email (comparando múltiples campos y con paginación)
+    let employees = [];
+    try {
+      employees = await fetchAllEmployees(apiBase, apiKey);
+    } catch (err) {
+      console.error(String(err));
+      return res.status(502).json({ error: "Error obteniendo empleados" });
     }
-    const empJson = await empResp.json().catch(() => ({}));
-    const employees = Array.isArray(empJson?.data) ? empJson.data : [];
-    const emailLc = String(userEmail || "").toLowerCase();
+
+    const variants = generateEmailVariants(userEmail);
     const employee = employees.find((e) => {
       const candidates = [
         e?.email,
+        e?.login_email,
         e?.work_email,
         e?.personal_email,
         e?.user?.email,
+        e?.user?.login_email,
       ]
-        .filter(Boolean)
-        .map((v) => String(v).toLowerCase());
-      return candidates.includes(emailLc);
+        .map((v) => normalizeEmail(v))
+        .filter(Boolean);
+      return candidates.some((c) => variants.includes(c));
     });
     if (!employee || !employee.id) {
       return res
