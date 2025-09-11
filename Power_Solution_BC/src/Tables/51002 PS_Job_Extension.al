@@ -103,6 +103,10 @@ tableextension 51002 PS_Job_Extension extends Job
         CurrentMonth := Date2DMY(Today, 2); // Devuelve el mes actual
 
         IF NOT PS_MonthClosing.FINDSET THEN BEGIN
+            // Validar que el proyecto NO tenga marcado "Imputación por desglose"
+            if RecJob."ARBVRNAllocationBreakdown" then
+                exit; // No crear períodos si tiene marcado el desglose
+                
             if (RecJob.Description <> '') AND (RecJob."Global Dimension 1 Code" <> '') then
                 for i := 1 to 12 do begin
                     PS_MonthClosing.INIT;

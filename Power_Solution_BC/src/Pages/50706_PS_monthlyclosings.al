@@ -171,6 +171,13 @@ page 50706 PS_monthlyclosings
         JobRec.SetFilter("No.", '<>%1', 'PY*');
         if JobRec.FindSet() then begin
             repeat
+                // Validar que el proyecto NO tenga marcado "Imputación por desglose"
+                if JobRec."ARBVRNAllocationBreakdown" then begin
+                    Message('El proyecto %1 tiene marcado "Imputación por desglose" y no se crearán períodos de cierre.', JobRec."No.");
+                    JobRec.Next();
+                    continue;
+                end;
+                
                 for i := 1 to 12 do begin
                     PS_MonthClosing.Init();
                     PS_MonthClosing."PS_JobNo" := JobRec."No."; // Assign the Job No. from the project

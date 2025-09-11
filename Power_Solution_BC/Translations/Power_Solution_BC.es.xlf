@@ -4677,7 +4677,7 @@
           <note from="Developer" annotates="general" priority="2"/>
           <note from="Xliff Generator" annotates="general" priority="3">Page PS_EconomicMonitoring - Action UpdateClosedMonths - Property Caption</note>
         </trans-unit>
-        <trans-unit id="Page 1126184009 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+        <trans-unit id="Page 1126184009 - Property 2879900210" size-unit="char" translate=conf"yes" xml:space="preserve">
           <source>Job Ledger Entry Payroll Costs</source>
           <target state="translated">Ajuste coste de nómina</target>
           <note from="Developer" annotates="general" priority="2"/>
