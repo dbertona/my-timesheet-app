@@ -82,10 +82,10 @@ tableextension 51002 PS_Job_Extension extends Job
         // Establecer la 'Probabilidad' a cero si el 'Status' ha cambiado
         if (Rec."PS_OriginalStatus" <> Rec.Status) AND (Rec.Status = Rec.Status::Open) then begin
             Rec."PS_% Probability" := 0;
-            
+
             // Limpiar dimensión OFERTA cuando el proyecto pasa de Planning a Open
             if (RecBeforeModification.Status = RecBeforeModification.Status::Planning) AND (Rec.Status = Rec.Status::Open) then
-                Rec."Shortcut Dimension 3 Code" := '';
+                Rec."ARBPOWShortcutDim5" := ''; // Typology Code - asumiendo que es la dimensión OFERTA
         end;
     end;
 
