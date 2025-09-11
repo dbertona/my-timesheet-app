@@ -49,6 +49,28 @@ tableextension 51000 PS_RespourceExten extends Resource
         {
         }
     }
+
+    trigger OnBeforeInsert()
+    begin
+        if Rec.IsTemporary then
+            exit;
+
+        if Rec."Gen. Prod. Posting Group" = '' then
+            Error(GPPGRequiredErrLbl);
+    end;
+
+    trigger OnBeforeModify()
+    begin
+        if Rec.IsTemporary then
+            exit;
+
+        if (xRec."Gen. Prod. Posting Group" <> '') and (Rec."Gen. Prod. Posting Group" = '') then
+            Error(CannotClearGPPGErrLbl);
+    end;
+
+    var
+        GPPGRequiredErrLbl: Label 'Debe especificar el Grupo contable producto gen. en el recurso.', Locked = true, MaxLength = 250, Comment = 'Error when missing Gen. Prod. Posting Group on insert.';
+        CannotClearGPPGErrLbl: Label 'No puede limpiar el Grupo contable producto gen. en un recurso existente.', Locked = true, MaxLength = 250, Comment = 'Error when clearing Gen. Prod. Posting Group on modify.';
 }
 
 /// <summary>
@@ -59,6 +81,10 @@ pageextension 50300 PS_ResurceCard extends "Resource Card"
 {
     layout
     {
+        modify("Gen. Prod. Posting Group")
+        {
+            ShowMandatory = true;
+        }
         addafter("Employment Date")
         {
             /// <summary>
