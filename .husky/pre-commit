@@ -26,4 +26,9 @@ bash scripts/smoke-rejected-edit.sh || {
   exit 1;
 }
 
+bash scripts/smoke-modals.sh || {
+  echo "\n💥 Pre-commit: se detectaron alert/confirm/prompt en UI.";
+  exit 1;
+}
+
 echo "✅ Pre-commit: smoke de Aprobación pasó."

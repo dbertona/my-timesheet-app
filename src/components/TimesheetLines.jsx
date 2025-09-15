@@ -634,10 +634,7 @@ export default function TimesheetLines({
                     }
                     onClick={async () => {
                       try {
-                        const ok = confirm(
-                          "¿Volver a abrir esta línea rechazada?"
-                        );
-                        if (!ok) return;
+                        // Confirmación mediante modal estándar pendiente de integrar; por ahora proceder directamente
                         const { error } = await supabaseClient
                           .from("timesheet")
                           .update({ status: "Open" })

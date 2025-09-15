@@ -39,4 +39,10 @@ alwaysApply: true
 - Usa siempre traducciones consistentes según el archivo `translations.mdc`.
 - Mantén coherencia en las etiquetas y mensajes de UI.
 
+## 5. Modales y mensajes
+
+- Prohibido usar `alert/confirm/prompt` en UI.
+- Usar modales estándar del proyecto: `BcModal`, `ApprovalModal`.
+- Cualquier nueva confirmación/notificación debe pasar por estos componentes.
+
 ---
