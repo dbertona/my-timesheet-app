@@ -18,6 +18,7 @@ import useTimesheetEdit from "../hooks/useTimesheetEdit";
 import { useAllJobs } from "../hooks/useTimesheetQueries";
 import TimesheetHeader from "./TimesheetHeader";
 import TimesheetLines from "./TimesheetLines";
+import "../styles/common.css";
 import CalendarPanel from "./timesheet/CalendarPanel";
 import BcModal from "./ui/BcModal";
 import ValidationErrorsModal from "./ui/ValidationErrorsModal";
@@ -2708,16 +2709,7 @@ function TimesheetEdit({ headerId }) {
             type="button"
             onClick={() => navigate("/")}
             aria-label="Ir a lista de parte de trabajo"
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#007E87",
-              fontWeight: 700,
-              fontSize: "22px",
-              lineHeight: 1,
-              cursor: "pointer",
-              padding: 0,
-            }}
+            className="ts-page-title--link"
           >
             {header ? "Editar Parte de Trabajo" : "Nuevo Parte de Trabajo"}
           </button>

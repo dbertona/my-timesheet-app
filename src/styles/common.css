@@ -1,0 +1,22 @@
+/* Estilos tipográficos comunes */
+
+.ts-page-title {
+  color: #007e87;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ts-page-title--link {
+  background: transparent;
+  border: none;
+  color: #007e87;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+

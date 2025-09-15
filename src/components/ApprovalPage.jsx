@@ -6,6 +6,7 @@ import { supabaseClient } from "../supabaseClient";
 import TimesheetLines from "./TimesheetLines";
 import BackToDashboard from "./ui/BackToDashboard";
 import "../styles/ApprovalPage.css";
+import "../styles/common.css";
 import { formatDate } from "../utils/dateHelpers";
 
 export default function ApprovalPage() {
@@ -456,7 +457,7 @@ export default function ApprovalPage() {
       <div className="approval-header">
         <div className="approval-header-left">
           <BackToDashboard title="Volver al Dashboard" compact={true} />
-          <h1>Aprobación de Horas</h1>
+          <h1 className="ts-page-title">Aprobación de Horas</h1>
         </div>
         <div className="approval-summary">
           📊 {totalHeaders} recursos con {totalLines} líneas pendientes
