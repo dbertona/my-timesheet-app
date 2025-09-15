@@ -10,6 +10,11 @@ alwaysApply: true
 - Optimiza para legibilidad antes que para complejidad visual.
 - Respeta el diseño definido en `button-styles.mdc`.
 
+### Botón Volver al Dashboard
+
+- Todas las páginas deben incluir `BackToDashboard` en el encabezado, arriba a la izquierda.
+- Componente reutilizable: `src/components/ui/BackToDashboard.jsx`.
+
 ## 2. Workflow de desarrollo
 
 - Responde paso a paso cuando se trate de guías o instalaciones.

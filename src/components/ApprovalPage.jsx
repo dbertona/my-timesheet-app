@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMsal } from "@azure/msal-react";
 import { supabaseClient } from "../supabaseClient";
 import TimesheetLines from "./TimesheetLines";
+import BackToDashboard from "./ui/BackToDashboard";
 import "../styles/ApprovalPage.css";
 import { formatDate } from "../utils/dateHelpers";
 
@@ -452,6 +453,7 @@ export default function ApprovalPage() {
 
   return (
     <div className="approval-page">
+      <BackToDashboard label="Dashboard" title="Volver al Dashboard" />
       <div className="approval-header">
         <h1>📋 Aprobación de Horas</h1>
         <div className="approval-summary">

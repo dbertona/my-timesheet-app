@@ -11,4 +11,9 @@ bash scripts/smoke-edit.sh || {
   exit 1;
 }
 
+bash scripts/smoke-dashboard.sh || {
+  echo "\n💥 Pre-commit: falta BackToDashboard en páginas clave.";
+  exit 1;
+}
+
 echo "✅ Pre-commit: smoke de Aprobación pasó."
