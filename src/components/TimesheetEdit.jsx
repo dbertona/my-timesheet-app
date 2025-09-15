@@ -1802,7 +1802,11 @@ function TimesheetEdit({ headerId }) {
       date: toDisplayDate(line.date),
     }));
     try {
-      const debugMap = (linesFormatted || []).map((l) => ({ id: l.id, date: l.date, status: l.status }));
+      const debugMap = (linesFormatted || []).map((l) => ({
+        id: l.id,
+        date: l.date,
+        status: l.status,
+      }));
       console.log("[TimesheetEdit] pre-filter ids:", debugMap);
     } catch {}
     // Filtrar filas totalmente vacías provenientes del backend (sin datos y cantidad 0)
@@ -3148,6 +3152,7 @@ function TimesheetEdit({ headerId }) {
               onDuplicateLines={handleDuplicateLines}
               onDeleteLines={handleDeleteLines}
               addEmptyLine={addEmptyLine} // 🆕 Pasar función para agregar línea vacía
+              showResponsible={true}
             />
           </div>
         </div>
