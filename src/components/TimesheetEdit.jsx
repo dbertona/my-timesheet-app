@@ -1785,12 +1785,14 @@ function TimesheetEdit({ headerId }) {
       date: toDisplayDate(line.date),
     }));
     // Filtrar filas totalmente vacías provenientes del backend (sin datos y cantidad 0)
+    // Mantener SIEMPRE visibles las Rechazadas para poder reabrir/ver motivo
     const filtered = linesFormatted.filter((l) => {
       const hasData = Boolean(
         l.job_no || l.job_task_no || l.description || l.work_type || l.date
       );
       const qty = Number(l.quantity) || 0;
-      return hasData || qty !== 0; // mantener solo si tiene datos o cantidad distinta de 0
+      const forceVisibleByStatus = l.status === "Rejected";
+      return forceVisibleByStatus || hasData || qty !== 0;
     });
 
     // 🆕 Conservar líneas temporales locales (tmp-) cuando actualizamos desde servidor
