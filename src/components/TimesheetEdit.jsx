@@ -1783,7 +1783,14 @@ function TimesheetEdit({ headerId }) {
         acc[s] = (acc[s] || 0) + 1;
         return acc;
       }, {});
-      console.log("[TimesheetEdit] header:", effectiveHeaderId, "total:", (linesHook.data || []).length, "byStatus:", byStatus);
+      console.log(
+        "[TimesheetEdit] header:",
+        effectiveHeaderId,
+        "total:",
+        (linesHook.data || []).length,
+        "byStatus:",
+        byStatus
+      );
     } catch {}
 
     // NO resetear hasUnsavedChanges si ya hay cambios pendientes
@@ -1794,6 +1801,10 @@ function TimesheetEdit({ headerId }) {
       ...line,
       date: toDisplayDate(line.date),
     }));
+    try {
+      const debugMap = (linesFormatted || []).map((l) => ({ id: l.id, date: l.date, status: l.status }));
+      console.log("[TimesheetEdit] pre-filter ids:", debugMap);
+    } catch {}
     // Filtrar filas totalmente vacías provenientes del backend (sin datos y cantidad 0)
     // Mantener SIEMPRE visibles las Rechazadas para poder reabrir/ver motivo
     const filtered = linesFormatted.filter((l) => {
@@ -1804,6 +1815,14 @@ function TimesheetEdit({ headerId }) {
       const forceVisibleByStatus = l.status === "Rejected";
       return forceVisibleByStatus || hasData || qty !== 0;
     });
+    try {
+      const idsAll = new Set((linesFormatted || []).map((l) => l.id));
+      const idsKept = new Set((filtered || []).map((l) => l.id));
+      const removedIds = Array.from(idsAll).filter((id) => !idsKept.has(id));
+      if (removedIds.length) {
+        console.log("[TimesheetEdit] removedIds tras filtro:", removedIds);
+      }
+    } catch {}
 
     // 🆕 Conservar líneas temporales locales (tmp-) cuando actualizamos desde servidor
     const localTmp = (Array.isArray(lines) ? lines : []).filter((l) =>
