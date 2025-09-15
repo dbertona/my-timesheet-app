@@ -68,8 +68,10 @@ export default function TimesheetLines({
           l.job_no || l.job_task_no || l.description || l.work_type || l.date
         );
         const qty = Number(l.quantity) || 0;
+        const forceVisibleByStatus = l.status === "Rejected"; // No ocultar rechazadas
         // Mostrar siempre las temporales; ocultar las totalmente vacías del backend
-        return isTmp || hasData || qty !== 0;
+        // pero mantener visibles las líneas Rechazadas para permitir reabrir
+        return isTmp || forceVisibleByStatus || hasData || qty !== 0;
       })
     : [];
   const tableRef = useRef(null);

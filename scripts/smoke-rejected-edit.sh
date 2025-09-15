@@ -8,6 +8,7 @@ EDIT="src/components/TimesheetEdit.jsx"
 
 # Debe existir lógica específica para estado Rejected en TimesheetLines
 grep -n 'status === "Rejected"' "$LINES" >/dev/null || fail "Falta manejo visual para líneas Rechazadas en TimesheetLines"
+grep -n 'forceVisibleByStatus = l.status === "Rejected"' "$LINES" >/dev/null || fail "Las líneas Rechazadas deben forzarse visibles en el filtrado"
 
 # En edición se debe renderizar con showResponsible=true
 grep -n '<TimesheetLines' "$EDIT" | grep -n 'showResponsible=\{true\}' >/dev/null || fail "TimesheetEdit debe pasar showResponsible={true}"
