@@ -455,7 +455,7 @@ export default function ApprovalPage() {
     <div className="approval-page">
       <div className="approval-header">
         <div className="approval-header-left">
-          <BackToDashboard title="Volver al Dashboard" />
+          <BackToDashboard title="Volver al Dashboard" compact={true} />
           <h1>Aprobación de Horas</h1>
         </div>
         <div className="approval-summary">

@@ -20,7 +20,7 @@
 .approval-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px; /* igual que edición */
 }
 
 .approval-header h1 {

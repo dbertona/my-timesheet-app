@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function BackToDashboard({ title = "Volver al Dashboard" }) {
+export default function BackToDashboard({ title = "Volver al Dashboard", compact = false }) {
   const navigate = useNavigate();
   return (
     <div
@@ -9,7 +9,7 @@ export default function BackToDashboard({ title = "Volver al Dashboard" }) {
         display: "flex",
         alignItems: "center",
         gap: 10,
-        marginBottom: 12,
+        marginBottom: compact ? 0 : 12,
       }}
     >
       <button
