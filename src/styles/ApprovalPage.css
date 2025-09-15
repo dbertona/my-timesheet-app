@@ -1,0 +1,256 @@
+/* src/styles/ApprovalPage.css */
+.approval-page {
+  padding: 12px;
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  font-family:
+    "Segoe UI", "Segoe WP", Segoe, device-segoe, Tahoma, Helvetica, Arial,
+    sans-serif;
+}
+
+.approval-header {
+  margin-bottom: 16px;
+}
+
+.approval-header h1 {
+  color: #007e87;
+  margin-bottom: 4px;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.approval-summary {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+/* Filtros */
+.approval-filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 3px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.filter-group select {
+  height: 28px;
+  padding: 4px 8px;
+  border: 1px solid #c1c1c1;
+  border-radius: 3px;
+  font-size: 9pt;
+  background: #ffffff;
+  font-family:
+    "Segoe UI", "Segoe WP", Segoe, device-segoe, Tahoma, Helvetica, Arial,
+    sans-serif;
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: #007e87;
+  box-shadow: 0 0 0 2px rgba(0, 126, 135, 0.12);
+}
+
+/* Headers Grid */
+.approval-headers {
+  margin-bottom: 16px;
+}
+
+.approval-headers h2 {
+  color: #007e87;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+}
+
+.headers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.header-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+.header-card:hover {
+  border-color: #007e87;
+  box-shadow: 0 2px 6px rgba(0, 126, 135, 0.08);
+}
+
+.header-card.selected {
+  border-color: #007e87;
+  background: #f0f9fa;
+}
+
+.header-info {
+  flex: 1;
+}
+
+.header-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.header-period {
+  color: #666;
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+}
+
+.header-count {
+  color: #007e87;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.header-checkbox {
+  margin-left: 15px;
+}
+
+.header-checkbox input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* Líneas */
+.approval-lines {
+  margin-bottom: 16px;
+}
+
+.lines-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 3px;
+}
+
+.lines-header h2 {
+  color: #007e87;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.lines-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lines-actions label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.lines-actions input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.selected-count {
+  color: #007e87;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.lines-loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+/* Botones de Acción */
+.approval-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 3px;
+}
+
+.approval-actions .ts-btn {
+  min-width: 120px;
+}
+
+.approval-actions .ts-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Loading */
+.approval-loading {
+  text-align: center;
+  padding: 60px;
+  color: #666;
+  font-size: 1.2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .approval-page {
+    padding: 10px;
+  }
+
+  .approval-filters {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .filter-group {
+    min-width: 100%;
+  }
+
+  .headers-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lines-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .approval-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .approval-actions .ts-btn {
+    min-width: 100%;
+  }
+}

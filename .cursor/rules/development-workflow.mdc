@@ -1,0 +1,61 @@
+---
+description: Reglas de flujo de desarrollo para el proyecto
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Reglas de Flujo de Desarrollo
+
+## Commits
+
+- Hacer commit frecuente de cambios pequeños en lugar de acumular muchos cambios sin commit
+- Cada funcionalidad o corrección debe tener su propio commit descriptivo
+- Usar mensajes de commit claros y descriptivos
+
+## Análisis de Errores
+
+- Siempre analizar la pestaña Problems del editor después de hacer cambios o builds
+- Detectar errores de linting o compilación antes de continuar
+- Corregir errores inmediatamente cuando se detecten
+- **NUNCA decir que algo está "listo" sin verificar primero la consola del navegador**
+- Revisar la consola de desarrollo para errores de JavaScript, React, o cualquier otro error
+- Verificar que no hay errores de consola antes de confirmar que una funcionalidad está completa
+
+## Reutilización de Código
+
+- Siempre reutilizar funcionalidad existente en lugar de crear nuevo código para el mismo comportamiento
+- Aplicar el principio DRY (Don't Repeat Yourself)
+- Buscar componentes o funciones existentes antes de crear nuevas
+
+## Estilo de UI Consistente
+
+- Usar un concepto de estilo único en toda la aplicación
+- Aprovechar componentes que heredan de elementos intermedios
+- Evitar mezclar divs con estilos inline con celdas basadas en componentes
+- Mantener consistencia visual en toda la interfaz
+
+## Calendario
+
+- El calendario debe empezar las semanas en lunes, no en sábado
+- Los botones deben ser rectangulares y usar la fuente Segoe UI
+- Mantener un tamaño más pequeño y sobrio para los elementos de UI
+
+## Gestión de Versiones
+
+- **SIEMPRE** cambiar la versión en package.json antes de subir a Testing
+- Incrementar el número de versión según el tipo de cambio:
+  - PATCH (0.0.X): Correcciones de bugs
+  - MINOR (0.X.0): Nuevas funcionalidades
+  - MAJOR (X.0.0): Cambios que rompen compatibilidad
+- Hacer commit del cambio de versión antes del deploy
+- Mantener un registro de versiones para facilitar rollbacks
+
+## Guardarraíles contra regresiones (Aprobaciones)
+
+- Antes de commitear cambios en `ApprovalPage.jsx` o `TimesheetLines.jsx`:
+  - Verificar manualmente que en Aprobación las líneas `Pending` muestren checkbox (no icono) cuando `showResponsible=false` y que en Edición `showResponsible=true` muestre icono de revertir.
+  - Seleccionar una cabecera: deben marcarse automáticamente sólo las líneas de esa cabecera; al desmarcar, deben deseleccionarse.
+  - Usar el checkbox “Seleccionar todo” de líneas y comprobar que afecta únicamente a las líneas cargadas.
+  - F5 en Aprobación y Edición y repetir la prueba breve (smoke test) sin errores en consola.
+  - Si se toca la lógica de selección, incluir en el commit una nota “affects: approval-selection”.
+  - UI fija: Los botones “Aprobar Selección” y “Rechazar Selección” deben estar en la barra de `lines-header`, a la derecha, no abajo. El checkbox de seleccionar todo no lleva etiqueta de texto.

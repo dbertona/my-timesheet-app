@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Script para modificar la clave primaria de la tabla resource en Supabase
+# Cambia de solo 'code' a compuesta por 'code' y 'company_name'
+
+SUPABASE_URL="https://qfpswxjunoepznrpsltt.supabase.co"
+SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmcHN3eGp1bm9lcHpucnBzbHR0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg3MTA3OSwiZXhwIjoyMDY5NDQ3MDc5fQ.PxpfuFsfvpeEPHCEiWhRn0SD1WxngTAEppJ-65QTTOQ"
+
+echo "🔧 Modificando clave primaria de la tabla resource..."
+
+echo "⚠️  IMPORTANTE: Este script solo puede verificar las restricciones."
+echo "   Para modificar la clave primaria, debes usar el SQL Editor de Supabase:"
+echo "   https://supabase.com/dashboard/project/qfpswxjunoepznrpsltt/sql"
+echo ""
+echo "📋 Comandos SQL a ejecutar en el SQL Editor:"
+echo ""
+echo "-- Paso 1: Verificar restricciones existentes en la tabla resource"
+echo "SELECT conname AS constraint_name, contype AS constraint_type FROM pg_constraint WHERE conrelid = 'public.resource'::regclass;"
+echo ""
+echo "-- Paso 2: Verificar claves foráneas que dependen de resource"
+echo "SELECT conname AS constraint_name FROM pg_constraint WHERE confrelid = 'public.resource'::regclass;"
+echo ""
+echo "-- Paso 3: Eliminar claves foráneas dependientes (si las hay)"
+echo "-- Ejemplo: ALTER TABLE nombre_tabla DROP CONSTRAINT IF EXISTS nombre_constraint;"
+echo ""
+echo "-- Paso 4: Eliminar la clave primaria actual de resource"
+echo "ALTER TABLE resource DROP CONSTRAINT IF EXISTS resource_pkey;"
+echo ""
+echo "-- Paso 5: Añadir la nueva clave primaria compuesta"
+echo "ALTER TABLE resource ADD CONSTRAINT resource_pkey PRIMARY KEY (code, company_name);"
+echo ""
+echo "-- Paso 6: Recrear las claves foráneas (si las había)"
+echo "-- Ejemplo: ALTER TABLE nombre_tabla ADD CONSTRAINT nombre_constraint FOREIGN KEY (code, company_name) REFERENCES resource(code, company_name);"
+echo ""
+echo "-- Paso 7: Verificar la nueva estructura"
+echo "SELECT conname AS constraint_name, contype AS constraint_type FROM pg_constraint WHERE conrelid = 'public.resource'::regclass;"
+echo ""
+echo "🔍 Tablas que podrían tener claves foráneas hacia resource:"
+echo "   - resource_cost (resource_no)"
+echo "   - job_team (resource_no)"
+echo "   - timesheet (resource_code)"

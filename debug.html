@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Debug Timesheet</title>
+  </head>
+  <body>
+    <h1>Debug Timesheet</h1>
+    <div id="debug-info">
+      <p>Página cargada correctamente</p>
+      <p>JavaScript disponible: <span id="js-status">Verificando...</span></p>
+      <p>Crypto disponible: <span id="crypto-status">Verificando...</span></p>
+      <p>Fecha actual: <span id="current-date"></span></p>
+    </div>
+
+    <script>
+      // Verificar JavaScript
+      document.getElementById("js-status").textContent = "Sí";
+
+      // Verificar crypto
+      const cryptoAvailable =
+        typeof window !== "undefined" && window.crypto && window.crypto.subtle;
+      document.getElementById("crypto-status").textContent = cryptoAvailable
+        ? "Sí"
+        : "No";
+
+      // Mostrar fecha
+      document.getElementById("current-date").textContent =
+        new Date().toLocaleString();
+
+      console.log("Debug page loaded successfully");
+      console.log("Crypto available:", cryptoAvailable);
+    </script>
+  </body>
+</html>

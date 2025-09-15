@@ -1,0 +1,9 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+bash scripts/smoke-approval.sh || {
+  echo "\n💥 Pre-commit: falló el smoke de Aprobación. Revisa el mensaje arriba.";
+  exit 1;
+}
+
+echo "✅ Pre-commit: smoke de Aprobación pasó."

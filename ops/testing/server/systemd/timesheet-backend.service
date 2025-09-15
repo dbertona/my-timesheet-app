@@ -1,0 +1,37 @@
+[Unit]
+Description=My Timesheet backend (server.js)
+After=network.target
+
+[Service]
+Type=simple
+User=dbertona
+WorkingDirectory=/home/dbertona/timesheet
+EnvironmentFile=/etc/default/timesheet-backend
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+KillSignal=SIGINT
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
+
+[Unit]
+Description=My Timesheet backend (server.js)
+After=network.target
+
+[Service]
+Type=simple
+User=dbertona
+WorkingDirectory=/home/dbertona/timesheet
+EnvironmentFile=/etc/default/timesheet-backend
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+KillSignal=SIGINT
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
+
+

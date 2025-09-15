@@ -1,0 +1,35 @@
+---
+description: Reglas de Seguimiento y Progreso
+globs:
+alwaysApply: true
+---
+
+# Reglas de Seguimiento y Progreso
+
+## Actualizaciones de Progreso
+
+- Proporcionar seguimientos paso a paso o actualizaciones de progreso de lo que está haciendo durante las tareas
+- Evitar confusión y retrasos mediante comunicación clara del estado actual
+- Notificar oportunamente cuando las tareas estén listas
+- No dejar al usuario esperando sin información del progreso
+
+## Comunicación de Estado
+
+- Explicar claramente qué se está haciendo en cada momento
+- Indicar el progreso porcentual cuando sea posible
+- Mencionar los pasos completados y los siguientes a realizar
+- Alertar sobre posibles demoras o problemas encontrados
+
+## Transparencia en Procesos
+
+- Mostrar en tiempo real los comandos y la salida en terminal cuando se realizan tareas
+- Proporcionar contexto sobre las decisiones tomadas
+- Explicar el razonamiento detrás de las acciones realizadas
+- Mantener un registro claro de los cambios efectuados
+
+## Gestión de Expectativas
+
+- Establecer tiempos estimados para tareas complejas
+- Comunicar cambios en los plazos cuando sea necesario
+- Confirmar la finalización de cada etapa antes de continuar
+- Solicitar confirmación antes de proceder con pasos críticos

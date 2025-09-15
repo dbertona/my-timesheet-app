@@ -1,0 +1,28 @@
+---
+description: Reglas para manejo de traducciones en el proyecto
+globs: ["**/*.xlf", "**/*.jsx", "**/*.js"]
+alwaysApply: true
+---
+
+# Reglas de Traducciones
+
+## Proceso de Traducción
+
+- Siempre generar y actualizar las traducciones (XLIFF) para cualquier texto de UI nuevo o renombrado
+- Ejecutar Generate XLIFF después de cambios en textos de interfaz
+- Ejecutar Synchronize Translation Units para mantener consistencia
+- Traducir al español todos los textos nuevos
+
+## Textos de Interfaz
+
+- Todos los textos visibles al usuario deben estar traducidos
+- Usar constantes de traducción en lugar de texto hardcodeado
+- Mantener consistencia en la terminología utilizada
+- Verificar que las traducciones se aplican correctamente en la interfaz
+
+## Archivos de Traducción
+
+- Mantener actualizados los archivos .xlf
+- Seguir el formato estándar de XLIFF
+- Incluir contexto para los traductores cuando sea necesario
+- Revisar que no se pierdan traducciones existentes al actualizar
