@@ -6,4 +6,9 @@ bash scripts/smoke-approval.sh || {
   exit 1;
 }
 
+bash scripts/smoke-edit.sh || {
+  echo "\n💥 Pre-commit: falló el smoke de Edición. Revisa el mensaje arriba.";
+  exit 1;
+}
+
 echo "✅ Pre-commit: smoke de Aprobación pasó."

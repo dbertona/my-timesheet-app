@@ -370,8 +370,8 @@ export default function TimesheetLines({
   const isLineEditable = (line) => {
     // Las líneas de Factorial no son editables
     if (line.isFactorialLine) return false;
-    // Las líneas con estado "Pending" no son editables
-    if (line.status === "Pending") return false;
+    // Las líneas con estado "Approved" no son editables (regla de negocio)
+    if (line.status === "Approved") return false;
     return true;
   };
 
