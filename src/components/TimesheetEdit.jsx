@@ -1776,6 +1776,16 @@ function TimesheetEdit({ headerId }) {
     // 🆕 Solo procesar líneas si hay header y datos del hook
     if (!effectiveHeaderId || !linesHook.data) return;
 
+    // Debug: visibilidad por estados
+    try {
+      const byStatus = (linesHook.data || []).reduce((acc, l) => {
+        const s = l.status || "(null)";
+        acc[s] = (acc[s] || 0) + 1;
+        return acc;
+      }, {});
+      console.log("[TimesheetEdit] header:", effectiveHeaderId, "total:", (linesHook.data || []).length, "byStatus:", byStatus);
+    } catch {}
+
     // NO resetear hasUnsavedChanges si ya hay cambios pendientes
     const shouldPreserveChanges = hasUnsavedChanges;
 
