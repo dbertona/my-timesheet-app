@@ -1,7 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function BackToDashboard({ title = "Volver al Dashboard", compact = false }) {
+export default function BackToDashboard({
+  title = "Volver al Dashboard",
+  compact = false,
+}) {
   const navigate = useNavigate();
   return (
     <div

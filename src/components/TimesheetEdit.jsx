@@ -2711,7 +2711,7 @@ function TimesheetEdit({ headerId }) {
             style={{
               background: "transparent",
               border: "none",
-              color: "#000",
+              color: "#007E87",
               fontWeight: 700,
               fontSize: "22px",
               lineHeight: 1,
