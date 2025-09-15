@@ -21,4 +21,9 @@ bash scripts/smoke-styles.sh || {
   exit 1;
 }
 
+bash scripts/smoke-rejected-edit.sh || {
+  echo "\n💥 Pre-commit: falta manejo de líneas Rechazadas en Edición.";
+  exit 1;
+}
+
 echo "✅ Pre-commit: smoke de Aprobación pasó."
