@@ -16,4 +16,9 @@ bash scripts/smoke-dashboard.sh || {
   exit 1;
 }
 
+bash scripts/smoke-styles.sh || {
+  echo "\n💥 Pre-commit: títulos de página no usan clases comunes.";
+  exit 1;
+}
+
 echo "✅ Pre-commit: smoke de Aprobación pasó."

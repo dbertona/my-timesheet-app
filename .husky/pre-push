@@ -8,6 +8,7 @@ npm run test --silent || { echo "💥 Tests fallaron"; exit 1; }
 bash scripts/smoke-approval.sh || { echo "💥 Smoke Aprobación falló"; exit 1; }
 bash scripts/smoke-edit.sh || { echo "💥 Smoke Edición falló"; exit 1; }
 bash scripts/smoke-dashboard.sh || { echo "💥 Falta BackToDashboard"; exit 1; }
+bash scripts/smoke-styles.sh || { echo "💥 Títulos no usan clases comunes"; exit 1; }
 
 echo "✅ Pre-push OK"
 
