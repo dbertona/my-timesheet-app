@@ -453,9 +453,11 @@ export default function ApprovalPage() {
 
   return (
     <div className="approval-page">
-      <BackToDashboard label="Dashboard" title="Volver al Dashboard" />
       <div className="approval-header">
-        <h1>📋 Aprobación de Horas</h1>
+        <div className="approval-header-left">
+          <BackToDashboard title="Volver al Dashboard" />
+          <h1>📋 Aprobación de Horas</h1>
+        </div>
         <div className="approval-summary">
           📊 {totalHeaders} recursos con {totalLines} líneas pendientes
         </div>
