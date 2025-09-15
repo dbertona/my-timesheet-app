@@ -1,0 +1,11 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔎 Ejecutando validaciones antes de push..."
+
+npm run lint || { echo "💥 Lint falló"; exit 1; }
+npm run test --silent || { echo "💥 Tests fallaron"; exit 1; }
+bash scripts/smoke-approval.sh || { echo "💥 Smoke Aprobación falló"; exit 1; }
+
+echo "✅ Pre-push OK"
+
