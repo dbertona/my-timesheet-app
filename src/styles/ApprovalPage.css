@@ -25,9 +25,10 @@
 
 .approval-header h1 {
   color: #007e87;
-  margin-bottom: 4px;
+  margin: 0; /* Alinear verticalmente con el botón */
   font-size: 1.25rem;
   font-weight: 600;
+  line-height: 36px; /* Igual a la altura del botón BackToDashboard */
 }
 
 .approval-summary {
