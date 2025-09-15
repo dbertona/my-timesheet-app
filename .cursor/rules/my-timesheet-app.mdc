@@ -20,7 +20,7 @@ alwaysApply: true
 - Usar siempre clases tipográficas comunes, no estilos inline:
   - `ts-page-title` para títulos `<h1>`.
   - `ts-page-title--link` cuando el título es un botón (p. ej., Edición).
- - Hoja de estilos: `src/styles/common.css`.
+- Hoja de estilos: `src/styles/common.css`.
 
 ## 2. Workflow de desarrollo
 

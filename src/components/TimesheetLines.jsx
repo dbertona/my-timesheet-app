@@ -614,6 +614,74 @@ export default function TimesheetLines({
                       />
                     </svg>
                   </div>
+                ) : line.status === "Rejected" && showResponsible ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "4px",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s ease",
+                    }}
+                    title={
+                      line.rejection_cause
+                        ? `Rechazada: ${line.rejection_cause}`
+                        : "Rechazada"
+                    }
+                    onClick={async () => {
+                      try {
+                        const ok = confirm(
+                          "¿Volver a abrir esta línea rechazada?"
+                        );
+                        if (!ok) return;
+                        const { error } = await supabaseClient
+                          .from("timesheet")
+                          .update({ status: "Open" })
+                          .eq("id", line.id);
+                        if (error) throw error;
+                        if (setLines) {
+                          setLines((prev) =>
+                            (prev || []).map((l) =>
+                              l.id === line.id ? { ...l, status: "Open" } : l
+                            )
+                          );
+                        }
+                        if (effectiveHeaderId) {
+                          queryClient.invalidateQueries({
+                            queryKey: ["lines", effectiveHeaderId],
+                          });
+                        }
+                      } catch (err) {
+                        console.error("Error reabriendo línea:", err);
+                        alert("No se pudo reabrir la línea");
+                      }
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#FCE8E8";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                    }}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{ color: "#EF4444" }}
+                    >
+                      <path
+                        d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                      <path d="M15 9L9 15" stroke="currentColor" strokeWidth="2" />
+                      <path d="M9 9L15 15" stroke="currentColor" strokeWidth="2" />
+                    </svg>
+                  </div>
                 ) : line.status === "Approved" ? (
                   <div
                     style={{
