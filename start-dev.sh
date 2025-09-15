@@ -1,38 +1,33 @@
 #!/bin/bash
 
-set -euo pipefail
-
+# Script para iniciar automáticamente el servidor de desarrollo
 echo "🚀 Iniciando servidor de desarrollo React..."
 
-PORT=5173
-PID_FILE="/tmp/vite-dev.pid"
-LOG_FILE="/tmp/vite-dev.log"
-
-# ¿Ya está escuchando el puerto?
-if lsof -nP -iTCP:${PORT} -sTCP:LISTEN -t >/dev/null ; then
-  echo "✅ Servidor ya está ejecutándose en puerto ${PORT}"
-  echo "🌐 Abre http://localhost:${PORT} en tu navegador"
-  exit 0
-fi
-
-echo "📦 Instalando dependencias si es necesario..."
-npm install
-
-echo "🔥 Iniciando servidor Vite en segundo plano..."
-nohup npm run dev -- --port ${PORT} --strictPort > "${LOG_FILE}" 2>&1 &
-VITE_PID=$!
-echo ${VITE_PID} > "${PID_FILE}"
-disown ${VITE_PID} || true
-
-sleep 2
-
-if lsof -nP -iTCP:${PORT} -sTCP:LISTEN -t >/dev/null ; then
-  echo "✅ Servidor iniciado exitosamente! PID: ${VITE_PID}"
-  echo "🌐 Abre http://localhost:${PORT} en tu navegador"
-  echo "📝 Log: ${LOG_FILE}"
-  echo "🛑 Para detener: pkill -f 'vite' (o kill $(cat ${PID_FILE}))"
+# Verificar si ya hay un proceso ejecutándose en el puerto 5173
+if lsof -Pi :5173 -sTCP:LISTEN -t >/dev/null ; then
+    echo "✅ Servidor ya está ejecutándose en puerto 5173"
+    echo "🌐 Abre http://localhost:5173 en tu navegador"
 else
-  echo "❌ Error al iniciar el servidor. Revisa el log: ${LOG_FILE}"
-  exit 1
+    echo "📦 Instalando dependencias si es necesario..."
+    npm install
+
+    echo "🔥 Iniciando servidor Vite..."
+    npm run dev &
+
+    # Esperar un momento para que el servidor se inicie
+    sleep 3
+
+    # Verificar si el servidor está funcionando
+    if lsof -Pi :5173 -sTCP:LISTEN -t >/dev/null ; then
+        echo "✅ Servidor iniciado exitosamente!"
+        echo "🌐 Abre http://localhost:5173 en tu navegador"
+        echo "📱 El servidor se ejecuta en segundo plano"
+        echo "🛑 Para detener: pkill -f 'vite'"
+    else
+        echo "❌ Error al iniciar el servidor"
+        exit 1
+    fi
 fi
+
+
 

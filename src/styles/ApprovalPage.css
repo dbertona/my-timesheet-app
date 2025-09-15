@@ -12,25 +12,13 @@
 
 .approval-header {
   margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.approval-header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px; /* igual que edición */
 }
 
 .approval-header h1 {
   color: #007e87;
-  margin: 0;
+  margin-bottom: 4px;
   font-size: 1.25rem;
   font-weight: 600;
-  line-height: 1; /* Evitar exceso de altura que desalineaba */
-  position: relative;
-  top: -1px; /* Microajuste visual para centrar con el botón */
 }
 
 .approval-summary {

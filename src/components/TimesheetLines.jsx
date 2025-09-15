@@ -68,10 +68,8 @@ export default function TimesheetLines({
           l.job_no || l.job_task_no || l.description || l.work_type || l.date
         );
         const qty = Number(l.quantity) || 0;
-        const forceVisibleByStatus = l.status === "Rejected"; // No ocultar rechazadas
         // Mostrar siempre las temporales; ocultar las totalmente vacías del backend
-        // pero mantener visibles las líneas Rechazadas para permitir reabrir
-        return isTmp || forceVisibleByStatus || hasData || qty !== 0;
+        return isTmp || hasData || qty !== 0;
       })
     : [];
   const tableRef = useRef(null);
@@ -372,8 +370,8 @@ export default function TimesheetLines({
   const isLineEditable = (line) => {
     // Las líneas de Factorial no son editables
     if (line.isFactorialLine) return false;
-    // Las líneas con estado "Approved" no son editables (regla de negocio)
-    if (line.status === "Approved") return false;
+    // Las líneas con estado "Pending" no son editables
+    if (line.status === "Pending") return false;
     return true;
   };
 
@@ -453,11 +451,7 @@ export default function TimesheetLines({
                     onChange={(e) =>
                       handleLineSelection(line.id, e.target.checked)
                     }
-                    style={{
-                      width: "16px",
-                      height: "16px",
-                      cursor: "pointer",
-                    }}
+                    style={{ width: "16px", height: "16px", cursor: "pointer" }}
                   />
                 ) : line.status === "Pending" && showResponsible ? (
                   <div
@@ -611,79 +605,6 @@ export default function TimesheetLines({
                       />
                       <path
                         d="M15 17L17 19L21 15"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      />
-                    </svg>
-                  </div>
-                ) : line.status === "Rejected" && showResponsible ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "4px",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      transition: "background-color 0.2s ease",
-                    }}
-                    title={
-                      line.rejection_cause
-                        ? `Rechazada: ${line.rejection_cause}`
-                        : "Rechazada"
-                    }
-                    onClick={async () => {
-                      try {
-                        // Confirmación mediante modal estándar pendiente de integrar; por ahora proceder directamente
-                        const { error } = await supabaseClient
-                          .from("timesheet")
-                          .update({ status: "Open" })
-                          .eq("id", line.id);
-                        if (error) throw error;
-                        if (setLines) {
-                          setLines((prev) =>
-                            (prev || []).map((l) =>
-                              l.id === line.id ? { ...l, status: "Open" } : l
-                            )
-                          );
-                        }
-                        if (effectiveHeaderId) {
-                          queryClient.invalidateQueries({
-                            queryKey: ["lines", effectiveHeaderId],
-                          });
-                        }
-                      } catch (err) {
-                        console.error("Error reabriendo línea:", err);
-                        alert("No se pudo reabrir la línea");
-                      }
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#FCE8E8";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent";
-                    }}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      style={{ color: "#EF4444" }}
-                    >
-                      <path
-                        d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      />
-                      <path
-                        d="M15 9L9 15"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      />
-                      <path
-                        d="M9 9L15 15"
                         stroke="currentColor"
                         strokeWidth="2"
                       />

@@ -18,7 +18,6 @@ import useTimesheetEdit from "../hooks/useTimesheetEdit";
 import { useAllJobs } from "../hooks/useTimesheetQueries";
 import TimesheetHeader from "./TimesheetHeader";
 import TimesheetLines from "./TimesheetLines";
-import "../styles/common.css";
 import CalendarPanel from "./timesheet/CalendarPanel";
 import BcModal from "./ui/BcModal";
 import ValidationErrorsModal from "./ui/ValidationErrorsModal";
@@ -1776,23 +1775,6 @@ function TimesheetEdit({ headerId }) {
     // 🆕 Solo procesar líneas si hay header y datos del hook
     if (!effectiveHeaderId || !linesHook.data) return;
 
-    // Debug: visibilidad por estados
-    try {
-      const byStatus = (linesHook.data || []).reduce((acc, l) => {
-        const s = l.status || "(null)";
-        acc[s] = (acc[s] || 0) + 1;
-        return acc;
-      }, {});
-      console.log(
-        "[TimesheetEdit] header:",
-        effectiveHeaderId,
-        "total:",
-        (linesHook.data || []).length,
-        "byStatus:",
-        byStatus
-      );
-    } catch {}
-
     // NO resetear hasUnsavedChanges si ya hay cambios pendientes
     const shouldPreserveChanges = hasUnsavedChanges;
 
@@ -1801,32 +1783,14 @@ function TimesheetEdit({ headerId }) {
       ...line,
       date: toDisplayDate(line.date),
     }));
-    try {
-      const debugMap = (linesFormatted || []).map((l) => ({
-        id: l.id,
-        date: l.date,
-        status: l.status,
-      }));
-      console.log("[TimesheetEdit] pre-filter ids:", debugMap);
-    } catch {}
     // Filtrar filas totalmente vacías provenientes del backend (sin datos y cantidad 0)
-    // Mantener SIEMPRE visibles las Rechazadas para poder reabrir/ver motivo
     const filtered = linesFormatted.filter((l) => {
       const hasData = Boolean(
         l.job_no || l.job_task_no || l.description || l.work_type || l.date
       );
       const qty = Number(l.quantity) || 0;
-      const forceVisibleByStatus = l.status === "Rejected";
-      return forceVisibleByStatus || hasData || qty !== 0;
+      return hasData || qty !== 0; // mantener solo si tiene datos o cantidad distinta de 0
     });
-    try {
-      const idsAll = new Set((linesFormatted || []).map((l) => l.id));
-      const idsKept = new Set((filtered || []).map((l) => l.id));
-      const removedIds = Array.from(idsAll).filter((id) => !idsKept.has(id));
-      if (removedIds.length) {
-        console.log("[TimesheetEdit] removedIds tras filtro:", removedIds);
-      }
-    } catch {}
 
     // 🆕 Conservar líneas temporales locales (tmp-) cuando actualizamos desde servidor
     const localTmp = (Array.isArray(lines) ? lines : []).filter((l) =>
@@ -2744,7 +2708,16 @@ function TimesheetEdit({ headerId }) {
             type="button"
             onClick={() => navigate("/")}
             aria-label="Ir a lista de parte de trabajo"
-            className="ts-page-title--link"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#000",
+              fontWeight: 700,
+              fontSize: "22px",
+              lineHeight: 1,
+              cursor: "pointer",
+              padding: 0,
+            }}
           >
             {header ? "Editar Parte de Trabajo" : "Nuevo Parte de Trabajo"}
           </button>
@@ -3152,7 +3125,6 @@ function TimesheetEdit({ headerId }) {
               onDuplicateLines={handleDuplicateLines}
               onDeleteLines={handleDeleteLines}
               addEmptyLine={addEmptyLine} // 🆕 Pasar función para agregar línea vacía
-              showResponsible={true}
             />
           </div>
         </div>

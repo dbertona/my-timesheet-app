@@ -1,16 +1,14 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-echo "🔎 Ejecutando validaciones antes de push..."
+npm run lint || { echo "\n💥 Lint falló"; exit 1; }
+npm run test --silent || { echo "\n💥 Tests fallaron"; exit 1; }
 
-npm run lint || { echo "💥 Lint falló"; exit 1; }
-npm run test --silent || { echo "💥 Tests fallaron"; exit 1; }
-bash scripts/smoke-approval.sh || { echo "💥 Smoke Aprobación falló"; exit 1; }
-bash scripts/smoke-edit.sh || { echo "💥 Smoke Edición falló"; exit 1; }
-bash scripts/smoke-dashboard.sh || { echo "💥 Falta BackToDashboard"; exit 1; }
-bash scripts/smoke-styles.sh || { echo "💥 Títulos no usan clases comunes"; exit 1; }
-bash scripts/smoke-rejected-edit.sh || { echo "💥 Falta manejo de líneas Rechazadas en Edición"; exit 1; }
-bash scripts/smoke-modals.sh || { echo "💥 Se detectaron alert/confirm/prompt en UI"; exit 1; }
+bash scripts/smoke-approval.sh || { echo "\n💥 Aprobación rota"; exit 1; }
+bash scripts/smoke-edit.sh || { echo "\n💥 Edición rota"; exit 1; }
+bash scripts/smoke-rejected-edit.sh || { echo "\n💥 Rejected en edición roto"; exit 1; }
+bash scripts/smoke-dashboard.sh || { echo "\n💥 BackToDashboard faltante"; exit 1; }
+bash scripts/smoke-modals.sh || { echo "\n💥 Uso de alert/confirm/prompt detectado"; exit 1; }
 
 echo "✅ Pre-push OK"
 

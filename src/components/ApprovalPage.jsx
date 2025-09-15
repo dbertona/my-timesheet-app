@@ -4,9 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMsal } from "@azure/msal-react";
 import { supabaseClient } from "../supabaseClient";
 import TimesheetLines from "./TimesheetLines";
-import BackToDashboard from "./ui/BackToDashboard";
 import "../styles/ApprovalPage.css";
-import "../styles/common.css";
 import { formatDate } from "../utils/dateHelpers";
 
 export default function ApprovalPage() {
@@ -23,12 +21,9 @@ export default function ApprovalPage() {
 
   // Estado para selección de headers
   const [selectedHeaders, setSelectedHeaders] = useState([]);
-  const [autoSelectedHeadersDone, setAutoSelectedHeadersDone] = useState(false);
 
   // Estado para selección de líneas
   const [selectedLines, setSelectedLines] = useState([]);
-  // Líneas excluidas manualmente aunque su cabecera esté seleccionada
-  const [excludedLines, setExcludedLines] = useState([]);
 
   // Estado para loading
   const [isProcessing, setIsProcessing] = useState(false);
@@ -283,101 +278,38 @@ export default function ApprovalPage() {
     },
   });
 
-  // Seleccionar todos los headers por defecto (solo una vez tras cargar datos)
+  // Seleccionar todos los headers por defecto
   useEffect(() => {
-    if (
-      !autoSelectedHeadersDone &&
-      Array.isArray(headersData) &&
-      headersData.length > 0
-    ) {
+    if (headersData && selectedHeaders.length === 0) {
       setSelectedHeaders(headersData.map((h) => h.id));
-      setAutoSelectedHeadersDone(true);
     }
-  }, [headersData, autoSelectedHeadersDone]);
+  }, [headersData, selectedHeaders.length]);
 
   // Manejar selección de headers
-  const handleHeaderSelection = useCallback(
-    (headerId, isSelected) => {
-      setSelectedHeaders((prev) =>
-        isSelected
-          ? [...new Set([...prev, headerId])]
-          : prev.filter((id) => id !== headerId)
-      );
-
-      // Al deseleccionar una cabecera, limpiar exclusiones de sus líneas
-      if (!isSelected && Array.isArray(linesData)) {
-        const headerLineIds = (linesData || [])
-          .filter((l) => l.header_id === headerId)
-          .map((l) => l.id);
-        setExcludedLines((prev) =>
-          prev.filter((id) => !headerLineIds.includes(id))
-        );
-      }
-    },
-    [linesData]
-  );
-
-  // Sincronizar selección de líneas cuando cambian headers seleccionados o llegan nuevas líneas
-  useEffect(() => {
-    if (!selectedHeaders || selectedHeaders.length === 0) {
-      setSelectedLines([]);
-      return;
-    }
-    const baseIds = (linesData || [])
-      .filter((l) => selectedHeaders.includes(l.header_id))
-      .map((l) => l.id);
-    const ids = baseIds.filter((id) => !excludedLines.includes(id));
-    setSelectedLines(ids);
-  }, [selectedHeaders, linesData, excludedLines]);
+  const handleHeaderSelection = useCallback((headerId, isSelected) => {
+    setSelectedHeaders((prev) =>
+      isSelected ? [...prev, headerId] : prev.filter((id) => id !== headerId)
+    );
+    // Limpiar selección de líneas cuando cambian los headers
+    setSelectedLines([]);
+  }, []);
 
   // Manejar selección de todas las líneas
   const handleSelectAllLines = useCallback(
     (selectAll) => {
-      const baseIds = (linesData || [])
-        .filter((l) => selectedHeaders.includes(l.header_id))
-        .map((l) => l.id);
-      if (selectAll) {
-        setExcludedLines([]);
-        setSelectedLines(baseIds);
-      } else {
-        setExcludedLines(baseIds);
-        setSelectedLines([]);
-      }
+      setSelectedLines(
+        selectAll ? (linesData || []).map((line) => line.id) : []
+      );
     },
-    [linesData, selectedHeaders]
+    [linesData]
   );
 
-  // Manejar selección de líneas recibiendo el array completo desde el hijo
-  const handleLineSelection = useCallback(
-    (lineIdOrArray, isSelected) => {
-      // Si el hijo envía el array completo (TimesheetLines onLineSelectionChange), sincronizamos directamente
-      if (Array.isArray(lineIdOrArray)) {
-        const newSelection = lineIdOrArray;
-        const baseIds = (linesData || [])
-          .filter((l) => selectedHeaders.includes(l.header_id))
-          .map((l) => l.id);
-        const newExcluded = baseIds.filter((id) => !newSelection.includes(id));
-        setExcludedLines(newExcluded);
-        setSelectedLines(newSelection);
-        return;
-      }
-
-      // Modo compatibilidad: (lineId, isSelected)
-      const lineId = lineIdOrArray;
-      if (isSelected) {
-        setExcludedLines((prev) => prev.filter((id) => id !== lineId));
-        setSelectedLines((prev) =>
-          prev.includes(lineId) ? prev : [...prev, lineId]
-        );
-      } else {
-        setExcludedLines((prev) =>
-          prev.includes(lineId) ? prev : [...prev, lineId]
-        );
-        setSelectedLines((prev) => prev.filter((id) => id !== lineId));
-      }
-    },
-    [linesData, selectedHeaders]
-  );
+  // Manejar selección individual de líneas
+  const handleLineSelection = useCallback((lineId, isSelected) => {
+    setSelectedLines((prev) =>
+      isSelected ? [...prev, lineId] : prev.filter((id) => id !== lineId)
+    );
+  }, []);
 
   // Aprobar líneas seleccionadas
   const handleApproveSelection = useCallback(async () => {
@@ -455,10 +387,7 @@ export default function ApprovalPage() {
   return (
     <div className="approval-page">
       <div className="approval-header">
-        <div className="approval-header-left">
-          <BackToDashboard title="Volver al Dashboard" compact={true} />
-          <h1 className="ts-page-title">Aprobación de Horas</h1>
-        </div>
+        <h1>📋 Aprobación de Horas</h1>
         <div className="approval-summary">
           📊 {totalHeaders} recursos con {totalLines} líneas pendientes
         </div>
@@ -621,36 +550,17 @@ export default function ApprovalPage() {
         <div className="lines-header">
           <h2>📝 Líneas Pendientes ({totalLines})</h2>
           <div className="lines-actions">
-            <input
-              type="checkbox"
-              aria-label="Seleccionar todas las líneas visibles"
-              checked={selectedLinesCount === totalLines && totalLines > 0}
-              onChange={(e) => handleSelectAllLines(e.target.checked)}
-              style={{ marginRight: 8 }}
-            />
+            <label>
+              <input
+                type="checkbox"
+                checked={selectedLinesCount === totalLines && totalLines > 0}
+                onChange={(e) => handleSelectAllLines(e.target.checked)}
+              />
+              Seleccionar todo
+            </label>
             <span className="selected-count">
               {selectedLinesCount} de {totalLines} seleccionadas
             </span>
-            <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
-              <button
-                className="ts-btn ts-btn--primary"
-                onClick={handleApproveSelection}
-                disabled={selectedLinesCount === 0 || isProcessing}
-              >
-                {isProcessing
-                  ? "Procesando..."
-                  : `✅ Aprobar Selección (${selectedLinesCount})`}
-              </button>
-              <button
-                className="ts-btn ts-btn--danger"
-                onClick={handleRejectSelection}
-                disabled={selectedLinesCount === 0 || isProcessing}
-              >
-                {isProcessing
-                  ? "Procesando..."
-                  : `❌ Rechazar Selección (${selectedLinesCount})`}
-              </button>
-            </div>
           </div>
         </div>
 
@@ -658,7 +568,10 @@ export default function ApprovalPage() {
           <div className="lines-loading">Cargando líneas...</div>
         ) : (
           <TimesheetLines
-            lines={linesData || []}
+            lines={(linesData || []).map((l) => ({
+              ...l,
+              isFactorialLine: true,
+            }))}
             selectedLines={selectedLines}
             onLineSelectionChange={handleLineSelection}
             // Pasar props necesarias para que funcione
@@ -708,7 +621,27 @@ export default function ApprovalPage() {
         )}
       </div>
 
-      {/* Botones de Acción movidos a la cabecera de líneas */}
+      {/* Botones de Acción */}
+      <div className="approval-actions">
+        <button
+          className="ts-btn ts-btn--primary"
+          onClick={handleApproveSelection}
+          disabled={selectedLinesCount === 0 || isProcessing}
+        >
+          {isProcessing
+            ? "Procesando..."
+            : `✅ Aprobar Selección (${selectedLinesCount})`}
+        </button>
+        <button
+          className="ts-btn ts-btn--danger"
+          onClick={handleRejectSelection}
+          disabled={selectedLinesCount === 0 || isProcessing}
+        >
+          {isProcessing
+            ? "Procesando..."
+            : `❌ Rechazar Selección (${selectedLinesCount})`}
+        </button>
+      </div>
     </div>
   );
 }

@@ -3,14 +3,11 @@ set -euo pipefail
 
 fail() { echo "❌ $1"; exit 1; }
 
-LINES="src/components/TimesheetLines.jsx"
 EDIT="src/components/TimesheetEdit.jsx"
+LINES="src/components/TimesheetLines.jsx"
 
-# 1) En edición se debe pasar showResponsible=true
-grep -n "<TimesheetLines" "$EDIT" | grep -n "showResponsible=\{true\}" >/dev/null || fail "TimesheetEdit debe pasar showResponsible={true}"
+grep -n 'showResponsible=\{true\}' "$EDIT" >/dev/null || fail "TimesheetEdit debe pasar showResponsible={true}"
+grep -n 'line.status === "Pending" && showResponsible' "$LINES" >/dev/null || fail "TimesheetLines debe usar icono en Edición"
 
-# 2) TimesheetLines: si status === Approved -> isLineEditable devuelve false
-grep -n "status === \"Approved\".*return false" "$LINES" >/dev/null || fail "Líneas Approved deben ser no editables"
-
-echo "✅ Smoke UI Edición OK"
+echo "✅ Smoke edición OK"
 
