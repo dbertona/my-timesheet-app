@@ -52,6 +52,66 @@ describe('normalizeDisplayDate', () => {
     vi.clearAllMocks();
   });
 
-  // TODO: GitHub Copilot, generate test cases here
+  it('should return null for empty or null input', () => {
+    expect(normalizeDisplayDate(null)).toBe(null);
+    expect(normalizeDisplayDate('')).toBe(null);
+    expect(normalizeDisplayDate('   ')).toBe(null);
+  });
 
+  it('should handle single digit day input', () => {
+    expect(normalizeDisplayDate('5')).toBe('05/09/2024');
+    expect(normalizeDisplayDate('1')).toBe('01/09/2024');
+    expect(normalizeDisplayDate('9')).toBe('09/09/2024');
+  });
+
+  it('should handle double digit day input', () => {
+    expect(normalizeDisplayDate('15')).toBe('15/09/2024');
+    expect(normalizeDisplayDate('28')).toBe('28/09/2024');
+    expect(normalizeDisplayDate('31')).toBe('30/09/2024'); // September has only 30 days
+  });
+
+  it('should handle day input exceeding month limits', () => {
+    expect(normalizeDisplayDate('32')).toBe('30/09/2024'); // Max day for September
+    expect(normalizeDisplayDate('0')).toBe('01/09/2024'); // Min day is 1
+    expect(normalizeDisplayDate('99')).toBe('30/09/2024'); // Should cap at month max
+  });
+
+  it('should handle dd/MM format', () => {
+    expect(normalizeDisplayDate('15/3')).toBe('15/03/2024');
+    expect(normalizeDisplayDate('5/12')).toBe('05/12/2024');
+    expect(normalizeDisplayDate('28/2')).toBe('28/02/2024');
+  });
+
+  it('should handle dd/MM format with double digits', () => {
+    expect(normalizeDisplayDate('15/03')).toBe('15/03/2024');
+    expect(normalizeDisplayDate('25/12')).toBe('25/12/2024');
+    expect(normalizeDisplayDate('01/01')).toBe('01/01/2024');
+  });
+
+  it('should return full date format unchanged', () => {
+    expect(normalizeDisplayDate('15/03/2023')).toBe('15/03/2023');
+    expect(normalizeDisplayDate('01/12/2024')).toBe('01/12/2024');
+    expect(normalizeDisplayDate('28/02/2025')).toBe('28/02/2025');
+  });
+
+  it('should return null for invalid formats', () => {
+    expect(normalizeDisplayDate('abc')).toBe(null);
+    expect(normalizeDisplayDate('15/13/2024')).toBe(null); // Invalid month
+    expect(normalizeDisplayDate('15-03-2024')).toBe(null); // Wrong separator
+    expect(normalizeDisplayDate('15/3/24')).toBe(null); // Wrong year format
+  });
+
+  it('should handle whitespace correctly', () => {
+    expect(normalizeDisplayDate('  15  ')).toBe('15/09/2024');
+    expect(normalizeDisplayDate(' 15/3 ')).toBe('15/03/2024');
+    expect(normalizeDisplayDate('  15/03/2024  ')).toBe('15/03/2024');
+  });
+
+  it('should call formatDate with correct Date objects', () => {
+    normalizeDisplayDate('15');
+    expect(formatDate).toHaveBeenCalledWith(new Date(2024, 8, 15)); // September 15, 2024
+    
+    normalizeDisplayDate('25/12');
+    expect(formatDate).toHaveBeenCalledWith(new Date(2024, 11, 25)); // December 25, 2024
+  });
 });
