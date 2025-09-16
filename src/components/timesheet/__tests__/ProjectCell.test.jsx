@@ -1,5 +1,5 @@
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ProjectCell from '../ProjectCell';
 
 // Mock dependencies
@@ -89,7 +89,7 @@ describe('ProjectCell', () => {
 
   it('should render input field correctly', () => {
     render(<ProjectCell {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     expect(input).toBeInTheDocument();
     expect(input).toHaveClass('ts-input', 'pr-icon');
@@ -97,16 +97,16 @@ describe('ProjectCell', () => {
 
   it('should handle input changes and clear field errors', () => {
     render(<ProjectCell {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'PROJ', name: 'job_no' } });
 
     // Check that handleInputChange was called at least once
     expect(mockHandlers.handleInputChange).toHaveBeenCalled();
-    
+
     // Check that clearFieldError was called for job_no
     expect(mockHandlers.clearFieldError).toHaveBeenCalledWith('line-1', 'job_no');
-    
+
     // Check that task field was cleared as well (component behavior)
     expect(mockHandlers.handleInputChange).toHaveBeenCalledWith('line-1', {
       target: { name: 'job_task_no', value: '' }
@@ -115,14 +115,14 @@ describe('ProjectCell', () => {
 
   it('should autocomplete job on Enter key press', () => {
     mockJobsState.findJob.mockReturnValue({ no: 'PROJ001', description: 'Project Alpha' });
-    
+
     const propsWithData = {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: 'PROJ', job_task_no: '' } }
     };
-    
+
     render(<ProjectCell {...propsWithData} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'Enter' });
 
@@ -135,14 +135,14 @@ describe('ProjectCell', () => {
 
   it('should clear task when project changes', () => {
     mockJobsState.findJob.mockReturnValue({ no: 'PROJ001', description: 'Project Alpha' });
-    
+
     const propsWithData = {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: 'PROJ', job_task_no: 'TASK001' } }
     };
-    
+
     render(<ProjectCell {...propsWithData} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'Enter' });
 
@@ -155,14 +155,14 @@ describe('ProjectCell', () => {
 
   it('should handle Tab key navigation', () => {
     mockJobsState.findJob.mockReturnValue({ no: 'PROJ002', description: 'Project Beta' });
-    
+
     const propsWithData = {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: 'PROJ002', job_task_no: '' } }
     };
-    
+
     render(<ProjectCell {...propsWithData} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'Tab' });
 
@@ -176,9 +176,9 @@ describe('ProjectCell', () => {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: '', job_task_no: '' } }
     };
-    
+
     render(<ProjectCell {...propsWithEmpty} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'Enter' });
 
@@ -190,7 +190,7 @@ describe('ProjectCell', () => {
 
   it('should handle arrow key navigation', () => {
     render(<ProjectCell {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'ArrowDown' });
 
@@ -201,14 +201,14 @@ describe('ProjectCell', () => {
 
   it('should set field error for invalid job', () => {
     mockJobsState.findJob.mockReturnValue(null); // Job not found
-    
+
     const propsWithData = {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: 'INVALID', job_task_no: '' } }
     };
-    
+
     render(<ProjectCell {...propsWithData} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.blur(input);
 
@@ -221,23 +221,23 @@ describe('ProjectCell', () => {
   it('should not be editable when isEditable is false', () => {
     const readOnlyProps = { ...defaultProps, isEditable: false };
     render(<ProjectCell {...readOnlyProps} />);
-    
+
     // When not editable, component renders a readonly div instead of input
     const cell = screen.getByRole('cell');
     expect(cell).toBeInTheDocument();
-    
+
     // Should not find any textbox when readonly
     const inputs = screen.queryAllByRole('textbox');
     expect(inputs).toHaveLength(0);
   });
 
   it('should display error styling when error prop is provided', () => {
-    const errorProps = { 
-      ...defaultProps, 
-      error: 'Campo requerido' 
+    const errorProps = {
+      ...defaultProps,
+      error: 'Campo requerido'
     };
     render(<ProjectCell {...errorProps} />);
-    
+
     const input = screen.getByRole('textbox');
     // Component doesn't add error class directly to input, error is handled differently
     expect(input).toBeInTheDocument();
@@ -246,7 +246,7 @@ describe('ProjectCell', () => {
 
   it('should handle F8 key for special navigation', () => {
     render(<ProjectCell {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'F8' });
 
