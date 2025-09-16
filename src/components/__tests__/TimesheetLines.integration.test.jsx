@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import TimesheetLines from '../TimesheetLines';
 
 // Mock icons mínimamente
@@ -97,7 +97,7 @@ describe('TimesheetLines integration - React Query loading/error and Supabase er
   it('handles Supabase error on reopen rejected line gracefully', async () => {
     const rejected = [{ ...baseProps.lines[0], status: 'Rejected', rejection_cause: 'Invalid project' }];
     render(
-      <TimesheetLines {...baseProps} lines={rejected} showResponsible={true} />, 
+      <TimesheetLines {...baseProps} lines={rejected} showResponsible={true} />,
       { wrapper: createWrapper() }
     );
 
