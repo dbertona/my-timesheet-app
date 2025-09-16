@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { formatDate } from '../../../utils/dateHelpers';
 
 // Mock the formatDate function
@@ -23,7 +23,7 @@ const normalizeDisplayDate = (raw) => {
 
   if (!raw) return null;
   const trimmed = String(raw).trim();
-  
+
   // Solo día → completar con mes/año efectivos
   if (/^\d{1,2}$/.test(trimmed)) {
     const { year, month } = getEffectiveMonthYear();
@@ -33,7 +33,7 @@ const normalizeDisplayDate = (raw) => {
     const d = new Date(year, month, day);
     return formatDate(d);
   }
-  
+
   // dd/MM o dd/M → completar año
   if (/^\d{1,2}\/\d{1,2}$/.test(trimmed)) {
     const [dd, mm] = trimmed.split("/");
@@ -41,7 +41,7 @@ const normalizeDisplayDate = (raw) => {
     const d = new Date(year, parseInt(mm, 10) - 1, parseInt(dd, 10));
     return formatDate(d);
   }
-  
+
   // Si ya viene dd/MM/yyyy, devolver tal cual
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) return trimmed;
   return null;
@@ -110,7 +110,7 @@ describe('normalizeDisplayDate', () => {
   it('should call formatDate with correct Date objects', () => {
     normalizeDisplayDate('15');
     expect(formatDate).toHaveBeenCalledWith(new Date(2024, 8, 15)); // September 15, 2024
-    
+
     normalizeDisplayDate('25/12');
     expect(formatDate).toHaveBeenCalledWith(new Date(2024, 11, 25)); // December 25, 2024
   });
