@@ -75,7 +75,7 @@ function BackToDashboard({ compact = false }) {
 
 export default BackToDashboard;
 
-importmuy bien no React, { useState } from "react";
+importmuy bien no lo React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function BackToDashboard({ compact = false }) {
