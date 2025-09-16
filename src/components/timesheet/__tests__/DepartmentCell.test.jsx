@@ -59,11 +59,10 @@ describe('DepartmentCell', () => {
     };
     const { container } = render(<DepartmentCell {...props} />);
     const td = container.querySelector('td');
-    expect(td).toHaveStyle({
-      width: '150px',
-      backgroundColor: 'red',
-      textAlign: 'center',
-    });
+    // Check individual styles since the component applies multiple styles
+    expect(td.style.width).toBe('150px');
+    expect(td.style.backgroundColor).toBe('red');
+    expect(td.style.textAlign).toBe('center');
   });
 
   it('has correct data attributes', () => {
