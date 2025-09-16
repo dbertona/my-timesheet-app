@@ -2703,7 +2703,7 @@ function TimesheetEdit({ headerId }) {
         <div
           ref={headerBarRef}
           className="ts-header-bar"
-          style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}
+          style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 12 }}
         >
           <BackToDashboard compact={true} />
           <h1
