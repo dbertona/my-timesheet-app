@@ -146,7 +146,7 @@ export default function DateCell({
   };
 
   // Helper robusto: aceptar fechas del header como string o Date
-  const parseHeaderDate = (val) => {
+  const _parseHeaderDate = (val) => {
     if (!val) return null;
     if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
     if (typeof val === "string") {
