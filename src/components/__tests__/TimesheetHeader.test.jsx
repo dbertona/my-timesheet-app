@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import TimesheetHeader from '../TimesheetHeader';
 
 // Mock dependencies
@@ -57,7 +57,7 @@ describe('TimesheetHeader', () => {
 
   it('renders resource information when no header provided', async () => {
     render(<TimesheetHeader {...defaultProps} />, { wrapper: createWrapper() });
-    
+
     // The component shows error message when resource not found
     await waitFor(() => {
       expect(screen.getByText(/Recurso no encontrado para el email/)).toBeInTheDocument();
@@ -75,9 +75,9 @@ describe('TimesheetHeader', () => {
       posting_description: 'Test Description',
       calendar_period_days: '15',
     };
-    
+
     render(<TimesheetHeader {...defaultProps} header={header} />, { wrapper: createWrapper() });
-    
+
     expect(screen.getByDisplayValue('RES002')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Header Resource')).toBeInTheDocument();
     expect(screen.getByDisplayValue('CUSTOM')).toBeInTheDocument();
@@ -88,14 +88,14 @@ describe('TimesheetHeader', () => {
 
   it('renders with correct structure', () => {
     render(<TimesheetHeader {...defaultProps} />, { wrapper: createWrapper() });
-    
+
     // Check that the component renders without crashing
     expect(screen.getByText('Recurso:')).toBeInTheDocument();
   });
 
   it('calls onHeaderChange when header changes', async () => {
     render(<TimesheetHeader {...defaultProps} />, { wrapper: createWrapper() });
-    
+
     await waitFor(() => {
       expect(defaultProps.onHeaderChange).toHaveBeenCalled();
     });
@@ -103,7 +103,7 @@ describe('TimesheetHeader', () => {
 
   it('has correct field labels', () => {
     render(<TimesheetHeader {...defaultProps} />, { wrapper: createWrapper() });
-    
+
     expect(screen.getByText('Recurso:')).toBeInTheDocument();
     expect(screen.getByText('Nombre:')).toBeInTheDocument();
     expect(screen.getByText('Calendario:')).toBeInTheDocument();
@@ -123,15 +123,15 @@ describe('TimesheetHeader', () => {
       posting_description: 'Test Description',
       calendar_period_days: '15',
     };
-    
+
     render(<TimesheetHeader {...defaultProps} header={header} />, { wrapper: createWrapper() });
-    
+
     const resourceInput = screen.getByDisplayValue('RES002');
     const nameInput = screen.getByDisplayValue('Header Resource');
     const calendarInput = screen.getByDisplayValue('CUSTOM');
     const dateInput = screen.getByDisplayValue('2024-01-15');
     const periodInput = screen.getByDisplayValue('M24-M01');
-    
+
     expect(resourceInput).toHaveAttribute('readOnly');
     expect(nameInput).toHaveAttribute('readOnly');
     expect(calendarInput).toHaveAttribute('readOnly');
@@ -150,16 +150,16 @@ describe('TimesheetHeader', () => {
       posting_description: 'Test Description',
       calendar_period_days: '15',
     };
-    
+
     render(<TimesheetHeader {...defaultProps} header={header} />, { wrapper: createWrapper() });
-    
+
     const descriptionInput = screen.getByDisplayValue('Test Description');
     expect(descriptionInput).not.toHaveAttribute('readOnly');
   });
 
   it('applies correct styling to readonly fields', () => {
     render(<TimesheetHeader {...defaultProps} />, { wrapper: createWrapper() });
-    
+
     const readonlyInputs = screen.getAllByRole('textbox').filter(input => input.hasAttribute('readOnly'));
     readonlyInputs.forEach(input => {
       expect(input).toHaveStyle({
@@ -171,7 +171,7 @@ describe('TimesheetHeader', () => {
 
   it('has correct grid layout', () => {
     const { container } = render(<TimesheetHeader {...defaultProps} />, { wrapper: createWrapper() });
-    
+
     const gridContainer = container.querySelector('div[style*="grid-template-columns"]');
     expect(gridContainer).toHaveStyle({
       display: 'grid',
@@ -184,7 +184,7 @@ describe('TimesheetHeader', () => {
   it('shows different styling for edit mode vs create mode', () => {
     const header = { resource_no: 'RES001' };
     const { container } = render(<TimesheetHeader {...defaultProps} header={header} />, { wrapper: createWrapper() });
-    
+
     const mainContainer = container.querySelector('div[style*="border"]');
     expect(mainContainer).toHaveStyle({
       border: '1px solid #ddd',
@@ -194,7 +194,7 @@ describe('TimesheetHeader', () => {
 
   it('shows create mode styling when no header', () => {
     const { container } = render(<TimesheetHeader {...defaultProps} />, { wrapper: createWrapper() });
-    
+
     const mainContainer = container.querySelector('div[style*="border"]');
     expect(mainContainer).toHaveStyle({
       border: '2px dashed #007bff',
