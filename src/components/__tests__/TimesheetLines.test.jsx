@@ -408,3 +408,4 @@ describe('TimesheetLines', () => {
     expect(screen.getByTestId('project-cell-line-1')).toBeInTheDocument();
   });
 });
+

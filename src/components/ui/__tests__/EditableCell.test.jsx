@@ -68,3 +68,4 @@ describe('EditableCell', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 });
+

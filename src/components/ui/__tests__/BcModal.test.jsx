@@ -194,3 +194,4 @@ describe('BcModal', () => {
     expect(document.querySelector('.ts-modal-actions')).toBeInTheDocument();
   });
 });
+
