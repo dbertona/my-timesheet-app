@@ -159,7 +159,7 @@
 
 - **Tiempo de carga inicial**: < 2s
 - **Respuesta de validación**: < 100ms
-- **Auto-guardado**: < 500ms
+- **Autoguardado**: < 500ms
 - **Navegación por teclado**: Instantánea
 
 ---
