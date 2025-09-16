@@ -1,0 +1,232 @@
+/* TimesheetListPage.css */
+.timesheet-list-page {
+  padding: 12px;
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family:
+    "Segoe UI", "Segoe WP", Segoe, device-segoe, Tahoma, Helvetica, Arial,
+    sans-serif;
+}
+
+.timesheet-list-filters {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 3px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: 160px;
+}
+
+.filter-group label { font-weight: 600; color: #333; font-size: 0.9rem; }
+
+.filter-select { height: 28px; padding: 4px 8px; border: 1px solid #c1c1c1; border-radius: 3px; font-size: 9pt; background: #ffffff; }
+
+.ts-responsive { flex: 1; min-height: 0; overflow: auto; }
+.ts-table { width: 100%; border-collapse: collapse; }
+.ts-th { position: sticky; top: 0; background: #fff; z-index: 1; border-bottom: 1px solid #e5e7eb; padding: 8px; font-weight: 600; }
+.ts-td { border-bottom: 1px solid #f1f3f4; padding: 8px; }
+
+.loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; }
+.loading-spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid rgb(0, 132, 137); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.error-container { text-align: center; padding: 60px 20px; }
+.no-data { text-align: center; padding: 40px 20px; color: #666; }
+
+@media (max-width: 768px) {
+  .timesheet-list-page { padding: 10px; }
+  .timesheet-list-filters { flex-direction: column; gap: 15px; }
+  .filter-group { min-width: 100%; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .ts-th, .ts-td { padding: 8px 12px; }
+}
+
+@media (max-width: 480px) {
+  .ts-table thead th:nth-child(3),
+  .ts-table tbody td:nth-child(3) { display: none; }
+}
+
+/* TimesheetListPage.css */
+.timesheet-list-page {
+  padding: 12px;
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family:
+    "Segoe UI", "Segoe WP", Segoe, device-segoe, Tahoma, Helvetica, Arial,
+    sans-serif;
+}
+
+/* Filtros (alineados con ApprovalPage) */
+.timesheet-list-filters {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 3px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: 160px;
+}
+
+.filter-group label { font-weight: 600; color: #333; font-size: 0.9rem; }
+
+.filter-select { height: 28px; padding: 4px 8px; border: 1px solid #c1c1c1; border-radius: 3px; font-size: 9pt; background: #ffffff; }
+
+.filter-select:focus {
+  outline: none;
+  border-color: #007e87;
+  box-shadow: 0 0 0 2px rgba(0, 126, 135, 0.12);
+}
+
+/* Usar la grilla estándar .ts-responsive + .ts-table */
+.ts-responsive { flex: 1; min-height: 0; overflow: auto; }
+.ts-table { width: 100%; border-collapse: collapse; }
+.ts-th { position: sticky; top: 0; background: #fff; z-index: 1; border-bottom: 1px solid #e5e7eb; padding: 8px; font-weight: 600; }
+.ts-td { border-bottom: 1px solid #f1f3f4; padding: 8px; }
+
+/* Estados */
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-draft {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.status-pending {
+  background-color: #cce5ff;
+  color: #004085;
+  border: 1px solid #99d6ff;
+}
+
+.status-approved {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #a3d9a4;
+}
+
+.status-rejected {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.status-synced {
+  background-color: #e2e3e5;
+  color: #383d41;
+  border: 1px solid #d6d8db;
+}
+
+.status-unknown {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+/* Sin datos */
+.no-data {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.no-data p {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+}
+
+/* Footer eliminado (la navegación está en la barra de cabecera) */
+
+/* Loading */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid rgb(0, 132, 137);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-container p {
+  margin: 0;
+  color: #666;
+  font-size: 16px;
+}
+
+/* Error */
+.error-container { text-align: center; padding: 60px 20px; }
+
+.error-container h2 {
+  color: #dc3545;
+  margin: 0 0 16px 0;
+}
+
+.error-container p {
+  color: #666;
+  margin: 0 0 20px 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .timesheet-list-page { padding: 10px; }
+  .timesheet-list-filters { flex-direction: column; gap: 15px; }
+  .filter-group { min-width: 100%; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .ts-th, .ts-td { padding: 8px 12px; }
+}
+
+@media (max-width: 480px) {
+  .ts-table thead th:nth-child(3),
+  .ts-table tbody td:nth-child(3) { display: none; }
+}

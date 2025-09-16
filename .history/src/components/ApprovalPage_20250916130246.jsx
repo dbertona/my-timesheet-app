@@ -1,14 +1,14 @@
 // src/components/ApprovalPage.jsx
-import { useMsal } from "@azure/msal-react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "react-hot-toast";
-import "../styles/ApprovalPage.css";
+import { useMsal } from "@azure/msal-react";
 import { supabaseClient } from "../supabaseClient";
-import { formatDate } from "../utils/dateHelpers";
 import TimesheetLines from "./TimesheetLines";
 import BackToDashboard from "./ui/BackToDashboard";
+import { toast } from "react-hot-toast";
 import BcModal from "./ui/BcModal";
+import "../styles/ApprovalPage.css";
+import { formatDate } from "../utils/dateHelpers";
 
 export default function ApprovalPage() {
   const queryClient = useQueryClient();
