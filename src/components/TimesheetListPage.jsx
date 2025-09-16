@@ -237,7 +237,7 @@ function TimesheetListPage() {
       <div className="ts-responsive" ref={tableContainerRef}>
         {headers.length === 0 ? (
           <div className="no-data">
-            <p>No hay partes de trabajo disponibles</p>
+            <p>No hay partes de horas disponibles</p>
             <button
               onClick={() => navigate("/nuevo-parte")}
               className="ts-btn ts-btn--primary"
