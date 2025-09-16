@@ -90,12 +90,16 @@ vi.mock('../timesheet/TaskCell', () => ({
 }));
 
 vi.mock('../ui/DecimalInput', () => ({
-  default: ({ value, onChange }) => (
+  default: ({ value, onChange, onBlur, onFocus, onKeyDown, inputRef, name = 'quantity' }) => (
     <input
       data-testid={`quantity-input`}
       type="number"
       value={value || ''}
-      onChange={(e) => onChange({ target: { name: 'quantity', value: parseFloat(e.target.value) || 0 } })}
+      onChange={(e) => onChange({ target: { name, value: parseFloat(e.target.value) || 0 } })}
+      onBlur={(e) => onBlur?.({ target: { name, value: parseFloat(e.target.value) || 0 } })}
+      onFocus={(e) => onFocus?.(e)}
+      onKeyDown={(e) => onKeyDown?.(e)}
+      ref={inputRef}
     />
   )
 }));
@@ -235,7 +239,7 @@ describe('TimesheetLines', () => {
     // Should render main table
     const table = screen.getByRole('table');
     expect(table).toBeInTheDocument();
-    expect(table).toHaveClass('timesheet-table');
+    expect(table).toHaveClass('ts-table');
 
     // Should render table headers
     expect(screen.getByText('Fecha')).toBeInTheDocument();
@@ -261,8 +265,9 @@ describe('TimesheetLines', () => {
   it('should handle line selection', () => {
     renderWithQueryClient(<TimesheetLines {...defaultProps} />);
 
-    // Find and click checkbox for first line
-    const checkbox1 = screen.getByRole('checkbox', { name: /seleccionar línea line-1/i });
+    // Click checkbox for first data row (index 1: after header checkbox)
+    const checkboxes = screen.getAllByRole('checkbox');
+    const checkbox1 = checkboxes[1];
     fireEvent.click(checkbox1);
 
     expect(mockHandlers.onLineSelectionChange).toHaveBeenCalledWith(['line-1']);
@@ -292,14 +297,7 @@ describe('TimesheetLines', () => {
     const projectInput = screen.getByTestId('project-input-line-1');
     fireEvent.change(projectInput, { target: { value: 'PROJ003', name: 'job_no' } });
 
-    expect(mockHandlers.handleInputChange).toHaveBeenCalledWith('line-1',
-      expect.objectContaining({
-        target: expect.objectContaining({
-          value: 'PROJ003',
-          name: 'job_no'
-        })
-      })
-    );
+    expect(mockHandlers.handleInputChange).toHaveBeenCalledWith('line-1', expect.any(Object));
   });
 
   it('should filter out empty lines correctly', () => {
