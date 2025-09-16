@@ -3109,7 +3109,7 @@ function TimesheetEdit({ headerId }) {
               onDuplicateLines={handleDuplicateLines}
               onDeleteLines={handleDeleteLines}
               addEmptyLine={addEmptyLine} // 🆕 Pasar función para agregar línea vacía
-              showResponsible={false}
+              showResponsible={true}
             />
           </div>
         </div>
