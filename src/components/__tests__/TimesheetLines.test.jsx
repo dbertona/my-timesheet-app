@@ -243,8 +243,8 @@ describe('TimesheetLines', () => {
 
     // Should render table headers
     expect(screen.getByText('Fecha')).toBeInTheDocument();
-    expect(screen.getByText('Proyecto')).toBeInTheDocument();
-    expect(screen.getByText('Tarea')).toBeInTheDocument();
+    expect(screen.getByText('Nº proyecto')).toBeInTheDocument();
+    expect(screen.getByText('Nº tarea')).toBeInTheDocument();
     expect(screen.getByText('Descripción')).toBeInTheDocument();
     expect(screen.getByText('Cantidad')).toBeInTheDocument();
   });
@@ -353,8 +353,8 @@ describe('TimesheetLines', () => {
     fireEvent.change(quantityInput, { target: { value: '10' } });
     fireEvent.blur(quantityInput);
 
-    // Should call scheduleAutosave for quantity changes on blur
-    expect(mockHandlers.scheduleAutosave).toHaveBeenCalled();
+    // Component prioritizes saveLineNow when provided
+    expect(mockHandlers.saveLineNow).toHaveBeenCalled();
   });
 
   it('should handle keyboard navigation', () => {
