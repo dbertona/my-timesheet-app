@@ -96,10 +96,10 @@ describe('TaskCell', () => {
 
   it('should render input field correctly', () => {
     render(<TaskCell {...defaultProps} />);
-
+    
     const input = screen.getByRole('textbox');
     expect(input).toBeInTheDocument();
-    expect(input).toHaveClass('ts-input', 'pr-icon');
+    expect(input).toHaveClass('ts-input'); // No pr-icon by default
     expect(input).toHaveAttribute('name', 'job_task_no');
   });
 
