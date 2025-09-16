@@ -134,7 +134,7 @@ N8N_PASSWORD=your_password
 
 ## 📞 Contacto
 
-- **Responsable:** Daniel Bertona Sanchez
+- **Responsable:** Daniel Bertona Sánchez
 - **Email:** dbertona@powersolution.es
 - **Proyecto:** My Timesheet App
 - **Última actualización:** 29 de Agosto, 2025
