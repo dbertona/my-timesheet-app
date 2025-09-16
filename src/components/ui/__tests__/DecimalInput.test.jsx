@@ -49,7 +49,7 @@ describe('DecimalInput', () => {
     expect(input).toHaveAttribute('type', 'text');
     expect(input).toHaveAttribute('inputMode', 'decimal');
     expect(input).toHaveAttribute('name', 'quantity');
-    expect(input).toHaveAttribute('placeholder', 'Cantidad');
+    expect(input).toHaveAttribute('placeholder', '0.00');
     expect(input).toHaveAttribute('min', '0');
     expect(input).toHaveAttribute('step', '0.01');
     expect(input).toHaveAttribute('pattern', '[0-9]*[.,]?[0-9]{0,2}');
