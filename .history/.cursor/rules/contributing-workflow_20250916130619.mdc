@@ -34,9 +34,6 @@
 
 8. Rollback plan
 - Si un PR rompe algo: `hotfix/revert-<sha>` con `git revert` del PR.
-<<<<<<< HEAD
-- No mezclar arreglos con nuevas features.
-=======
 - No mezclar arreglos con nuevas features.
 
 9. Reglas operativas adicionales (estrictas)
@@ -45,4 +42,3 @@
 - Evitar comandos encadenados peligrosos que cambian de rama en la misma línea (ej. `checkout && tag && push`). Primero mostrar plan, luego ejecutar paso a paso.
 - Mantener la rama `autosave` como caja negra de seguridad. No sobrescribirla. Solo recuperar cambios desde ahí con `cherry-pick` o `merge` cuando sea necesario.
 - Proteger `main` en el servidor: bloquear `push` directo/`force`, exigir "branch up to date" y no permitir merge de PR si no pasan los checks (lint, smokes y tests).
->>>>>>> origin/fix/approval-restore-stable
