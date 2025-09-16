@@ -197,7 +197,7 @@ function TimesheetListPage() {
             top: -1,
           }}
         >
-          Mis Partes de Trabajo
+          Mis Partes de Horas
         </h1>
         <div
           style={{
