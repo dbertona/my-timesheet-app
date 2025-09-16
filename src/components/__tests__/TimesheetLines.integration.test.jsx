@@ -7,6 +7,7 @@ import TimesheetLines from '../TimesheetLines';
 vi.mock('react-icons/fi', () => ({
   FiChevronDown: () => <div data-testid="chevron-down" />,
   FiSearch: () => <div data-testid="search-icon" />,
+  FiCalendar: () => <div data-testid="calendar-icon" />,
 }));
 
 // Dinámicamente controlaremos los hooks de React Query
