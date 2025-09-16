@@ -113,11 +113,22 @@ describe('TimesheetHeader', () => {
   });
 
   it('has readonly fields for resource, name, calendar, date, and period', () => {
-    render(<TimesheetHeader {...defaultProps} />, { wrapper: createWrapper() });
+    const header = {
+      resource_no: 'RES002',
+      resource_name: 'Header Resource',
+      department_code: 'HR',
+      calendar_type: 'CUSTOM',
+      allocation_period: 'M24-M01',
+      posting_date: '2024-01-15',
+      posting_description: 'Test Description',
+      calendar_period_days: '15',
+    };
     
-    const resourceInput = screen.getByDisplayValue('RES001');
-    const nameInput = screen.getByDisplayValue('Test Resource');
-    const calendarInput = screen.getByDisplayValue('STANDARD');
+    render(<TimesheetHeader {...defaultProps} header={header} />, { wrapper: createWrapper() });
+    
+    const resourceInput = screen.getByDisplayValue('RES002');
+    const nameInput = screen.getByDisplayValue('Header Resource');
+    const calendarInput = screen.getByDisplayValue('CUSTOM');
     const dateInput = screen.getByDisplayValue('2024-01-15');
     const periodInput = screen.getByDisplayValue('M24-M01');
     
