@@ -454,12 +454,26 @@ export default function ApprovalPage() {
 
   return (
     <div className="approval-page">
-      <div className="approval-header">
-        <div className="approval-header-left">
-          <BackToDashboard title="Volver al Dashboard" compact={true} />
-          <h1>Aprobación de Horas</h1>
-        </div>
-        <div className="approval-summary">
+      <div
+        className="ts-header-bar"
+        style={{ display: "flex", alignItems: "center", gap: 12 }}
+      >
+        <BackToDashboard title="Volver al Dashboard" compact={true} />
+        <h1
+          className="ts-page-title"
+          style={{
+            color: "#007E87",
+            margin: 0,
+            fontSize: "1.25rem",
+            fontWeight: 600,
+            lineHeight: 1,
+            position: "relative",
+            top: -1,
+          }}
+        >
+          Aprobación de Horas
+        </h1>
+        <div className="approval-summary" style={{ marginLeft: "auto" }}>
           📊 {totalHeaders} recursos con {totalLines} líneas pendientes
         </div>
       </div>
