@@ -64,7 +64,7 @@ Este archivo documenta todas las claves API y credenciales utilizadas en el proy
 
 ### **Workflows**
 
-- **ID Principal:** `rDSrPE4U9zNGRaJi`
+- **Id Principal:** `rDSrPE4U9zNGRaJi`
 - **Nombre:** `001_sincronizacion_completa`
 
 ---
