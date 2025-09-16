@@ -332,8 +332,9 @@ export default function DateCell({
             }
             onBlur={(e) => {
               if (disabled) return;
+              const currentValue = e.target.value;
               const normalized =
-                normalizeDisplayDate(e.target.value) || e.target.value;
+                normalizeDisplayDate(currentValue) || currentValue;
               handleInputChange(line.id, {
                 target: { name: "date", value: normalized },
               });
