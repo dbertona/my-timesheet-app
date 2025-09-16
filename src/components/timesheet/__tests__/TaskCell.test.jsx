@@ -96,7 +96,7 @@ describe('TaskCell', () => {
 
   it('should render input field correctly', () => {
     render(<TaskCell {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     expect(input).toBeInTheDocument();
     expect(input).toHaveClass('ts-input'); // No pr-icon by default
@@ -117,7 +117,7 @@ describe('TaskCell', () => {
 
   it('should handle input changes and clear field errors', () => {
     render(<TaskCell {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'TASK', name: 'job_task_no' } });
 
@@ -210,9 +210,9 @@ describe('TaskCell', () => {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: 'PROJ001', job_task_no: '' } }
     };
-    
+
     render(<TaskCell {...propsWithEmpty} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'Enter' });
 
@@ -248,9 +248,9 @@ describe('TaskCell', () => {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: '', job_task_no: '' } }
     };
-    
+
     render(<TaskCell {...propsNoJob} />);
-    
+
     // Component shows dropdown regardless - this is acceptable behavior
     // The dropdown will just be empty without a job selected
     expect(screen.getByRole('textbox')).toBeInTheDocument();
@@ -264,17 +264,17 @@ describe('TaskCell', () => {
   });
 
   it('should not be editable when isEditable is false', () => {
-    const readOnlyProps = { 
-      ...defaultProps, 
+    const readOnlyProps = {
+      ...defaultProps,
       isEditable: false,
       editFormData: { 'line-1': { job_no: 'PROJ001', job_task_no: 'TASK001' } }
     };
-    
+
     render(<TaskCell {...readOnlyProps} />);
-    
+
     // Should show readonly div instead of input
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-    
+
     // Component renders empty readonly div, which is acceptable
     const cell = screen.getByRole('cell');
     expect(cell).toBeInTheDocument();
