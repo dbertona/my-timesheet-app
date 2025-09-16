@@ -5,6 +5,7 @@ import AppError from "./components/ui/AppError";
 import LoginMicrosoft from "./components/LoginMicrosoft";
 import TimesheetHeaderList from "./components/TimesheetHeaderList";
 import TimesheetEdit from "./components/TimesheetEdit";
+import TimesheetListPage from "./components/TimesheetListPage";
 import HomeDashboard from "./components/HomeDashboard";
 import ApprovalPage from "./components/ApprovalPage";
 import RequireMsalAuth from "./components/auth/RequireMsalAuth";
@@ -47,6 +48,11 @@ export const router = createBrowserRouter([
         element: <EnsureResource />, // Guard: requiere recurso válido
         errorElement: <AppError />,
         children: [
+          {
+            path: "mis-partes",
+            element: <TimesheetListPage />,
+            errorElement: <AppError />,
+          },
           {
             path: "edit/:headerId",
             element: <TimesheetEditWrapper />,
