@@ -164,7 +164,7 @@ export default function DateCell({
         try {
           const parsed = parse(val, format, new Date());
           if (!isNaN(parsed.getTime())) return parsed;
-        } catch (e) {
+        } catch {
           // Continuar con el siguiente formato
         }
       }
