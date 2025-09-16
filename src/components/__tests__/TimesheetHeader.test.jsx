@@ -140,9 +140,20 @@ describe('TimesheetHeader', () => {
   });
 
   it('allows editing description field', () => {
-    render(<TimesheetHeader {...defaultProps} />, { wrapper: createWrapper() });
+    const header = {
+      resource_no: 'RES002',
+      resource_name: 'Header Resource',
+      department_code: 'HR',
+      calendar_type: 'CUSTOM',
+      allocation_period: 'M24-M01',
+      posting_date: '2024-01-15',
+      posting_description: 'Test Description',
+      calendar_period_days: '15',
+    };
     
-    const descriptionInput = screen.getByDisplayValue('Parte de trabajo M24-M01');
+    render(<TimesheetHeader {...defaultProps} header={header} />, { wrapper: createWrapper() });
+    
+    const descriptionInput = screen.getByDisplayValue('Test Description');
     expect(descriptionInput).not.toHaveAttribute('readOnly');
   });
 
