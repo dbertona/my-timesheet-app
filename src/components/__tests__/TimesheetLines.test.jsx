@@ -62,12 +62,13 @@ vi.mock('../timesheet/DateCell', () => ({
 }));
 
 vi.mock('../timesheet/ProjectCell', () => ({
-  default: ({ line, editFormData, handleInputChange }) => (
+  default: ({ line, editFormData, handlers }) => (
     <td data-testid={`project-cell-${line.id}`}>
       <input
         data-testid={`project-input-${line.id}`}
         value={editFormData[line.id]?.job_no || ''}
-        onChange={(e) => handleInputChange(line.id, e)}
+        onChange={(e) => handlers.handleInputChange(line.id, e)}
+        onKeyDown={(e) => handlers.handleKeyDown(e)}
         name="job_no"
       />
     </td>
@@ -75,12 +76,13 @@ vi.mock('../timesheet/ProjectCell', () => ({
 }));
 
 vi.mock('../timesheet/TaskCell', () => ({
-  default: ({ line, editFormData, handleInputChange }) => (
+  default: ({ line, editFormData, handlers }) => (
     <td data-testid={`task-cell-${line.id}`}>
       <input
         data-testid={`task-input-${line.id}`}
         value={editFormData[line.id]?.job_task_no || ''}
-        onChange={(e) => handleInputChange(line.id, e)}
+        onChange={(e) => handlers.handleInputChange(line.id, e)}
+        onKeyDown={(e) => handlers.handleKeyDown(e)}
         name="job_task_no"
       />
     </td>
@@ -88,12 +90,12 @@ vi.mock('../timesheet/TaskCell', () => ({
 }));
 
 vi.mock('../ui/DecimalInput', () => ({
-  default: ({ value, onChange, lineId }) => (
+  default: ({ value, onChange }) => (
     <input
-      data-testid={`quantity-input-${lineId}`}
+      data-testid={`quantity-input`}
       type="number"
       value={value || ''}
-      onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+      onChange={(e) => onChange({ target: { name: 'quantity', value: parseFloat(e.target.value) || 0 } })}
     />
   )
 }));
@@ -269,8 +271,8 @@ describe('TimesheetLines', () => {
   it('should handle select all functionality', () => {
     renderWithQueryClient(<TimesheetLines {...defaultProps} />);
 
-    // Find and click select all checkbox
-    const selectAllCheckbox = screen.getByRole('checkbox', { name: /seleccionar todas/i });
+    // Find and click select all checkbox (first checkbox in header)
+    const selectAllCheckbox = screen.getAllByRole('checkbox')[0];
     fireEvent.click(selectAllCheckbox);
 
     expect(mockHandlers.onLineSelectionChange).toHaveBeenCalledWith(['line-1', 'line-2']);
@@ -349,10 +351,11 @@ describe('TimesheetLines', () => {
   it('should handle quantity input changes', () => {
     renderWithQueryClient(<TimesheetLines {...defaultProps} />);
 
-    const quantityInput = screen.getByTestId('quantity-input-line-1');
+    const quantityInput = screen.getByTestId('quantity-input');
     fireEvent.change(quantityInput, { target: { value: '10' } });
+    fireEvent.blur(quantityInput);
 
-    // Should call scheduleAutosave for quantity changes
+    // Should call scheduleAutosave for quantity changes on blur
     expect(mockHandlers.scheduleAutosave).toHaveBeenCalled();
   });
 
@@ -380,8 +383,8 @@ describe('TimesheetLines', () => {
 
     renderWithQueryClient(<TimesheetLines {...propsWithRejected} />);
 
-    // Should show rejected status icon
-    const rejectedIcon = screen.getByTitle('Hacer clic para reabrir línea');
+    // Should show rejected status icon with title containing reason
+    const rejectedIcon = screen.getByTitle('Motivo: Invalid project');
     expect(rejectedIcon).toBeInTheDocument();
 
     // Click to open reopen modal
@@ -389,7 +392,7 @@ describe('TimesheetLines', () => {
 
     // Should show reopen modal
     expect(screen.getByTestId('bc-modal')).toBeInTheDocument();
-    expect(screen.getByText('Reabrir Línea Rechazada')).toBeInTheDocument();
+    expect(screen.getByText('Reabrir línea rechazada')).toBeInTheDocument();
   });
 
   it('should handle errors display correctly', () => {
