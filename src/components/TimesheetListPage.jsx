@@ -103,7 +103,7 @@ function TimesheetListPage() {
         const { data, error: headersError } = await query;
 
         if (headersError) {
-          setError("Error cargando los partes de trabajo");
+          setError("Error cargando los partes de horas");
           return;
         }
 
