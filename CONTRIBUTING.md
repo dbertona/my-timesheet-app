@@ -6,7 +6,7 @@
 2. Crear rama feature/ o docs/.
 3. Implementar en pasos pequeños: 1–2 celdas por PR cuando aplique.
 4. Validación: `npm run lint`, `npm run build`, `npm run preview`.
-5. Abrir PR con el checklist completo y notas.
+5. Abrir PR con la checklist completo y notas.
 6. Revisar, ajustar y mergear.
 
 ### Patrones
