@@ -2700,9 +2700,24 @@ function TimesheetEdit({ headerId }) {
     <div className="ts-responsive timesheet-edit-page">
       <div className="timesheet-container">
         {/* Header de navegación (componente unificado) */}
-        <div ref={headerBarRef} className="ts-header-bar" style={{ marginBottom: 12 }}>
+        <div
+          ref={headerBarRef}
+          className="ts-header-bar"
+          style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}
+        >
           <BackToDashboard compact={true} />
-          <h1 className="ts-page-title">
+          <h1
+            className="ts-page-title"
+            style={{
+              color: "#007E87",
+              margin: 0,
+              fontSize: "1.25rem",
+              fontWeight: 600,
+              lineHeight: 1,
+              position: "relative",
+              top: -1,
+            }}
+          >
             {header ? "Editar Parte de Trabajo" : "Nuevo Parte de Trabajo"}
           </h1>
         </div>
