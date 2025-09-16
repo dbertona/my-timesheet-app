@@ -161,7 +161,7 @@ describe('TaskCell', () => {
     await waitFor(() => {
       expect(mockTasksState.findTask).toHaveBeenCalledWith('PROJ001', 'INVALID');
       expect(mockHandlers.setFieldError).toHaveBeenCalledWith(
-        'line-1', 'job_task_no', 'Tarea inválida. Debe seleccionar una de la lista.'
+        'line-1', 'job_task_no', 'Tarea inválida para el proyecto seleccionado.'
       );
     });
   });
