@@ -25,7 +25,7 @@ const HomeDashboard = () => {
   const [rejectedHeadersCount, setRejectedHeadersCount] = useState(0);
   const [loadingRejected, setLoadingRejected] = useState(true);
   const [errorRejected, setErrorRejected] = useState(null);
-  
+
   // eslint-disable-next-line no-unused-vars
   const _useRejectedStates = { loadingRejected, errorRejected };
 
