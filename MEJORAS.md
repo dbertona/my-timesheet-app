@@ -38,7 +38,7 @@
 - [x] **Grid personalizado React Table** con todas las celdas editables
 - [x] **Validación en tiempo real** con feedback visual inmediato
 - [x] **Navegación por teclado** completa (flechas, Tab, Enter)
-- [x] **Auto-guardado inteligente** con indicadores de estado
+- [x] **Autoguardado inteligente** con indicadores de estado
 - [x] **Filtros avanzados** por proyecto, tarea y departamento
 - [x] **Búsqueda global** en todas las columnas
 - [x] **Ordenamiento multi-columna** con indicadores visuales
