@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
-import { FiCalendar } from "react-icons/fi";
 import { parse } from "date-fns";
-import { parseDate, formatDate } from "../../utils/dateHelpers";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { FiCalendar } from "react-icons/fi";
 import TIMESHEET_FIELDS from "../../constants/timesheetFields";
 import "../../styles/DateInput.css";
+import { formatDate, parseDate } from "../../utils/dateHelpers";
 
 export default function DateCell({
   line,
@@ -146,7 +146,7 @@ export default function DateCell({
   };
 
   // Helper robusto: aceptar fechas del header como string o Date
-  const parseHeaderDate = (val) => {
+  const _parseHeaderDate = (val) => {
     if (!val) return null;
     if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
     if (typeof val === "string") {
@@ -164,7 +164,7 @@ export default function DateCell({
         try {
           const parsed = parse(val, format, new Date());
           if (!isNaN(parsed.getTime())) return parsed;
-        } catch (e) {
+        } catch {
           // Continuar con el siguiente formato
         }
       }
@@ -332,8 +332,9 @@ export default function DateCell({
             }
             onBlur={(e) => {
               if (disabled) return;
+              const currentValue = e.target.value;
               const normalized =
-                normalizeDisplayDate(e.target.value) || e.target.value;
+                normalizeDisplayDate(currentValue) || currentValue;
               handleInputChange(line.id, {
                 target: { name: "date", value: normalized },
               });

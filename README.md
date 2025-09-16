@@ -1,6 +1,14 @@
 [![CI](https://github.com/dbertona/my-timesheet-app/actions/workflows/ci.yml/badge.svg)](https://github.com/dbertona/my-timesheet-app/actions/workflows/ci.yml)
 
-# React + Vite
+# My Timesheet App
+
+A modern timesheet application built with React and Vite.
+
+## CI/CD
+- Lint y tests automáticos en cada PR
+- Protección de rama `reset/main` con aprobación obligatoria
+
+## Template Original
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

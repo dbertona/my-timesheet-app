@@ -23,7 +23,9 @@ const HomeDashboard = () => {
   // 🆕 Estados para partes de trabajo rechazados
   const [rejectedLinesCount, setRejectedLinesCount] = useState(0);
   const [rejectedHeadersCount, setRejectedHeadersCount] = useState(0);
+  // eslint-disable-next-line no-unused-vars
   const [loadingRejected, setLoadingRejected] = useState(true);
+  // eslint-disable-next-line no-unused-vars  
   const [errorRejected, setErrorRejected] = useState(null);
 
   // 🆕 Estados para partes de trabajo pendientes de aprobar
@@ -277,13 +279,13 @@ const HomeDashboard = () => {
         // Calcular días faltantes por completar usando la misma lógica que el calendario
         const EPS = 0.01;
         let incompleteDays = 0;
-        let completeDays = 0;
-        let holidayDays = 0;
+        let _completeDays = 0;
+        let _holidayDays = 0;
 
         calendarDays.forEach((calendarDay) => {
           // Los festivos vienen marcados con holiday = true desde la BD
           if (calendarDay.holiday === true) {
-            holidayDays++;
+            _holidayDays++;
             return; // Saltar festivos
           }
 
@@ -303,7 +305,7 @@ const HomeDashboard = () => {
           if (requiredHours > 0 && totalHours < requiredHours - EPS) {
             incompleteDays++;
           } else if (requiredHours > 0) {
-            completeDays++;
+            _completeDays++;
           }
         });
 
