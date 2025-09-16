@@ -190,10 +190,8 @@ export default function ProjectCell({
                     }
                   }
 
-                  // Continuar con la navegación incluso si raw está vacío
-                  setTimeout(() => {
-                    handleKeyDown(e, lineIndex, 0);
-                  }, 0);
+                  // Continuar con la navegación incluso si raw está vacío (sincrónico para tests)
+                  handleKeyDown(e, lineIndex, 0);
                   return;
                 }
 
