@@ -303,7 +303,7 @@ const HomeDashboard = () => {
           if (requiredHours > 0 && totalHours < requiredHours - EPS) {
             incompleteDays++;
           } else if (requiredHours > 0) {
-            completeDays++;
+            _completeDays++;
           }
         });
 
