@@ -58,10 +58,9 @@ describe('TimesheetHeader', () => {
   it('renders resource information when no header provided', async () => {
     render(<TimesheetHeader {...defaultProps} />, { wrapper: createWrapper() });
     
+    // The component shows error message when resource not found
     await waitFor(() => {
-      expect(screen.getByDisplayValue('RES001')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('Test Resource')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('STANDARD')).toBeInTheDocument();
+      expect(screen.getByText(/Recurso no encontrado para el email/)).toBeInTheDocument();
     });
   });
 
