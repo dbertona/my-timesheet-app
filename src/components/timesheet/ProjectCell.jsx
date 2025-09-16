@@ -167,13 +167,12 @@ export default function ProjectCell({
                   handleKeyDown(e, lineIndex, 0);
                   return;
                 }
-                // 🆕 Autocompletado con Enter o Tab
+                // 🆕 Autocompletado con Enter o Tab (navegar incluso si está vacío)
                 if (e.key === "Enter" || e.key === "Tab") {
                   const raw = (editFormData[line.id]?.job_no || "").trim();
+                  e.preventDefault(); // Prevenir comportamiento por defecto
 
                   if (raw) {
-                    e.preventDefault(); // Prevenir comportamiento por defecto
-
                     // Intentar autocompletar
                     const found = findJob(raw);
                     if (found && found.no !== raw) {
@@ -189,13 +188,13 @@ export default function ProjectCell({
                       });
                       clearFieldError(line.id, "job_task_no");
                     }
-
-                    // Continuar con la navegación después del autocompletado
-                    setTimeout(() => {
-                      handleKeyDown(e, lineIndex, 0);
-                    }, 0);
-                    return;
                   }
+
+                  // Continuar con la navegación incluso si raw está vacío
+                  setTimeout(() => {
+                    handleKeyDown(e, lineIndex, 0);
+                  }, 0);
+                  return;
                 }
 
                 // TODAS las demás teclas de navegación usan la misma función
