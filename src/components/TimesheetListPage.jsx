@@ -210,7 +210,7 @@ function TimesheetListPage() {
             border: "1px solid #BFE9EC",
             fontWeight: 600,
           }}
-          title="Total de partes de trabajo"
+          title="Total de partes de horas"
         >
           {headers?.length || 0} partes
         </div>
