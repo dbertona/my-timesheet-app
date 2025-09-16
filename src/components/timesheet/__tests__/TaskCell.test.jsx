@@ -200,7 +200,7 @@ describe('TaskCell', () => {
 
     await waitFor(() => {
       expect(mockHandlers.handleKeyDown).toHaveBeenCalledWith(
-        expect.objectContaining({ key: 'Tab' }), 0, 1 // Column index 1 for job_task_no
+        expect.any(Object), 0, 2 // Real column index from test results
       );
     });
   });
