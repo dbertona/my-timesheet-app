@@ -330,7 +330,7 @@ export default function DateCell({
                 target: { name: "date", value: e.target.value },
               })
             }
-            onBlur={(e) => {
+            onBlur={() => {
               if (disabled) return;
               const normalized =
                 normalizeDisplayDate(e.target.value) || e.target.value;
