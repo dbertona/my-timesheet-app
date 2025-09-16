@@ -213,7 +213,7 @@ export default function TimesheetLines({
           queryClient.invalidateQueries({ queryKey: ["lines", effectiveHeaderId] })
         );
       }
-    } catch (e) {
+          } catch {
       // noop
     } finally {
       setReopenModal({ open: false, lineId: null, dateIso: null, reason: "" });
