@@ -23,8 +23,8 @@ const HomeDashboard = () => {
   // 🆕 Estados para partes de trabajo rechazados
   const [rejectedLinesCount, setRejectedLinesCount] = useState(0);
   const [rejectedHeadersCount, setRejectedHeadersCount] = useState(0);
-  const [_loadingRejected, _setLoadingRejected] = useState(true);
-  const [_errorRejected, _setErrorRejected] = useState(null);
+  const [loadingRejected, setLoadingRejected] = useState(true);
+  const [errorRejected, setErrorRejected] = useState(null);
 
   // 🆕 Estados para partes de trabajo pendientes de aprobar
   const [pendingLinesCount, setPendingLinesCount] = useState(0);
