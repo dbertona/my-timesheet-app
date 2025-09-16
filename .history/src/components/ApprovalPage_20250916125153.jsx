@@ -457,9 +457,7 @@ export default function ApprovalPage() {
       <div className="approval-header">
         <div className="approval-header-left">
           <BackToDashboard title="Volver al Dashboard" compact={true} />
-          <h1 style={{ color: "#007E87", margin: 0, fontSize: "1.25rem", fontWeight: 600, lineHeight: 1, position: "relative", top: -1 }}>
-            Aprobación de Horas
-          </h1>
+          <h1>Aprobación de Horas</h1>
         </div>
         <div className="approval-summary">
           📊 {totalHeaders} recursos con {totalLines} líneas pendientes
