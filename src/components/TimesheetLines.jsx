@@ -1,27 +1,27 @@
 // src/components/TimesheetLines.jsx
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
-import { toIsoFromInput } from "../utils/dateHelpers";
+import TIMESHEET_FIELDS, {
+    COL_MAX_WIDTH,
+    COL_MIN_WIDTH,
+    DEFAULT_COL_WIDTH,
+    TIMESHEET_ALIGN,
+    TIMESHEET_LABELS,
+} from "../constants/timesheetFields";
 import useColumnResize from "../hooks/useColumnResize";
-import { supabaseClient } from "../supabaseClient";
 import { useJobs, useWorkTypes } from "../hooks/useTimesheetQueries";
 import "../styles/TimesheetLines.css";
-import TIMESHEET_FIELDS, {
-  TIMESHEET_LABELS,
-  TIMESHEET_ALIGN,
-  COL_MIN_WIDTH,
-  COL_MAX_WIDTH,
-  DEFAULT_COL_WIDTH,
-} from "../constants/timesheetFields";
+import { supabaseClient } from "../supabaseClient";
+import { toIsoFromInput } from "../utils/dateHelpers";
+import DateCell from "./timesheet/DateCell";
+import DepartmentCell from "./timesheet/DepartmentCell";
 import ProjectCell from "./timesheet/ProjectCell";
 import ProjectDescriptionCell from "./timesheet/ProjectDescriptionCell";
 import TaskCell from "./timesheet/TaskCell";
-import DepartmentCell from "./timesheet/DepartmentCell";
-import { useQueryClient } from "@tanstack/react-query";
-import InlineError from "./ui/InlineError";
 import DecimalInput from "./ui/DecimalInput";
-import DateCell from "./timesheet/DateCell";
 import EditableCell from "./ui/EditableCell";
+import BcModal from "./ui/BcModal";
 
 export default function TimesheetLines({
   lines,
@@ -179,6 +179,42 @@ export default function TimesheetLines({
 
     // Si hay múltiples coincidencias, no autocompletar (dejar que el usuario elija)
     return null;
+  };
+
+  // Modal para reabrir líneas Rechazadas/Pending por día
+  const [reopenModal, setReopenModal] = useState({ open: false, dateIso: null, ids: [] });
+  const openReopenModalForDate = (dateIso) => {
+    if (!dateIso) return;
+    const ids = (lines || [])
+      .filter((l) => (l.date ? toIsoFromInput(l.date) : null) === dateIso)
+      .filter((l) => l.status === "Rejected" || l.status === "Pending")
+      .map((l) => l.id);
+    if (ids.length === 0) return;
+    setReopenModal({ open: true, dateIso, ids });
+  };
+  const confirmReopen = async () => {
+    try {
+      const ids = reopenModal.ids || [];
+      if (ids.length === 0) return;
+      const { error } = await supabaseClient.from("timesheet").update({ status: "Open" }).in("id", ids);
+      if (error) throw error;
+      if (setLines) {
+        setLines((prevLines) =>
+          sortLines
+            ? sortLines(prevLines.map((l) => (ids.includes(l.id) ? { ...l, status: "Open" } : l)))
+            : prevLines.map((l) => (ids.includes(l.id) ? { ...l, status: "Open" } : l))
+        );
+      }
+      if (effectiveHeaderId) {
+        await Promise.resolve(
+          queryClient.invalidateQueries({ queryKey: ["lines", effectiveHeaderId] })
+        );
+      }
+    } catch (e) {
+      // noop
+    } finally {
+      setReopenModal({ open: false, dateIso: null, ids: [] });
+    }
   };
 
   // Helpers de validación/normalización para Proyecto y Tarea
@@ -646,8 +682,21 @@ export default function TimesheetLines({
                       justifyContent: "center",
                       padding: "4px",
                       borderRadius: "4px",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s ease",
                     }}
-                    title="Línea rechazada"
+                    title="Reabrir líneas del mismo día (a estado Open)"
+                    onClick={() => {
+                      const dateIso = line.date ? toIsoFromInput(line.date) : null;
+                      if (!dateIso) return;
+                      openReopenModalForDate(dateIso);
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = "#FEE2E2";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = "transparent";
+                    }}
                   >
                     <svg
                       width="16"
@@ -1202,6 +1251,21 @@ export default function TimesheetLines({
           ))}
         </tbody>
       </table>
+
+      <BcModal
+        isOpen={reopenModal.open}
+        onClose={() => setReopenModal({ open: false, dateIso: null, ids: [] })}
+        title="Reabrir líneas del día"
+        confirmText="Reabrir"
+        cancelText="Cancelar"
+        confirmButtonType="primary"
+        onConfirm={confirmReopen}
+        onCancel={() => setReopenModal({ open: false, dateIso: null, ids: [] })}
+      >
+        <p>
+          Se reabrirán {reopenModal.ids.length} líneas del día {reopenModal.dateIso}.
+        </p>
+      </BcModal>
     </div>
   );
 }
