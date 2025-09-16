@@ -277,8 +277,8 @@ const HomeDashboard = () => {
         // Calcular días faltantes por completar usando la misma lógica que el calendario
         const EPS = 0.01;
         let incompleteDays = 0;
-        let completeDays = 0;
-        let holidayDays = 0;
+        let _completeDays = 0;
+        let _holidayDays = 0;
 
         calendarDays.forEach((calendarDay) => {
           // Los festivos vienen marcados con holiday = true desde la BD
