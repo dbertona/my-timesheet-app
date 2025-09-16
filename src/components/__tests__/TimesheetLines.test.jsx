@@ -31,7 +31,8 @@ vi.mock('../hooks/useTimesheetQueries', () => ({
 
 vi.mock('react-icons/fi', () => ({
   FiChevronDown: () => <div data-testid="chevron-down" />,
-  FiSearch: () => <div data-testid="search-icon" />
+  FiSearch: () => <div data-testid="search-icon" />,
+  FiCalendar: () => <div data-testid="calendar-icon" />,
 }));
 
 vi.mock('../supabaseClient', () => ({
@@ -47,7 +48,7 @@ vi.mock('../supabaseClient', () => ({
 }));
 
 // Mock cell components
-vi.mock('./timesheet/DateCell', () => ({
+vi.mock('../timesheet/DateCell', () => ({
   default: ({ line, editFormData, handleInputChange }) => (
     <td data-testid={`date-cell-${line.id}`}>
       <input
@@ -60,7 +61,7 @@ vi.mock('./timesheet/DateCell', () => ({
   )
 }));
 
-vi.mock('./timesheet/ProjectCell', () => ({
+vi.mock('../timesheet/ProjectCell', () => ({
   default: ({ line, editFormData, handleInputChange }) => (
     <td data-testid={`project-cell-${line.id}`}>
       <input
@@ -73,7 +74,7 @@ vi.mock('./timesheet/ProjectCell', () => ({
   )
 }));
 
-vi.mock('./timesheet/TaskCell', () => ({
+vi.mock('../timesheet/TaskCell', () => ({
   default: ({ line, editFormData, handleInputChange }) => (
     <td data-testid={`task-cell-${line.id}`}>
       <input
@@ -86,7 +87,7 @@ vi.mock('./timesheet/TaskCell', () => ({
   )
 }));
 
-vi.mock('./ui/DecimalInput', () => ({
+vi.mock('../ui/DecimalInput', () => ({
   default: ({ value, onChange, lineId }) => (
     <input
       data-testid={`quantity-input-${lineId}`}
@@ -97,7 +98,7 @@ vi.mock('./ui/DecimalInput', () => ({
   )
 }));
 
-vi.mock('./ui/BcModal', () => ({
+vi.mock('../ui/BcModal', () => ({
   default: ({ isOpen, children, title, onConfirm, onCancel }) =>
     isOpen ? (
       <div data-testid="bc-modal">
