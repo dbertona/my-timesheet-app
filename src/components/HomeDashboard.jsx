@@ -283,7 +283,7 @@ const HomeDashboard = () => {
         calendarDays.forEach((calendarDay) => {
           // Los festivos vienen marcados con holiday = true desde la BD
           if (calendarDay.holiday === true) {
-            holidayDays++;
+            _holidayDays++;
             return; // Saltar festivos
           }
 
