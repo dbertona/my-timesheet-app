@@ -136,10 +136,12 @@ describe('ValidationErrorsModal', () => {
   });
 
   it('does not call onClose when modal content is clicked', () => {
-    const { container } = render(<ValidationErrorsModal {...defaultProps} />);
+    const mockOnClose = vi.fn();
+    const props = { ...defaultProps, onClose: mockOnClose };
+    const { container } = render(<ValidationErrorsModal {...props} />);
     const modal = container.querySelector('.bc-modal');
     fireEvent.click(modal);
-    expect(defaultProps.onClose).not.toHaveBeenCalled();
+    expect(mockOnClose).not.toHaveBeenCalled();
   });
 
   it('handles empty errors object', () => {
