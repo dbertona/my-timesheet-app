@@ -222,8 +222,13 @@ describe('ProjectCell', () => {
     const readOnlyProps = { ...defaultProps, isEditable: false };
     render(<ProjectCell {...readOnlyProps} />);
     
-    const input = screen.getByRole('textbox');
-    expect(input).toBeDisabled();
+    // When not editable, component renders a readonly div instead of input
+    const cell = screen.getByRole('cell');
+    expect(cell).toBeInTheDocument();
+    
+    // Should not find any textbox when readonly
+    const inputs = screen.queryAllByRole('textbox');
+    expect(inputs).toHaveLength(0);
   });
 
   it('should display error styling when error prop is provided', () => {
