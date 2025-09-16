@@ -52,7 +52,7 @@ function TimesheetListPage() {
 
     return () => {
       window.removeEventListener("resize", onResize);
-      try { ro.disconnect(); } catch (err) { /* ignore */ }
+      try { ro.disconnect(); } catch { /* ignore */ }
     };
   }, []);
 
