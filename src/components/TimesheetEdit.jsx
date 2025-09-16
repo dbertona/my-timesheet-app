@@ -1,35 +1,36 @@
 // src/components/TimesheetEdit.jsx
-import React, {
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-  useMemo,
-} from "react";
-import { useNavigate, useLocation, useBlocker } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
-import { toast } from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabaseClient } from "../supabaseClient";
-import { toIsoFromInput } from "../utils/dateHelpers";
+import { format } from "date-fns";
+import React, {
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+import { toast } from "react-hot-toast";
+import { useBlocker, useLocation, useNavigate } from "react-router-dom";
+import { getServerDate } from "../api/date";
+import { TOAST, VALIDATION } from "../constants/i18n";
 import useCalendarData from "../hooks/useCalendarData";
-import useTimesheetLines from "../hooks/useTimesheetLines";
 import useTimesheetEdit from "../hooks/useTimesheetEdit";
+import useTimesheetLines from "../hooks/useTimesheetLines";
 import { useAllJobs } from "../hooks/useTimesheetQueries";
+import { supabaseClient } from "../supabaseClient";
+import {
+    buildHolidaySet,
+    computeTotalsByIso,
+    validateAllData,
+} from "../utils/validation";
 import TimesheetHeader from "./TimesheetHeader";
 import TimesheetLines from "./TimesheetLines";
 import CalendarPanel from "./timesheet/CalendarPanel";
+import ApprovalModal from "./ui/ApprovalModal";
+import BackToDashboard from "./ui/BackToDashboard";
 import BcModal from "./ui/BcModal";
 import ValidationErrorsModal from "./ui/ValidationErrorsModal";
-import ApprovalModal from "./ui/ApprovalModal";
-import { TOAST, PLACEHOLDERS, VALIDATION, LABELS } from "../constants/i18n";
-import { format } from "date-fns";
-import { getServerDate } from "../api/date";
-import {
-  buildHolidaySet,
-  computeTotalsByIso,
-  validateAllData,
-} from "../utils/validation";
 /* eslint-disable react-hooks/exhaustive-deps */
 import "../styles/BcModal.css";
 
@@ -69,6 +70,52 @@ function TimesheetEdit({ headerId }) {
     useState(false);
   const [calendarNotFoundData, setCalendarNotFoundData] = useState({});
   const [rightPad, setRightPad] = useState(234);
+  const headerBarRef = useRef(null);
+  const headerSectionRef = useRef(null);
+  const tableContainerRef = useRef(null);
+  const footerRef = useRef(null); // Ref para el pie de página
+
+  // LÓGICA DE CÁLCULO DE ALTURA PRECISA BASADA EN MEDICIÓN
+  useLayoutEffect(() => {
+    const calculateAndSetHeight = () => {
+      const tableContainer = tableContainerRef.current;
+
+      if (tableContainer) {
+        const viewportHeight = window.innerHeight;
+        const tableTopPosition = tableContainer.getBoundingClientRect().top;
+        const bottomMargin = 20; // Margen más pequeño para evitar espacio extra
+
+        const availableHeight = viewportHeight - tableTopPosition - bottomMargin;
+
+        // Solo establecer max-height, no height fijo
+        tableContainer.style.height = 'auto';
+        tableContainer.style.maxHeight = `${availableHeight}px`;
+        tableContainer.style.overflow = 'auto';
+      }
+    };
+
+    // Ejecutar al montar y al cambiar el tamaño de la ventana
+    calculateAndSetHeight();
+    window.addEventListener('resize', calculateAndSetHeight);
+
+    // Ejecutar con un pequeño retraso cuando los datos cambien
+    const timeoutId = setTimeout(calculateAndSetHeight, 50);
+
+    return () => {
+      window.removeEventListener('resize', calculateAndSetHeight);
+      clearTimeout(timeoutId);
+    };
+  }, [lines]); // Recalcular si las líneas cambian
+
+  // Efecto para añadir/quitar la clase 'no-scroll' del body
+  useEffect(() => {
+    document.body.classList.add('no-scroll');
+    // Función de limpieza para quitar la clase cuando el componente se desmonte
+    return () => {
+      document.body.classList.remove('no-scroll');
+    };
+  }, []); // El array vacío asegura que se ejecute solo al montar/desmontar
+
   const [editableHeader, setEditableHeader] = useState(null); // 🆕 Cabecera editable para nuevos partes
   const [periodChangeTrigger, setPeriodChangeTrigger] = useState(0); // 🆕 Trigger para forzar re-renderizado cuando cambie el período
   const [selectedLines, setSelectedLines] = useState([]); // 🆕 Líneas seleccionadas para acciones múltiples
@@ -1186,7 +1233,7 @@ function TimesheetEdit({ headerId }) {
           headerData.allocation_period
         );
         console.log("  - headerData.calendar_type:", headerData.calendar_type);
-        console.log("  - ap (parámetro):", ap);
+        // console.log("  - ap (parámetro):", ap);
 
         // 1.a) Intentar encontrar registro para el día exacto del servidor
         const { data: dayRecord, error: dayError } = await supabaseClient
@@ -1317,7 +1364,7 @@ function TimesheetEdit({ headerId }) {
               serverIso
             );
           }
-        } catch (e) {
+        } catch {
           console.warn(
             "No se pudo verificar partes previos, se continúa con valores actuales"
           );
@@ -2650,81 +2697,18 @@ function TimesheetEdit({ headerId }) {
   }
 
   return (
-    <div className="ts-responsive">
+    <div className="ts-responsive timesheet-edit-page">
       <div className="timesheet-container">
-        {/* Header de navegación */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginBottom: 12,
-          }}
-        >
-          {/* Botón circular solo con el icono */}
-          <button
-            type="button"
-            aria-label="Lista Parte Trabajo"
-            onClick={() => navigate("/")}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#D8EEF1"; // hover suave
-              e.currentTarget.style.borderColor = "#007E87";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#ffffff";
-              e.currentTarget.style.borderColor = "rgba(0,126,135,0.35)";
-            }}
-            style={{
-              width: 36,
-              height: 36,
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: "9999px",
-              border: "1px solid rgba(0,126,135,0.35)",
-              background: "#EAF7F9",
-              padding: 0,
-              cursor: "pointer",
-            }}
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M15 6L9 12L15 18"
-                stroke="#007E87"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          {/* Etiqueta clickable con el mismo color del botón Editar, modificado a color negro */}
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            aria-label="Ir a lista de parte de trabajo"
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#000",
-              fontWeight: 700,
-              fontSize: "22px",
-              lineHeight: 1,
-              cursor: "pointer",
-              padding: 0,
-            }}
-          >
+        {/* Header de navegación (componente unificado) */}
+        <div ref={headerBarRef} className="ts-header-bar" style={{ marginBottom: 12 }}>
+          <BackToDashboard compact={true} />
+          <h1 className="ts-page-title">
             {header ? "Editar Parte de Trabajo" : "Nuevo Parte de Trabajo"}
-          </button>
+          </h1>
         </div>
 
         {/* Sección del header y calendario - altura fija */}
-        <div className="timesheet-header-section">
+        <div ref={headerSectionRef} className="timesheet-header-section" style={{ flex: "0 0 auto" }}>
           {/* Header, resumen y calendario en la misma fila, alineados a la derecha */}
           <div
             style={{
@@ -2892,13 +2876,13 @@ function TimesheetEdit({ headerId }) {
                   fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
                   transition: "all 0.2s ease",
                 }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = "#D9F0F2";
-                  e.target.style.borderColor = "transparent";
+                onMouseEnter={(_e) => {
+                  _e.target.style.backgroundColor = "#D9F0F2";
+                  _e.target.style.borderColor = "transparent";
                 }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = "#ffffff";
-                  e.target.style.borderColor = "transparent";
+                onMouseLeave={(_e) => {
+                  _e.target.style.backgroundColor = "#ffffff";
+                  _e.target.style.borderColor = "transparent";
                 }}
               >
                 📅 Importar Factorial
@@ -2923,16 +2907,16 @@ function TimesheetEdit({ headerId }) {
                   fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
                   transition: "all 0.2s ease",
                 }}
-                onMouseEnter={(e) => {
+                onMouseEnter={(_e) => {
                   if (selectedLines.length > 0) {
-                    e.target.style.backgroundColor = "#D9F0F2";
-                    e.target.style.borderColor = "transparent";
+                    _e.target.style.backgroundColor = "#D9F0F2";
+                    _e.target.style.borderColor = "transparent";
                   }
                 }}
-                onMouseLeave={(e) => {
+                onMouseLeave={(_e) => {
                   if (selectedLines.length > 0) {
-                    e.target.style.backgroundColor = "#ffffff";
-                    e.target.style.borderColor = "transparent";
+                    _e.target.style.backgroundColor = "#ffffff";
+                    _e.target.style.borderColor = "transparent";
                   }
                 }}
               >
@@ -2958,16 +2942,16 @@ function TimesheetEdit({ headerId }) {
                   fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
                   transition: "all 0.2s ease",
                 }}
-                onMouseEnter={(e) => {
+                onMouseEnter={(_e) => {
                   if (selectedLines.length > 0) {
-                    e.target.style.backgroundColor = "#D9F0F2";
-                    e.target.style.borderColor = "transparent";
+                    _e.target.style.backgroundColor = "#D9F0F2";
+                    _e.target.style.borderColor = "transparent";
                   }
                 }}
-                onMouseLeave={(e) => {
+                onMouseLeave={(_e) => {
                   if (selectedLines.length > 0) {
-                    e.target.style.backgroundColor = "#ffffff";
-                    e.target.style.borderColor = "transparent";
+                    _e.target.style.backgroundColor = "#ffffff";
+                    _e.target.style.borderColor = "transparent";
                   }
                 }}
               >
@@ -2994,14 +2978,14 @@ function TimesheetEdit({ headerId }) {
                   alignItems: "center",
                   gap: 8,
                 }}
-                onMouseEnter={(e) => {
+                onMouseEnter={(_e) => {
                   if (hasUnsavedChanges && !isSaving) {
-                    e.target.style.backgroundColor = "#D9F0F2";
+                    _e.target.style.backgroundColor = "#D9F0F2";
                   }
                 }}
-                onMouseLeave={(e) => {
+                onMouseLeave={(_e) => {
                   if (hasUnsavedChanges && !isSaving) {
-                    e.target.style.backgroundColor = "#ffffff";
+                    _e.target.style.backgroundColor = "#ffffff";
                   }
                 }}
               >
@@ -3089,7 +3073,7 @@ function TimesheetEdit({ headerId }) {
           </div>
 
           {/* Contenedor de la tabla - ocupa todo el espacio disponible */}
-          <div className="timesheet-table-container" style={{ width: "100%" }}>
+          <div ref={tableContainerRef} className="timesheet-table-container" style={{ width: "100%" }}>
             <TimesheetLines
               lines={lines}
               editFormData={editFormData}
@@ -3125,8 +3109,16 @@ function TimesheetEdit({ headerId }) {
               onDuplicateLines={handleDuplicateLines}
               onDeleteLines={handleDeleteLines}
               addEmptyLine={addEmptyLine} // 🆕 Pasar función para agregar línea vacía
+              showResponsible={false}
             />
           </div>
+        </div>
+      </div>
+
+      {/* Acciones de pie de página */}
+      <div className="actions-footer" ref={footerRef}>
+        <div className="footer-actions-container">
+          {/* CONTENIDO DEL BOTÓN ELIMINADO */}
         </div>
       </div>
 
