@@ -520,7 +520,7 @@ const HomeDashboard = () => {
             <Link to="/nuevo-parte">Nuevo Parte de Trabajo</Link>
           </div>
           <div className="bc-menu-item">
-            <Link to="/mis-partes">Editar Partes de Trabajo</Link>
+            <Link to="/mis-partes">Editar Partes de Horas</Link>
           </div>
         </div>
         <div
