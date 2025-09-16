@@ -101,9 +101,13 @@ describe('ProjectCell', () => {
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'PROJ' } });
 
+    // The component receives the actual synthetic event, not just the target object
     expect(mockHandlers.handleInputChange).toHaveBeenCalledWith('line-1', 
       expect.objectContaining({
-        target: expect.objectContaining({ value: 'PROJ' })
+        target: expect.objectContaining({ 
+          value: 'PROJ',
+          name: 'job_no'
+        })
       })
     );
     expect(mockHandlers.clearFieldError).toHaveBeenCalledWith('line-1', 'job_no');
