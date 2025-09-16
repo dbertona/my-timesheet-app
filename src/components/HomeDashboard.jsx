@@ -517,7 +517,7 @@ const HomeDashboard = () => {
       >
         <div style={{ display: "flex", gap: 16 }}>
           <div className="bc-menu-item">
-            <Link to="/nuevo-parte">Nuevo Parte de Trabajo</Link>
+            <Link to="/nuevo-parte">Nuevo Parte de Horas</Link>
           </div>
           <div className="bc-menu-item">
             <Link to="/mis-partes">Editar Partes de Horas</Link>
