@@ -1,0 +1,116 @@
+{
+  // ===== Edición y formato =====
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "modificationsIfAvailable",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "eslint.validate": ["typescript", "typescriptreact", "javascript", "javascriptreact"],
+  "prettier.requireConfig": true,
+
+  // Asegura consistencia de archivos (evita diffs fantasma)
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+
+  // ===== Guardado automático robusto =====
+  // En vez de onFocusChange (que a veces deja pestañas “sucias”),
+  // guarda tras 0,5 s de inactividad.
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 500,
+
+  // ===== Terminal (macOS) =====
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.profiles.osx": {
+    "zsh": {
+      "path": "/bin/zsh",
+      "args": ["-l"]
+    }
+  },
+  "terminal.integrated.env.osx": {
+    "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+  },
+  "terminal.integrated.allowWorkspaceConfiguration": true,
+
+  // ===== Inicio del editor =====
+  "workbench.startupEditor": "none",
+
+  // ===== Tareas =====
+  "task.autoDetect": "on",
+  "task.slowProviderWarning": false,
+
+  // ===== Git: seguridad y menos sustos =====
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  // Si usas Sync, rebase + autostash reduce conflictos y pérdidas
+  "git.rebaseWhenSync": true,
+  "git.mergeEditor": true,
+  "git.promptToSaveFilesBeforeCommit": "always",
+
+  // ===== Diff más fiable (no ignores espacios) =====
+  "diffEditor.ignoreTrimWhitespace": false,
+
+  // ===== Emmet =====
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact"
+  },
+  "emmet.triggerExpansionOnTab": true,
+
+  // ===== Rendimiento TypeScript en workspaces grandes =====
+  "typescript.tsserver.maxTsServerMemory": 4096,
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+
+  // ===== Excluir ruidos típicos en búsquedas/watcher =====
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.next": true,
+    "**/.turbo": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.next/**": true,
+    "**/.turbo/**": true
+  },
+
+  // === Local History ===
+  "local-history.path": ".local-history",
+  "local-history.workspace": true,
+  "local-history.maxFileHistory": 100,
+  "local-history.daysLimit": 30,
+  "local-history.exclude": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.git/**",
+    "**/.next/**",
+    "**/build/**"
+  ],
+  "local-history.notification": true,
+
+  // === Recomendado: excluir de Git ===
+  "files.exclude": {
+    ".local-history": true
+  },
+
+  // ===== LTeX (ortografía/gramática) =====
+  // Excluir reglas internas de Cursor para evitar avisos de nombres técnicos
+  "ltex.files.exclude": [
+    "**/.cursor/**"
+  ],
+  // Añadir términos técnicos usados en estilos/componentes
+  "ltex.dictionary.es-ES": [
+    "Segoe",
+    "Segoe UI",
+    "device-segoe",
+    "WP",
+    "Business",
+    "Central"
+  ]
+}
