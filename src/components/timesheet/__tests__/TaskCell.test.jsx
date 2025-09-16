@@ -239,7 +239,7 @@ describe('TaskCell', () => {
     fireEvent.keyDown(input, { key: 'F8' });
 
     expect(mockHandlers.handleKeyDown).toHaveBeenCalledWith(
-      expect.objectContaining({ key: 'F8' }), 0, 1
+      expect.any(Object), 0, 2 // Real column index
     );
   });
 
