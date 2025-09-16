@@ -19,9 +19,9 @@ import DepartmentCell from "./timesheet/DepartmentCell";
 import ProjectCell from "./timesheet/ProjectCell";
 import ProjectDescriptionCell from "./timesheet/ProjectDescriptionCell";
 import TaskCell from "./timesheet/TaskCell";
+import BcModal from "./ui/BcModal";
 import DecimalInput from "./ui/DecimalInput";
 import EditableCell from "./ui/EditableCell";
-import BcModal from "./ui/BcModal";
 
 export default function TimesheetLines({
   lines,
@@ -181,28 +181,31 @@ export default function TimesheetLines({
     return null;
   };
 
-  // Modal para reabrir líneas Rechazadas/Pending por día
-  const [reopenModal, setReopenModal] = useState({ open: false, dateIso: null, ids: [] });
-  const openReopenModalForDate = (dateIso) => {
-    if (!dateIso) return;
-    const ids = (lines || [])
-      .filter((l) => (l.date ? toIsoFromInput(l.date) : null) === dateIso)
-      .filter((l) => l.status === "Rejected" || l.status === "Pending")
-      .map((l) => l.id);
-    if (ids.length === 0) return;
-    setReopenModal({ open: true, dateIso, ids });
+  // Modal para reabrir UNA línea Rechazada (mostrar motivo)
+  const [reopenModal, setReopenModal] = useState({ open: false, lineId: null, dateIso: null, reason: "" });
+  const openReopenModalForLine = (line) => {
+    const dateIso = line?.date ? toIsoFromInput(line.date) : null;
+    setReopenModal({
+      open: true,
+      lineId: line?.id || null,
+      dateIso,
+      reason: line?.rejection_cause || "",
+    });
   };
   const confirmReopen = async () => {
     try {
-      const ids = reopenModal.ids || [];
-      if (ids.length === 0) return;
-      const { error } = await supabaseClient.from("timesheet").update({ status: "Open" }).in("id", ids);
+      const id = reopenModal.lineId;
+      if (!id) return;
+      const { error } = await supabaseClient
+        .from("timesheet")
+        .update({ status: "Open" })
+        .eq("id", id);
       if (error) throw error;
       if (setLines) {
         setLines((prevLines) =>
           sortLines
-            ? sortLines(prevLines.map((l) => (ids.includes(l.id) ? { ...l, status: "Open" } : l)))
-            : prevLines.map((l) => (ids.includes(l.id) ? { ...l, status: "Open" } : l))
+            ? sortLines(prevLines.map((l) => (l.id === id ? { ...l, status: "Open" } : l)))
+            : prevLines.map((l) => (l.id === id ? { ...l, status: "Open" } : l))
         );
       }
       if (effectiveHeaderId) {
@@ -213,7 +216,7 @@ export default function TimesheetLines({
     } catch (e) {
       // noop
     } finally {
-      setReopenModal({ open: false, dateIso: null, ids: [] });
+      setReopenModal({ open: false, lineId: null, dateIso: null, reason: "" });
     }
   };
 
@@ -685,12 +688,8 @@ export default function TimesheetLines({
                       cursor: "pointer",
                       transition: "background-color 0.2s ease",
                     }}
-                    title="Reabrir líneas del mismo día (a estado Open)"
-                    onClick={() => {
-                      const dateIso = line.date ? toIsoFromInput(line.date) : null;
-                      if (!dateIso) return;
-                      openReopenModalForDate(dateIso);
-                    }}
+                    title={line.rejection_cause ? `Motivo: ${line.rejection_cause}` : "Reabrir línea (a estado Open)"}
+                    onClick={() => openReopenModalForLine(line)}
                     onMouseEnter={(e) => {
                       e.target.style.backgroundColor = "#FEE2E2";
                     }}
@@ -1254,17 +1253,32 @@ export default function TimesheetLines({
 
       <BcModal
         isOpen={reopenModal.open}
-        onClose={() => setReopenModal({ open: false, dateIso: null, ids: [] })}
-        title="Reabrir líneas del día"
+        onClose={() => setReopenModal({ open: false, lineId: null, dateIso: null, reason: "" })}
+        title="Reabrir línea rechazada"
         confirmText="Reabrir"
         cancelText="Cancelar"
         confirmButtonType="primary"
         onConfirm={confirmReopen}
-        onCancel={() => setReopenModal({ open: false, dateIso: null, ids: [] })}
+        onCancel={() => setReopenModal({ open: false, lineId: null, dateIso: null, reason: "" })}
       >
-        <p>
-          Se reabrirán {reopenModal.ids.length} líneas del día {reopenModal.dateIso}.
-        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {reopenModal.reason && (
+            <div
+              style={{
+                padding: "8px 12px",
+                background: "#FEF2F2",
+                border: "1px solid #FECACA",
+                borderRadius: 4,
+                color: "#B91C1C",
+              }}
+            >
+              <strong>Motivo del rechazo:</strong> {reopenModal.reason}
+            </div>
+          )}
+          <p>
+            ¿Deseas reabrir la línea del día {reopenModal.dateIso}?
+          </p>
+        </div>
       </BcModal>
     </div>
   );
