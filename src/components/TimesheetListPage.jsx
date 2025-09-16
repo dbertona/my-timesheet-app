@@ -157,7 +157,7 @@ function TimesheetListPage() {
       <div className="timesheet-list-page">
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <p>Cargando partes de trabajo...</p>
+          <p>Cargando partes de horas...</p>
         </div>
       </div>
     );
