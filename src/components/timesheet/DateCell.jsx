@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
-import { FiCalendar } from "react-icons/fi";
 import { parse } from "date-fns";
-import { parseDate, formatDate } from "../../utils/dateHelpers";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { FiCalendar } from "react-icons/fi";
 import TIMESHEET_FIELDS from "../../constants/timesheetFields";
 import "../../styles/DateInput.css";
+import { formatDate, parseDate } from "../../utils/dateHelpers";
 
 export default function DateCell({
   line,
