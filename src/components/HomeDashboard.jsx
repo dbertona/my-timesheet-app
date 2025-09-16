@@ -1,12 +1,12 @@
 // cspell:ignore msal useMsal
 /* global __APP_VERSION__ */
-import React, { useEffect, useState, useRef, useMemo } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useMsal } from "@azure/msal-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { generateAllocationPeriod, getServerDate } from "../api/date";
 import "../styles/HomeDashboard.css";
 import { supabaseClient } from "../supabaseClient";
 import BcModal from "./ui/BcModal";
-import { getServerDate, generateAllocationPeriod } from "../api/date";
 
 // Helper utilities removidos por no uso para cumplir lint
 
