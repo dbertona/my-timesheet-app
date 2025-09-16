@@ -723,7 +723,7 @@ const HomeDashboard = () => {
           }
         >
           <h3 className="bc-card__title">
-            Horas y días pendientes de imputar este mes
+            Pendientes de imputar este mes
           </h3>
           <div className="bc-card__value">
             {loadingHours ? (
