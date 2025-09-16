@@ -5,6 +5,8 @@ import { useMsal } from "@azure/msal-react";
 import { supabaseClient } from "../supabaseClient";
 import TimesheetLines from "./TimesheetLines";
 import BackToDashboard from "./ui/BackToDashboard";
+import { toast } from "react-hot-toast";
+import BcModal from "./ui/BcModal";
 import "../styles/ApprovalPage.css";
 import { formatDate } from "../utils/dateHelpers";
 
@@ -397,48 +399,47 @@ export default function ApprovalPage() {
       queryClient.invalidateQueries({ queryKey: ["lines"] });
 
       setSelectedLines([]);
-      alert(`✅ ${selectedLines.length} líneas aprobadas correctamente`);
+      toast.success(`✅ ${selectedLines.length} líneas aprobadas correctamente`);
     } catch (error) {
       console.error("Error aprobando líneas:", error);
-      alert("❌ Error al aprobar líneas");
+      toast.error("❌ Error al aprobar líneas");
     } finally {
       setIsProcessing(false);
     }
   }, [selectedLines, queryClient]);
 
-  // Rechazar líneas seleccionadas
-  const handleRejectSelection = useCallback(async () => {
-    if (selectedLines.length === 0) return;
+  // Modal de rechazo
+  const [rejectModal, setRejectModal] = useState({ open: false, reason: "" });
 
-    const reason = prompt("Motivo del rechazo:");
-    if (!reason) return;
+  const openRejectModal = useCallback(() => {
+    if (selectedLines.length === 0) return;
+    setRejectModal({ open: true, reason: "" });
+  }, [selectedLines.length]);
+
+  const confirmReject = useCallback(async () => {
+    if (selectedLines.length === 0) return;
+    const reason = (rejectModal.reason || "").trim();
+    if (!reason) return; // no confirmar sin motivo
 
     setIsProcessing(true);
     try {
       const { error } = await supabaseClient
         .from("timesheet")
-        .update({
-          status: "Rejected",
-          rejection_cause: reason,
-        })
+        .update({ status: "Rejected", rejection_cause: reason })
         .in("id", selectedLines);
-
       if (error) throw error;
 
-      // Invalidar queries para refrescar datos
       queryClient.invalidateQueries({ queryKey: ["approval-headers"] });
       queryClient.invalidateQueries({ queryKey: ["approval-lines"] });
       queryClient.invalidateQueries({ queryKey: ["lines"] });
-
       setSelectedLines([]);
-      alert(`❌ ${selectedLines.length} líneas rechazadas correctamente`);
+      setRejectModal({ open: false, reason: "" });
     } catch (error) {
       console.error("Error rechazando líneas:", error);
-      alert("❌ Error al rechazar líneas");
     } finally {
       setIsProcessing(false);
     }
-  }, [selectedLines, queryClient]);
+  }, [selectedLines, rejectModal.reason, queryClient]);
 
   // Calcular totales
   const totalHeaders = headersData?.length || 0;
@@ -642,7 +643,7 @@ export default function ApprovalPage() {
               </button>
               <button
                 className="ts-btn ts-btn--danger"
-                onClick={handleRejectSelection}
+                onClick={openRejectModal}
                 disabled={selectedLinesCount === 0 || isProcessing}
               >
                 {isProcessing
@@ -708,6 +709,33 @@ export default function ApprovalPage() {
       </div>
 
       {/* Botones de Acción movidos a la cabecera de líneas */}
+
+      {/* Modal de rechazo */}
+      <BcModal
+        isOpen={rejectModal.open}
+        onClose={() => setRejectModal({ open: false, reason: "" })}
+        title="Motivo del rechazo"
+        confirmText="Rechazar"
+        cancelText="Cancelar"
+        confirmButtonType="danger"
+        onConfirm={confirmReject}
+        onCancel={() => setRejectModal({ open: false, reason: "" })}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <label htmlFor="reject-reason" style={{ fontWeight: 600, color: "#333" }}>
+            Indica el motivo del rechazo
+          </label>
+          <input
+            id="reject-reason"
+            type="text"
+            value={rejectModal.reason}
+            onChange={(e) => setRejectModal((prev) => ({ ...prev, reason: e.target.value }))}
+            className="ts-input"
+            placeholder="Motivo..."
+            autoFocus
+          />
+        </div>
+      </BcModal>
     </div>
   );
 }
