@@ -1,6 +1,6 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import TimesheetLines from '../TimesheetLines';
 
 // Mock dependencies
@@ -216,7 +216,7 @@ describe('TimesheetLines', () => {
   // TODO: GitHub Copilot, please generate comprehensive tests for TimesheetLines component
   // Focus on:
   // 1. Basic rendering with lines and table structure
-  // 2. Line selection and multi-select functionality  
+  // 2. Line selection and multi-select functionality
   // 3. Status icons (Pending, Approved, Rejected) and reopen modal
   // 4. Input handling and cell editing
   // 5. Line filtering (empty lines, factorial lines)
@@ -228,12 +228,12 @@ describe('TimesheetLines', () => {
 
   it('should render table with correct structure', () => {
     renderWithQueryClient(<TimesheetLines {...defaultProps} />);
-    
+
     // Should render main table
     const table = screen.getByRole('table');
     expect(table).toBeInTheDocument();
     expect(table).toHaveClass('timesheet-table');
-    
+
     // Should render table headers
     expect(screen.getByText('Fecha')).toBeInTheDocument();
     expect(screen.getByText('Proyecto')).toBeInTheDocument();
@@ -244,12 +244,12 @@ describe('TimesheetLines', () => {
 
   it('should render all lines correctly', () => {
     renderWithQueryClient(<TimesheetLines {...defaultProps} />);
-    
+
     // Should render cells for each line
     expect(screen.getByTestId('date-cell-line-1')).toBeInTheDocument();
     expect(screen.getByTestId('project-cell-line-1')).toBeInTheDocument();
     expect(screen.getByTestId('task-cell-line-1')).toBeInTheDocument();
-    
+
     expect(screen.getByTestId('date-cell-line-2')).toBeInTheDocument();
     expect(screen.getByTestId('project-cell-line-2')).toBeInTheDocument();
     expect(screen.getByTestId('task-cell-line-2')).toBeInTheDocument();
@@ -257,39 +257,39 @@ describe('TimesheetLines', () => {
 
   it('should handle line selection', () => {
     renderWithQueryClient(<TimesheetLines {...defaultProps} />);
-    
+
     // Find and click checkbox for first line
     const checkbox1 = screen.getByRole('checkbox', { name: /seleccionar línea line-1/i });
     fireEvent.click(checkbox1);
-    
+
     expect(mockHandlers.onLineSelectionChange).toHaveBeenCalledWith(['line-1']);
   });
 
   it('should handle select all functionality', () => {
     renderWithQueryClient(<TimesheetLines {...defaultProps} />);
-    
+
     // Find and click select all checkbox
     const selectAllCheckbox = screen.getByRole('checkbox', { name: /seleccionar todas/i });
     fireEvent.click(selectAllCheckbox);
-    
+
     expect(mockHandlers.onLineSelectionChange).toHaveBeenCalledWith(['line-1', 'line-2']);
   });
 
   it('should show status icons when showResponsible is true', () => {
     const responsibleProps = { ...defaultProps, showResponsible: true };
     renderWithQueryClient(<TimesheetLines {...responsibleProps} />);
-    
+
     // Should show responsible column header
     expect(screen.getByText('Responsable')).toBeInTheDocument();
   });
 
   it('should handle input changes correctly', () => {
     renderWithQueryClient(<TimesheetLines {...defaultProps} />);
-    
+
     const projectInput = screen.getByTestId('project-input-line-1');
     fireEvent.change(projectInput, { target: { value: 'PROJ003', name: 'job_no' } });
-    
-    expect(mockHandlers.handleInputChange).toHaveBeenCalledWith('line-1', 
+
+    expect(mockHandlers.handleInputChange).toHaveBeenCalledWith('line-1',
       expect.objectContaining({
         target: expect.objectContaining({
           value: 'PROJ003',
@@ -312,13 +312,13 @@ describe('TimesheetLines', () => {
         date: ''
       }
     ];
-    
+
     const propsWithEmpty = { ...defaultProps, lines: linesWithEmpty };
     renderWithQueryClient(<TimesheetLines {...propsWithEmpty} />);
-    
+
     // Empty line should not be rendered
     expect(screen.queryByTestId('date-cell-empty-line')).not.toBeInTheDocument();
-    
+
     // Only valid lines should be rendered
     expect(screen.getByTestId('date-cell-line-1')).toBeInTheDocument();
     expect(screen.getByTestId('date-cell-line-2')).toBeInTheDocument();
@@ -337,30 +337,30 @@ describe('TimesheetLines', () => {
         date: ''
       }
     ];
-    
+
     const propsWithTemp = { ...defaultProps, lines: linesWithTemp };
     renderWithQueryClient(<TimesheetLines {...propsWithTemp} />);
-    
+
     // Temporary line should be rendered even if empty
     expect(screen.getByTestId('date-cell-tmp-new-line')).toBeInTheDocument();
   });
 
   it('should handle quantity input changes', () => {
     renderWithQueryClient(<TimesheetLines {...defaultProps} />);
-    
+
     const quantityInput = screen.getByTestId('quantity-input-line-1');
     fireEvent.change(quantityInput, { target: { value: '10' } });
-    
+
     // Should call scheduleAutosave for quantity changes
     expect(mockHandlers.scheduleAutosave).toHaveBeenCalled();
   });
 
   it('should handle keyboard navigation', () => {
     renderWithQueryClient(<TimesheetLines {...defaultProps} />);
-    
+
     const projectInput = screen.getByTestId('project-input-line-1');
     fireEvent.keyDown(projectInput, { key: 'Tab' });
-    
+
     expect(mockHandlers.handleKeyDown).toHaveBeenCalled();
   });
 
@@ -370,22 +370,22 @@ describe('TimesheetLines', () => {
       status: 'Rejected',
       rejection_cause: 'Invalid project'
     };
-    
+
     const propsWithRejected = {
       ...defaultProps,
       lines: [rejectedLine],
       showResponsible: true
     };
-    
+
     renderWithQueryClient(<TimesheetLines {...propsWithRejected} />);
-    
+
     // Should show rejected status icon
     const rejectedIcon = screen.getByTitle('Hacer clic para reabrir línea');
     expect(rejectedIcon).toBeInTheDocument();
-    
+
     // Click to open reopen modal
     fireEvent.click(rejectedIcon);
-    
+
     // Should show reopen modal
     expect(screen.getByTestId('bc-modal')).toBeInTheDocument();
     expect(screen.getByText('Reabrir Línea Rechazada')).toBeInTheDocument();
@@ -401,9 +401,9 @@ describe('TimesheetLines', () => {
         }
       }
     };
-    
+
     renderWithQueryClient(<TimesheetLines {...propsWithErrors} />);
-    
+
     // Should render without crashing when errors are present
     expect(screen.getByTestId('project-cell-line-1')).toBeInTheDocument();
   });

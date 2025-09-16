@@ -32,7 +32,7 @@ describe('DecimalInput', () => {
   // Focus on:
   // 1. Basic rendering with correct attributes
   // 2. Number validation and formatting
-  // 3. Decimal precision handling 
+  // 3. Decimal precision handling
   // 4. Comma/period decimal separator normalization
   // 5. Min value enforcement
   // 6. Invalid input rejection
@@ -43,7 +43,7 @@ describe('DecimalInput', () => {
 
   it('should render with correct default attributes', () => {
     render(<DecimalInput {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     expect(input).toBeInTheDocument();
     expect(input).toHaveAttribute('type', 'text');
@@ -58,17 +58,17 @@ describe('DecimalInput', () => {
 
   it('should display the provided value', () => {
     render(<DecimalInput {...defaultProps} value="10.50" />);
-    
+
     const input = screen.getByRole('textbox');
     expect(input).toHaveValue('10.50');
   });
 
   it('should handle valid decimal input', () => {
     render(<DecimalInput {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: '12.34' } });
-    
+
     expect(mockOnChange).toHaveBeenCalledWith({
       target: { name: 'quantity', value: '12.34' }
     });
@@ -76,10 +76,10 @@ describe('DecimalInput', () => {
 
   it('should normalize comma to period', () => {
     render(<DecimalInput {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: '12,34' } });
-    
+
     expect(mockOnChange).toHaveBeenCalledWith({
       target: { name: 'quantity', value: '12.34' }
     });
@@ -87,10 +87,10 @@ describe('DecimalInput', () => {
 
   it('should accept integers without decimal point', () => {
     render(<DecimalInput {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: '42' } });
-    
+
     expect(mockOnChange).toHaveBeenCalledWith({
       target: { name: 'quantity', value: '42' }
     });
@@ -98,17 +98,17 @@ describe('DecimalInput', () => {
 
   it('should reject invalid characters', () => {
     render(<DecimalInput {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
-    
+
     // Should reject letters
     fireEvent.change(input, { target: { value: 'abc' } });
     expect(mockOnChange).not.toHaveBeenCalled();
-    
+
     // Should reject special characters
     fireEvent.change(input, { target: { value: '12$34' } });
     expect(mockOnChange).not.toHaveBeenCalled();
-    
+
     // Should reject multiple decimal points
     fireEvent.change(input, { target: { value: '12.34.56' } });
     expect(mockOnChange).not.toHaveBeenCalled();
@@ -116,17 +116,17 @@ describe('DecimalInput', () => {
 
   it('should enforce decimal precision', () => {
     render(<DecimalInput {...defaultProps} decimals={2} />);
-    
+
     const input = screen.getByRole('textbox');
-    
+
     // Should accept up to 2 decimals
     fireEvent.change(input, { target: { value: '12.34' } });
     expect(mockOnChange).toHaveBeenCalledWith({
       target: { name: 'quantity', value: '12.34' }
     });
-    
+
     vi.clearAllMocks();
-    
+
     // Should reject more than 2 decimals
     fireEvent.change(input, { target: { value: '12.345' } });
     expect(mockOnChange).not.toHaveBeenCalled();
@@ -134,10 +134,10 @@ describe('DecimalInput', () => {
 
   it('should handle custom decimal precision', () => {
     render(<DecimalInput {...defaultProps} decimals={3} />);
-    
+
     const input = screen.getByRole('textbox');
     expect(input).toHaveAttribute('pattern', '[0-9]*[.,]?[0-9]{0,3}');
-    
+
     fireEvent.change(input, { target: { value: '12.345' } });
     expect(mockOnChange).toHaveBeenCalledWith({
       target: { name: 'quantity', value: '12.345' }
@@ -146,10 +146,10 @@ describe('DecimalInput', () => {
 
   it('should format value on blur', () => {
     render(<DecimalInput {...defaultProps} min={0} decimals={2} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.blur(input, { target: { value: '12.3' } });
-    
+
     expect(mockOnBlur).toHaveBeenCalledWith({
       target: { name: 'quantity', value: '12.30' }
     });
@@ -157,10 +157,10 @@ describe('DecimalInput', () => {
 
   it('should enforce minimum value on blur', () => {
     render(<DecimalInput {...defaultProps} min={5} decimals={2} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.blur(input, { target: { value: '3' } });
-    
+
     // Should enforce minimum value of 5
     expect(mockOnBlur).toHaveBeenCalledWith({
       target: { name: 'quantity', value: '5.00' }
@@ -169,10 +169,10 @@ describe('DecimalInput', () => {
 
   it('should handle empty value on blur', () => {
     render(<DecimalInput {...defaultProps} min={0} decimals={2} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.blur(input, { target: { value: '' } });
-    
+
     expect(mockOnBlur).toHaveBeenCalledWith({
       target: { name: 'quantity', value: '0.00' }
     });
@@ -180,10 +180,10 @@ describe('DecimalInput', () => {
 
   it('should handle negative values with minimum', () => {
     render(<DecimalInput {...defaultProps} min={0} decimals={2} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.blur(input, { target: { value: '-5' } });
-    
+
     // Should enforce minimum of 0
     expect(mockOnBlur).toHaveBeenCalledWith({
       target: { name: 'quantity', value: '0.00' }
@@ -192,53 +192,53 @@ describe('DecimalInput', () => {
 
   it('should handle focus events', () => {
     render(<DecimalInput {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.focus(input);
-    
+
     expect(mockOnFocus).toHaveBeenCalled();
   });
 
   it('should handle keyboard events', () => {
     render(<DecimalInput {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'Enter' });
-    
+
     expect(mockOnKeyDown).toHaveBeenCalled();
   });
 
   it('should be disabled when disabled prop is true', () => {
     render(<DecimalInput {...defaultProps} disabled={true} />);
-    
+
     const input = screen.getByRole('textbox');
     expect(input).toBeDisabled();
   });
 
   it('should accept custom className', () => {
     render(<DecimalInput {...defaultProps} className="custom-class" />);
-    
+
     const input = screen.getByRole('textbox');
     expect(input).toHaveClass('custom-class');
   });
 
   it('should accept custom placeholder', () => {
     render(<DecimalInput {...defaultProps} placeholder="Enter amount" />);
-    
+
     const input = screen.getByRole('textbox');
     expect(input).toHaveAttribute('placeholder', 'Enter amount');
   });
 
   it('should handle null/undefined value', () => {
     render(<DecimalInput {...defaultProps} value={null} />);
-    
+
     const input = screen.getByRole('textbox');
     expect(input).toHaveValue('');
   });
 
   it('should accept additional props', () => {
     render(<DecimalInput {...defaultProps} data-testid="decimal-input" />);
-    
+
     const input = screen.getByTestId('decimal-input');
     expect(input).toBeInTheDocument();
   });
@@ -246,24 +246,24 @@ describe('DecimalInput', () => {
   it('should handle ref forwarding', () => {
     const ref = { current: null };
     render(<DecimalInput {...defaultProps} inputRef={ref} />);
-    
+
     expect(ref.current).not.toBeNull();
     expect(ref.current.tagName).toBe('INPUT');
   });
 
   it('should accept partial decimal input', () => {
     render(<DecimalInput {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
-    
+
     // Should accept just decimal point
     fireEvent.change(input, { target: { value: '12.' } });
     expect(mockOnChange).toHaveBeenCalledWith({
       target: { name: 'quantity', value: '12.' }
     });
-    
+
     vi.clearAllMocks();
-    
+
     // Should accept single decimal digit
     fireEvent.change(input, { target: { value: '12.5' } });
     expect(mockOnChange).toHaveBeenCalledWith({

@@ -96,7 +96,7 @@ describe('TaskCell', () => {
 
   it('should render input field correctly', () => {
     render(<TaskCell {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     expect(input).toBeInTheDocument();
     expect(input).toHaveClass('ts-input', 'pr-icon');
@@ -108,20 +108,20 @@ describe('TaskCell', () => {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: 'PROJ001', job_task_no: 'TASK001' } }
     };
-    
+
     render(<TaskCell {...propsWithTask} />);
-    
+
     const input = screen.getByRole('textbox');
     expect(input).toHaveValue('TASK001');
   });
 
   it('should handle input changes and clear field errors', () => {
     render(<TaskCell {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'TASK', name: 'job_task_no' } });
 
-    expect(mockHandlers.handleInputChange).toHaveBeenCalledWith('line-1', 
+    expect(mockHandlers.handleInputChange).toHaveBeenCalledWith('line-1',
       expect.objectContaining({
         target: expect.objectContaining({
           value: 'TASK',
@@ -134,14 +134,14 @@ describe('TaskCell', () => {
 
   it('should handle task autocomplete on blur', async () => {
     mockTasksState.findTask.mockReturnValue({ no: 'TASK001', description: 'Development Task' });
-    
+
     const propsWithData = {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: 'PROJ001', job_task_no: 'TASK' } }
     };
-    
+
     render(<TaskCell {...propsWithData} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.blur(input);
 
@@ -153,14 +153,14 @@ describe('TaskCell', () => {
 
   it('should set error for invalid task on blur', async () => {
     mockTasksState.findTask.mockReturnValue(null); // Task not found
-    
+
     const propsWithData = {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: 'PROJ001', job_task_no: 'INVALID' } }
     };
-    
+
     render(<TaskCell {...propsWithData} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.blur(input);
 
@@ -174,14 +174,14 @@ describe('TaskCell', () => {
 
   it('should handle Enter key autocomplete', async () => {
     mockTasksState.findTask.mockReturnValue({ no: 'TASK002', description: 'Testing Task' });
-    
+
     const propsWithData = {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: 'PROJ001', job_task_no: 'TASK002' } }
     };
-    
+
     render(<TaskCell {...propsWithData} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'Enter' });
 
@@ -193,14 +193,14 @@ describe('TaskCell', () => {
 
   it('should handle Tab key navigation', async () => {
     mockTasksState.findTask.mockReturnValue({ no: 'TASK003', description: 'Documentation Task' });
-    
+
     const propsWithData = {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: 'PROJ001', job_task_no: 'TASK003' } }
     };
-    
+
     render(<TaskCell {...propsWithData} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'Tab' });
 
@@ -216,9 +216,9 @@ describe('TaskCell', () => {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: 'PROJ001', job_task_no: '' } }
     };
-    
+
     render(<TaskCell {...propsWithEmpty} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'Enter' });
 
@@ -230,7 +230,7 @@ describe('TaskCell', () => {
 
   it('should handle arrow key navigation', () => {
     render(<TaskCell {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'ArrowDown' });
 
@@ -241,7 +241,7 @@ describe('TaskCell', () => {
 
   it('should handle F8 key navigation', () => {
     render(<TaskCell {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'F8' });
 
@@ -255,29 +255,29 @@ describe('TaskCell', () => {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: '', job_task_no: '' } }
     };
-    
+
     render(<TaskCell {...propsNoJob} />);
-    
+
     // Should not show dropdown icon when no job selected
     expect(screen.queryByTestId('chevron-down')).not.toBeInTheDocument();
   });
 
   it('should show dropdown when job is selected', () => {
     render(<TaskCell {...defaultProps} />);
-    
+
     // Should show dropdown icon when job is selected
     expect(screen.getByTestId('chevron-down')).toBeInTheDocument();
   });
 
   it('should not be editable when isEditable is false', () => {
-    const readOnlyProps = { 
-      ...defaultProps, 
+    const readOnlyProps = {
+      ...defaultProps,
       isEditable: false,
       editFormData: { 'line-1': { job_no: 'PROJ001', job_task_no: 'TASK001' } }
     };
-    
+
     render(<TaskCell {...readOnlyProps} />);
-    
+
     // Should show readonly div instead of input
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.getByText('TASK001')).toBeInTheDocument();
@@ -285,7 +285,7 @@ describe('TaskCell', () => {
 
   it('should handle focus events', () => {
     render(<TaskCell {...defaultProps} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.focus(input);
 
@@ -294,14 +294,14 @@ describe('TaskCell', () => {
 
   it('should complete task on autocomplete match', async () => {
     mockTasksState.findTask.mockReturnValue({ no: 'TASK002', description: 'Testing Task' });
-    
+
     const propsWithPartial = {
       ...defaultProps,
       editFormData: { 'line-1': { job_no: 'PROJ001', job_task_no: 'TASK' } }
     };
-    
+
     render(<TaskCell {...propsWithPartial} />);
-    
+
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'Enter' });
 
@@ -315,24 +315,24 @@ describe('TaskCell', () => {
 
   it('should handle task selection from dropdown', () => {
     render(<TaskCell {...defaultProps} />);
-    
+
     // Simulate dropdown open and task selection
     const input = screen.getByRole('textbox');
     fireEvent.click(input);
-    
+
     // The dropdown functionality would be tested with more complex interaction
     // This is a simplified test to ensure the component renders without errors
     expect(input).toBeInTheDocument();
   });
 
   it('should display error styling when error prop is provided', () => {
-    const errorProps = { 
-      ...defaultProps, 
-      error: 'Tarea requerida' 
+    const errorProps = {
+      ...defaultProps,
+      error: 'Tarea requerida'
     };
-    
+
     render(<TaskCell {...errorProps} />);
-    
+
     const input = screen.getByRole('textbox');
     expect(input).toBeInTheDocument();
     // Error styling is typically handled by parent or CSS classes
