@@ -26,7 +26,6 @@ const HomeDashboard = () => {
   const [loadingRejected, setLoadingRejected] = useState(true);
   const [errorRejected, setErrorRejected] = useState(null);
 
-  // eslint-disable-next-line no-unused-vars
   const _useRejectedStates = { loadingRejected, errorRejected };
 
   // 🆕 Estados para partes de trabajo pendientes de aprobar
