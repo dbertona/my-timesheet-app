@@ -2718,7 +2718,7 @@ function TimesheetEdit({ headerId }) {
               top: -1,
             }}
           >
-            {header ? "Editar Parte de Trabajo" : "Nuevo Parte de Trabajo"}
+            {header ? "Editar Parte de Horas" : "Nuevo Parte de Horas"}
           </h1>
         </div>
 

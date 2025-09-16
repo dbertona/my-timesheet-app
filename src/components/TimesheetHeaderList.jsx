@@ -1,9 +1,8 @@
-import React from "react";
-import { useEffect, useState } from "react";
-import { supabaseClient } from "../supabaseClient.js";
 import { useMsal } from "@azure/msal-react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/TimesheetHeaderList.css";
+import { supabaseClient } from "../supabaseClient.js";
 
 function TimesheetHeaderList({ headers: propHeaders }) {
   // Componente TimesheetHeaderList renderizado
@@ -37,7 +36,7 @@ function TimesheetHeaderList({ headers: propHeaders }) {
 
   return (
     <div>
-      <h2 className="timesheet-title">Partes de Trabajo</h2>
+      <h2 className="timesheet-title">Partes de Horas</h2>
       {headers.length === 0 ? (
         <p>No hay cabeceras disponibles.</p>
       ) : (

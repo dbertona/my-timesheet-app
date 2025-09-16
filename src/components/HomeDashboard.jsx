@@ -25,7 +25,7 @@ const HomeDashboard = () => {
   const [rejectedHeadersCount, setRejectedHeadersCount] = useState(0);
   // eslint-disable-next-line no-unused-vars
   const [loadingRejected, setLoadingRejected] = useState(true);
-  // eslint-disable-next-line no-unused-vars  
+  // eslint-disable-next-line no-unused-vars
   const [errorRejected, setErrorRejected] = useState(null);
 
   // 🆕 Estados para partes de trabajo pendientes de aprobar
@@ -517,10 +517,10 @@ const HomeDashboard = () => {
       >
         <div style={{ display: "flex", gap: 16 }}>
           <div className="bc-menu-item">
-            <Link to="/nuevo-parte">Nuevo Parte de Trabajo</Link>
+            <Link to="/nuevo-parte">Nuevo Parte de Horas</Link>
           </div>
           <div className="bc-menu-item">
-            <Link to="/mis-partes">Editar Partes de Trabajo</Link>
+            <Link to="/mis-partes">Mis Partes de Horas</Link>
           </div>
         </div>
         <div
@@ -723,7 +723,7 @@ const HomeDashboard = () => {
           }
         >
           <h3 className="bc-card__title">
-            Horas y días pendientes de imputar este mes
+            Pendientes de imputar este mes
           </h3>
           <div className="bc-card__value">
             {loadingHours ? (

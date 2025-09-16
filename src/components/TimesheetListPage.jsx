@@ -103,7 +103,7 @@ function TimesheetListPage() {
         const { data, error: headersError } = await query;
 
         if (headersError) {
-          setError("Error cargando los partes de trabajo");
+          setError("Error cargando los partes de horas");
           return;
         }
 
@@ -157,7 +157,7 @@ function TimesheetListPage() {
       <div className="timesheet-list-page">
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <p>Cargando partes de trabajo...</p>
+          <p>Cargando partes de horas...</p>
         </div>
       </div>
     );
@@ -197,7 +197,7 @@ function TimesheetListPage() {
             top: -1,
           }}
         >
-          Mis Partes de Trabajo
+          Mis Partes de Horas
         </h1>
         <div
           style={{
@@ -210,7 +210,7 @@ function TimesheetListPage() {
             border: "1px solid #BFE9EC",
             fontWeight: 600,
           }}
-          title="Total de partes de trabajo"
+          title="Total de partes de horas"
         >
           {headers?.length || 0} partes
         </div>
@@ -237,7 +237,7 @@ function TimesheetListPage() {
       <div className="ts-responsive" ref={tableContainerRef}>
         {headers.length === 0 ? (
           <div className="no-data">
-            <p>No hay partes de trabajo disponibles</p>
+            <p>No hay partes de horas disponibles</p>
             <button
               onClick={() => navigate("/nuevo-parte")}
               className="ts-btn ts-btn--primary"
