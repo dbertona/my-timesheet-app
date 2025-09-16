@@ -5,7 +5,7 @@ import DecimalInput from '../DecimalInput';
 // Mock i18n constants
 vi.mock('../../constants/i18n', () => ({
   PLACEHOLDERS: {
-    QUANTITY: 'Cantidad'
+    QUANTITY: '0.00'
   }
 }));
 
