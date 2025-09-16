@@ -1,0 +1,9 @@
+# Excluir archivos del historial de Cursor
+.history/
+# Excluir archivos de servidor Node.js
+server.js
+# Excluir archivos de build y dependencias
+dist/
+node_modules/
+# Excluir archivos de configuración
+vite.config.js
