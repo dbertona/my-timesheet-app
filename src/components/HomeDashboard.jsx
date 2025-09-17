@@ -796,7 +796,7 @@ const HomeDashboard = () => {
           }
         >
           <h3 className="bc-card__title">
-            Partes de trabajo pendientes de aprobar
+            Horas pendientes de aprobar
           </h3>
           <div className="bc-card__value">
             {loadingPending ? (
