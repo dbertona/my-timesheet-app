@@ -20,6 +20,13 @@ html {
 
 body {
   font-family: inherit;
+  margin: 0; /* Eliminar margen por defecto que provoca scroll */
+}
+
+/* Asegurar que el viewport ocupa toda la altura disponible */
+html,
+body {
+  height: 100%;
 }
 
 /* Bloquear scroll global cuando las vistas gestionan su propio scroll interno */
