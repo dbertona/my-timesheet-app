@@ -3,7 +3,7 @@ Testing: despliegue y recuperación sin esfuerzo
 Resumen
 - Backend Node (Express) servido por `systemd` en `192.168.88.68` puerto 3001
 - Frontend (dist) servido por Nginx del contenedor `timesheet-web-1` y proxy de Home Assistant
-- Multi-empresa Factorial: variables `FACTORIAL_API_KEY` (A) y `FACTORIAL_API_KEY_B` (B)
+- Multiempresa Factorial: variables `FACTORIAL_API_KEY` (A) y `FACTORIAL_API_KEY_B` (B)
 
 Requisitos en el servidor (Debian/Ubuntu)
 - Node.js 18.x

@@ -9,7 +9,7 @@ vi.mock('../../utils/useDropdownFilter', () => ({
     setFilterByLine: vi.fn(),
     openFor: null,
     setOpenFor: vi.fn(),
-    getVisible: vi.fn((lineId, items, _formatter) => items.slice(0, 5))
+    getVisible: vi.fn((lineId, items, formatter) => items.slice(0, 5))
   })
 }));
 
