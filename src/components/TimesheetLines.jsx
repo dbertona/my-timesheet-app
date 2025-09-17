@@ -446,20 +446,22 @@ export default function TimesheetLines({
             </th>
 
             {TIMESHEET_FIELDS.map((key) => (
-              <th
-                key={key}
-                data-col={key}
-                className="ts-th"
-                style={{ ...colStyles[key] }}
-              >
-                {TIMESHEET_LABELS?.[key] || key}
-                <span
-                  className="ts-resizer"
-                  onMouseDown={(e) => onMouseDown(e, key)}
-                  onDoubleClick={() => handleAutoFit(key)}
-                  aria-hidden
-                />
-              </th>
+              (showResponsible || (key !== "resource_no" && key !== "resource_name")) && (
+                <th
+                  key={key}
+                  data-col={key}
+                  className="ts-th"
+                  style={{ ...colStyles[key] }}
+                >
+                  {TIMESHEET_LABELS?.[key] || key}
+                  <span
+                    className="ts-resizer"
+                    onMouseDown={(e) => onMouseDown(e, key)}
+                    onDoubleClick={() => handleAutoFit(key)}
+                    aria-hidden
+                  />
+                </th>
+              )
             ))}
             {showResponsible && (
               <th className="ts-th" style={{ width: "160px" }}>
@@ -735,30 +737,34 @@ export default function TimesheetLines({
               </td>
 
               {/* ----- CÓDIGO RECURSO: solo lectura ----- */}
-              <td
-                className="ts-td"
-                style={{
-                  ...colStyles.resource_no,
-                  textAlign: getAlign("resource_no"),
-                  padding: "8px",
-                  verticalAlign: "middle",
-                }}
-              >
-                <div className="ts-readonly">{line.resource_no || ""}</div>
-              </td>
+              {showResponsible && (
+                <td
+                  className="ts-td"
+                  style={{
+                    ...colStyles.resource_no,
+                    textAlign: getAlign("resource_no"),
+                    padding: "8px",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  <div className="ts-readonly">{line.resource_no || ""}</div>
+                </td>
+              )}
 
               {/* ----- NOMBRE RECURSO: solo lectura ----- */}
-              <td
-                className="ts-td"
-                style={{
-                  ...colStyles.resource_name,
-                  textAlign: getAlign("resource_name"),
-                  padding: "8px",
-                  verticalAlign: "middle",
-                }}
-              >
-                <div className="ts-readonly">{line.resource_name || ""}</div>
-              </td>
+              {showResponsible && (
+                <td
+                  className="ts-td"
+                  style={{
+                    ...colStyles.resource_name,
+                    textAlign: getAlign("resource_name"),
+                    padding: "8px",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  <div className="ts-readonly">{line.resource_name || ""}</div>
+                </td>
+              )}
 
               {/* ----- PROYECTO: combo buscable ----- */}
               <ProjectCell
