@@ -54,6 +54,7 @@ export default function TimesheetLines({
   onDeleteLines: _onDeleteLines, // 🆕 Función para borrar líneas seleccionadas
   showResponsible = false, // 🆕 Mostrar columna de responsable (solo aprobación)
   showResourceColumns = false, // 🆕 Mostrar columnas de recurso (solo aprobación)
+  extraColumns = [], // 🆕 Columnas extra al inicio (solo algunas páginas)
 }) {
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
     TIMESHEET_FIELDS,
@@ -422,6 +423,17 @@ export default function TimesheetLines({
       <table ref={tableRef} className="ts-table">
         <thead>
           <tr>
+            {/* 🆕 Encabezados de columnas extra al inicio */}
+            {Array.isArray(extraColumns) &&
+              extraColumns.map((col) => (
+                <th
+                  key={`extra-head-${col.key}`}
+                  className="ts-th"
+                  style={{ width: col.width || 140, textAlign: col.align || "left" }}
+                >
+                  {col.label || col.key}
+                </th>
+              ))}
             {/* 🆕 Columna de selección */}
             <th
               className="ts-th"
@@ -476,6 +488,24 @@ export default function TimesheetLines({
           {/* Líneas existentes */}
           {safeLines.map((line, lineIndex) => (
             <tr key={line.id}>
+              {/* 🆕 Celdas de columnas extra al inicio */}
+              {Array.isArray(extraColumns) &&
+                extraColumns.map((col) => (
+                  <td
+                    key={`extra-${col.key}-${line.id}`}
+                    className="ts-td"
+                    style={{
+                      width: col.width || 140,
+                      textAlign: col.align || "left",
+                      padding: "8px",
+                      verticalAlign: "middle",
+                    }}
+                  >
+                    {typeof col.renderCell === "function"
+                      ? col.renderCell(line)
+                      : (line?.[col.key] ?? "")}
+                  </td>
+                ))}
               {/* 🆕 Columna de selección */}
               <td
                 className="ts-td"
