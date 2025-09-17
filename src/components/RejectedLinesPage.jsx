@@ -1,20 +1,14 @@
 import { useMsal } from "@azure/msal-react";
-import React, { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useEffect, useLayoutEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../supabaseClient";
 import BackToDashboard from "./ui/BackToDashboard";
 import TimesheetLines from "./TimesheetLines";
 
-function useQueryParam(name) {
-  const { search } = useLocation();
-  return useMemo(() => new URLSearchParams(search).get(name), [search, name]);
-}
-
 export default function RejectedLinesPage() {
   const { accounts } = useMsal();
   const navigate = useNavigate();
-  const period = useQueryParam("period") || ""; // YYYY-MM opcional
 
   const pageRef = useRef(null);
   const headerBarRef = useRef(null);
@@ -51,12 +45,8 @@ export default function RejectedLinesPage() {
 
   const userEmail = accounts?.[0]?.username || "";
 
-  const {
-    data: rejectedLines,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["rejected-lines", userEmail, period],
+  const { data: rejectedLines, isLoading, error } = useQuery({
+    queryKey: ["rejected-lines", userEmail],
     queryFn: async () => {
       if (!userEmail) return [];
 
@@ -68,8 +58,7 @@ export default function RejectedLinesPage() {
         .single();
       if (resourceErr || !resourceRow?.code) return [];
 
-      // 2) Traer líneas Rejected no sincronizadas, del responsable
-      //    Si period llega, filtrar por header.allocation_period
+      // 2) Traer TODAS las líneas Rejected no sincronizadas, del responsable
       let query = supabaseClient
         .from("timesheet")
         .select(
@@ -96,10 +85,6 @@ export default function RejectedLinesPage() {
         .eq("status", "Rejected")
         .eq("resource_responsible", resourceRow.code)
         .or("synced_to_bc.is.null,synced_to_bc.eq.false");
-
-      if (period) {
-        query = query.eq("resource_timesheet_header.allocation_period", period);
-      }
 
       const { data, error } = await query;
       if (error) throw error;
@@ -133,7 +118,7 @@ export default function RejectedLinesPage() {
             top: -1,
           }}
         >
-          Líneas Rechazadas {period ? `( ${period} )` : ""}
+          Líneas Rechazadas
         </h1>
         <div
           style={{
@@ -165,7 +150,7 @@ export default function RejectedLinesPage() {
           </div>
         ) : totalLines === 0 ? (
           <div className="no-data">
-            <p>No hay líneas rechazadas {period ? `en ${period}` : ""}</p>
+            <p>No hay líneas rechazadas</p>
           </div>
         ) : (
           <TimesheetLines

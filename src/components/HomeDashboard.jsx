@@ -850,9 +850,9 @@ const HomeDashboard = () => {
           className="bc-card dashboard-card"
           role="button"
           tabIndex={0}
-          onClick={() => allocationPeriod && navigate(`/lines/rejected?period=${allocationPeriod}`)}
+          onClick={() => navigate(`/lines/rejected`)}
           onKeyDown={(e) =>
-            (e.key === "Enter" || e.key === " ") && allocationPeriod && navigate(`/lines/rejected?period=${allocationPeriod}`)
+            (e.key === "Enter" || e.key === " ") && navigate(`/lines/rejected`)
           }
         >
           <h3 className="bc-card__title">Horas Rechazadas</h3>
