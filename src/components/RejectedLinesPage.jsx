@@ -1,5 +1,5 @@
 import { useMsal } from "@azure/msal-react";
-import React, { useEffect, useLayoutEffect, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../supabaseClient";
@@ -12,6 +12,7 @@ export default function RejectedLinesPage() {
 
   const pageRef = useRef(null);
   const headerBarRef = useRef(null);
+  const filtersRef = useRef(null);
   const tableContainerRef = useRef(null);
 
   const recalcHeights = () => {
@@ -33,7 +34,14 @@ export default function RejectedLinesPage() {
     recalcHeights();
     const onResize = () => recalcHeights();
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    const ro = new ResizeObserver(() => recalcHeights());
+    if (filtersRef.current) ro.observe(filtersRef.current);
+    if (headerBarRef.current) ro.observe(headerBarRef.current);
+    if (pageRef.current) ro.observe(pageRef.current);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      try { ro.disconnect(); } catch { /* ignore */ }
+    };
   }, []);
 
   useEffect(() => {
@@ -45,7 +53,25 @@ export default function RejectedLinesPage() {
 
   const userEmail = accounts?.[0]?.username || "";
 
-  const { data: rejectedLines, isLoading, error } = useQuery({
+  // Filtros locales (patrón similar a otras páginas)
+  const [filterPeriod, setFilterPeriod] = useState("");
+  const [filterProject, setFilterProject] = useState("");
+
+  // Proyectos para select (como en ApprovalPage)
+  const { data: projects } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data, error } = await supabaseClient
+        .from("job")
+        .select("no, description")
+        .order("description");
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: rejectedLinesRaw, isLoading, error } = useQuery({
     queryKey: ["rejected-lines", userEmail],
     queryFn: async () => {
       if (!userEmail) return [];
@@ -92,6 +118,29 @@ export default function RejectedLinesPage() {
     },
   });
 
+  // Derivar períodos disponibles y aplicar filtros en cliente
+  const periods = useMemo(() => {
+    const set = new Set(
+      (rejectedLinesRaw || []).map(
+        (l) => l?.resource_timesheet_header?.allocation_period
+      )
+    );
+    return Array.from(set).filter(Boolean).sort().reverse();
+  }, [rejectedLinesRaw]);
+
+  const rejectedLines = useMemo(() => {
+    let list = Array.isArray(rejectedLinesRaw) ? rejectedLinesRaw : [];
+    if (filterPeriod) {
+      list = list.filter(
+        (l) => l?.resource_timesheet_header?.allocation_period === filterPeriod
+      );
+    }
+    if (filterProject) {
+      list = list.filter((l) => String(l.job_no || "") === filterProject);
+    }
+    return list;
+  }, [rejectedLinesRaw, filterPeriod, filterProject]);
+
   const totalLines = rejectedLines?.length || 0;
   const totalHours = (rejectedLines || []).reduce(
     (sum, l) => sum + (Number(l.quantity) || 0),
@@ -134,6 +183,55 @@ export default function RejectedLinesPage() {
           title="Horas • Líneas"
         >
           {Math.round(totalHours)} Horas • {totalLines} líneas
+        </div>
+      </div>
+
+      {/* Filtros en bloque como otras páginas */}
+      <div className="timesheet-list-filters" ref={filtersRef}>
+        <div className="filter-group">
+          <label htmlFor="filter-period">Período:</label>
+          <select
+            id="filter-period"
+            value={filterPeriod}
+            onChange={(e) => setFilterPeriod(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">Todos</option>
+            {periods.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label htmlFor="filter-project">Proyecto:</label>
+          <select
+            id="filter-project"
+            value={filterProject}
+            onChange={(e) => setFilterProject(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">Todos</option>
+            {(projects || []).map((p) => (
+              <option key={p.no} value={p.no}>
+                {p.description}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-actions">
+          <button
+            className="ts-btn ts-btn--secondary ts-btn--small"
+            onClick={() => {
+              setFilterPeriod("");
+              setFilterProject("");
+            }}
+          >
+            Limpiar
+          </button>
         </div>
       </div>
 
@@ -210,7 +308,20 @@ export default function RejectedLinesPage() {
             onDuplicateLines={() => {}}
             onDeleteLines={() => {}}
             showResponsible={false}
-            showResourceColumns={true}
+            showResourceColumns={false}
+            extraColumns={[
+              {
+                key: "allocation_period",
+                label: "Período",
+                width: 110,
+                align: "left",
+                renderCell: (l) => (
+                  <div className="ts-readonly">
+                    {l?.resource_timesheet_header?.allocation_period || ""}
+                  </div>
+                ),
+              },
+            ]}
           />
         )}
       </div>
