@@ -44,11 +44,18 @@ VITE_DEV_PORT=5173
 - `scripts/cleanup-branches.sh`: elimina ramas locales mergeadas y remotas seleccionadas; usa `git fetch -p`.
 - `scripts/context-dump.sh`: imprime resumen de repo/entorno para soporte.
 
+Requisito de equipo: Se deben usar los comandos de `scripts/pr-flow.sh` para abrir, consultar estado, relanzar CI y fusionar PRs hacia `reset/main`. Evitar usar directamente `git push` a `reset/main` o abrir/fusionar PRs fuera de este flujo.
+
 Convenciones Git/PR:
 - Trabajar en rama feature/fix/chore; abrir PR hacia `reset/main`.
 - CI se ejecuta en `pull_request` (lint con `--max-warnings=0`, tests).
 - No se puede pushear directo a `reset/main` (protegida).
 - Tras merge, limpiar ramas locales/remotas (excepto `autosave`, `stable/*` y soporte activo).
+
+Política de PR (unidad funcional):
+- Abrir PR por unidad funcional coherente (no por cada microcambio). Objetivo: ≤ ~300 líneas netas, 1–3 archivos relacionados.
+- Usar commits atómicos dentro del PR y realizar squash merge.
+- Cambios de solo documentación pueden agruparse; el CI puede ignorarlos (ver filtro de paths en CI).
 
 ### 4) Lint y tests
 - Lint: `npm run lint -- --max-warnings=0`.
@@ -84,7 +91,7 @@ Convenciones Git/PR:
 ### 9) Paquete de estado (context-dump)
 Ejecutar `scripts/context-dump.sh` para imprimir:
 - rama actual, sync con remoto, PR asociado (si `gh` está disponible).
-- versión `package.json`, scripts clave.
+- Versión `package.json`, scripts clave.
 - variables requeridas por `.env.example`.
 
 ### 10) Buenas prácticas
