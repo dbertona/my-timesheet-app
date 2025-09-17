@@ -389,17 +389,20 @@ const HomeDashboard = () => {
     };
 
     calculateAndSetHeight();
-    const resizeObserver = new ResizeObserver(calculateAndSetHeight);
+    let resizeObserver = null;
     const currentPageRef = pageRef.current; // Capturar la referencia actual
 
-    if (currentPageRef) {
-      resizeObserver.observe(currentPageRef);
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(calculateAndSetHeight);
+      if (currentPageRef) {
+        resizeObserver.observe(currentPageRef);
+      }
     }
     window.addEventListener("resize", calculateAndSetHeight);
 
     return () => {
       window.removeEventListener("resize", calculateAndSetHeight);
-      if (currentPageRef) {
+      if (resizeObserver && currentPageRef) {
         resizeObserver.unobserve(currentPageRef);
       }
     };
