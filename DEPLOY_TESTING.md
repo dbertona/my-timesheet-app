@@ -159,7 +159,7 @@ my-timesheet-app/
 2. Limpiar caché del navegador
 3. Verificar que Nginx está sirviendo desde el contenedor
 
-### Si hay errores de permisos
+### Sí hay errores de permisos
 
 ```bash
 # Verificar permisos en el servidor

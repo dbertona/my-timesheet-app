@@ -37,7 +37,7 @@ alwaysApply: true
 - Manejar violaciones de claves foráneas y duplicados de manera elegante
 - Configurar alertas automáticas para errores críticos
 
-## Multi-empresa
+## Multiempresa
 
 - Diseñar sistemas que soporten múltiples empresas de manera dinámica
 - Usar parámetros de empresa para filtrar datos correctamente

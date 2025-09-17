@@ -64,7 +64,7 @@ Este archivo documenta todas las claves API y credenciales utilizadas en el proy
 
 ### **Workflows**
 
-- **ID Principal:** `rDSrPE4U9zNGRaJi`
+- **Id Principal:** `rDSrPE4U9zNGRaJi`
 - **Nombre:** `001_sincronizacion_completa`
 
 ---
@@ -134,7 +134,7 @@ N8N_PASSWORD=your_password
 
 ## 📞 Contacto
 
-- **Responsable:** Daniel Bertona Sanchez
+- **Responsable:** Daniel Bertona Sánchez
 - **Email:** dbertona@powersolution.es
 - **Proyecto:** My Timesheet App
-- **Última actualización:** 29 de Agosto, 2025
+- **Última actualización:** 29 de agosto, 2025

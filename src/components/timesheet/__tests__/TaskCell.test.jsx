@@ -327,6 +327,7 @@ describe('TaskCell', () => {
       ...defaultProps,
       error: 'Tarea requerida'
     };
+
     render(<TaskCell {...errorProps} />);
 
     const input = screen.getByRole('textbox');

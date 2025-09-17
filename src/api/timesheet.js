@@ -79,10 +79,8 @@ export async function updateTimesheetLine(id, row) {
   // Obtener fecha del servidor para diagnóstico
   try {
     const serverNow = await getServerDate();
-    // eslint-disable-next-line no-console
     console.log("[updateTimesheetLine] serverNow:", serverNow.toISOString());
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.warn("[updateTimesheetLine] no se pudo obtener serverNow:", e);
   }
 
@@ -99,10 +97,8 @@ export async function insertTimesheetLines(rows) {
   try {
     const serverNow = await getServerDate();
     serverNowIso = serverNow.toISOString();
-    // eslint-disable-next-line no-console
     console.log("[insertTimesheetLines] serverNow:", serverNowIso);
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.warn("[insertTimesheetLines] no se pudo obtener serverNow:", e);
   }
 
