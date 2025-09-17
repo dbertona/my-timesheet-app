@@ -22,6 +22,12 @@ body {
   font-family: inherit;
 }
 
+/* Bloquear scroll global cuando las vistas gestionan su propio scroll interno */
+body.no-scroll {
+  overflow: hidden;
+  height: 100vh;
+}
+
 * {
   font-family: inherit;
 }
