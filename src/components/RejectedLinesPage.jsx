@@ -1,10 +1,10 @@
 import { useMsal } from "@azure/msal-react";
 import { useQuery } from "@tanstack/react-query";
 import React, {
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabaseClient } from "../supabaseClient";
