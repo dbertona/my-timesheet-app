@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import TIMESHEET_FIELDS from '../../../constants/timesheetFields';
 import TaskCell from '../TaskCell';
 
 // Mock dependencies
@@ -200,7 +201,9 @@ describe('TaskCell', () => {
 
     await waitFor(() => {
       expect(mockHandlers.handleKeyDown).toHaveBeenCalledWith(
-        expect.any(Object), 0, 2 // Real column index from test results
+        expect.any(Object),
+        0,
+        TIMESHEET_FIELDS.indexOf('job_task_no')
       );
     });
   });
@@ -227,8 +230,10 @@ describe('TaskCell', () => {
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'ArrowDown' });
 
-    expect(mockHandlers.handleKeyDown).toHaveBeenCalledWith(
-      expect.any(Object), 0, 2 // Real column index
+  expect(mockHandlers.handleKeyDown).toHaveBeenCalledWith(
+      expect.any(Object),
+      0,
+      TIMESHEET_FIELDS.indexOf('job_task_no')
     );
   });
 
@@ -238,8 +243,10 @@ describe('TaskCell', () => {
     const input = screen.getByRole('textbox');
     fireEvent.keyDown(input, { key: 'F8' });
 
-    expect(mockHandlers.handleKeyDown).toHaveBeenCalledWith(
-      expect.any(Object), 0, 2 // Real column index
+  expect(mockHandlers.handleKeyDown).toHaveBeenCalledWith(
+      expect.any(Object),
+      0,
+      TIMESHEET_FIELDS.indexOf('job_task_no')
     );
   });
 

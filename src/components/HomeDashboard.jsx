@@ -23,6 +23,7 @@ const HomeDashboard = () => {
   // 🆕 Estados para partes de trabajo rechazados
   const [rejectedLinesCount, setRejectedLinesCount] = useState(0);
   const [rejectedHeadersCount, setRejectedHeadersCount] = useState(0);
+  const [rejectedHoursSum, setRejectedHoursSum] = useState(0);
   // eslint-disable-next-line no-unused-vars
   const [loadingRejected, setLoadingRejected] = useState(true);
   // eslint-disable-next-line no-unused-vars
@@ -31,6 +32,7 @@ const HomeDashboard = () => {
   // 🆕 Estados para partes de trabajo pendientes de aprobar
   const [pendingLinesCount, setPendingLinesCount] = useState(0);
   const [pendingHeadersCount, setPendingHeadersCount] = useState(0);
+  const [pendingHoursSum, setPendingHoursSum] = useState(0);
   const [loadingPending, setLoadingPending] = useState(true);
   const [errorPending, setErrorPending] = useState(null);
 
@@ -103,12 +105,13 @@ const HomeDashboard = () => {
 
         const resourceNo = resourceData.code;
 
-        // Obtener líneas en estado Pending donde el recurso es el responsable
+        // Obtener líneas Rejected del recurso (no enviadas a BC o null)
         const { data: linesData, error: linesError } = await supabaseClient
           .from("timesheet")
-          .select("id, header_id, status")
-          .eq("status", "Pending")
-          .eq("resource_responsible", resourceNo);
+          .select("id, header_id, status, quantity, synced_to_bc")
+          .eq("status", "Rejected")
+          .eq("resource_responsible", resourceNo)
+          .or("synced_to_bc.is.null,synced_to_bc.eq.false");
 
         if (linesError) {
           console.error("Error obteniendo líneas rechazadas:", linesError);
@@ -119,6 +122,13 @@ const HomeDashboard = () => {
         // Contar líneas
         const linesCount = linesData?.length || 0;
         setRejectedLinesCount(linesCount);
+
+        // Sumar horas
+        const hoursSum = (linesData || []).reduce(
+          (sum, l) => sum + (Number(l.quantity) || 0),
+          0
+        );
+        setRejectedHoursSum(hoursSum);
 
         // Contar headers únicos
         const uniqueHeaders = new Set(
@@ -169,10 +179,10 @@ const HomeDashboard = () => {
 
         const { data: linesData, error: linesError } = await supabaseClient
           .from("timesheet")
-          .select("id, header_id, status, synced_to_bc")
+          .select("id, header_id, status, synced_to_bc, quantity")
           .eq("status", "Pending")
           .eq("resource_responsible", resourceNo)
-          .eq("synced_to_bc", false);
+          .or("synced_to_bc.is.null,synced_to_bc.eq.false");
 
         if (linesError) {
           console.error("Error obteniendo líneas pendientes:", linesError);
@@ -183,6 +193,13 @@ const HomeDashboard = () => {
         // Contar líneas
         const linesCount = linesData?.length || 0;
         setPendingLinesCount(linesCount);
+
+        // Sumar horas (quantity)
+        const hoursSum = (linesData || []).reduce(
+          (sum, l) => sum + (Number(l.quantity) || 0),
+          0
+        );
+        setPendingHoursSum(hoursSum);
 
         // Contar headers únicos
         const uniqueHeaders = new Set(
@@ -796,7 +813,7 @@ const HomeDashboard = () => {
           }
         >
           <h3 className="bc-card__title">
-            Partes de trabajo pendientes de aprobar
+            Horas pendientes de aprobar
           </h3>
           <div className="bc-card__value">
             {loadingPending ? (
@@ -815,11 +832,14 @@ const HomeDashboard = () => {
                   color: "white",
                 }}
               >
-                <span>{rejectedLinesCount} líneas</span>
+                <span>{Math.round(pendingHoursSum || 0)} Horas</span>
                 <span>•</span>
                 <span>
-                  {rejectedHeadersCount}{" "}
-                  {rejectedHeadersCount === 1 ? "parte" : "partes"}
+                  {pendingLinesCount} {pendingLinesCount === 1 ? "línea" : "líneas"}
+                </span>
+                <span>•</span>
+                <span>
+                  {pendingHeadersCount} {pendingHeadersCount === 1 ? "parte" : "partes"}
                 </span>
               </div>
             )}
@@ -829,11 +849,11 @@ const HomeDashboard = () => {
         </article>
 
         <article className="bc-card dashboard-card">
-          <h3 className="bc-card__title">Partes de trabajo rechazadas</h3>
+          <h3 className="bc-card__title">Horas Rechazadas</h3>
           <div className="bc-card__value">
-            {loadingPending ? (
+            {loadingRejected ? (
               "…"
-            ) : errorPending ? (
+            ) : errorRejected ? (
               "—"
             ) : (
               <div
@@ -847,11 +867,14 @@ const HomeDashboard = () => {
                   color: "white",
                 }}
               >
-                <span>{pendingLinesCount} líneas</span>
+                <span>{Math.round(rejectedHoursSum || 0)} Horas</span>
                 <span>•</span>
                 <span>
-                  {pendingHeadersCount}{" "}
-                  {pendingHeadersCount === 1 ? "parte" : "partes"}
+                  {rejectedLinesCount} {rejectedLinesCount === 1 ? "línea" : "líneas"}
+                </span>
+                <span>•</span>
+                <span>
+                  {rejectedHeadersCount} {rejectedHeadersCount === 1 ? "parte" : "partes"}
                 </span>
               </div>
             )}

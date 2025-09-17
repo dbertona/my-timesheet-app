@@ -3,11 +3,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 import TIMESHEET_FIELDS, {
-    COL_MAX_WIDTH,
-    COL_MIN_WIDTH,
-    DEFAULT_COL_WIDTH,
-    TIMESHEET_ALIGN,
-    TIMESHEET_LABELS,
+  COL_MAX_WIDTH,
+  COL_MIN_WIDTH,
+  DEFAULT_COL_WIDTH,
+  TIMESHEET_ALIGN,
+  TIMESHEET_LABELS,
 } from "../constants/timesheetFields";
 import useColumnResize from "../hooks/useColumnResize";
 import { useJobs, useWorkTypes } from "../hooks/useTimesheetQueries";
@@ -53,6 +53,7 @@ export default function TimesheetLines({
   onDuplicateLines: _onDuplicateLines, // 🆕 Función para duplicar líneas seleccionadas
   onDeleteLines: _onDeleteLines, // 🆕 Función para borrar líneas seleccionadas
   showResponsible = false, // 🆕 Mostrar columna de responsable (solo aprobación)
+  showResourceColumns = false, // 🆕 Mostrar columnas de recurso (solo aprobación)
 }) {
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
     TIMESHEET_FIELDS,
@@ -446,20 +447,22 @@ export default function TimesheetLines({
             </th>
 
             {TIMESHEET_FIELDS.map((key) => (
-              <th
-                key={key}
-                data-col={key}
-                className="ts-th"
-                style={{ ...colStyles[key] }}
-              >
-                {TIMESHEET_LABELS?.[key] || key}
-                <span
-                  className="ts-resizer"
-                  onMouseDown={(e) => onMouseDown(e, key)}
-                  onDoubleClick={() => handleAutoFit(key)}
-                  aria-hidden
-                />
-              </th>
+              (showResourceColumns || (key !== "resource_no" && key !== "resource_name")) && (
+                <th
+                  key={key}
+                  data-col={key}
+                  className="ts-th"
+                  style={{ ...colStyles[key] }}
+                >
+                  {TIMESHEET_LABELS?.[key] || key}
+                  <span
+                    className="ts-resizer"
+                    onMouseDown={(e) => onMouseDown(e, key)}
+                    onDoubleClick={() => handleAutoFit(key)}
+                    aria-hidden
+                  />
+                </th>
+              )
             ))}
             {showResponsible && (
               <th className="ts-th" style={{ width: "160px" }}>
@@ -735,30 +738,34 @@ export default function TimesheetLines({
               </td>
 
               {/* ----- CÓDIGO RECURSO: solo lectura ----- */}
-              <td
-                className="ts-td"
-                style={{
-                  ...colStyles.resource_no,
-                  textAlign: getAlign("resource_no"),
-                  padding: "8px",
-                  verticalAlign: "middle",
-                }}
-              >
-                <div className="ts-readonly">{line.resource_no || ""}</div>
-              </td>
+              {showResourceColumns && (
+                <td
+                  className="ts-td"
+                  style={{
+                    ...colStyles.resource_no,
+                    textAlign: getAlign("resource_no"),
+                    padding: "8px",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  <div className="ts-readonly">{line.resource_no || ""}</div>
+                </td>
+              )}
 
               {/* ----- NOMBRE RECURSO: solo lectura ----- */}
-              <td
-                className="ts-td"
-                style={{
-                  ...colStyles.resource_name,
-                  textAlign: getAlign("resource_name"),
-                  padding: "8px",
-                  verticalAlign: "middle",
-                }}
-              >
-                <div className="ts-readonly">{line.resource_name || ""}</div>
-              </td>
+              {showResourceColumns && (
+                <td
+                  className="ts-td"
+                  style={{
+                    ...colStyles.resource_name,
+                    textAlign: getAlign("resource_name"),
+                    padding: "8px",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  <div className="ts-readonly">{line.resource_name || ""}</div>
+                </td>
+              )}
 
               {/* ----- PROYECTO: combo buscable ----- */}
               <ProjectCell

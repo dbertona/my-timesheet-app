@@ -16,8 +16,8 @@ const TIMESHEET_FIELDS = [
 
 // Etiquetas para el <thead>
 export const TIMESHEET_LABELS = {
-  resource_no: "Código recurso",
-  resource_name: "Nombre recurso",
+  resource_no: "Recurso",
+  resource_name: "Nombre",
   job_no: "Nº proyecto",
   job_no_description: "Descripción proyecto", // Nueva etiqueta
   job_task_no: "Nº tarea",

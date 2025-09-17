@@ -704,6 +704,7 @@ export default function ApprovalPage() {
             onDuplicateLines={() => {}}
             onDeleteLines={() => {}}
             showResponsible={false}
+            showResourceColumns={true}
           />
         )}
       </div>

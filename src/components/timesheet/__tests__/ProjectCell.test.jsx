@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import TIMESHEET_FIELDS from '../../../constants/timesheetFields';
 import ProjectCell from '../ProjectCell';
 
 // Mock dependencies
@@ -167,7 +168,9 @@ describe('ProjectCell', () => {
     fireEvent.keyDown(input, { key: 'Tab' });
 
     expect(mockHandlers.handleKeyDown).toHaveBeenCalledWith(
-      expect.objectContaining({ key: 'Tab' }), 0, 0
+      expect.objectContaining({ key: 'Tab' }),
+      0,
+      TIMESHEET_FIELDS.indexOf('job_no')
     );
   });
 
@@ -184,7 +187,9 @@ describe('ProjectCell', () => {
 
     // Should still call handleKeyDown for navigation even with empty input
     expect(mockHandlers.handleKeyDown).toHaveBeenCalledWith(
-      expect.objectContaining({ key: 'Enter' }), 0, 0
+      expect.objectContaining({ key: 'Enter' }),
+      0,
+      TIMESHEET_FIELDS.indexOf('job_no')
     );
   });
 
@@ -195,7 +200,9 @@ describe('ProjectCell', () => {
     fireEvent.keyDown(input, { key: 'ArrowDown' });
 
     expect(mockHandlers.handleKeyDown).toHaveBeenCalledWith(
-      expect.objectContaining({ key: 'ArrowDown' }), 0, 0
+      expect.objectContaining({ key: 'ArrowDown' }),
+      0,
+      TIMESHEET_FIELDS.indexOf('job_no')
     );
   });
 
@@ -251,7 +258,9 @@ describe('ProjectCell', () => {
     fireEvent.keyDown(input, { key: 'F8' });
 
     expect(mockHandlers.handleKeyDown).toHaveBeenCalledWith(
-      expect.objectContaining({ key: 'F8' }), 0, 0
+      expect.objectContaining({ key: 'F8' }),
+      0,
+      TIMESHEET_FIELDS.indexOf('job_no')
     );
   });
 });
