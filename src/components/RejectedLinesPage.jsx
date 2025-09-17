@@ -1,10 +1,10 @@
 import { useMsal } from "@azure/msal-react";
+import { useQuery } from "@tanstack/react-query";
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { supabaseClient } from "../supabaseClient";
-import BackToDashboard from "./ui/BackToDashboard";
 import TimesheetLines from "./TimesheetLines";
+import BackToDashboard from "./ui/BackToDashboard";
 
 export default function RejectedLinesPage() {
   const { accounts } = useMsal();
@@ -141,7 +141,34 @@ export default function RejectedLinesPage() {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      const lines = data || [];
+
+      // Enriquecer con descripciones de proyecto como en ApprovalPage
+      const missingDescJobNos = Array.from(
+        new Set(
+          lines
+            .filter((l) => l.job_no && !l.job_no_description)
+            .map((l) => l.job_no)
+        )
+      );
+      let jobDescMap = {};
+      if (missingDescJobNos.length > 0) {
+        try {
+          const { data: jobsRes } = await supabaseClient
+            .from("job")
+            .select("no, description")
+            .in("no", missingDescJobNos);
+          jobDescMap = Object.fromEntries(
+            (jobsRes || []).map((j) => [j.no, j.description || ""])
+          );
+        } catch {
+          jobDescMap = {};
+        }
+      }
+      return lines.map((l) => ({
+        ...l,
+        job_no_description: l.job_no_description || jobDescMap[l.job_no] || "",
+      }));
     },
   });
 
@@ -194,7 +221,7 @@ export default function RejectedLinesPage() {
             top: -1,
           }}
         >
-          Líneas Rechazadas
+          Horas Rechazadas
         </h1>
         <div
           style={{
