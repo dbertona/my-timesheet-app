@@ -173,7 +173,7 @@ const HomeDashboard = () => {
           .select("id, header_id, status, synced_to_bc, quantity")
           .eq("status", "Pending")
           .eq("resource_responsible", resourceNo)
-          .eq("synced_to_bc", false);
+          .or("synced_to_bc.is.null,synced_to_bc.eq.false");
 
         if (linesError) {
           console.error("Error obteniendo líneas pendientes:", linesError);
