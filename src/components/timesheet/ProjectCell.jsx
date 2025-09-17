@@ -1,15 +1,15 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import useDropdownFilter from "../../utils/useDropdownFilter";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
-import TIMESHEET_FIELDS from "../../constants/timesheetFields";
 import { fetchJobStatus } from "../../api/jobs";
+import TIMESHEET_FIELDS from "../../constants/timesheetFields";
+import useDropdownFilter from "../../utils/useDropdownFilter";
 
 export default function ProjectCell({
   line,
@@ -164,7 +164,11 @@ export default function ProjectCell({
                 // 🆕 F8: copiar desde celda superior (debe ir ANTES de la navegación)
                 if (e.key === "F8") {
                   e.preventDefault();
-                  handleKeyDown(e, lineIndex, 0);
+                  handleKeyDown(
+                    e,
+                    lineIndex,
+                    TIMESHEET_FIELDS.indexOf("job_no")
+                  );
                   return;
                 }
                 // 🆕 Autocompletado con Enter o Tab (navegar incluso si está vacío)
@@ -191,15 +195,22 @@ export default function ProjectCell({
                   }
 
                   // Continuar con la navegación incluso si raw está vacío (sincrónico para tests)
-                  handleKeyDown(e, lineIndex, 0);
+                  handleKeyDown(
+                    e,
+                    lineIndex,
+                    TIMESHEET_FIELDS.indexOf("job_no")
+                  );
                   return;
                 }
 
                 // TODAS las demás teclas de navegación usan la misma función
                 if (e.key.startsWith("Arrow")) {
                   e.preventDefault(); // Prevenir comportamiento por defecto
-                  // job_no está en el índice 0 de TIMESHEET_FIELDS
-                  handleKeyDown(e, lineIndex, 0);
+                  handleKeyDown(
+                    e,
+                    lineIndex,
+                    TIMESHEET_FIELDS.indexOf("job_no")
+                  );
                   return;
                 }
               }}

@@ -1,9 +1,9 @@
 // src/components/timesheet/TaskCell.jsx
+import { useVirtualizer } from "@tanstack/react-virtual";
 import React, { useCallback, useMemo, useRef } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import useDropdownFilter from "../../utils/useDropdownFilter";
 import TIMESHEET_FIELDS from "../../constants/timesheetFields";
+import useDropdownFilter from "../../utils/useDropdownFilter";
 
 const TaskCell = ({
   line,
@@ -124,7 +124,11 @@ const TaskCell = ({
                 // 🆕 F8: copiar desde celda superior (debe ir ANTES de la navegación)
                 if (e.key === "F8") {
                   e.preventDefault();
-                  handleKeyDown(e, lineIndex, 2);
+                  handleKeyDown(
+                    e,
+                    lineIndex,
+                    TIMESHEET_FIELDS.indexOf("job_task_no")
+                  );
                   return;
                 }
                 // 🆕 Autocompletado con Enter o Tab
@@ -148,7 +152,11 @@ const TaskCell = ({
 
                       // Continuar con la navegación después del autocompletado
                       setTimeout(() => {
-                        handleKeyDown(e, lineIndex, 2);
+                        handleKeyDown(
+                          e,
+                          lineIndex,
+                          TIMESHEET_FIELDS.indexOf("job_task_no")
+                        );
                       }, 0);
                     });
                     return;
@@ -158,8 +166,11 @@ const TaskCell = ({
                 // TODAS las demás teclas de navegación usan la misma función
                 if (e.key.startsWith("Arrow")) {
                   e.preventDefault(); // Prevenir comportamiento por defecto
-                  // job_task_no está en el índice 2 de TIMESHEET_FIELDS
-                  handleKeyDown(e, lineIndex, 2);
+                  handleKeyDown(
+                    e,
+                    lineIndex,
+                    TIMESHEET_FIELDS.indexOf("job_task_no")
+                  );
                   return;
                 }
               }}
