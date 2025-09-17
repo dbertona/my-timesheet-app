@@ -46,7 +46,7 @@
 .dash {
   padding: 20px;
   background: var(--bc-bg);
-  height: 90vh; /* Reducido 10% segun indicación; scroll interno en grid */
+  height: 95vh; /* +5% respecto al ajuste anterior */
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   width: 100%;
   max-width: 100vw; /* Nunca exceder el viewport */
