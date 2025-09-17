@@ -1,7 +1,7 @@
 // cspell:ignore msal useMsal
 /* global __APP_VERSION__ */
 import { useMsal } from "@azure/msal-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { generateAllocationPeriod, getServerDate } from "../api/date";
 import "../styles/HomeDashboard.css";
@@ -360,8 +360,41 @@ const HomeDashboard = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const pageRef = useRef(null);
+  const gridContainerRef = useRef(null);
 
-  // Dashboard no bloquea scroll global; cada sección interna gestiona su propio flujo.
+  // Bloquear scroll global para emular comportamiento de Aprobación/Edición
+  useEffect(() => {
+    document.body.classList.add("no-scroll");
+    return () => document.body.classList.remove("no-scroll");
+  }, []);
+
+  // Ajustar la altura disponible para el grid (scroll interno solo en grid)
+  useLayoutEffect(() => {
+    const recalcHeights = () => {
+      try {
+        if (!gridContainerRef.current) return;
+        const viewportH = window.innerHeight || document.documentElement.clientHeight;
+        const rect = gridContainerRef.current.getBoundingClientRect();
+        const top = rect.top;
+        const available = Math.max(0, Math.floor(viewportH - top));
+        gridContainerRef.current.style.height = `${available}px`;
+        gridContainerRef.current.style.maxHeight = `${available}px`;
+        gridContainerRef.current.style.overflowY = "auto";
+      } catch {
+        /* ignore */
+      }
+    };
+    requestAnimationFrame(() => recalcHeights());
+    const onResize = () => recalcHeights();
+    window.addEventListener("resize", onResize);
+    const ro = new ResizeObserver(() => recalcHeights());
+    if (pageRef.current) ro.observe(pageRef.current);
+    if (gridContainerRef.current) ro.observe(gridContainerRef.current);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      try { ro.disconnect(); } catch { /* ignore */ }
+    };
+  }, []);
 
   useEffect(() => {
     const onDocClick = (e) => {
@@ -730,7 +763,7 @@ const HomeDashboard = () => {
         </h2>
       </header>
 
-      <section className="dash__grid dashboard-grid">
+      <section className="dash__grid dashboard-grid" ref={gridContainerRef}>
         <article
           className="bc-card dashboard-card"
           role="button"
