@@ -24,76 +24,45 @@ fi
 export VITE_BASE_PATH=${VITE_BASE_PATH:-/my-timesheet-app/}
 npm run build
 
-PKG_FILE="timesheet_bundle_$(date +%F_%H%M%S).tar.gz"
-echo "→ Empaquetando bundle: $PKG_FILE"
-tar -czf "$PKG_FILE" \
-  dist/ \
-  server.js \
-  package.json \
-  package-lock.json \
-  ops/testing/server/systemd/timesheet-backend.service \
-  ops/testing/server/env/timesheet-backend.env.example || {
-  echo "Error empaquetando"; exit 1; }
-
-echo "→ Creando directorio en remoto $REMOTE_DIR"
-ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no "$USER@$HOST" "mkdir -p '$REMOTE_DIR'"
-
-echo "→ Subiendo bundle"
-scp -o PreferredAuthentications=password -o PubkeyAuthentication=no "$PKG_FILE" "$USER@$HOST:$REMOTE_DIR/"
-
-REMOTE_SCRIPT="set -e; cd '$REMOTE_DIR'; \
-  echo '→ Desempaquetando'; tar -xzf '$PKG_FILE'; rm -f '$PKG_FILE'; \
-  echo '→ Instalando dependencias (prod)'; npm ci --omit=dev; \
-  echo '→ Instalando systemd'; sudo install -m 0644 -o root -g root -D ops/testing/server/systemd/timesheet-backend.service /etc/systemd/system/timesheet-backend.service; \
-  sudo systemctl daemon-reload; \
-  echo '→ Reiniciando servicio'; sudo systemctl restart timesheet-backend; \
-  sleep 1; systemctl status timesheet-backend --no-pager | sed -n '1,12p'"
-
-if [[ -n "${SUDO_PASSWORD:-}" ]]; then
-  echo "→ Ejecutando script remoto con sudo no interactivo"
-  ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no "$USER@$HOST" "export SUDO_PASSWORD='$SUDO_PASSWORD'; echo \"\$SUDO_PASSWORD\" | sudo -S bash -lc \"$REMOTE_SCRIPT\""
-else
-  echo "→ Ejecutando script remoto (sudo solicitará contraseña)"
-  ssh -tt -o PreferredAuthentications=password -o PubkeyAuthentication=no "$USER@$HOST" "bash -lc '$REMOTE_SCRIPT'"
-fi
-
-echo "→ Despliegue completado"
-
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Despliegue rápido a testing
-
-if ! command -v ssh >/dev/null; then
-  echo "ssh no disponible" >&2; exit 1
-fi
-
-SERVER="dbertona@192.168.88.68"
-REMOTE_DIR="/home/dbertona/timesheet"
-
-echo "== Build local =="
-if [ -f ".env.testing" ]; then
-  echo "🧩 Cargando variables desde .env.testing"
-  export $(grep -v '^#' .env.testing | xargs)
-fi
-npm run build
 TS=$(date +%Y%m%d_%H%M%S)
 PKG="my-timesheet-app-$TS.tar.gz"
+echo "→ Empaquetando: $PKG"
 tar -czf "$PKG" -C dist .
 
-echo "== Copiar artefacto y server.js =="
-scp "$PKG" server.js "$SERVER:$REMOTE_DIR/"
+echo "→ Creando directorio en remoto $REMOTE_DIR"
+ssh "$USER@$HOST" "mkdir -p '$REMOTE_DIR'"
 
-echo "== Actualizar estáticos en contenedor y reiniciar backend =="
-ssh "$SERVER" bash -s <<'EOF'
+echo "→ Subiendo artefactos"
+scp "$PKG" server.js "$USER@$HOST:$REMOTE_DIR/"
+
+echo "→ Actualizando estáticos en contenedor"
+ssh "$USER@$HOST" "REMOTE_DIR='$REMOTE_DIR' PKG='$PKG' SUDO_PASSWORD='${SUDO_PASSWORD:-}' bash -s" <<'EOF'
 set -e
 cd "$REMOTE_DIR"
-tar -xzf $PKG
-BASE_PATH="/usr/share/nginx/html/my-timesheet-app"
-rm -rf "$BASE_PATH"/* || true
-mkdir -p "$BASE_PATH"
-cp -f index.html vite.svg "$BASE_PATH"/
-mkdir -p "$BASE_PATH/assets" && cp -r assets/* "$BASE_PATH/assets/"
+tar -xzf "$PKG"
+# Empaquetar actualización y copiar al contenedor con privilegios
+tar -czf timesheet-update.tar.gz index.html vite.svg assets/
+if [ -n "$SUDO_PASSWORD" ]; then
+  echo "$SUDO_PASSWORD" | sudo -S docker cp timesheet-update.tar.gz timesheet-web-1:/tmp/
+  echo "$SUDO_PASSWORD" | sudo -S docker exec -u 0 timesheet-web-1 sh -lc '
+    set -e
+    BASE_PATH="/usr/share/nginx/html/my-timesheet-app"
+    mkdir -p "$BASE_PATH"
+    rm -rf "$BASE_PATH"/* || true
+    tar -xzf /tmp/timesheet-update.tar.gz -C "$BASE_PATH"
+    rm -f /tmp/timesheet-update.tar.gz
+  '
+else
+  sudo docker cp timesheet-update.tar.gz timesheet-web-1:/tmp/
+  sudo docker exec -u 0 timesheet-web-1 sh -lc '
+  set -e
+  BASE_PATH="/usr/share/nginx/html/my-timesheet-app"
+  mkdir -p "$BASE_PATH"
+  rm -rf "$BASE_PATH"/* || true
+  tar -xzf /tmp/timesheet-update.tar.gz -C "$BASE_PATH"
+  rm -f /tmp/timesheet-update.tar.gz
+  '
+fi
 rm -f timesheet-update.tar.gz "$PKG"
 
 sudo systemctl restart timesheet-backend || true
@@ -101,6 +70,4 @@ sleep 2
 curl -sS https://testingapp.powersolution.es/my-timesheet-app/ | head -n 5 || true
 EOF
 
-echo "== OK =="
-
-
+echo "→ Despliegue completado"

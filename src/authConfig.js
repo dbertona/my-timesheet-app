@@ -36,13 +36,26 @@ export const msalConfig = {
     // Configuración adicional para entornos de testing
     loggerOptions: {
       loggerCallback: (level, message, containsPii) => {
-        if (containsPii) {
-          return;
+        if (containsPii) return;
+        const msg = String(message || "");
+        // Ignorar warning benigno de múltiples instancias en HMR
+        if (msg.includes("There is already an instance of MSAL.js")) return;
+        // Solo avisos y errores para reducir ruido en consola
+        try {
+          const lvl = typeof level === "string" ? level.toLowerCase() : String(level);
+          const isError = lvl.includes("error") || level === 0;
+          const isWarning = lvl.includes("warn") || level === 1;
+          if (isError) {
+            console.error(`MSAL ${level}: ${msg}`);
+          } else if (isWarning) {
+            console.warn(`MSAL ${level}: ${msg}`);
+          }
+        } catch {
+          /* ignore */
         }
-        console.log(`MSAL ${level}: ${message}`);
       },
       piiLoggingEnabled: false,
-      logLevel: "Info",
+      logLevel: "Warning",
     },
   },
 };

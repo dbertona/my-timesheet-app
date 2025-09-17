@@ -105,6 +105,27 @@ Ejecutar `scripts/context-dump.sh` para imprimir:
   - Router usa `VITE_BASE_PATH` como `basename`;
   - MSAL calcula `redirectUri` y `postLogoutRedirectUri` como `${origin}${VITE_BASE_PATH}` (o se sobreescriben con `VITE_MSAL_*`).
 - Nginx sirve SOLO desde `/usr/share/nginx/html/my-timesheet-app/` con fallback SPA a `index.html` y cache immutable para `assets/*`.
+- Nginx frontal (Home Assistant) — PROXY /api:
+  - El balanceador/proxy de dominio reside en Home Assistant. Debe enrutar todas las llamadas a `/api/*` al backend Node (3001) del servidor de testing.
+  - Si usas Nginx Proxy Manager (Add-on): Proxy Host → testingapp.powersolution.es → Custom Location:
+    - Location: `/api/*`, Forward Host/IP: `192.168.88.68`, Port: `3001`, Scheme: `http` (Enable websockets).
+    - (Opcional) Custom config:
+      ```nginx
+      proxy_connect_timeout 5s;
+      proxy_send_timeout 15s;
+      proxy_read_timeout 15s;
+      ```
+  - Config Nginx equivalente:
+    ```nginx
+    location /api/ {
+      proxy_pass http://192.168.88.68:3001;
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+    ```
+  - Importante: este proxy se configura en Home Assistant (no dentro del contenedor web de la app).
 - Variables recomendadas en `.env.testing`:
 ```env
 VITE_BASE_PATH=/my-timesheet-app/
