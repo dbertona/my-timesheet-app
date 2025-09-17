@@ -373,7 +373,8 @@ const HomeDashboard = () => {
     const calculateAndSetHeight = () => {
       const gridContainer = gridContainerRef.current;
       if (gridContainer) {
-        const viewportHeight = window.innerHeight * 0.95; // 5% de seguridad
+        const viewportBase = window.visualViewport?.height || window.innerHeight;
+        const viewportHeight = viewportBase * 0.90; // 10% de seguridad
         const gridTopPosition = gridContainer.getBoundingClientRect().top;
         const bottomMargin = 20; // margen inferior
 
