@@ -846,7 +846,15 @@ const HomeDashboard = () => {
           <div className="bc-card__icon">&gt;</div>
         </article>
 
-        <article className="bc-card dashboard-card">
+        <article
+          className="bc-card dashboard-card"
+          role="button"
+          tabIndex={0}
+          onClick={() => allocationPeriod && navigate(`/lines/rejected?period=${allocationPeriod}`)}
+          onKeyDown={(e) =>
+            (e.key === "Enter" || e.key === " ") && allocationPeriod && navigate(`/lines/rejected?period=${allocationPeriod}`)
+          }
+        >
           <h3 className="bc-card__title">Horas Rechazadas</h3>
           <div className="bc-card__value">
             {loadingRejected ? (

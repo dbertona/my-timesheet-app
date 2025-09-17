@@ -9,6 +9,7 @@ import LoginMicrosoft from "./components/LoginMicrosoft";
 import TimesheetEdit from "./components/TimesheetEdit";
 import TimesheetHeaderList from "./components/TimesheetHeaderList";
 import TimesheetListPage from "./components/TimesheetListPage";
+import RejectedLinesPage from "./components/RejectedLinesPage";
 import AppError from "./components/ui/AppError";
 
 function TimesheetEditWrapper() {
@@ -51,6 +52,11 @@ export const router = createBrowserRouter([
           {
             path: "mis-partes",
             element: <TimesheetListPage />,
+            errorElement: <AppError />,
+          },
+          {
+            path: "lines/rejected",
+            element: <RejectedLinesPage />,
             errorElement: <AppError />,
           },
           {
