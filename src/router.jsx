@@ -18,13 +18,15 @@ function TimesheetEditWrapper() {
 }
 
 function AppWrapper() {
+  // 💡 AppWrapper ahora solo provee el contexto de MSAL.
+  // El layout de página (flex, 100vh) se gestiona a nivel de cada
+  // componente de vista (Dashboard, Edit, Approval, etc.) para
+  // un control más granular y preciso.
   return (
     <RequireMsalAuth>
-      <div className="page-root" style={{ padding: 0, fontSize: "inherit" }}>
+      <div style={{ padding: 0, fontSize: "inherit", height: "100%" }}>
         <LoginMicrosoft />
-        <div className="page-scroll">
-          <Outlet />
-        </div>
+        <Outlet />
       </div>
     </RequireMsalAuth>
   );

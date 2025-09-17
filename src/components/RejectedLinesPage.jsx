@@ -1,6 +1,11 @@
 import { useMsal } from "@azure/msal-react";
 import { useQuery } from "@tanstack/react-query";
-import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { supabaseClient } from "../supabaseClient";
 import TimesheetLines from "./TimesheetLines";
@@ -9,43 +14,42 @@ import BackToDashboard from "./ui/BackToDashboard";
 export default function RejectedLinesPage() {
   const { accounts } = useMsal();
   const navigate = useNavigate();
-
   const pageRef = useRef(null);
-  const headerBarRef = useRef(null);
-  const filtersRef = useRef(null);
   const tableContainerRef = useRef(null);
 
-  const recalcHeights = () => {
-    try {
-      if (!tableContainerRef.current) return;
-      const viewportH = window.innerHeight || document.documentElement.clientHeight;
-      const tableRect = tableContainerRef.current.getBoundingClientRect();
-      const top = tableRect.top;
-      const available = Math.max(0, Math.floor(viewportH - top));
-      tableContainerRef.current.style.height = `${available}px`;
-      tableContainerRef.current.style.maxHeight = `${available}px`;
-      tableContainerRef.current.style.overflowY = "auto";
-    } catch {
-      /* noop */
-    }
-  };
-
+  // Lógica de cálculo de altura replicada de TimesheetEdit
   useLayoutEffect(() => {
-    // Asegurar recálculo tras primer paint para capturar alturas reales
-    requestAnimationFrame(() => recalcHeights());
-    const onResize = () => recalcHeights();
-    window.addEventListener("resize", onResize);
-    const ro = new ResizeObserver(() => recalcHeights());
-    if (filtersRef.current) ro.observe(filtersRef.current);
-    if (headerBarRef.current) ro.observe(headerBarRef.current);
-    if (pageRef.current) ro.observe(pageRef.current);
+    const calculateAndSetHeight = () => {
+      const tableContainer = tableContainerRef.current;
+      if (tableContainer) {
+        const viewportHeight = window.innerHeight;
+        const tableTopPosition = tableContainer.getBoundingClientRect().top;
+        const bottomMargin = 20; // Margen inferior
+
+        const availableHeight =
+          viewportHeight - tableTopPosition - bottomMargin;
+
+        tableContainer.style.height = `${availableHeight}px`;
+        tableContainer.style.overflow = "auto";
+      }
+    };
+
+    calculateAndSetHeight();
+    window.addEventListener("resize", calculateAndSetHeight);
+    const resizeObserver = new ResizeObserver(calculateAndSetHeight);
+    const currentPageRef = pageRef.current; // Capturar la referencia actual
+
+    if (currentPageRef) {
+      resizeObserver.observe(currentPageRef);
+    }
+
     return () => {
-      window.removeEventListener("resize", onResize);
-      try { ro.disconnect(); } catch { /* ignore */ }
+      window.removeEventListener("resize", calculateAndSetHeight);
+      if (currentPageRef) {
+        resizeObserver.unobserve(currentPageRef);
+      }
     };
   }, []);
-
-  // Con layout unificado, no añadimos no-scroll al body
 
   const userEmail = accounts?.[0]?.username || "";
 
@@ -198,11 +202,19 @@ export default function RejectedLinesPage() {
   );
 
   return (
-    <div className="rejected-lines-page" ref={pageRef}>
+    <div
+      className="rejected-lines-page"
+      ref={pageRef}
+      style={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
       <div
         className="ts-header-bar"
-        ref={headerBarRef}
-        style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}
+        style={{ display: "flex", alignItems: "center", gap: 12 }}
       >
         <BackToDashboard compact={true} />
         <h1
@@ -239,7 +251,6 @@ export default function RejectedLinesPage() {
       {/* Filtros en bloque como otras páginas */}
       <div
         className="timesheet-list-filters"
-        ref={filtersRef}
         style={{ flexShrink: 0 }}
       >
         <div className="filter-group">
@@ -289,10 +300,13 @@ export default function RejectedLinesPage() {
         </div>
       </div>
 
-      <div className="ts-responsive" ref={tableContainerRef}>
-        {isLoading ? (
-          <div className="loading-container">Cargando líneas rechazadas…</div>
-        ) : error ? (
+      <div
+        className="ts-responsive"
+        ref={tableContainerRef}
+        style={{ flex: 1, minHeight: 0 }}
+      >
+        {isLoading && <p>Cargando líneas rechazadas...</p>}
+        {error && (
           <div className="error-container">
             <h2>Error</h2>
             <p>{String(error?.message || error)}</p>
@@ -300,7 +314,8 @@ export default function RejectedLinesPage() {
               Reintentar
             </button>
           </div>
-        ) : totalLines === 0 ? (
+        )}
+        {totalLines === 0 ? (
           <div className="no-data">
             <p>No hay líneas rechazadas</p>
           </div>

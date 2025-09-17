@@ -1,7 +1,13 @@
 // cspell:ignore msal useMsal
 /* global __APP_VERSION__ */
 import { useMsal } from "@azure/msal-react";
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { generateAllocationPeriod, getServerDate } from "../api/date";
 import "../styles/HomeDashboard.css";
@@ -362,34 +368,36 @@ const HomeDashboard = () => {
   const pageRef = useRef(null);
   const gridContainerRef = useRef(null);
 
-  // Bloquear scroll global para emular comportamiento de Aprobación/Edición
-  // Con layout unificado, no forzamos no-scroll aquí
-
-  // Ajustar la altura disponible para el grid (scroll interno solo en grid)
+  // Lógica de cálculo de altura para el contenedor del grid, replicada de TimesheetEdit
   useLayoutEffect(() => {
-    const recalcHeights = () => {
-      try {
-        if (!gridContainerRef.current) return;
-        const viewportH = window.innerHeight || document.documentElement.clientHeight;
-        const rect = gridContainerRef.current.getBoundingClientRect();
-        const top = rect.top;
-        const available = Math.max(0, Math.floor(viewportH - top));
-        gridContainerRef.current.style.height = `${available}px`;
-        gridContainerRef.current.style.maxHeight = `${available}px`;
-        gridContainerRef.current.style.overflowY = "auto";
-      } catch {
-        /* ignore */
+    const calculateAndSetHeight = () => {
+      const gridContainer = gridContainerRef.current;
+      if (gridContainer) {
+        const viewportHeight = window.innerHeight;
+        const gridTopPosition = gridContainer.getBoundingClientRect().top;
+        const bottomMargin = 20; // Un pequeño margen inferior
+
+        const availableHeight = viewportHeight - gridTopPosition - bottomMargin;
+
+        gridContainer.style.height = `${availableHeight}px`;
+        gridContainer.style.overflow = "auto";
       }
     };
-    requestAnimationFrame(() => recalcHeights());
-    const onResize = () => recalcHeights();
-    window.addEventListener("resize", onResize);
-    const ro = new ResizeObserver(() => recalcHeights());
-    if (pageRef.current) ro.observe(pageRef.current);
-    if (gridContainerRef.current) ro.observe(gridContainerRef.current);
+
+    calculateAndSetHeight();
+    const resizeObserver = new ResizeObserver(calculateAndSetHeight);
+    const currentPageRef = pageRef.current; // Capturar la referencia actual
+
+    if (currentPageRef) {
+      resizeObserver.observe(currentPageRef);
+    }
+    window.addEventListener("resize", calculateAndSetHeight);
+
     return () => {
-      window.removeEventListener("resize", onResize);
-      try { ro.disconnect(); } catch { /* ignore */ }
+      window.removeEventListener("resize", calculateAndSetHeight);
+      if (currentPageRef) {
+        resizeObserver.unobserve(currentPageRef);
+      }
     };
   }, []);
 
@@ -538,7 +546,16 @@ const HomeDashboard = () => {
   };
 
   return (
-    <div className="dash" ref={pageRef}>
+    <div
+      className="dash"
+      ref={pageRef}
+      style={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
       {showMissingModal && (
         <BcModal
           isOpen={true}
@@ -760,7 +777,11 @@ const HomeDashboard = () => {
         </h2>
       </header>
 
-      <section className="dash__grid dashboard-grid" ref={gridContainerRef}>
+      <section
+        className="dash__grid dashboard-grid"
+        ref={gridContainerRef}
+        style={{ flex: 1, minHeight: 0 }}
+      >
         <article
           className="bc-card dashboard-card"
           role="button"
