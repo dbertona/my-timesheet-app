@@ -21,8 +21,8 @@ const HomeDashboard = () => {
   const [allocationPeriod, setAllocationPeriod] = useState(null);
 
   // 🆕 Estados para partes de trabajo rechazados
-  const [rejectedLinesCount, setRejectedLinesCount] = useState(0);
-  const [rejectedHeadersCount, setRejectedHeadersCount] = useState(0);
+  const [_REJECTED_LINES_COUNT, setRejectedLinesCount] = useState(0);
+  const [_REJECTED_HEADERS_COUNT, setRejectedHeadersCount] = useState(0);
   // eslint-disable-next-line no-unused-vars
   const [loadingRejected, setLoadingRejected] = useState(true);
   // eslint-disable-next-line no-unused-vars
@@ -31,6 +31,7 @@ const HomeDashboard = () => {
   // 🆕 Estados para partes de trabajo pendientes de aprobar
   const [pendingLinesCount, setPendingLinesCount] = useState(0);
   const [pendingHeadersCount, setPendingHeadersCount] = useState(0);
+  const [pendingHoursSum, setPendingHoursSum] = useState(0);
   const [loadingPending, setLoadingPending] = useState(true);
   const [errorPending, setErrorPending] = useState(null);
 
@@ -169,7 +170,7 @@ const HomeDashboard = () => {
 
         const { data: linesData, error: linesError } = await supabaseClient
           .from("timesheet")
-          .select("id, header_id, status, synced_to_bc")
+          .select("id, header_id, status, synced_to_bc, quantity")
           .eq("status", "Pending")
           .eq("resource_responsible", resourceNo)
           .eq("synced_to_bc", false);
@@ -183,6 +184,13 @@ const HomeDashboard = () => {
         // Contar líneas
         const linesCount = linesData?.length || 0;
         setPendingLinesCount(linesCount);
+
+        // Sumar horas (quantity)
+        const hoursSum = (linesData || []).reduce(
+          (sum, l) => sum + (Number(l.quantity) || 0),
+          0
+        );
+        setPendingHoursSum(hoursSum);
 
         // Contar headers únicos
         const uniqueHeaders = new Set(
@@ -815,11 +823,14 @@ const HomeDashboard = () => {
                   color: "white",
                 }}
               >
-                <span>{rejectedLinesCount} líneas</span>
+                <span>{Math.round(pendingHoursSum || 0)} Horas</span>
                 <span>•</span>
                 <span>
-                  {rejectedHeadersCount}{" "}
-                  {rejectedHeadersCount === 1 ? "parte" : "partes"}
+                  {pendingLinesCount} {pendingLinesCount === 1 ? "línea" : "líneas"}
+                </span>
+                <span>•</span>
+                <span>
+                  {pendingHeadersCount} {pendingHeadersCount === 1 ? "parte" : "partes"}
                 </span>
               </div>
             )}
