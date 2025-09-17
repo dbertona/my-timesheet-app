@@ -46,7 +46,7 @@
 .dash {
   padding: 20px;
   background: var(--bc-bg);
-  height: 100vh; /* Altura completa del viewport; scroll se gestiona en el grid */
+  height: 90vh; /* Reducido 10% segun indicación; scroll interno en grid */
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   width: 100%;
   max-width: 100vw; /* Nunca exceder el viewport */
