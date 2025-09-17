@@ -20,5 +20,20 @@ export const msalConfig = {
     iframeHashTimeout: 10000,
     loadFrameTimeout: 10000,
     allowNativeBroker: false,
+    // Configuración para resolver problemas de crypto
+    cryptoOptions: {
+      useMsalCrypto: true,
+    },
+    // Configuración adicional para entornos de testing
+    loggerOptions: {
+      loggerCallback: (level, message, containsPii) => {
+        if (containsPii) {
+          return;
+        }
+        console.log(`MSAL ${level}: ${message}`);
+      },
+      piiLoggingEnabled: false,
+      logLevel: "Info",
+    },
   },
 };
