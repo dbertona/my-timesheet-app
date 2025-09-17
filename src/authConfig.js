@@ -1,16 +1,19 @@
+// Configuración de MSAL con crypto nativo
+const REDIRECT_URI =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_MSAL_REDIRECT_URI) ||
+  (typeof window !== "undefined" ? window.location.origin : "http://localhost:5173");
+
+const POST_LOGOUT_URI =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_MSAL_POSTLOGOUT) ||
+  (typeof window !== "undefined" ? window.location.origin : "http://localhost:5173");
+
 export const msalConfig = {
   auth: {
     clientId: "3975625e-617d-410c-a166-9a3c88563344",
     authority:
       "https://login.microsoftonline.com/a18dc497-a8b8-4740-b723-65362ab7a3fb",
-    redirectUri:
-      typeof window !== "undefined"
-        ? window.location.origin
-        : "http://localhost:5173",
-    postLogoutRedirectUri:
-      typeof window !== "undefined"
-        ? window.location.origin
-        : "http://localhost:5173",
+    redirectUri: REDIRECT_URI,
+    postLogoutRedirectUri: POST_LOGOUT_URI,
   },
   cache: {
     cacheLocation: "localStorage",
@@ -20,9 +23,9 @@ export const msalConfig = {
     iframeHashTimeout: 10000,
     loadFrameTimeout: 10000,
     allowNativeBroker: false,
-    // Configuración para resolver problemas de crypto
+    // Configuración para usar crypto nativo del navegador
     cryptoOptions: {
-      useMsalCrypto: true,
+      useMsalCrypto: false, // Usar crypto nativo del navegador
     },
     // Configuración adicional para entornos de testing
     loggerOptions: {

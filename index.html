@@ -15,10 +15,11 @@
 
     <title>Timesheet</title>
     <script>
-      // Reparar rutas profundas en GitHub Pages: mantener navegación SPA
+      // Reparar rutas profundas SOLO en GitHub Pages (evitar afectar servidores reales)
       (function() {
         var l = window.location;
-        if (l.pathname.startsWith('/my-timesheet-app/') && !l.hash && l.pathname !== '/my-timesheet-app/') {
+        var isGitHubPages = /github\.io$/i.test(l.hostname);
+        if (isGitHubPages && l.pathname.startsWith('/my-timesheet-app/') && !l.hash && l.pathname !== '/my-timesheet-app/') {
           l.replace('/my-timesheet-app/#' + l.pathname.replace('/my-timesheet-app/', '') + l.search + l.hash);
         }
       })();
