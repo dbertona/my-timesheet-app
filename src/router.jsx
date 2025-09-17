@@ -6,10 +6,10 @@ import EnsureResource from "./components/auth/EnsureResource";
 import RequireMsalAuth from "./components/auth/RequireMsalAuth";
 import HomeDashboard from "./components/HomeDashboard";
 import LoginMicrosoft from "./components/LoginMicrosoft";
+import RejectedLinesPage from "./components/RejectedLinesPage";
 import TimesheetEdit from "./components/TimesheetEdit";
 import TimesheetHeaderList from "./components/TimesheetHeaderList";
 import TimesheetListPage from "./components/TimesheetListPage";
-import RejectedLinesPage from "./components/RejectedLinesPage";
 import AppError from "./components/ui/AppError";
 
 function TimesheetEditWrapper() {
@@ -20,7 +20,7 @@ function TimesheetEditWrapper() {
 function AppWrapper() {
   return (
     <RequireMsalAuth>
-      <div style={{ padding: 0, fontSize: "inherit", height: "100vh" }}>
+      <div style={{ padding: 0, fontSize: "inherit", height: "100%" }}>
         <LoginMicrosoft />
         <Outlet />
       </div>
