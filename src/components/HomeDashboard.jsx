@@ -359,6 +359,9 @@ const HomeDashboard = () => {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const pageRef = useRef(null);
+
+  // Dashboard no bloquea scroll global; cada sección interna gestiona su propio flujo.
 
   useEffect(() => {
     const onDocClick = (e) => {
@@ -505,7 +508,7 @@ const HomeDashboard = () => {
   };
 
   return (
-    <div className="dash">
+    <div className="dash" ref={pageRef}>
       {showMissingModal && (
         <BcModal
           isOpen={true}
