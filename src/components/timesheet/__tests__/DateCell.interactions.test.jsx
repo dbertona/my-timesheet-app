@@ -74,12 +74,10 @@ describe('DateCell - interacciones de entrada y calendario', () => {
     const calendar = screen.queryByRole('dialog', { hidden: true });
     // Si no hay role=dialog, buscamos por clase
     // fallback manual
-    // eslint-disable-next-line testing-library/no-node-access
     const calendarEl = document.querySelector('.ts-calendar');
     expect(calendar || calendarEl).toBeTruthy();
 
     // Intentar seleccionar el día 15 (normalmente dentro de rango y no festivo)
-    // eslint-disable-next-line testing-library/no-node-access
     const dayButton = Array.from(document.querySelectorAll('.ts-calendar-day')).find(el => el.textContent === '15' && !el.disabled);
     if (dayButton) {
       fireEvent.click(dayButton);
