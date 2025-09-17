@@ -202,11 +202,15 @@ export default function RejectedLinesPage() {
   );
 
   return (
-    <div className="rejected-lines-page" ref={pageRef}>
+    <div
+      className="rejected-lines-page"
+      ref={pageRef}
+      style={{ height: "100vh", display: "flex", flexDirection: "column" }}
+    >
       <div
         className="ts-header-bar"
         ref={headerBarRef}
-        style={{ display: "flex", alignItems: "center", gap: 12 }}
+        style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}
       >
         <BackToDashboard compact={true} />
         <h1
@@ -241,7 +245,11 @@ export default function RejectedLinesPage() {
       </div>
 
       {/* Filtros en bloque como otras páginas */}
-      <div className="timesheet-list-filters" ref={filtersRef}>
+      <div
+        className="timesheet-list-filters"
+        ref={filtersRef}
+        style={{ flexShrink: 0 }}
+      >
         <div className="filter-group">
           <label htmlFor="filter-period">Período:</label>
           <select
@@ -289,7 +297,11 @@ export default function RejectedLinesPage() {
         </div>
       </div>
 
-      <div className="ts-responsive" ref={tableContainerRef}>
+      <div
+        className="ts-responsive"
+        ref={tableContainerRef}
+        style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
+      >
         {isLoading ? (
           <div className="loading-container">Cargando líneas rechazadas…</div>
         ) : error ? (
