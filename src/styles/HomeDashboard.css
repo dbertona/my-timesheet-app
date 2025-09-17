@@ -46,7 +46,7 @@
 .dash {
   padding: 20px;
   background: var(--bc-bg);
-  height: 100vh; /* Forzar altura exacta de viewport para evitar scroll global */
+  height: 80vh; /* Reducido 20% para evitar scroll global */
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   width: 100%;
   max-width: 100vw; /* Nunca exceder el viewport */
