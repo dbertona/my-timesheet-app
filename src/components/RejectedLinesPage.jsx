@@ -17,17 +17,20 @@ export default function RejectedLinesPage() {
   const pageRef = useRef(null);
   const tableContainerRef = useRef(null);
 
-  // Lógica de cálculo de altura replicada de TimesheetEdit
+  // Lógica de cálculo de altura con margen de seguridad (10%)
   useLayoutEffect(() => {
     const calculateAndSetHeight = () => {
       const tableContainer = tableContainerRef.current;
       if (tableContainer) {
-        const viewportHeight = window.innerHeight;
+        const viewportBase = window.visualViewport?.height || window.innerHeight;
+        const viewportHeight = viewportBase * 0.90; // 10% de seguridad
         const tableTopPosition = tableContainer.getBoundingClientRect().top;
         const bottomMargin = 20; // Margen inferior
 
-        const availableHeight =
-          viewportHeight - tableTopPosition - bottomMargin;
+        const availableHeight = Math.max(
+          0,
+          Math.floor(viewportHeight - tableTopPosition - bottomMargin)
+        );
 
         tableContainer.style.height = `${availableHeight}px`;
         tableContainer.style.overflow = "auto";
@@ -206,7 +209,7 @@ export default function RejectedLinesPage() {
       className="rejected-lines-page"
       ref={pageRef}
       style={{
-        height: "100vh",
+        height: "95vh", // Alineado con Dashboard (95vh)
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
