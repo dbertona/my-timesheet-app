@@ -508,11 +508,7 @@ const HomeDashboard = () => {
   };
 
   return (
-    <div
-      className="dash"
-      ref={pageRef}
-      style={{ height: "100vh", display: "flex", flexDirection: "column" }}
-    >
+    <div className="dash" ref={pageRef}>
       {showMissingModal && (
         <BcModal
           isOpen={true}
@@ -734,10 +730,7 @@ const HomeDashboard = () => {
         </h2>
       </header>
 
-      <section
-        className="dash__grid dashboard-grid"
-        style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
-      >
+      <section className="dash__grid dashboard-grid">
         <article
           className="bc-card dashboard-card"
           role="button"

@@ -31,7 +31,8 @@ export default function RejectedLinesPage() {
   };
 
   useLayoutEffect(() => {
-    recalcHeights();
+    // Asegurar recálculo tras primer paint para capturar alturas reales
+    requestAnimationFrame(() => recalcHeights());
     const onResize = () => recalcHeights();
     window.addEventListener("resize", onResize);
     const ro = new ResizeObserver(() => recalcHeights());
@@ -202,11 +203,7 @@ export default function RejectedLinesPage() {
   );
 
   return (
-    <div
-      className="rejected-lines-page"
-      ref={pageRef}
-      style={{ height: "100vh", display: "flex", flexDirection: "column" }}
-    >
+    <div className="rejected-lines-page" ref={pageRef}>
       <div
         className="ts-header-bar"
         ref={headerBarRef}
@@ -297,11 +294,7 @@ export default function RejectedLinesPage() {
         </div>
       </div>
 
-      <div
-        className="ts-responsive"
-        ref={tableContainerRef}
-        style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
-      >
+      <div className="ts-responsive" ref={tableContainerRef}>
         {isLoading ? (
           <div className="loading-container">Cargando líneas rechazadas…</div>
         ) : error ? (

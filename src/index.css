@@ -27,7 +27,6 @@ body {
 html,
 body {
   height: 100%;
-  overflow: hidden; /* Previene scroll global por desbordes mínimos */
 }
 
 /* Bloquear scroll global cuando las vistas gestionan su propio scroll interno */
