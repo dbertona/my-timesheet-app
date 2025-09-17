@@ -17,6 +17,10 @@ fi
 
 echo "→ Construyendo frontend"
 npm ci
+if [ -f ".env.testing" ]; then
+  echo "🧩 Cargando variables desde .env.testing"
+  export $(grep -v '^#' .env.testing | xargs)
+fi
 npm run build
 
 PKG_FILE="timesheet_bundle_$(date +%F_%H%M%S).tar.gz"
@@ -67,6 +71,10 @@ SERVER="dbertona@192.168.88.68"
 REMOTE_DIR="/home/dbertona/timesheet"
 
 echo "== Build local =="
+if [ -f ".env.testing" ]; then
+  echo "🧩 Cargando variables desde .env.testing"
+  export $(grep -v '^#' .env.testing | xargs)
+fi
 npm run build
 TS=$(date +%Y%m%d_%H%M%S)
 PKG="my-timesheet-app-$TS.tar.gz"
