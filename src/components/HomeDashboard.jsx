@@ -779,7 +779,12 @@ const HomeDashboard = () => {
       <section
         className="dash__grid dashboard-grid"
         ref={gridContainerRef}
-        style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          height: `calc(100vh - ${gridContainerRef.current?.getBoundingClientRect().top || 0}px - 20px)`,
+        }}
       >
         <article
           className="bc-card dashboard-card"
