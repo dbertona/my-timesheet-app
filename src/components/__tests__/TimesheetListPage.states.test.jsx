@@ -23,9 +23,9 @@ const mockSupabaseClient = {
   from: vi.fn(() => ({
     select: vi.fn(() => ({
       eq: vi.fn(() => ({
-        single: vi.fn(() => Promise.resolve({ 
-          data: { code: 'RES001', name: 'Test Resource' }, 
-          error: null 
+        single: vi.fn(() => Promise.resolve({
+          data: { code: 'RES001', name: 'Test Resource' },
+          error: null
         })),
         order: vi.fn(() => ({
           order: vi.fn(() => ({
@@ -67,9 +67,9 @@ describe('TimesheetListPage - estados y textos', () => {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              single: vi.fn(() => Promise.resolve({ 
-                data: { code: 'RES001', name: 'Test Resource' }, 
-                error: null 
+              single: vi.fn(() => Promise.resolve({
+                data: { code: 'RES001', name: 'Test Resource' },
+                error: null
               })),
             })),
           })),
@@ -90,7 +90,7 @@ describe('TimesheetListPage - estados y textos', () => {
     });
 
     render(<TimesheetListPage />, { wrapper: createWrapper() });
-    
+
     expect(screen.getByText('Cargando partes de horas...')).toBeInTheDocument();
     expect(screen.getByText('Cargando partes de horas...')).toBeInTheDocument(); // loading-spinner no tiene role progressbar
   });
@@ -102,9 +102,9 @@ describe('TimesheetListPage - estados y textos', () => {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              single: vi.fn(() => Promise.resolve({ 
-                data: null, 
-                error: { message: 'Error de conexión' } 
+              single: vi.fn(() => Promise.resolve({
+                data: null,
+                error: { message: 'Error de conexión' }
               })),
             })),
           })),
@@ -114,7 +114,7 @@ describe('TimesheetListPage - estados y textos', () => {
     });
 
     render(<TimesheetListPage />, { wrapper: createWrapper() });
-    
+
     await waitFor(() => {
       expect(screen.getByText('Error')).toBeInTheDocument();
       expect(screen.getByText('No se pudo obtener la información del recurso')).toBeInTheDocument();
@@ -129,9 +129,9 @@ describe('TimesheetListPage - estados y textos', () => {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              single: vi.fn(() => Promise.resolve({ 
-                data: { code: 'RES001', name: 'Test Resource' }, 
-                error: null 
+              single: vi.fn(() => Promise.resolve({
+                data: { code: 'RES001', name: 'Test Resource' },
+                error: null
               })),
             })),
           })),
@@ -142,9 +142,9 @@ describe('TimesheetListPage - estados y textos', () => {
             eq: vi.fn(() => ({
               order: vi.fn(() => ({
                 order: vi.fn(() => ({
-                  order: vi.fn(() => Promise.resolve({ 
-                    data: [], 
-                    error: null 
+                  order: vi.fn(() => Promise.resolve({
+                    data: [],
+                    error: null
                   })),
                 })),
               })),
@@ -156,7 +156,7 @@ describe('TimesheetListPage - estados y textos', () => {
     });
 
     render(<TimesheetListPage />, { wrapper: createWrapper() });
-    
+
     await waitFor(() => {
       expect(screen.getByText('No hay partes de horas disponibles')).toBeInTheDocument();
       expect(screen.getByText('Crear Primer Parte')).toBeInTheDocument();
@@ -181,9 +181,9 @@ describe('TimesheetListPage - estados y textos', () => {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              single: vi.fn(() => Promise.resolve({ 
-                data: { code: 'RES001', name: 'Test Resource' }, 
-                error: null 
+              single: vi.fn(() => Promise.resolve({
+                data: { code: 'RES001', name: 'Test Resource' },
+                error: null
               })),
             })),
           })),
@@ -194,9 +194,9 @@ describe('TimesheetListPage - estados y textos', () => {
             eq: vi.fn(() => ({
               order: vi.fn(() => ({
                 order: vi.fn(() => ({
-                  order: vi.fn(() => Promise.resolve({ 
-                    data: mockHeaders, 
-                    error: null 
+                  order: vi.fn(() => Promise.resolve({
+                    data: mockHeaders,
+                    error: null
                   })),
                 })),
               })),
@@ -208,14 +208,14 @@ describe('TimesheetListPage - estados y textos', () => {
     });
 
     render(<TimesheetListPage />, { wrapper: createWrapper() });
-    
+
     await waitFor(() => {
       // Verificar título actualizado
       expect(screen.getByText('Mis Partes de Horas')).toBeInTheDocument();
-      
+
       // Verificar contador actualizado
       expect(screen.getByText('1 partes')).toBeInTheDocument();
-      
+
       // Verificar tabla con datos
       expect(screen.getByText('Descripción del parte')).toBeInTheDocument();
       expect(screen.getByText('Borrador')).toBeInTheDocument();
@@ -241,9 +241,9 @@ describe('TimesheetListPage - estados y textos', () => {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              single: vi.fn(() => Promise.resolve({ 
-                data: { code: 'RES001', name: 'Test Resource' }, 
-                error: null 
+              single: vi.fn(() => Promise.resolve({
+                data: { code: 'RES001', name: 'Test Resource' },
+                error: null
               })),
             })),
           })),
@@ -254,9 +254,9 @@ describe('TimesheetListPage - estados y textos', () => {
             eq: vi.fn(() => ({
               order: vi.fn(() => ({
                 order: vi.fn(() => ({
-                  order: vi.fn(() => Promise.resolve({ 
-                    data: mockHeaders, 
-                    error: null 
+                  order: vi.fn(() => Promise.resolve({
+                    data: mockHeaders,
+                    error: null
                   })),
                 })),
               })),
@@ -268,7 +268,7 @@ describe('TimesheetListPage - estados y textos', () => {
     });
 
     render(<TimesheetListPage />, { wrapper: createWrapper() });
-    
+
     await waitFor(() => {
       // Verificar filtro de "Enviado a BC"
       expect(screen.getByText('Enviado a BC:')).toBeInTheDocument();
@@ -301,9 +301,9 @@ describe('TimesheetListPage - estados y textos', () => {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              single: vi.fn(() => Promise.resolve({ 
-                data: { code: 'RES001', name: 'Test Resource' }, 
-                error: null 
+              single: vi.fn(() => Promise.resolve({
+                data: { code: 'RES001', name: 'Test Resource' },
+                error: null
               })),
             })),
           })),
@@ -314,9 +314,9 @@ describe('TimesheetListPage - estados y textos', () => {
             eq: vi.fn(() => ({
               order: vi.fn(() => ({
                 order: vi.fn(() => ({
-                  order: vi.fn(() => Promise.resolve({ 
-                    data: mockHeaders, 
-                    error: null 
+                  order: vi.fn(() => Promise.resolve({
+                    data: mockHeaders,
+                    error: null
                   })),
                 })),
               })),
@@ -328,7 +328,7 @@ describe('TimesheetListPage - estados y textos', () => {
     });
 
     render(<TimesheetListPage />, { wrapper: createWrapper() });
-    
+
     await waitFor(() => {
       expect(screen.getByText('Pendiente')).toBeInTheDocument();
       expect(screen.getByText('Aprobado')).toBeInTheDocument();
