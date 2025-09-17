@@ -53,6 +53,7 @@ export default function TimesheetLines({
   onDuplicateLines: _onDuplicateLines, // 🆕 Función para duplicar líneas seleccionadas
   onDeleteLines: _onDeleteLines, // 🆕 Función para borrar líneas seleccionadas
   showResponsible = false, // 🆕 Mostrar columna de responsable (solo aprobación)
+  showResourceColumns = false, // 🆕 Mostrar columnas de recurso (solo aprobación)
 }) {
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
     TIMESHEET_FIELDS,
@@ -446,7 +447,7 @@ export default function TimesheetLines({
             </th>
 
             {TIMESHEET_FIELDS.map((key) => (
-              (showResponsible || (key !== "resource_no" && key !== "resource_name")) && (
+              (showResourceColumns || (key !== "resource_no" && key !== "resource_name")) && (
                 <th
                   key={key}
                   data-col={key}
@@ -737,7 +738,7 @@ export default function TimesheetLines({
               </td>
 
               {/* ----- CÓDIGO RECURSO: solo lectura ----- */}
-              {showResponsible && (
+              {showResourceColumns && (
                 <td
                   className="ts-td"
                   style={{
@@ -752,7 +753,7 @@ export default function TimesheetLines({
               )}
 
               {/* ----- NOMBRE RECURSO: solo lectura ----- */}
-              {showResponsible && (
+              {showResourceColumns && (
                 <td
                   className="ts-td"
                   style={{
