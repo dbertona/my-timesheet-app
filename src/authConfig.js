@@ -1,4 +1,5 @@
 // Configuración de MSAL con crypto nativo
+<<<<<<< HEAD
 const BASE_PATH = (typeof import.meta !== "undefined" && import.meta.env?.VITE_BASE_PATH) || "/";
 
 const REDIRECT_URI =
@@ -12,6 +13,8 @@ const POST_LOGOUT_URI =
   (typeof window !== "undefined"
     ? `${window.location.origin}${BASE_PATH}`
     : `http://localhost:5173${BASE_PATH}`);
+=======
+>>>>>>> 85df894 (fix: configurar MSAL para usar crypto nativo del navegador)
 export const msalConfig = {
   auth: {
     clientId: "3975625e-617d-410c-a166-9a3c88563344",
@@ -28,6 +31,7 @@ export const msalConfig = {
     iframeHashTimeout: 10000,
     loadFrameTimeout: 10000,
     allowNativeBroker: false,
+<<<<<<< HEAD
     // Preferir Web Crypto si está disponible; MSAL hará fallback interno si no
     cryptoOptions: {
       useMsalCrypto: true,
@@ -42,6 +46,11 @@ export const msalConfig = {
       },
       piiLoggingEnabled: false,
       logLevel: "Info",
+=======
+    // Configuración para usar crypto nativo del navegador
+    cryptoOptions: {
+      useMsalCrypto: false, // Usar crypto nativo del navegador
+>>>>>>> 85df894 (fix: configurar MSAL para usar crypto nativo del navegador)
     },
   },
 };
