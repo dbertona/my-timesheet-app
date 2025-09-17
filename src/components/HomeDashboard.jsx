@@ -368,16 +368,19 @@ const HomeDashboard = () => {
   const pageRef = useRef(null);
   const gridContainerRef = useRef(null);
 
-  // Lógica de cálculo de altura para el contenedor del grid, replicada de TimesheetEdit
+  // Lógica de cálculo de altura con margen de seguridad (5%)
   useLayoutEffect(() => {
     const calculateAndSetHeight = () => {
       const gridContainer = gridContainerRef.current;
       if (gridContainer) {
-        const viewportHeight = window.innerHeight;
+        const viewportHeight = window.innerHeight * 0.95; // 5% de seguridad
         const gridTopPosition = gridContainer.getBoundingClientRect().top;
-        const bottomMargin = 20; // Un pequeño margen inferior
+        const bottomMargin = 20; // margen inferior
 
-        const availableHeight = viewportHeight - gridTopPosition - bottomMargin;
+        const availableHeight = Math.max(
+          0,
+          Math.floor(viewportHeight - gridTopPosition - bottomMargin)
+        );
 
         gridContainer.style.height = `${availableHeight}px`;
         gridContainer.style.overflow = "auto";
@@ -779,12 +782,7 @@ const HomeDashboard = () => {
       <section
         className="dash__grid dashboard-grid"
         ref={gridContainerRef}
-        style={{
-          flex: 1,
-          minHeight: 0,
-          overflowY: "auto",
-          height: `calc(100vh - ${gridContainerRef.current?.getBoundingClientRect().top || 0}px - 20px)`,
-        }}
+        style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
       >
         <article
           className="bc-card dashboard-card"
