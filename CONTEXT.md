@@ -52,6 +52,11 @@ Convenciones Git/PR:
 - No se puede pushear directo a `reset/main` (protegida).
 - Tras merge, limpiar ramas locales/remotas (excepto `autosave`, `stable/*` y soporte activo).
 
+Política de PR (unidad funcional):
+- Abrir PR por unidad funcional coherente (no por cada microcambio). Objetivo: ≤ ~300 líneas netas, 1–3 archivos relacionados.
+- Usar commits atómicos dentro del PR y realizar squash merge.
+- Cambios de solo documentación pueden agruparse; el CI puede ignorarlos (ver filtro de paths en CI).
+
 ### 4) Lint y tests
 - Lint: `npm run lint -- --max-warnings=0`.
 - Tests: `npm test` (Vitest + Testing Library). Mocks críticos:
