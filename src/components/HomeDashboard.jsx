@@ -538,14 +538,22 @@ const HomeDashboard = () => {
 
   const handleLogout = async () => {
     try {
-      await instance.logoutRedirect({
-        postLogoutRedirectUri: window.location.origin,
-      });
+      const basePath = window.location.pathname.includes("/my-timesheet-app/")
+        ? "/my-timesheet-app/"
+        : "/";
+      const postLogout =
+        (typeof import.meta !== "undefined" && import.meta.env?.VITE_MSAL_POSTLOGOUT) ||
+        `${window.location.origin}${basePath}`;
+      await instance.logoutRedirect({ postLogoutRedirectUri: postLogout });
     } catch {
       try {
-        await instance.logoutPopup({
-          postLogoutRedirectUri: window.location.origin,
-        });
+        const basePath = window.location.pathname.includes("/my-timesheet-app/")
+          ? "/my-timesheet-app/"
+          : "/";
+        const postLogout =
+          (typeof import.meta !== "undefined" && import.meta.env?.VITE_MSAL_POSTLOGOUT) ||
+          `${window.location.origin}${basePath}`;
+        await instance.logoutPopup({ postLogoutRedirectUri: postLogout });
       } catch {
         /* ignore */
       }
