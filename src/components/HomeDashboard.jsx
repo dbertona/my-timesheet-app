@@ -1,7 +1,13 @@
 // cspell:ignore msal useMsal
 /* global __APP_VERSION__ */
 import { useMsal } from "@azure/msal-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { generateAllocationPeriod, getServerDate } from "../api/date";
 import "../styles/HomeDashboard.css";
@@ -359,6 +365,48 @@ const HomeDashboard = () => {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const pageRef = useRef(null);
+  const gridContainerRef = useRef(null);
+
+  // Lógica de cálculo de altura con margen de seguridad (5%)
+  useLayoutEffect(() => {
+    const calculateAndSetHeight = () => {
+      const gridContainer = gridContainerRef.current;
+      if (gridContainer) {
+        const viewportBase = window.visualViewport?.height || window.innerHeight;
+        const viewportHeight = viewportBase * 0.90; // 10% de seguridad
+        const gridTopPosition = gridContainer.getBoundingClientRect().top;
+        const bottomMargin = 20; // margen inferior
+
+        const availableHeight = Math.max(
+          0,
+          Math.floor(viewportHeight - gridTopPosition - bottomMargin)
+        );
+
+        gridContainer.style.height = `${availableHeight}px`;
+        gridContainer.style.overflow = "auto";
+      }
+    };
+
+    calculateAndSetHeight();
+    let resizeObserver = null;
+    const currentPageRef = pageRef.current; // Capturar la referencia actual
+
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(calculateAndSetHeight);
+      if (currentPageRef) {
+        resizeObserver.observe(currentPageRef);
+      }
+    }
+    window.addEventListener("resize", calculateAndSetHeight);
+
+    return () => {
+      window.removeEventListener("resize", calculateAndSetHeight);
+      if (resizeObserver && currentPageRef) {
+        resizeObserver.unobserve(currentPageRef);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const onDocClick = (e) => {
@@ -505,7 +553,15 @@ const HomeDashboard = () => {
   };
 
   return (
-    <div className="dash">
+    <div
+      className="dash ts-page"
+      ref={pageRef}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
       {showMissingModal && (
         <BcModal
           isOpen={true}
@@ -727,7 +783,11 @@ const HomeDashboard = () => {
         </h2>
       </header>
 
-      <section className="dash__grid dashboard-grid">
+      <section
+        className="dash__grid dashboard-grid"
+        ref={gridContainerRef}
+        style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
+      >
         <article
           className="bc-card dashboard-card"
           role="button"
@@ -846,7 +906,15 @@ const HomeDashboard = () => {
           <div className="bc-card__icon">&gt;</div>
         </article>
 
-        <article className="bc-card dashboard-card">
+        <article
+          className="bc-card dashboard-card"
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate(`/lines/rejected`)}
+          onKeyDown={(e) =>
+            (e.key === "Enter" || e.key === " ") && navigate(`/lines/rejected`)
+          }
+        >
           <h3 className="bc-card__title">Horas Rechazadas</h3>
           <div className="bc-card__value">
             {loadingRejected ? (

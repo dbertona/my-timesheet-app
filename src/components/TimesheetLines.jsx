@@ -54,9 +54,15 @@ export default function TimesheetLines({
   onDeleteLines: _onDeleteLines, // 🆕 Función para borrar líneas seleccionadas
   showResponsible = false, // 🆕 Mostrar columna de responsable (solo aprobación)
   showResourceColumns = false, // 🆕 Mostrar columnas de recurso (solo aprobación)
+  extraColumns = [], // 🆕 Columnas extra (se insertan tras la columna de selección)
 }) {
+  const extraKeys = Array.isArray(extraColumns)
+    ? extraColumns.map((c) => String(c.key))
+    : [];
+  const allKeys = [...extraKeys, ...TIMESHEET_FIELDS];
+
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
-    TIMESHEET_FIELDS,
+    allKeys,
     "timesheet_column_widths",
     DEFAULT_COL_WIDTH
   );
@@ -314,7 +320,7 @@ export default function TimesheetLines({
     const table = tableRef.current;
     if (!table) return;
 
-    const colIndex = TIMESHEET_FIELDS.indexOf(colKey);
+    const colIndex = allKeys.indexOf(colKey);
     if (colIndex === -1) return;
 
     let maxContent = 0;
@@ -422,7 +428,7 @@ export default function TimesheetLines({
       <table ref={tableRef} className="ts-table">
         <thead>
           <tr>
-            {/* 🆕 Columna de selección */}
+            {/* 🆕 Columna de selección (iconos) */}
             <th
               className="ts-th"
               style={{
@@ -445,6 +451,24 @@ export default function TimesheetLines({
                 }}
               />
             </th>
+
+            {/* 🆕 Encabezados de columnas extra (tras selección) */}
+            {Array.isArray(extraColumns) &&
+              extraColumns.map((col) => (
+                <th
+                  key={`extra-head-${col.key}`}
+                  className="ts-th"
+                  style={{ ...(colStyles[col.key] || {}), textAlign: col.align || "left" }}
+                >
+                  {col.label || col.key}
+                  <span
+                    className="ts-resizer"
+                    onMouseDown={(e) => onMouseDown(e, col.key)}
+                    onDoubleClick={() => handleAutoFit(col.key)}
+                    aria-hidden
+                  />
+                </th>
+              ))}
 
             {TIMESHEET_FIELDS.map((key) => (
               (showResourceColumns || (key !== "resource_no" && key !== "resource_name")) && (
@@ -476,7 +500,7 @@ export default function TimesheetLines({
           {/* Líneas existentes */}
           {safeLines.map((line, lineIndex) => (
             <tr key={line.id}>
-              {/* 🆕 Columna de selección */}
+              {/* 🆕 Columna de selección (iconos) */}
               <td
                 className="ts-td"
                 style={{
@@ -736,6 +760,25 @@ export default function TimesheetLines({
                   />
                 )}
               </td>
+
+              {/* 🆕 Celdas de columnas extra (tras selección) */}
+              {Array.isArray(extraColumns) &&
+                extraColumns.map((col) => (
+                  <td
+                    key={`extra-${col.key}-${line.id}`}
+                    className="ts-td"
+                    style={{
+                      ...(colStyles[col.key] || {}),
+                      textAlign: col.align || "left",
+                      padding: "8px",
+                      verticalAlign: "middle",
+                    }}
+                  >
+                    {typeof col.renderCell === "function"
+                      ? col.renderCell(line)
+                      : (line?.[col.key] ?? "")}
+                  </td>
+                ))}
 
               {/* ----- CÓDIGO RECURSO: solo lectura ----- */}
               {showResourceColumns && (
