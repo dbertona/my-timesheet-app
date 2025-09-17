@@ -1,6 +1,6 @@
 import { useMsal } from "@azure/msal-react";
 import { useQuery } from "@tanstack/react-query";
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabaseClient } from "../supabaseClient";
 import TimesheetLines from "./TimesheetLines";
@@ -45,12 +45,7 @@ export default function RejectedLinesPage() {
     };
   }, []);
 
-  useEffect(() => {
-    document.body.classList.add("no-scroll");
-    return () => {
-      document.body.classList.remove("no-scroll");
-    };
-  }, []);
+  // Con layout unificado, no añadimos no-scroll al body
 
   const userEmail = accounts?.[0]?.username || "";
 

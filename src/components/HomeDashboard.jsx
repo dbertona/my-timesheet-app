@@ -363,10 +363,7 @@ const HomeDashboard = () => {
   const gridContainerRef = useRef(null);
 
   // Bloquear scroll global para emular comportamiento de Aprobación/Edición
-  useEffect(() => {
-    document.body.classList.add("no-scroll");
-    return () => document.body.classList.remove("no-scroll");
-  }, []);
+  // Con layout unificado, no forzamos no-scroll aquí
 
   // Ajustar la altura disponible para el grid (scroll interno solo en grid)
   useLayoutEffect(() => {

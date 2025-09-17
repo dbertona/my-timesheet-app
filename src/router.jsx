@@ -20,9 +20,11 @@ function TimesheetEditWrapper() {
 function AppWrapper() {
   return (
     <RequireMsalAuth>
-      <div style={{ padding: 0, fontSize: "inherit", height: "100%" }}>
+      <div className="page-root" style={{ padding: 0, fontSize: "inherit" }}>
         <LoginMicrosoft />
-        <Outlet />
+        <div className="page-scroll">
+          <Outlet />
+        </div>
       </div>
     </RequireMsalAuth>
   );

@@ -30,6 +30,21 @@ body {
   overflow-x: hidden; /* Prevenir desbordes horizontales que generan scroll */
 }
 
+/* Layout unificado de página: cabecera + área de contenido scrollable */
+.page-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: 100vw;
+  overflow: hidden;
+}
+
+.page-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
 /* Bloquear scroll global cuando las vistas gestionan su propio scroll interno */
 html.no-scroll,
 body.no-scroll {
