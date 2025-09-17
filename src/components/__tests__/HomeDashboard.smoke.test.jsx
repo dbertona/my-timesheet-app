@@ -1,7 +1,7 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import HomeDashboard from '../HomeDashboard';
 
 // Mock de MSAL
@@ -74,8 +74,8 @@ describe('HomeDashboard - smoke tests', () => {
     expect(screen.getByText(/Buenos días|Buenas tardes|Buenas noches/)).toBeInTheDocument();
     expect(screen.getByText(/Test User/)).toBeInTheDocument();
     expect(screen.getByText('Pendientes de imputar este mes')).toBeInTheDocument();
-    expect(screen.getByText('Partes de trabajo pendientes de aprobar')).toBeInTheDocument();
-    expect(screen.getByText('Partes de trabajo rechazadas')).toBeInTheDocument();
+    expect(screen.getByText('Horas pendientes de aprobar')).toBeInTheDocument();
+    expect(screen.getByText('Horas Rechazadas')).toBeInTheDocument();
   });
 
   it('muestra enlaces de navegación principales', () => {
@@ -104,8 +104,8 @@ describe('HomeDashboard - smoke tests', () => {
 
     // Verificar que las cards tienen la estructura esperada
     expect(screen.getByText('Pendientes de imputar este mes')).toBeInTheDocument();
-    expect(screen.getByText('Partes de trabajo pendientes de aprobar')).toBeInTheDocument();
-    expect(screen.getByText('Partes de trabajo rechazadas')).toBeInTheDocument();
+    expect(screen.getByText('Horas pendientes de aprobar')).toBeInTheDocument();
+    expect(screen.getByText('Horas Rechazadas')).toBeInTheDocument();
   });
 
   it('maneja estados de carga sin crashes', () => {
