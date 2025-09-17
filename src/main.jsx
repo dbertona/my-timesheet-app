@@ -8,6 +8,7 @@ import { msalConfig } from "./authConfig";
 import { Toaster } from "react-hot-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import "./index.css";
 
 const msalInstance = new PublicClientApplication(msalConfig);
 const root = document.getElementById("root");
