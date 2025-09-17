@@ -103,7 +103,6 @@ describe('TimesheetListPage - estados y textos', () => {
     render(<TimesheetListPage />, { wrapper: createWrapper() });
 
     await waitFor(() => {
-      expect(screen.getByText('Error')).toBeInTheDocument();
       expect(screen.getByText('No se pudo obtener la información del recurso')).toBeInTheDocument();
     });
   });
@@ -140,8 +139,8 @@ describe('TimesheetListPage - estados y textos', () => {
     render(<TimesheetListPage />, { wrapper: createWrapper() });
 
     await waitFor(() => {
-      // Solo verificar que no hay error (el componente siempre muestra error por la complejidad del mock)
-      expect(screen.getByText('Error')).toBeInTheDocument();
+      // Verificar que el componente renderiza sin mostrar el texto genérico "Error"
+      expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
     });
   });
 
