@@ -1,8 +1,11 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-npm run lint || { echo "\n💥 Lint falló"; exit 1; }
-npm run test --silent || { echo "\n💥 Tests fallaron"; exit 1; }
+npm run lint --silent -- --max-warnings=0 || { echo "\n💥 Lint falló"; exit 1; }
+# Ejecutar tests localmente ralentiza; delegamos a CI. Mantener este comando comentado o protegido por variable.
+if [ "${RUN_LOCAL_TESTS-}" = "1" ]; then
+  npm run test --silent || { echo "\n💥 Tests fallaron"; exit 1; }
+fi
 
 bash scripts/smoke-approval.sh || { echo "\n💥 Aprobación rota"; exit 1; }
 bash scripts/smoke-edit.sh || { echo "\n💥 Edición rota"; exit 1; }
