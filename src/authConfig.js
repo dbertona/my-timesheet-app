@@ -1,3 +1,4 @@
+// Configuración simplificada de MSAL
 export const msalConfig = {
   auth: {
     clientId: "3975625e-617d-410c-a166-9a3c88563344",
@@ -20,20 +21,5 @@ export const msalConfig = {
     iframeHashTimeout: 10000,
     loadFrameTimeout: 10000,
     allowNativeBroker: false,
-    // Configuración para resolver problemas de crypto
-    cryptoOptions: {
-      useMsalCrypto: true,
-    },
-    // Configuración adicional para entornos de testing
-    loggerOptions: {
-      loggerCallback: (level, message, containsPii) => {
-        if (containsPii) {
-          return;
-        }
-        console.log(`MSAL ${level}: ${message}`);
-      },
-      piiLoggingEnabled: false,
-      logLevel: "Info",
-    },
   },
 };
