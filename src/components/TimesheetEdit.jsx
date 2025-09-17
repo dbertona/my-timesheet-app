@@ -2698,7 +2698,7 @@ function TimesheetEdit({ headerId }) {
 
   return (
     <div className="ts-responsive timesheet-edit-page">
-      <div className="timesheet-container">
+      <div className="timesheet-container ts-page">
         {/* Header de navegación (componente unificado) */}
         <div
           ref={headerBarRef}
