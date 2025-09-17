@@ -829,7 +829,7 @@ const HomeDashboard = () => {
         </article>
 
         <article className="bc-card dashboard-card">
-          <h3 className="bc-card__title">Partes de trabajo rechazadas</h3>
+          <h3 className="bc-card__title">Horas Rechazadas</h3>
           <div className="bc-card__value">
             {loadingPending ? (
               "…"
