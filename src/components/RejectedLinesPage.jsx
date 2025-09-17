@@ -206,7 +206,7 @@ export default function RejectedLinesPage() {
 
   return (
     <div
-      className="rejected-lines-page ts-page"
+      className="rejected-lines-page"
       ref={pageRef}
       style={{
         height: "95vh", // Alineado con Dashboard (95vh)
@@ -215,10 +215,11 @@ export default function RejectedLinesPage() {
         overflow: "hidden",
       }}
     >
-      <div
-        className="ts-header-bar"
-        style={{ display: "flex", alignItems: "center", gap: 12 }}
-      >
+      <div className="ts-page" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        <div
+          className="ts-header-bar"
+          style={{ display: "flex", alignItems: "center", gap: 12 }}
+        >
         <BackToDashboard compact={true} />
         <h1
           className="ts-page-title"
@@ -249,13 +250,13 @@ export default function RejectedLinesPage() {
         >
           {Math.round(totalHours)} Horas • {totalLines} líneas
         </div>
-      </div>
+        </div>
 
-      {/* Filtros en bloque como otras páginas */}
-      <div
-        className="timesheet-list-filters"
-        style={{ flexShrink: 0 }}
-      >
+        {/* Filtros en bloque como otras páginas */}
+        <div
+          className="timesheet-list-filters"
+          style={{ flexShrink: 0 }}
+        >
         <div className="filter-group">
           <label htmlFor="filter-period">Período:</label>
           <select
@@ -301,13 +302,13 @@ export default function RejectedLinesPage() {
             Limpiar
           </button>
         </div>
-      </div>
+        </div>
 
-      <div
-        className="ts-responsive"
-        ref={tableContainerRef}
-        style={{ flex: 1, minHeight: 0 }}
-      >
+        <div
+          className="ts-responsive"
+          ref={tableContainerRef}
+          style={{ flex: 1, minHeight: 0 }}
+        >
         {isLoading && <p>Cargando líneas rechazadas...</p>}
         {error && (
           <div className="error-container">
@@ -396,6 +397,7 @@ export default function RejectedLinesPage() {
             ]}
           />
         )}
+        </div>
       </div>
     </div>
   );
