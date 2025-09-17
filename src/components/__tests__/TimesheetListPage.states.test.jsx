@@ -136,7 +136,7 @@ describe('TimesheetListPage - estados y textos', () => {
             })),
           })),
         };
-      } else {
+      } else if (table === 'resource_timesheet_header') {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
@@ -152,6 +152,7 @@ describe('TimesheetListPage - estados y textos', () => {
           })),
         };
       }
+      return { select: vi.fn() };
     });
 
     render(<TimesheetListPage />, { wrapper: createWrapper() });
@@ -187,7 +188,7 @@ describe('TimesheetListPage - estados y textos', () => {
             })),
           })),
         };
-      } else {
+      } else if (table === 'resource_timesheet_header') {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
@@ -203,6 +204,7 @@ describe('TimesheetListPage - estados y textos', () => {
           })),
         };
       }
+      return { select: vi.fn() };
     });
 
     render(<TimesheetListPage />, { wrapper: createWrapper() });
@@ -246,7 +248,7 @@ describe('TimesheetListPage - estados y textos', () => {
             })),
           })),
         };
-      } else {
+      } else if (table === 'resource_timesheet_header') {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
@@ -262,6 +264,7 @@ describe('TimesheetListPage - estados y textos', () => {
           })),
         };
       }
+      return { select: vi.fn() };
     });
 
     render(<TimesheetListPage />, { wrapper: createWrapper() });
@@ -305,7 +308,7 @@ describe('TimesheetListPage - estados y textos', () => {
             })),
           })),
         };
-      } else {
+      } else if (table === 'resource_timesheet_header') {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
@@ -321,6 +324,7 @@ describe('TimesheetListPage - estados y textos', () => {
           })),
         };
       }
+      return { select: vi.fn() };
     });
 
     render(<TimesheetListPage />, { wrapper: createWrapper() });

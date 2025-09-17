@@ -8,7 +8,7 @@ import HomeDashboard from '../HomeDashboard';
 vi.mock('@azure/msal-react', () => ({
   useMsal: () => ({
     instance: {
-      getActiveAccount: vi.fn(() => ({ 
+      getActiveAccount: vi.fn(() => ({
         username: 'test@example.com',
         name: 'Test User'
       })),
@@ -24,20 +24,20 @@ vi.mock('../supabaseClient', () => ({
     from: vi.fn(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ 
+          single: vi.fn(() => Promise.resolve({
             data: { code: 'RES001', name: 'Test Resource', calendar_type: 'STANDARD' },
-            error: null 
+            error: null
           })),
-          maybeSingle: vi.fn(() => Promise.resolve({ 
+          maybeSingle: vi.fn(() => Promise.resolve({
             data: { code: 'RES001', name: 'Test Resource', calendar_type: 'STANDARD' },
-            error: null 
+            error: null
           })),
         })),
       })),
     })),
-    rpc: vi.fn(() => Promise.resolve({ 
-      data: [{ pendientes: 8.5 }], 
-      error: null 
+    rpc: vi.fn(() => Promise.resolve({
+      data: [{ pendientes: 8.5 }],
+      error: null
     })),
   },
 }));
@@ -69,7 +69,7 @@ describe('HomeDashboard - smoke tests', () => {
 
   it('renderiza sin crashes y muestra elementos principales', async () => {
     render(<HomeDashboard />, { wrapper: createWrapper() });
-    
+
     // Verificar elementos principales del dashboard
     expect(screen.getByText(/Buenos días|Buenas tardes|Buenas noches/)).toBeInTheDocument();
     expect(screen.getByText(/Test User/)).toBeInTheDocument();
@@ -80,28 +80,28 @@ describe('HomeDashboard - smoke tests', () => {
 
   it('muestra enlaces de navegación principales', () => {
     render(<HomeDashboard />, { wrapper: createWrapper() });
-    
+
     expect(screen.getByText('Nuevo Parte de Horas')).toBeInTheDocument();
     expect(screen.getByText('Mis Partes de Horas')).toBeInTheDocument();
   });
 
   it('muestra información de versión y fecha', () => {
     render(<HomeDashboard />, { wrapper: createWrapper() });
-    
+
     // Versión de la app
     expect(screen.getByText(/v\d+\.\d+\.\d+/)).toBeInTheDocument();
-    
+
     // Durante la carga inicial, la fecha puede mostrar "Cargando..."
     expect(screen.getByText(/Cargando\.\.\.|lunes|martes|miércoles|jueves|viernes|sábado|domingo/)).toBeInTheDocument();
   });
 
   it('renderiza cards del dashboard con estructura correcta', () => {
     render(<HomeDashboard />, { wrapper: createWrapper() });
-    
+
     // Verificar que existen las cards principales
     const cards = screen.getAllByRole('button');
     expect(cards.length).toBeGreaterThan(0);
-    
+
     // Verificar que las cards tienen la estructura esperada
     expect(screen.getByText('Pendientes de imputar este mes')).toBeInTheDocument();
     expect(screen.getByText('Partes de trabajo pendientes de aprobar')).toBeInTheDocument();
@@ -110,7 +110,7 @@ describe('HomeDashboard - smoke tests', () => {
 
   it('maneja estados de carga sin crashes', () => {
     render(<HomeDashboard />, { wrapper: createWrapper() });
-    
+
     // Durante la carga inicial, algunos elementos pueden mostrar "…" o estar en estado de carga
     // Verificar que no hay errores de renderizado
     expect(screen.getByText('Pendientes de imputar este mes')).toBeInTheDocument();
@@ -118,7 +118,7 @@ describe('HomeDashboard - smoke tests', () => {
 
   it('muestra menú de usuario cuando está disponible', () => {
     render(<HomeDashboard />, { wrapper: createWrapper() });
-    
+
     // Verificar que existe el botón del menú de usuario (inicial con "T")
     const userButton = screen.getByRole('button', { name: 'T' });
     expect(userButton).toBeInTheDocument();
