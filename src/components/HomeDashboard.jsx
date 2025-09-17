@@ -551,7 +551,7 @@ const HomeDashboard = () => {
 
   return (
     <div
-      className="dash"
+      className="dash ts-page"
       ref={pageRef}
       style={{
         display: "flex",

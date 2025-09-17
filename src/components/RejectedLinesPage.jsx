@@ -206,7 +206,7 @@ export default function RejectedLinesPage() {
 
   return (
     <div
-      className="rejected-lines-page"
+      className="rejected-lines-page ts-page"
       ref={pageRef}
       style={{
         height: "95vh", // Alineado con Dashboard (95vh)
