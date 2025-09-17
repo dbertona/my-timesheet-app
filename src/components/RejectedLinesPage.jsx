@@ -57,17 +57,44 @@ export default function RejectedLinesPage() {
   const [filterPeriod, setFilterPeriod] = useState("");
   const [filterProject, setFilterProject] = useState("");
 
-  // Proyectos para select (como en ApprovalPage)
-  const { data: projects } = useQuery({
-    queryKey: ["projects"],
+  // Resolver resource_no del usuario actual para filtros dependientes
+  const { data: resourceCode } = useQuery({
+    queryKey: ["resource-code", userEmail],
     queryFn: async () => {
+      if (!userEmail) return null;
       const { data, error } = await supabaseClient
+        .from("resource")
+        .select("code")
+        .eq("email", userEmail)
+        .single();
+      if (error) return null;
+      return data?.code || null;
+    },
+  });
+
+  // Proyectos para select: solo donde el recurso sea miembro (tabla job_team)
+  const { data: projects } = useQuery({
+    queryKey: ["projects-by-member", resourceCode],
+    queryFn: async () => {
+      if (!resourceCode) return [];
+      // 1) job_team → recoger job_no del miembro
+      const { data: jtRows, error: jtErr } = await supabaseClient
+        .from("job_team")
+        .select("job_no")
+        .eq("resource_no", resourceCode);
+      if (jtErr) throw jtErr;
+      const jobNos = Array.from(new Set((jtRows || []).map((r) => r.job_no))).filter(Boolean);
+      if (jobNos.length === 0) return [];
+      // 2) job → traer descripciones
+      const { data: jobs, error: jobsErr } = await supabaseClient
         .from("job")
         .select("no, description")
+        .in("no", jobNos)
         .order("description");
-      if (error) throw error;
-      return data || [];
+      if (jobsErr) throw jobsErr;
+      return jobs || [];
     },
+    enabled: !!resourceCode,
     staleTime: 5 * 60 * 1000,
   });
 
