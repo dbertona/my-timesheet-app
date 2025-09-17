@@ -1,6 +1,6 @@
 {
   "name": "my-timesheet-app",
-  "version": "0.2.5-beta.19",
+  "version": "0.2.5-beta.20",
   "private": true,
   "type": "module",
   "scripts": {
