@@ -24,9 +24,7 @@ const HomeDashboard = () => {
   const [rejectedLinesCount, setRejectedLinesCount] = useState(0);
   const [rejectedHeadersCount, setRejectedHeadersCount] = useState(0);
   const [rejectedHoursSum, setRejectedHoursSum] = useState(0);
-  // eslint-disable-next-line no-unused-vars
   const [loadingRejected, setLoadingRejected] = useState(true);
-  // eslint-disable-next-line no-unused-vars
   const [errorRejected, setErrorRejected] = useState(null);
 
   // 🆕 Estados para partes de trabajo pendientes de aprobar
