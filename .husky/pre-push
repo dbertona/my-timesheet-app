@@ -1,6 +1,8 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+echo "ℹ️  Política de PR: Usa scripts/pr-flow.sh (open/status/rerun-ci/merge/cleanup) para gestionar PRs hacia reset/main."
+
 npm run lint --silent -- --max-warnings=0 || { echo "\n💥 Lint falló"; exit 1; }
 # Ejecutar tests localmente ralentiza; delegamos a CI. Mantener este comando comentado o protegido por variable.
 if [ "${RUN_LOCAL_TESTS-}" = "1" ]; then
