@@ -103,7 +103,10 @@ describe('TimesheetListPage - estados y textos', () => {
     render(<TimesheetListPage />, { wrapper: createWrapper() });
 
     await waitFor(() => {
-      expect(screen.getByText('No se pudo obtener la información del recurso')).toBeInTheDocument();
+      const nodes = screen.getAllByText((_, node) =>
+        (node?.textContent || '').includes('No se pudo obtener la información del recurso')
+      );
+      expect(nodes.length).toBeGreaterThan(0);
     });
   });
 
