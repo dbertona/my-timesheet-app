@@ -6,6 +6,12 @@
   table-layout: fixed;
 }
 
+/* Contenedor scrollable para mantener thead sticky visible */
+.ts-responsive {
+  position: relative;
+  overflow: auto;
+}
+
 /* Encabezados y celdas */
 .ts-th {
   position: relative;
@@ -17,6 +23,14 @@
   vertical-align: middle !important; /* ✅ Centrar contenido verticalmente */
   line-height: 1.1 !important; /* ✅ Line-height compacto */
   box-sizing: border-box !important;
+}
+
+/* Encabezados fijos al hacer scroll vertical */
+.ts-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3; /* por encima de celdas */
+  background: #ffffff; /* evitar transparencia al pasar */
 }
 .ts-td {
   border: 1px solid #ddd;
