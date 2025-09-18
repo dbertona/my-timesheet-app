@@ -54,6 +54,7 @@ export default function ProjectCell({
   const [projectStatus, setProjectStatus] = useState(null);
   // Estado para posicionamiento inteligente del dropdown
   const [dropdownRect, setDropdownRect] = useState(null);
+  const cellWrapperRef = useRef(null);
 
   // Prefetch: cuando se abre el dropdown de proyectos o cambia el filtro,
   // pre-cargamos tareas de los primeros candidatos visibles (hasta 5) para
@@ -89,17 +90,20 @@ export default function ProjectCell({
   useLayoutEffect(() => {
     const updateRect = () => {
       if (jobOpenFor !== line.id) return;
-      const cellElement = document.querySelector(`[data-line-id="${line.id}"] .ts-cell`);
-      if (!cellElement) return;
+      const el = cellWrapperRef.current;
+      if (!el) return;
 
-      const rect = cellElement.getBoundingClientRect();
+      const rect = el.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
       const spaceBelow = viewportHeight - rect.bottom;
       const spaceAbove = rect.top;
       const dropdownHeight = 220;
 
       let top = rect.bottom + window.scrollY;
       let maxHeight = dropdownHeight;
+      const dropdownWidth = Math.max(rect.width, 420);
+      let left = rect.left + window.scrollX;
 
       if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
         top = rect.top + window.scrollY - dropdownHeight;
@@ -108,12 +112,12 @@ export default function ProjectCell({
         maxHeight = Math.max(50, spaceBelow - 10);
       }
 
-      setDropdownRect({
-        left: rect.left + window.scrollX,
-        top,
-        width: Math.max(rect.width, 420),
-        maxHeight,
-      });
+      // Clamp horizontal dentro del viewport, alineado con la celda
+      const maxLeft = window.scrollX + viewportWidth - dropdownWidth - 8;
+      const minLeft = window.scrollX + 8;
+      left = Math.max(minLeft, Math.min(left, maxLeft));
+
+      setDropdownRect({ left, top, width: dropdownWidth, maxHeight });
     };
 
     updateRect();
@@ -146,7 +150,7 @@ export default function ProjectCell({
       style={{ ...colStyle, textAlign: align }}
     >
       {isEditable ? (
-        <div className="ts-cell" data-line-id={line.id}>
+        <div className="ts-cell" data-line-id={line.id} ref={cellWrapperRef}>
           <div className="ts-cell">
             <input
               type="text"

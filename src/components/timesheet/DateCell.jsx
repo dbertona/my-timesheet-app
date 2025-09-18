@@ -24,6 +24,7 @@ export default function DateCell({
 }) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [dropdownRect, setDropdownRect] = useState(null);
+  const cellWrapperRef = useRef(null);
   const baseToday = serverDate || new Date();
   const [selectedDate, setSelectedDate] = useState(
     parseDate(editFormData[line.id]?.date) || baseToday
@@ -64,17 +65,20 @@ export default function DateCell({
   useLayoutEffect(() => {
     const updateRect = () => {
       if (!calendarOpen) return;
-      const cellElement = document.querySelector(`[data-line-id="${line.id}"] .ts-cell`);
-      if (!cellElement) return;
+      const el = cellWrapperRef.current;
+      if (!el) return;
 
-      const rect = cellElement.getBoundingClientRect();
+      const rect = el.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
       const spaceBelow = viewportHeight - rect.bottom;
       const spaceAbove = rect.top;
       const dropdownHeight = 280;
 
       let top = rect.bottom + window.scrollY;
       let maxHeight = dropdownHeight;
+      const dropdownWidth = Math.max(rect.width, 300);
+      let left = rect.left + window.scrollX;
       if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
         top = rect.top + window.scrollY - dropdownHeight;
         if (top < 0) top = 0;
@@ -82,12 +86,11 @@ export default function DateCell({
         maxHeight = Math.max(50, spaceBelow - 10);
       }
 
-      setDropdownRect({
-        left: rect.left + window.scrollX,
-        top,
-        width: Math.max(rect.width, 300),
-        maxHeight,
-      });
+      const maxLeft = window.scrollX + viewportWidth - dropdownWidth - 8;
+      const minLeft = window.scrollX + 8;
+      left = Math.max(minLeft, Math.min(left, maxLeft));
+
+      setDropdownRect({ left, top, width: dropdownWidth, maxHeight });
     };
 
     updateRect();
@@ -360,7 +363,7 @@ export default function DateCell({
 
   return (
     <td className="ts-td ts-cell" style={{ textAlign: align }}>
-      <div className="ts-cell" data-line-id={line.id}>
+      <div className="ts-cell" data-line-id={line.id} ref={cellWrapperRef}>
         <div className="ts-cell">
           <input
             type="text"

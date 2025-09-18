@@ -45,33 +45,35 @@ const TaskCell = ({
 
   // Estado y efecto para posicionamiento inteligente del dropdown de tareas
   const [dropdownRect, setDropdownRect] = useState(null);
+  const cellWrapperRef = useRef(null);
   useLayoutEffect(() => {
     const updateRect = () => {
       if (taskOpenFor !== line.id) return;
-      const cellElement = document.querySelector(`[data-line-id="${line.id}"] .ts-cell`);
-      if (!cellElement) return;
+      const el = cellWrapperRef.current;
+      if (!el) return;
 
-      const rect = cellElement.getBoundingClientRect();
+      const rect = el.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
       const spaceBelow = viewportHeight - rect.bottom;
       const spaceAbove = rect.top;
       const dropdownHeight = 220;
 
       let top = rect.bottom + window.scrollY;
       let maxHeight = dropdownHeight;
+      const dropdownWidth = Math.max(rect.width, 420);
+      let left = rect.left + window.scrollX;
       if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
         top = rect.top + window.scrollY - dropdownHeight;
         if (top < 0) top = 0;
       } else if (spaceBelow < dropdownHeight) {
         maxHeight = Math.max(50, spaceBelow - 10);
       }
+      const maxLeft = window.scrollX + viewportWidth - dropdownWidth - 8;
+      const minLeft = window.scrollX + 8;
+      left = Math.max(minLeft, Math.min(left, maxLeft));
 
-      setDropdownRect({
-        left: rect.left + window.scrollX,
-        top,
-        width: Math.max(rect.width, 420),
-        maxHeight,
-      });
+      setDropdownRect({ left, top, width: dropdownWidth, maxHeight });
     };
 
     updateRect();
@@ -105,7 +107,7 @@ const TaskCell = ({
       style={{ ...colStyle, textAlign: align }}
     >
       {isEditable ? (
-        <div className="ts-cell" data-line-id={line.id}>
+        <div className="ts-cell" data-line-id={line.id} ref={cellWrapperRef}>
           <div className="ts-cell">
             <input
               type="text"
