@@ -80,6 +80,7 @@ export default function TimesheetLines({
       })
     : [];
   const tableRef = useRef(null);
+  const headTableRef = useRef(null);
 
   const getAlign = (key) => TIMESHEET_ALIGN?.[key] || "left";
 
@@ -423,10 +424,39 @@ export default function TimesheetLines({
 
   // Eliminar línea ficticia: no agregar filas vacías automáticamente
 
+  // ===============================
+  // Doble tabla: header fijo + body scroll
+  // ===============================
+  const filteredTimesheetFields = TIMESHEET_FIELDS.filter(
+    (key) => showResourceColumns || (key !== "resource_no" && key !== "resource_name")
+  );
+  const colKeys = [
+    "__select__",
+    ...extraKeys,
+    ...filteredTimesheetFields,
+    ...(showResponsible ? ["__responsible__"] : []),
+  ];
+  const getColWidth = (key) => {
+    if (key === "__select__") return "40px";
+    if (key === "__responsible__") return "160px";
+    const style = colStyles[key] || {};
+    const w = style && style.width;
+    if (typeof w === "number") return `${w}px`;
+    if (typeof w === "string") return w;
+    return undefined;
+  };
+
   return (
-    <div className="ts-responsive" style={{ maxHeight: '65vh', overflowY: 'auto', overflowX: 'hidden' }}>
-      <table ref={tableRef} className="ts-table">
-        <thead>
+    <div className="ts-lines-wrap">
+      {/* Tabla: solo encabezado (fijo) */}
+      <div className="ts-lines-header">
+        <table ref={headTableRef} className="ts-table">
+          <colgroup>
+            {colKeys.map((k) => (
+              <col key={`head-col-${k}`} style={{ width: getColWidth(k) }} />
+            ))}
+          </colgroup>
+          <thead>
           <tr>
             {/* 🆕 Columna de selección (iconos) */}
             <th
@@ -494,9 +524,19 @@ export default function TimesheetLines({
               </th>
             )}
           </tr>
-        </thead>
+          </thead>
+        </table>
+      </div>
 
-        <tbody>
+      {/* Tabla: solo cuerpo (scroll) */}
+      <div className="ts-responsive" style={{ maxHeight: '65vh', overflowY: 'auto', overflowX: 'hidden' }}>
+        <table ref={tableRef} className="ts-table">
+          <colgroup>
+            {colKeys.map((k) => (
+              <col key={`body-col-${k}`} style={{ width: getColWidth(k) }} />
+            ))}
+          </colgroup>
+          <tbody>
           {/* Líneas existentes */}
           {safeLines.map((line, lineIndex) => (
             <tr key={line.id}>
@@ -1298,8 +1338,9 @@ export default function TimesheetLines({
               )}
             </tr>
           ))}
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
 
       <BcModal
         isOpen={reopenModal.open}
