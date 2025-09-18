@@ -1,4 +1,4 @@
-import { useVirtualizer } from "@tanstack/react-virtual";
+// import { useVirtualizer } from "@tanstack/react-virtual"; // desactivado en fallback
 import React, {
     useCallback,
     useEffect,
@@ -132,16 +132,12 @@ export default function ProjectCell({
   }, [jobOpenFor, line.id]);
 
   // Virtualización: hooks deben llamarse siempre, nunca condicionalmente
-  const parentRef = useRef(null);
+  // const parentRef = useRef(null); // desactivado en fallback
   const items = useMemo(
     () => getVisibleJobs(line.id) || [],
     [getVisibleJobs, line.id]
   );
-  const rowVirtualizer = useVirtualizer({
-    count: jobOpenFor === line.id && jobsLoaded ? items.length : 0,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 28,
-  });
+  // Fallback sin virtualización: dejamos creado el ref por compatibilidad
 
   return (
     <td
@@ -324,60 +320,40 @@ export default function ProjectCell({
                 <div style={{ padding: "8px", color: "#999" }}>Cargando…</div>
               ) : (
                 <div
-                  ref={parentRef}
                   style={{
-                    height: Math.max(40, (dropdownRect?.maxHeight ?? 220) - 40),
-                    overflow: "auto",
+                    maxHeight: Math.max(40, (dropdownRect?.maxHeight ?? 220) - 40),
+                    overflowY: "auto",
                   }}
                 >
-                  <div
-                    style={{
-                      height: rowVirtualizer.getTotalSize(),
-                      width: "100%",
-                      position: "relative",
-                    }}
-                  >
-                    {rowVirtualizer.getVirtualItems().map((v) => {
-                      const j = items[v.index];
-                      return (
-                        <div
-                          key={j.no}
-                          style={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            width: "100%",
-                            height: v.size,
-                            transform: `translateY(${v.start}px)`,
-                          }}
-                          onMouseDown={async () => {
-                            handleInputChange(line.id, {
-                              target: { name: "job_no", value: j.no },
-                            });
-                            setJobFilter((prev) => ({
-                              ...prev,
-                              [line.id]: j.no,
-                            }));
-                            setJobOpenFor(null);
-                            handleInputChange(line.id, {
-                              target: { name: "job_task_no", value: "" },
-                            });
-                            await ensureTasksLoaded(j.no);
-                            const el =
-                              inputRefs.current?.[line.id]?.["job_task_no"];
-                            if (el) {
-                              el.focus();
-                              el.select();
-                            }
-                          }}
-                          title={`${j.no} - ${j.description || ""}`}
-                        >
-                          <strong>{j.no}</strong>{" "}
-                          {j.description ? `— ${j.description}` : ""}
-                        </div>
-                      );
-                    })}
-                  </div>
+                  {(items || []).map((j) => (
+                    <div
+                      key={j.no}
+                      className="ts-dropdown__item"
+                      onMouseDown={async () => {
+                        handleInputChange(line.id, {
+                          target: { name: "job_no", value: j.no },
+                        });
+                        setJobFilter((prev) => ({
+                          ...prev,
+                          [line.id]: j.no,
+                        }));
+                        setJobOpenFor(null);
+                        handleInputChange(line.id, {
+                          target: { name: "job_task_no", value: "" },
+                        });
+                        await ensureTasksLoaded(j.no);
+                        const el = inputRefs.current?.[line.id]?.["job_task_no"];
+                        if (el) {
+                          el.focus();
+                          el.select();
+                        }
+                      }}
+                      title={`${j.no} - ${j.description || ""}`}
+                    >
+                      <strong>{j.no}</strong>{" "}
+                      {j.description ? `— ${j.description}` : ""}
+                    </div>
+                  ))}
                 </div>
               )}
 

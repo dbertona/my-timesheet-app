@@ -1,5 +1,5 @@
 // src/components/timesheet/TaskCell.jsx
-import { useVirtualizer } from "@tanstack/react-virtual";
+// import { useVirtualizer } from "@tanstack/react-virtual"; // desactivado en fallback
 import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 import TIMESHEET_FIELDS from "../../constants/timesheetFields";
@@ -88,17 +88,13 @@ const TaskCell = ({
   }, [taskOpenFor, line.id]);
 
   // Virtualización siempre montada para mantener orden de hooks estable
-  const parentRef = useRef(null);
+  // const parentRef = useRef(null); // desactivado en fallback
   const jobNo = editFormData[line.id]?.job_no || "";
   const items = useMemo(
     () => (jobNo ? getVisibleTasks(line.id, jobNo) : []),
     [getVisibleTasks, line.id, jobNo]
   );
-  const rowVirtualizer = useVirtualizer({
-    count: taskOpenFor === line.id ? items.length : 0,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 28,
-  });
+  // Fallback sin virtualización
 
   return (
     <td
@@ -265,51 +261,31 @@ const TaskCell = ({
               </div>
 
               <div
-                ref={parentRef}
                 style={{
-                  height: Math.max(40, (dropdownRect?.maxHeight ?? 220) - 40),
-                  overflow: "auto",
+                  maxHeight: Math.max(40, (dropdownRect?.maxHeight ?? 220) - 40),
+                  overflowY: "auto",
                 }}
               >
-                <div
-                  style={{
-                    height: rowVirtualizer.getTotalSize(),
-                    width: "100%",
-                    position: "relative",
-                  }}
-                >
-                  {rowVirtualizer.getVirtualItems().map((v) => {
-                    const t = items[v.index];
-                    if (!t) return null;
-                    return (
-                      <div
-                        key={t.no}
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          height: v.size,
-                          transform: `translateY(${v.start}px)`,
-                        }}
-                        onMouseDown={() => {
-                          handleInputChange(line.id, {
-                            target: { name: "job_task_no", value: t.no },
-                          });
-                          setTaskFilter((prev) => ({
-                            ...prev,
-                            [line.id]: t.no,
-                          }));
-                          setTaskOpenFor(null);
-                        }}
-                        title={`${t.no} - ${t.description || ""}`}
-                      >
-                        <strong>{t.no}</strong>{" "}
-                        {t.description ? `— ${t.description}` : ""}
-                      </div>
-                    );
-                  })}
-                </div>
+                {(items || []).map((t) => (
+                  <div
+                    key={t.no}
+                    className="ts-dropdown__item"
+                    onMouseDown={() => {
+                      handleInputChange(line.id, {
+                        target: { name: "job_task_no", value: t.no },
+                      });
+                      setTaskFilter((prev) => ({
+                        ...prev,
+                        [line.id]: t.no,
+                      }));
+                      setTaskOpenFor(null);
+                    }}
+                    title={`${t.no} - ${t.description || ""}`}
+                  >
+                    <strong>{t.no}</strong>{" "}
+                    {t.description ? `— ${t.description}` : ""}
+                  </div>
+                ))}
               </div>
 
               {jobNo && items.length === 0 && (
