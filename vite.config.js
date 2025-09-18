@@ -14,6 +14,7 @@ const packageJsonWatcher = () => {
     configureServer(server) {
       const packageJsonPath = resolve(process.cwd(), 'package.json'); // eslint-disable-line no-undef
       let lastVersion = null;
+      let isReloading = false;
       
       try {
         lastVersion = JSON.parse(readFileSync(packageJsonPath, 'utf-8')).version;
@@ -23,23 +24,32 @@ const packageJsonWatcher = () => {
       }
       
       const checkVersion = () => {
+        if (isReloading) return; // Evitar múltiples recargas
+        
         try {
           const currentVersion = JSON.parse(readFileSync(packageJsonPath, 'utf-8')).version;
           if (lastVersion && currentVersion !== lastVersion) {
             console.log(`🔄 Version changed from ${lastVersion} to ${currentVersion}, reloading...`);
+            isReloading = true;
+            lastVersion = currentVersion;
+            
             // Forzar recarga completa
             server.ws.send({
               type: 'full-reload'
             });
-            lastVersion = currentVersion;
+            
+            // Reset flag after 2 seconds
+            setTimeout(() => {
+              isReloading = false;
+            }, 2000);
           }
         } catch {
           // Ignore errors
         }
       };
       
-      // Check every 1 second for faster response
-      setInterval(checkVersion, 1000);
+      // Check every 2 seconds
+      setInterval(checkVersion, 2000);
     }
   };
 };
