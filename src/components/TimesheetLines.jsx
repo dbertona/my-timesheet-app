@@ -102,6 +102,8 @@ export default function TimesheetLines({
   // Eliminado estado local de workTypes: usamos React Query
   const [wtFilter, setWtFilter] = useState({}); // { [lineId]: "filtro" }
   const [wtOpenFor, setWtOpenFor] = useState(null); // lineId con dropdown abierto
+  const [wtDropdownRect, setWtDropdownRect] = useState(null); // Portal-like positioning
+  const wtCellWrapperRef = useRef(null);
 
   // React Query: Carga y cache de proyectos por recurso (hook reutilizable)
   const jobsQuery = useJobs((header || editableHeader)?.resource_no);
@@ -445,6 +447,45 @@ export default function TimesheetLines({
     if (typeof w === "string") return w;
     return undefined;
   };
+
+  // Posicionamiento inteligente para Tipo trabajo (portal-like)
+  useEffect(() => {
+    const updateRect = () => {
+      if (wtOpenFor === null) return;
+      const el = wtCellWrapperRef.current || document.querySelector(`[data-line-id="${wtOpenFor}"] .ts-cell`);
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const dropdownHeight = 220;
+      const dropdownWidth = Math.max(rect.width, 420);
+
+      let top = rect.bottom + window.scrollY;
+      let left = rect.left + window.scrollX;
+      let maxHeight = dropdownHeight;
+      if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+        top = rect.top + window.scrollY - dropdownHeight;
+        if (top < 0) top = 0;
+      } else if (spaceBelow < dropdownHeight) {
+        maxHeight = Math.max(50, spaceBelow - 10);
+      }
+      const maxLeft = window.scrollX + viewportWidth - dropdownWidth - 8;
+      const minLeft = window.scrollX + 8;
+      left = Math.max(minLeft, Math.min(left, maxLeft));
+      setWtDropdownRect({ left, top, width: dropdownWidth, maxHeight });
+    };
+    updateRect();
+    if (wtOpenFor !== null) {
+      window.addEventListener("scroll", updateRect, true);
+      window.addEventListener("resize", updateRect);
+    }
+    return () => {
+      window.removeEventListener("scroll", updateRect, true);
+      window.removeEventListener("resize", updateRect);
+    };
+  }, [wtOpenFor]);
 
   return (
     <div className="ts-lines-wrap">
@@ -975,7 +1016,7 @@ export default function TimesheetLines({
                 error={localErrors[line.id]?.work_type}
               >
                 {isLineEditable(line) ? (
-                  <div className="ts-cell">
+                  <div className="ts-cell" ref={wtCellWrapperRef} data-line-id={line.id}>
                     <div className="ts-cell">
                       <input
                         type="text"
@@ -1131,6 +1172,7 @@ export default function TimesheetLines({
                       <div
                         className="ts-dropdown"
                         onMouseDown={(e) => e.preventDefault()}
+                        style={{ position: "fixed", left: wtDropdownRect?.left ?? 0, top: wtDropdownRect?.top ?? 0, width: wtDropdownRect?.width ?? 420, height: wtDropdownRect?.maxHeight ?? 220, overflow: "hidden", zIndex: 5000 }}
                       >
                         <div className="ts-dropdown__header">
                           <FiSearch />
@@ -1150,36 +1192,16 @@ export default function TimesheetLines({
                             }}
                           />
                         </div>
-
-                        {(workTypesLoaded
-                          ? getVisibleWorkTypes(line.id)
-                          : []
-                        ).map((wt) => (
-                          <div
-                            key={wt}
-                            onMouseDown={() => {
-                              handleInputChange(line.id, {
-                                target: { name: "work_type", value: wt },
-                              });
-                              clearFieldError(line.id, "work_type");
-                              setWtFilter((prev) => ({
-                                ...prev,
-                                [line.id]: wt,
-                              }));
-                              setWtOpenFor(null);
-                            }}
-                            title={wt}
-                          >
-                            {wt}
-                          </div>
-                        ))}
-
-                        {workTypesLoaded &&
-                          getVisibleWorkTypes(line.id).length === 0 && (
-                            <div style={{ padding: "8px", color: "#999" }}>
-                              Sin resultados…
+                        <div style={{ maxHeight: Math.max(40, (wtDropdownRect?.maxHeight ?? 220) - 40), overflowY: "auto" }}>
+                          {(workTypesLoaded ? getVisibleWorkTypes(line.id) : []).map((wt) => (
+                            <div key={wt} className="ts-dropdown__item" onMouseDown={() => { handleInputChange(line.id, { target: { name: "work_type", value: wt } }); clearFieldError(line.id, "work_type"); setWtFilter((prev) => ({ ...prev, [line.id]: wt })); setWtOpenFor(null); }} title={wt}>
+                              {wt}
                             </div>
+                          ))}
+                          {workTypesLoaded && getVisibleWorkTypes(line.id).length === 0 && (
+                            <div style={{ padding: "8px", color: "#999" }}>Sin resultados…</div>
                           )}
+                        </div>
                       </div>
                     )}
                   </div>
