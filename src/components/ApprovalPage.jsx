@@ -1,14 +1,14 @@
 // src/components/ApprovalPage.jsx
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMsal } from "@azure/msal-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
+import "../styles/ApprovalPage.css";
 import { supabaseClient } from "../supabaseClient";
+import { formatDate } from "../utils/dateHelpers";
 import TimesheetLines from "./TimesheetLines";
 import BackToDashboard from "./ui/BackToDashboard";
-import { toast } from "react-hot-toast";
 import BcModal from "./ui/BcModal";
-import "../styles/ApprovalPage.css";
-import { formatDate } from "../utils/dateHelpers";
 
 export default function ApprovalPage() {
   const queryClient = useQueryClient();
@@ -21,6 +21,9 @@ export default function ApprovalPage() {
     project: "",
     task: "",
   });
+
+  // Estado para filtros con debounce (para evitar consultas excesivas)
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
 
   // Estado para selección de headers
   const [selectedHeaders, setSelectedHeaders] = useState([]);
@@ -151,7 +154,7 @@ export default function ApprovalPage() {
 
   // Obtener líneas pendientes filtradas por headers seleccionados
   const { data: linesData, isLoading: linesLoading } = useQuery({
-    queryKey: ["approval-lines", selectedHeaders, filters],
+    queryKey: ["approval-lines", selectedHeaders, debouncedFilters],
     queryFn: async () => {
       if (selectedHeaders.length === 0) return [];
 
@@ -199,11 +202,17 @@ export default function ApprovalPage() {
       }
 
       // Aplicar filtros adicionales
-      if (filters.project) {
-        query = query.eq("job_no", filters.project);
+      if (debouncedFilters.resource) {
+        query = query.eq("resource_no", debouncedFilters.resource);
       }
-      if (filters.task) {
-        query = query.eq("job_task_no", filters.task);
+      if (debouncedFilters.period) {
+        query = query.eq("resource_timesheet_header.allocation_period", debouncedFilters.period);
+      }
+      if (debouncedFilters.project) {
+        query = query.eq("job_no", debouncedFilters.project);
+      }
+      if (debouncedFilters.task) {
+        query = query.eq("job_task_no", debouncedFilters.task);
       }
 
       const { data, error } = await query;
@@ -239,23 +248,63 @@ export default function ApprovalPage() {
       }));
     },
     enabled: selectedHeaders.length > 0,
+    staleTime: 30000, // 30 segundos - evita refrescos innecesarios
+    refetchOnWindowFocus: false, // No refrescar al cambiar de ventana
   });
 
-  // Obtener recursos para filtro
+  // Obtener recursos para filtro (solo los que tienen líneas pendientes de aprobación)
   const { data: resources } = useQuery({
-    queryKey: ["resources"],
+    queryKey: ["resources", user?.username],
     queryFn: async () => {
-      const { data, error } = await supabaseClient
+      if (!user?.username) return [];
+
+      // Obtener el resource_no del aprobador
+      const userEmail = String(user.username).toLowerCase();
+      const { data: resourceRow } = await supabaseClient
         .from("resource")
-        .select("code, name")
-        .order("name");
+        .select("code")
+        .eq("email", userEmail)
+        .single();
+
+      if (!resourceRow?.code) return [];
+
+      // Obtener solo recursos que tienen líneas pendientes donde el aprobador es responsable
+      const { data, error } = await supabaseClient
+        .from("timesheet")
+        .select(`
+          resource_timesheet_header!inner(
+            resource_no,
+            resource!inner(code, name)
+          )
+        `)
+        .eq("status", "Pending")
+        .eq("resource_responsible", resourceRow.code)
+        .or("synced_to_bc.is.false,synced_to_bc.is.null");
+
       if (error) {
         console.error("❌ Error cargando recursos:", error);
         throw error;
       }
-      console.log("📊 Recursos cargados:", data?.length || 0);
-      return data || [];
+
+      // Extraer recursos únicos
+      const uniqueResources = new Map();
+      (data || []).forEach(line => {
+        const resource = line.resource_timesheet_header?.resource;
+        if (resource?.code && resource?.name) {
+          uniqueResources.set(resource.code, {
+            code: resource.code,
+            name: resource.name
+          });
+        }
+      });
+
+      const result = Array.from(uniqueResources.values()).sort((a, b) => a.name.localeCompare(b.name));
+      console.log("📊 Recursos con líneas pendientes:", result.length);
+      return result;
     },
+    enabled: !!user?.username,
+    staleTime: 5 * 60 * 1000, // 5 minutos - recursos cambian poco
+    refetchOnWindowFocus: false,
   });
 
   // Obtener proyectos para filtro (solo los del equipo del aprobador)
@@ -263,7 +312,7 @@ export default function ApprovalPage() {
     queryKey: ["projects", user?.username],
     queryFn: async () => {
       if (!user?.username) return [];
-      
+
       // Obtener el resource_no del aprobador
       const userEmail = String(user.username).toLowerCase();
       const { data: resourceRow } = await supabaseClient
@@ -271,9 +320,9 @@ export default function ApprovalPage() {
         .select("code")
         .eq("email", userEmail)
         .single();
-      
+
       if (!resourceRow?.code) return [];
-      
+
       // Obtener solo proyectos donde el aprobador es parte del equipo
       const { data, error } = await supabaseClient
         .from("job")
@@ -281,19 +330,42 @@ export default function ApprovalPage() {
         .eq("job_team.resource_no", resourceRow.code)
         .eq("status", "Open")
         .order("description");
-      
+
       if (error) throw error;
       return data || [];
     },
     enabled: !!user?.username,
+    staleTime: 5 * 60 * 1000, // 5 minutos - proyectos cambian poco
+    refetchOnWindowFocus: false,
   });
 
-  // Obtener tareas para filtro (solo de proyectos del equipo del aprobador)
+  // Obtener tareas para filtro (solo del proyecto seleccionado)
   const { data: tasks } = useQuery({
-    queryKey: ["tasks", user?.username],
+    queryKey: ["tasks", debouncedFilters.project],
+    queryFn: async () => {
+      if (!debouncedFilters.project) return [];
+
+      // Obtener tareas solo del proyecto seleccionado
+      const { data, error } = await supabaseClient
+        .from("job_task")
+        .select("no, description")
+        .eq("job_no", debouncedFilters.project)
+        .order("description");
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!debouncedFilters.project,
+    staleTime: 2 * 60 * 1000, // 2 minutos - tareas cambian poco
+    refetchOnWindowFocus: false,
+  });
+
+  // Obtener períodos para filtro (solo de partes pendientes de aprobar)
+  const { data: periods } = useQuery({
+    queryKey: ["periods", user?.username],
     queryFn: async () => {
       if (!user?.username) return [];
-      
+
       // Obtener el resource_no del aprobador
       const userEmail = String(user.username).toLowerCase();
       const { data: resourceRow } = await supabaseClient
@@ -301,21 +373,59 @@ export default function ApprovalPage() {
         .select("code")
         .eq("email", userEmail)
         .single();
-      
+
       if (!resourceRow?.code) return [];
-      
-      // Obtener tareas solo de proyectos donde el aprobador es parte del equipo
+
+      // Obtener períodos únicos de líneas pendientes donde el aprobador es responsable
       const { data, error } = await supabaseClient
-        .from("job_task")
-        .select("no, description, job!inner(job_team!inner(resource_no))")
-        .eq("job.job_team.resource_no", resourceRow.code)
-        .order("description");
-      
-      if (error) throw error;
-      return data || [];
+        .from("timesheet")
+        .select(`
+          resource_timesheet_header!inner(
+            allocation_period
+          )
+        `)
+        .eq("status", "Pending")
+        .eq("resource_responsible", resourceRow.code)
+        .or("synced_to_bc.is.false,synced_to_bc.is.null");
+
+      if (error) {
+        console.error("❌ Error cargando períodos:", error);
+        throw error;
+      }
+
+      // Extraer períodos únicos
+      const uniquePeriods = new Set();
+      (data || []).forEach(line => {
+        const period = line.resource_timesheet_header?.allocation_period;
+        if (period) {
+          uniquePeriods.add(period);
+        }
+      });
+
+      const result = Array.from(uniquePeriods).sort();
+      console.log("📊 Períodos con líneas pendientes:", result.length);
+      return result;
     },
     enabled: !!user?.username,
+    staleTime: 2 * 60 * 1000, // 2 minutos - períodos cambian poco
+    refetchOnWindowFocus: false,
   });
+
+  // Debounce para filtros (evita consultas excesivas)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilters(filters);
+    }, 300); // 300ms de delay
+
+    return () => clearTimeout(timer);
+  }, [filters]);
+
+  // Limpiar filtro de tareas cuando cambie el proyecto
+  useEffect(() => {
+    if (filters.task && !filters.project) {
+      setFilters(prev => ({ ...prev, task: "" }));
+    }
+  }, [filters.project, filters.task]);
 
   // Seleccionar todos los headers por defecto (solo una vez tras cargar datos)
   useEffect(() => {
@@ -528,7 +638,11 @@ export default function ApprovalPage() {
             }
           >
             <option value="">Todos</option>
-            {/* TODO: Obtener períodos disponibles */}
+            {periods?.map((period, index) => (
+              <option key={`period-${index}-${period}`} value={period}>
+                {period}
+              </option>
+            ))}
           </select>
         </div>
 
