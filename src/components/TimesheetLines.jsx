@@ -1,6 +1,6 @@
 // src/components/TimesheetLines.jsx
 import { useQueryClient } from "@tanstack/react-query";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 import TIMESHEET_FIELDS, {
     COL_MAX_WIDTH,
@@ -102,6 +102,7 @@ export default function TimesheetLines({
   // Eliminado estado local de workTypes: usamos React Query
   const [wtFilter, setWtFilter] = useState({}); // { [lineId]: "filtro" }
   const [wtOpenFor, setWtOpenFor] = useState(null); // lineId con dropdown abierto
+  const [wtDropdownRect, setWtDropdownRect] = useState(null); // Posicionamiento inteligente
 
   // React Query: Carga y cache de proyectos por recurso (hook reutilizable)
   const jobsQuery = useJobs((header || editableHeader)?.resource_no);
@@ -391,6 +392,52 @@ export default function TimesheetLines({
   useEffect(() => {
     setLocalSelectedLines(selectedLines || []);
   }, [selectedLines]);
+
+  // 🆕 Posicionamiento inteligente para dropdown de work_type
+  useLayoutEffect(() => {
+    const updateRect = () => {
+      if (wtOpenFor !== null) {
+        const lineId = wtOpenFor;
+        const cellElement = document.querySelector(`[data-line-id="${lineId}"] .ts-cell`);
+        if (!cellElement) return;
+        
+        const rect = cellElement.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const spaceBelow = viewportHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        const dropdownHeight = 220; // Altura fija para la lista virtualizada
+
+        let top = rect.bottom + window.scrollY;
+        let maxHeight = dropdownHeight;
+
+        if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+          // Abrir hacia arriba
+          top = rect.top + window.scrollY - dropdownHeight;
+          if (top < 0) top = 0; // Asegurar que no se salga de la pantalla
+        } else if (spaceBelow < dropdownHeight) {
+          // No hay espacio arriba ni abajo, ajustar altura
+          maxHeight = Math.max(50, spaceBelow - 10); // Mantener margen
+        }
+
+        setWtDropdownRect({
+          left: rect.left + window.scrollX,
+          top: top,
+          width: Math.max(rect.width, 420),
+          maxHeight: maxHeight,
+        });
+      }
+    };
+
+    updateRect();
+    if (wtOpenFor !== null) {
+      window.addEventListener("scroll", updateRect, true);
+      window.addEventListener("resize", updateRect);
+    }
+    return () => {
+      window.removeEventListener("scroll", updateRect, true);
+      window.removeEventListener("resize", updateRect);
+    };
+  }, [wtOpenFor]);
 
   // 🆕 Función para manejar selección individual
   const handleLineSelection = (lineId, isSelected) => {
@@ -975,7 +1022,7 @@ export default function TimesheetLines({
                 error={localErrors[line.id]?.work_type}
               >
                 {isLineEditable(line) ? (
-                  <div className="ts-cell">
+                  <div className="ts-cell" data-line-id={line.id}>
                     <div className="ts-cell">
                       <input
                         type="text"
@@ -1131,6 +1178,14 @@ export default function TimesheetLines({
                       <div
                         className="ts-dropdown"
                         onMouseDown={(e) => e.preventDefault()}
+                        style={{
+                          position: "fixed",
+                          left: wtDropdownRect?.left ?? 0,
+                          top: wtDropdownRect?.top ?? 0,
+                          width: wtDropdownRect?.width ?? 420,
+                          maxHeight: wtDropdownRect?.maxHeight ?? 220,
+                          zIndex: 5000,
+                        }}
                       >
                         <div className="ts-dropdown__header">
                           <FiSearch />
