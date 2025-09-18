@@ -1,5 +1,5 @@
 import { parse } from "date-fns";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FiCalendar } from "react-icons/fi";
 import TIMESHEET_FIELDS from "../../constants/timesheetFields";
 import "../../styles/DateInput.css";
@@ -23,6 +23,7 @@ export default function DateCell({
   handleKeyDown,
 }) {
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [dropdownRect, setDropdownRect] = useState(null);
   const baseToday = serverDate || new Date();
   const [selectedDate, setSelectedDate] = useState(
     parseDate(editFormData[line.id]?.date) || baseToday
@@ -58,6 +59,47 @@ export default function DateCell({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [calendarOpen]);
+
+  // Posicionamiento inteligente del calendario
+  useLayoutEffect(() => {
+    const updateRect = () => {
+      if (!calendarOpen) return;
+      const cellElement = document.querySelector(`[data-line-id="${line.id}"] .ts-cell`);
+      if (!cellElement) return;
+
+      const rect = cellElement.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const dropdownHeight = 280;
+
+      let top = rect.bottom + window.scrollY;
+      let maxHeight = dropdownHeight;
+      if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+        top = rect.top + window.scrollY - dropdownHeight;
+        if (top < 0) top = 0;
+      } else if (spaceBelow < dropdownHeight) {
+        maxHeight = Math.max(50, spaceBelow - 10);
+      }
+
+      setDropdownRect({
+        left: rect.left + window.scrollX,
+        top,
+        width: Math.max(rect.width, 300),
+        maxHeight,
+      });
+    };
+
+    updateRect();
+    if (calendarOpen) {
+      window.addEventListener("scroll", updateRect, true);
+      window.addEventListener("resize", updateRect);
+    }
+    return () => {
+      window.removeEventListener("scroll", updateRect, true);
+      window.removeEventListener("resize", updateRect);
+    };
+  }, [calendarOpen, line.id]);
 
   // Re-renderizar cuando cambie el período para actualizar validación
   const effectivePeriod = useMemo(() => {
@@ -318,7 +360,7 @@ export default function DateCell({
 
   return (
     <td className="ts-td ts-cell" style={{ textAlign: align }}>
-      <div className="ts-cell">
+      <div className="ts-cell" data-line-id={line.id}>
         <div className="ts-cell">
           <input
             type="text"
@@ -379,7 +421,14 @@ export default function DateCell({
           />
 
           {calendarOpen && !disabled && (
-            <div className="ts-datepop" ref={calendarRef}>
+            <div className="ts-datepop" ref={calendarRef} style={{
+              position: "fixed",
+              left: dropdownRect?.left ?? 0,
+              top: dropdownRect?.top ?? 0,
+              width: dropdownRect?.width ?? 300,
+              maxHeight: dropdownRect?.maxHeight ?? 280,
+              zIndex: 5000,
+            }}>
               <div className="ts-calendar">
                 {/* Header del calendario */}
                 <div className="ts-calendar-header">

@@ -1,6 +1,6 @@
 // src/components/timesheet/TaskCell.jsx
 import { useVirtualizer } from "@tanstack/react-virtual";
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 import TIMESHEET_FIELDS from "../../constants/timesheetFields";
 import useDropdownFilter from "../../utils/useDropdownFilter";
@@ -43,6 +43,48 @@ const TaskCell = ({
     [tasksFilter, tasksByJob]
   );
 
+  // Estado y efecto para posicionamiento inteligente del dropdown de tareas
+  const [dropdownRect, setDropdownRect] = useState(null);
+  useLayoutEffect(() => {
+    const updateRect = () => {
+      if (taskOpenFor !== line.id) return;
+      const cellElement = document.querySelector(`[data-line-id="${line.id}"] .ts-cell`);
+      if (!cellElement) return;
+
+      const rect = cellElement.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const dropdownHeight = 220;
+
+      let top = rect.bottom + window.scrollY;
+      let maxHeight = dropdownHeight;
+      if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+        top = rect.top + window.scrollY - dropdownHeight;
+        if (top < 0) top = 0;
+      } else if (spaceBelow < dropdownHeight) {
+        maxHeight = Math.max(50, spaceBelow - 10);
+      }
+
+      setDropdownRect({
+        left: rect.left + window.scrollX,
+        top,
+        width: Math.max(rect.width, 420),
+        maxHeight,
+      });
+    };
+
+    updateRect();
+    if (taskOpenFor === line.id) {
+      window.addEventListener("scroll", updateRect, true);
+      window.addEventListener("resize", updateRect);
+    }
+    return () => {
+      window.removeEventListener("scroll", updateRect, true);
+      window.removeEventListener("resize", updateRect);
+    };
+  }, [taskOpenFor, line.id]);
+
   // Virtualización siempre montada para mantener orden de hooks estable
   const parentRef = useRef(null);
   const jobNo = editFormData[line.id]?.job_no || "";
@@ -63,7 +105,7 @@ const TaskCell = ({
       style={{ ...colStyle, textAlign: align }}
     >
       {isEditable ? (
-        <div className="ts-cell">
+        <div className="ts-cell" data-line-id={line.id}>
           <div className="ts-cell">
             <input
               type="text"
@@ -191,11 +233,19 @@ const TaskCell = ({
             />
           </div>
 
-          {taskOpenFor === line.id && (
-            <div
-              className="ts-dropdown"
-              onMouseDown={(e) => e.preventDefault()}
-            >
+        {taskOpenFor === line.id && (
+          <div
+            className="ts-dropdown"
+            onMouseDown={(e) => e.preventDefault()}
+            style={{
+              position: "fixed",
+              left: dropdownRect?.left ?? 0,
+              top: dropdownRect?.top ?? 0,
+              width: dropdownRect?.width ?? 420,
+              maxHeight: dropdownRect?.maxHeight ?? 220,
+              zIndex: 5000,
+            }}
+          >
               <div className="ts-dropdown__header">
                 <FiSearch />
                 <input

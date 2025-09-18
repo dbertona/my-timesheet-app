@@ -2,6 +2,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import React, {
     useCallback,
     useEffect,
+    useLayoutEffect,
     useMemo,
     useRef,
     useState,
@@ -51,6 +52,8 @@ export default function ProjectCell({
 
   // Estado para el status del proyecto seleccionado
   const [projectStatus, setProjectStatus] = useState(null);
+  // Estado para posicionamiento inteligente del dropdown
+  const [dropdownRect, setDropdownRect] = useState(null);
 
   // Prefetch: cuando se abre el dropdown de proyectos o cambia el filtro,
   // pre-cargamos tareas de los primeros candidatos visibles (hasta 5) para
@@ -82,6 +85,48 @@ export default function ProjectCell({
     }
   }, [editFormData, line.id]);
 
+  // Posicionamiento inteligente para el dropdown de proyectos
+  useLayoutEffect(() => {
+    const updateRect = () => {
+      if (jobOpenFor !== line.id) return;
+      const cellElement = document.querySelector(`[data-line-id="${line.id}"] .ts-cell`);
+      if (!cellElement) return;
+
+      const rect = cellElement.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const dropdownHeight = 220;
+
+      let top = rect.bottom + window.scrollY;
+      let maxHeight = dropdownHeight;
+
+      if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+        top = rect.top + window.scrollY - dropdownHeight;
+        if (top < 0) top = 0;
+      } else if (spaceBelow < dropdownHeight) {
+        maxHeight = Math.max(50, spaceBelow - 10);
+      }
+
+      setDropdownRect({
+        left: rect.left + window.scrollX,
+        top,
+        width: Math.max(rect.width, 420),
+        maxHeight,
+      });
+    };
+
+    updateRect();
+    if (jobOpenFor === line.id) {
+      window.addEventListener("scroll", updateRect, true);
+      window.addEventListener("resize", updateRect);
+    }
+    return () => {
+      window.removeEventListener("scroll", updateRect, true);
+      window.removeEventListener("resize", updateRect);
+    };
+  }, [jobOpenFor, line.id]);
+
   // Virtualización: hooks deben llamarse siempre, nunca condicionalmente
   const parentRef = useRef(null);
   const items = useMemo(
@@ -101,7 +146,7 @@ export default function ProjectCell({
       style={{ ...colStyle, textAlign: align }}
     >
       {isEditable ? (
-        <div className="ts-cell">
+        <div className="ts-cell" data-line-id={line.id}>
           <div className="ts-cell">
             <input
               type="text"
@@ -244,6 +289,14 @@ export default function ProjectCell({
             <div
               className="ts-dropdown"
               onMouseDown={(e) => e.preventDefault()}
+              style={{
+                position: "fixed",
+                left: dropdownRect?.left ?? 0,
+                top: dropdownRect?.top ?? 0,
+                width: dropdownRect?.width ?? 420,
+                maxHeight: dropdownRect?.maxHeight ?? 220,
+                zIndex: 5000,
+              }}
             >
               <div className="ts-dropdown__header">
                 <FiSearch />
