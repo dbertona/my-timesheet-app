@@ -9,14 +9,14 @@
 - **Contenedor Docker:** timesheet-web-1
 - **Directorio del contenedor:** /usr/share/nginx/html/
 
-## Proceso de Despliegue
+## Proceso de Despliegue (robusto con subruta)
 
 ### 1. Preparación (Desarrollo)
 
 ```bash
 # Verificar que el servidor de desarrollo funciona
 npm run dev
-# Verificar en: http://localhost:5173/my-timesheet-app/
+# Verificar en: http://localhost:5173/
 ```
 
 ### 2. Incrementar Versión
@@ -35,7 +35,17 @@ git commit -m "feat: actualización para testing v0.1.4"
 git push origin feat/n8n-smart-delta-upsert
 ```
 
-### 4. Build de Producción
+### 4. Variables de entorno (Testing)
+
+Crear/editar `.env.testing` en la raíz (puedes usar `testing-config/env.testing.example` como plantilla):
+
+```env
+VITE_BASE_PATH=/my-timesheet-app/
+VITE_MSAL_REDIRECT_URI=https://testingapp.powersolution.es/my-timesheet-app/
+VITE_MSAL_POSTLOGOUT=https://testingapp.powersolution.es/my-timesheet-app/
+```
+
+### 5. Build de Producción
 
 ```bash
 # Generar build de producción
@@ -44,21 +54,21 @@ npm run build
 
 **Nota:** La aplicación ahora incluye un servidor Node.js para la API de fecha del servidor. El servidor debe ejecutarse en el puerto 3001 para que la funcionalidad de fecha del servidor funcione correctamente.
 
-### 5. Empaquetado
+### 6. Empaquetado
 
 ```bash
 # Crear archivo comprimido con los archivos de producción
 tar -czf my-timesheet-app-v0.1.4.tar.gz -C dist .
 ```
 
-### 6. Transferencia al Servidor
+### 7. Transferencia al Servidor
 
 ```bash
 # Subir archivo al servidor
 scp my-timesheet-app-v0.1.4.tar.gz dbertona@192.168.88.68:/home/dbertona/timesheet/
 ```
 
-### 7. Despliegue en el Servidor
+### 8. Despliegue en el Servidor (subruta fija)
 
 ```bash
 # Conectar al servidor
@@ -70,17 +80,15 @@ cd /home/dbertona/timesheet/
 # Extraer archivos (sobrescribir existentes)
 tar -xzf my-timesheet-app-v0.1.4.tar.gz
 
-# Crear archivo para el contenedor
-tar -czf timesheet-update.tar.gz index.html assets/ 404.html vite.svg
-
-# Copiar al contenedor
-docker cp timesheet-update.tar.gz timesheet-web-1:/tmp/
-
-# Extraer en el contenedor
-docker exec timesheet-web-1 sh -c 'cd /usr/share/nginx/html && tar -xzf /tmp/timesheet-update.tar.gz && rm /tmp/timesheet-update.tar.gz'
+# Copiar build a la subruta del contenedor (sin duplicar en raíz)
+BASE_PATH="/usr/share/nginx/html/my-timesheet-app"
+rm -rf "$BASE_PATH"/* || true
+mkdir -p "$BASE_PATH"
+cp -f index.html vite.svg "$BASE_PATH"/
+mkdir -p "$BASE_PATH/assets" && cp -r assets/* "$BASE_PATH/assets/"
 
 # Limpiar archivos temporales
-rm timesheet-update.tar.gz my-timesheet-app-v0.1.4.tar.gz
+rm my-timesheet-app-v0.1.4.tar.gz
 
 # Salir del servidor
 exit
@@ -93,11 +101,12 @@ exit
 rm my-timesheet-app-v0.1.4.tar.gz
 ```
 
-### 9. Verificación
+### 9. Verificación (smoke)
 
 - **URL de testing:** https://testingapp.powersolution.es/my-timesheet-app/
-- **Verificar versión:** Debe aparecer la nueva versión en el dashboard
-- **Refrescar navegador:** Ctrl+F5 o Cmd+Shift+R para limpiar caché
+- **Assets:** 200 y `Content-Type: application/javascript` para `assets/index-*.js`
+- **Rutas profundas:** `.../aprobacion`, `.../editar-parte`, `.../lines/rejected` responden 200 tras refresco duro
+- **MSAL:** `redirect_uri` contiene `/my-timesheet-app/`
 
 ## Comandos de Verificación
 
@@ -122,16 +131,16 @@ ssh dbertona@192.168.88.68 "docker ps | grep timesheet"
 ### Verificar respuesta HTTP
 
 ```bash
-curl -sS https://testingapp.powersolution.es/my-timesheet-app/ | head -n 5
+ops/testing/smoke.sh
 ```
 
 ## Notas Importantes
 
-1. **Siempre incrementar la versión** antes de desplegar
-2. **Verificar en desarrollo** antes de desplegar a testing
-3. **El contenedor Docker** es la fuente de verdad para Nginx
-4. **Limpiar caché del navegador** después del despliegue
-5. **No desplegar sin autorización explícita** del usuario
+1. **`VITE_BASE_PATH` debe ser /my-timesheet-app/** en testing. En local/prod usar `/`.
+2. **MSAL**: `VITE_MSAL_REDIRECT_URI` y `VITE_MSAL_POSTLOGOUT` deben incluir la subruta.
+3. **Nginx** sirve desde `/usr/share/nginx/html/my-timesheet-app` con fallback a `index.html`.
+4. **Incrementar la versión** en `package.json` antes de desplegar.
+5. **Refresco duro** tras deploy (Ctrl+F5) y ejecutar el smoke.
 
 ## Estructura de Archivos
 
