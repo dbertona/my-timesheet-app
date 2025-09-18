@@ -14,6 +14,22 @@
   overflow: auto;
 }
 
+/* Doble tabla: wrapper/header/scroll */
+.ts-lines-wrap {
+  position: relative;
+}
+.ts-lines-header {
+  position: sticky;
+  top: 0;
+  z-index: 5; /* por encima de celdas */
+  background: #ffffff;
+}
+.ts-lines-scroll {
+  max-height: 65vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 /* Encabezados y celdas */
 .ts-th {
   position: relative;
