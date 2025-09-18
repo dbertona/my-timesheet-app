@@ -63,6 +63,11 @@
 .ts-responsive * {
   transform: none !important;
 }
+/* Permitir transform en overlays (dropdowns, calendarios) para virtualización */
+.ts-dropdown *,
+.ts-datepop * {
+  transform: unset !important;
+}
 
 /* Forzar sticky con mayor especificidad sobre .ts-th (que establece position:relative) */
 .ts-table thead .ts-th {
