@@ -325,36 +325,52 @@ export default function ApprovalPage() {
       if (!resourceRow?.code) return [];
 
       // Obtener solo proyectos que están en líneas pendientes donde el aprobador es responsable
-      const { data, error } = await supabaseClient
+      console.log("🔍 Buscando proyectos para aprobador:", resourceRow.code);
+      
+      // Primero probemos una consulta más simple
+      const { data: simpleData, error: simpleError } = await supabaseClient
         .from("timesheet")
-        .select(`
-          job_no,
-          job!inner(no, description)
-        `)
+        .select("job_no")
         .eq("status", "Pending")
         .eq("resource_responsible", resourceRow.code)
-        .or("synced_to_bc.is.false,synced_to_bc.is.null")
-        .not("job_no", "is", null);
+        .not("job_no", "is", null)
+        .limit(10);
+      
+      console.log("📊 Consulta simple:", simpleData?.length || 0, simpleData);
+      
+      if (simpleError) {
+        console.error("❌ Error en consulta simple:", simpleError);
+        throw simpleError;
+      }
+      
+      if (!simpleData || simpleData.length === 0) {
+        console.log("❌ No hay líneas pendientes para este aprobador");
+        return [];
+      }
+      
+      // Ahora obtener los proyectos
+      const jobNos = [...new Set(simpleData.map(line => line.job_no).filter(Boolean))];
+      console.log("📊 Job numbers únicos:", jobNos);
+      
+      const { data, error } = await supabaseClient
+        .from("job")
+        .select("no, description")
+        .in("no", jobNos)
+        .order("description");
 
       if (error) {
         console.error("❌ Error cargando proyectos:", error);
         throw error;
       }
 
-      // Extraer proyectos únicos
-      const uniqueProjects = new Map();
-      (data || []).forEach(line => {
-        const job = line.job;
-        if (job?.no && job?.description) {
-          uniqueProjects.set(job.no, {
-            no: job.no,
-            description: job.description
-          });
-        }
-      });
+      console.log("📊 Datos de proyectos:", data?.length || 0, data);
 
-      const result = Array.from(uniqueProjects.values()).sort((a, b) => a.description.localeCompare(b.description));
-      console.log("📊 Proyectos en líneas pendientes:", result.length);
+      const result = (data || []).map(job => ({
+        no: job.no,
+        description: job.description
+      }));
+      
+      console.log("📊 Proyectos finales:", result.length, result);
       return result;
     },
     enabled: !!user?.username,
