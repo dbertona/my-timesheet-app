@@ -1,5 +1,5 @@
-import express from "express";
 import cors from "cors";
+import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -58,7 +58,13 @@ function generateEmailVariants(inputEmail) {
   const [localPart] = normalized.split("@");
   const variants = new Set();
   variants.add(normalized);
-  if (localPart) variants.add(`${localPart}@ps-grupo.net`);
+  if (localPart) {
+    // Dominios alternativos conocidos entre empresas del grupo
+    variants.add(`${localPart}@ps-grupo.net`);
+    variants.add(`${localPart}@ps-lab.net`);
+    variants.add(`${localPart}@powersolution.es`);
+    variants.add(`${localPart}@power-solution.es`);
+  }
   return Array.from(variants).filter(Boolean);
 }
 
