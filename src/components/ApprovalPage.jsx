@@ -258,30 +258,63 @@ export default function ApprovalPage() {
     },
   });
 
-  // Obtener proyectos para filtro
+  // Obtener proyectos para filtro (solo los del equipo del aprobador)
   const { data: projects } = useQuery({
-    queryKey: ["projects"],
+    queryKey: ["projects", user?.username],
     queryFn: async () => {
+      if (!user?.username) return [];
+      
+      // Obtener el resource_no del aprobador
+      const userEmail = String(user.username).toLowerCase();
+      const { data: resourceRow } = await supabaseClient
+        .from("resource")
+        .select("code")
+        .eq("email", userEmail)
+        .single();
+      
+      if (!resourceRow?.code) return [];
+      
+      // Obtener solo proyectos donde el aprobador es parte del equipo
       const { data, error } = await supabaseClient
         .from("job")
-        .select("no, description")
+        .select("no, description, job_team!inner(resource_no)")
+        .eq("job_team.resource_no", resourceRow.code)
+        .eq("status", "Open")
         .order("description");
+      
       if (error) throw error;
       return data || [];
     },
+    enabled: !!user?.username,
   });
 
-  // Obtener tareas para filtro
+  // Obtener tareas para filtro (solo de proyectos del equipo del aprobador)
   const { data: tasks } = useQuery({
-    queryKey: ["tasks"],
+    queryKey: ["tasks", user?.username],
     queryFn: async () => {
+      if (!user?.username) return [];
+      
+      // Obtener el resource_no del aprobador
+      const userEmail = String(user.username).toLowerCase();
+      const { data: resourceRow } = await supabaseClient
+        .from("resource")
+        .select("code")
+        .eq("email", userEmail)
+        .single();
+      
+      if (!resourceRow?.code) return [];
+      
+      // Obtener tareas solo de proyectos donde el aprobador es parte del equipo
       const { data, error } = await supabaseClient
         .from("job_task")
-        .select("no, description")
+        .select("no, description, job!inner(job_team!inner(resource_no))")
+        .eq("job.job_team.resource_no", resourceRow.code)
         .order("description");
+      
       if (error) throw error;
       return data || [];
     },
+    enabled: !!user?.username,
   });
 
   // Seleccionar todos los headers por defecto (solo una vez tras cargar datos)
