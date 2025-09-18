@@ -642,8 +642,7 @@ const HomeDashboard = () => {
               border: "1px solid #ddd",
             }}
           >
-            v
-            {typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.0.0"}
+            v{typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.0.0"}
           </div>
           <button
             aria-haspopup="menu"
