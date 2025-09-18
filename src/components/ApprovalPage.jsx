@@ -307,7 +307,7 @@ export default function ApprovalPage() {
     refetchOnWindowFocus: false,
   });
 
-  // Obtener proyectos para filtro (solo los del equipo del aprobador)
+  // Obtener proyectos para filtro (solo los que están en líneas pendientes de aprobación)
   const { data: projects } = useQuery({
     queryKey: ["projects", user?.username],
     queryFn: async () => {
@@ -323,19 +323,41 @@ export default function ApprovalPage() {
 
       if (!resourceRow?.code) return [];
 
-      // Obtener solo proyectos donde el aprobador es parte del equipo
+      // Obtener solo proyectos que están en líneas pendientes donde el aprobador es responsable
       const { data, error } = await supabaseClient
-        .from("job")
-        .select("no, description, job_team!inner(resource_no)")
-        .eq("job_team.resource_no", resourceRow.code)
-        .eq("status", "Open")
-        .order("description");
+        .from("timesheet")
+        .select(`
+          job_no,
+          job!inner(no, description)
+        `)
+        .eq("status", "Pending")
+        .eq("resource_responsible", resourceRow.code)
+        .or("synced_to_bc.is.false,synced_to_bc.is.null")
+        .not("job_no", "is", null);
 
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        console.error("❌ Error cargando proyectos:", error);
+        throw error;
+      }
+
+      // Extraer proyectos únicos
+      const uniqueProjects = new Map();
+      (data || []).forEach(line => {
+        const job = line.job;
+        if (job?.no && job?.description) {
+          uniqueProjects.set(job.no, {
+            no: job.no,
+            description: job.description
+          });
+        }
+      });
+
+      const result = Array.from(uniqueProjects.values()).sort((a, b) => a.description.localeCompare(b.description));
+      console.log("📊 Proyectos en líneas pendientes:", result.length);
+      return result;
     },
     enabled: !!user?.username,
-    staleTime: 5 * 60 * 1000, // 5 minutos - proyectos cambian poco
+    staleTime: 2 * 60 * 1000, // 2 minutos - proyectos en líneas cambian moderadamente
     refetchOnWindowFocus: false,
   });
 
