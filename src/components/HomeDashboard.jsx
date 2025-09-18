@@ -384,7 +384,9 @@ const HomeDashboard = () => {
         );
 
         gridContainer.style.height = `${availableHeight}px`;
-        gridContainer.style.overflow = "auto";
+        // Dejar el overflow del contenedor visible para que el sticky header funcione
+        // y el scroll recaiga en el contenedor interno `.ts-responsive`.
+        gridContainer.style.overflow = "visible";
       }
     };
 

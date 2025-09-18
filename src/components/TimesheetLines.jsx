@@ -424,7 +424,7 @@ export default function TimesheetLines({
   // Eliminar línea ficticia: no agregar filas vacías automáticamente
 
   return (
-    <div className="ts-responsive">
+    <div className="ts-responsive" style={{ maxHeight: '60vh', overflow: 'auto' }}>
       <table ref={tableRef} className="ts-table">
         <thead>
           <tr>
