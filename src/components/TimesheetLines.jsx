@@ -3,11 +3,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 import TIMESHEET_FIELDS, {
-  COL_MAX_WIDTH,
-  COL_MIN_WIDTH,
-  DEFAULT_COL_WIDTH,
-  TIMESHEET_ALIGN,
-  TIMESHEET_LABELS,
+    COL_MAX_WIDTH,
+    COL_MIN_WIDTH,
+    DEFAULT_COL_WIDTH,
+    TIMESHEET_ALIGN,
+    TIMESHEET_LABELS,
 } from "../constants/timesheetFields";
 import useColumnResize from "../hooks/useColumnResize";
 import { useJobs, useWorkTypes } from "../hooks/useTimesheetQueries";
@@ -424,7 +424,7 @@ export default function TimesheetLines({
   // Eliminar línea ficticia: no agregar filas vacías automáticamente
 
   return (
-    <div className="ts-responsive" style={{ maxHeight: '60vh', overflow: 'auto' }}>
+    <div className="ts-responsive" style={{ maxHeight: '65vh', overflowY: 'auto', overflowX: 'hidden' }}>
       <table ref={tableRef} className="ts-table">
         <thead>
           <tr>
