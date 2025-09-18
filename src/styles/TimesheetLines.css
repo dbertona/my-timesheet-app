@@ -1,7 +1,9 @@
 /* TimesheetLines.css - Modal BC Style v2 */
 /* Tabla base */
 .ts-table {
-  border-collapse: collapse;
+  /* Sticky header funciona mejor con separate + spacing 0 */
+  border-collapse: separate;
+  border-spacing: 0;
   width: 100%;
   table-layout: fixed;
 }
@@ -31,6 +33,14 @@
   top: 0;
   z-index: 3; /* por encima de celdas */
   background: #ffffff; /* evitar transparencia al pasar */
+}
+
+/* Asegurar que el bloque thead esté por encima en todos los navegadores */
+.ts-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #ffffff;
 }
 .ts-td {
   border: 1px solid #ddd;
