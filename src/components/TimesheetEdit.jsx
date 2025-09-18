@@ -503,9 +503,16 @@ function TimesheetEdit({ headerId }) {
       try {
         vacations = await getFactorialVacations(userEmail, startDate, endDate);
       } catch (error) {
-        // Si falla, no crear líneas - dejar array vacío
+        // Manejo específico si backend no puede resolver empresa
+        const msg = String(error?.message || "");
+        if (msg.includes("company_not_resolved") || msg.includes("424")) {
+          toast.error(
+            "No se pudo resolver la empresa del recurso en testing (faltan credenciales)."
+          );
+        } else {
+          console.error("❌ Error obteniendo vacaciones:", error);
+        }
         vacations = [];
-        console.error("❌ Error obteniendo vacaciones:", error);
       }
 
       if (!vacations || vacations.length === 0) {

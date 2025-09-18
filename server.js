@@ -141,6 +141,25 @@ app.post("/api/factorial/vacations", async (req, res) => {
     let apiKey = process.env.FACTORIAL_API_KEY;
     const companyFromSupabase = await getResourceCompanyByEmail(userEmail);
     const companyLc = (companyFromSupabase || "").toLowerCase();
+  const hasSupabaseEnv = Boolean(
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
+  );
+  if (!companyFromSupabase && !hasSupabaseEnv) {
+    // No podemos resolver empresa en testing si faltan credenciales de Supabase
+    try {
+      console.warn(
+        `Factorial company resolve FAILED (no SUPABASE env). email=${userEmail}`
+      );
+    } catch {}
+    return res
+      .status(424)
+      .json({ error: "company_not_resolved", message: "Backend no puede resolver la empresa del recurso (faltan credenciales de Supabase en testing)." });
+  }
+  try {
+    console.log(
+      `Factorial company resolve: email=${userEmail}, supabase_company=${companyFromSupabase} env_has_anon=${Boolean(process.env.SUPABASE_ANON_KEY)} env_has_service=${Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)}`
+    );
+  } catch {}
     const keyCompanyA = process.env.FACTORIAL_API_KEY; // Empresa A (por defecto)
     const keyCompanyB = process.env.FACTORIAL_API_KEY_B; // Empresa B
     if (
@@ -149,8 +168,10 @@ app.post("/api/factorial/vacations", async (req, res) => {
       companyLc.includes("pslab")
     ) {
       apiKey = keyCompanyB || apiKey;
+    try { console.log("Factorial key selected: B (PSLAB)"); } catch {}
     } else {
       apiKey = keyCompanyA || apiKey;
+    try { console.log("Factorial key selected: A (PSI)"); } catch {}
     }
 
     if (!apiKey) {
