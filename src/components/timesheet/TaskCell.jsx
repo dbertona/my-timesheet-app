@@ -244,7 +244,8 @@ const TaskCell = ({
               left: dropdownRect?.left ?? 0,
               top: dropdownRect?.top ?? 0,
               width: dropdownRect?.width ?? 420,
-              maxHeight: dropdownRect?.maxHeight ?? 220,
+              height: dropdownRect?.maxHeight ?? 220,
+              overflow: "hidden",
               zIndex: 5000,
             }}
           >
@@ -263,7 +264,13 @@ const TaskCell = ({
                 />
               </div>
 
-              <div ref={parentRef} style={{ height: 220, overflow: "auto" }}>
+              <div
+                ref={parentRef}
+                style={{
+                  height: Math.max(40, (dropdownRect?.maxHeight ?? 220) - 40),
+                  overflow: "auto",
+                }}
+              >
                 <div
                   style={{
                     height: rowVirtualizer.getTotalSize(),
