@@ -5,7 +5,15 @@ export default function RequireMsalAuth({ children }) {
   const { instance, accounts, inProgress } = useMsal();
   const isAuthenticated = Array.isArray(accounts) && accounts.length > 0;
 
+  // Bypass de autenticación para tests E2E
+  const isE2EBypass = import.meta.env?.VITE_E2E_AUTH_BYPASS === 'true';
+
   useEffect(() => {
+    // Si está en modo E2E bypass, no hacer login
+    if (isE2EBypass) {
+      return;
+    }
+
     if (!isAuthenticated && inProgress === "none") {
       const basePath = (typeof import.meta !== "undefined" && import.meta.env?.VITE_BASE_PATH) || "/";
       const redirectUri =
@@ -19,7 +27,12 @@ export default function RequireMsalAuth({ children }) {
         })
         .catch(() => {});
     }
-  }, [isAuthenticated, inProgress, instance]);
+  }, [isAuthenticated, inProgress, instance, isE2EBypass]);
+
+  // En modo E2E bypass, siempre mostrar children
+  if (isE2EBypass) {
+    return children;
+  }
 
   if (!isAuthenticated) {
     return null; // o spinner si quieres

@@ -83,9 +83,9 @@ export default function WorkTypeCell({
       {isEditable ? (
         <div className="ts-cell" ref={cellWrapperRef} data-line-id={line.id}>
           <div className="ts-cell">
-            <input
-              type="text"
-              name="work_type"
+                    <input
+                      type="text"
+                      name="work_type"
               value={editFormData[line.id]?.work_type || ""}
               onChange={(e) => {
                 handleInputChange(line.id, e);

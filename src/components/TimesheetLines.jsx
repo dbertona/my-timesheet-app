@@ -1,7 +1,6 @@
 // src/components/TimesheetLines.jsx
 import { useQueryClient } from "@tanstack/react-query";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { FiChevronDown, FiSearch } from "react-icons/fi";
 import TIMESHEET_FIELDS, {
     COL_MAX_WIDTH,
     COL_MIN_WIDTH,
@@ -19,10 +18,10 @@ import DepartmentCell from "./timesheet/DepartmentCell";
 import ProjectCell from "./timesheet/ProjectCell";
 import ProjectDescriptionCell from "./timesheet/ProjectDescriptionCell";
 import TaskCell from "./timesheet/TaskCell";
+import WorkTypeCell from "./timesheet/WorkTypeCell";
 import BcModal from "./ui/BcModal";
 import DecimalInput from "./ui/DecimalInput";
 import EditableCell from "./ui/EditableCell";
-import WorkTypeCell from "./timesheet/WorkTypeCell";
 
 export default function TimesheetLines({
   lines,

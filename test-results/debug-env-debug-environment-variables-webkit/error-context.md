@@ -1,0 +1,49 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - button "Iniciar sesión con Microsoft" [ref=e5]
+    - generic [ref=e6]:
+      - navigation [ref=e7]:
+        - generic [ref=e8]:
+          - link "Nuevo Parte de Horas" [ref=e10]:
+            - /url: /nuevo-parte
+          - link "Mis Partes de Horas" [ref=e12]:
+            - /url: /mis-partes
+        - generic [ref=e13]:
+          - generic [ref=e14]: jueves, 18 de septiembre de 2025
+          - generic [ref=e15]: v0.1.0-beta.28.7
+          - button "u" [ref=e16] [cursor=pointer]:
+            - generic [ref=e17] [cursor=pointer]: u
+      - banner [ref=e18]:
+        - heading "Buenas tardes, usuario." [level=2] [ref=e19]
+      - generic [ref=e20]:
+        - button "Pendientes de imputar este mes 0 Horas • … >" [ref=e21]:
+          - heading "Pendientes de imputar este mes" [level=3] [ref=e22]
+          - generic [ref=e24]:
+            - generic [ref=e25]: 0 Horas
+            - generic [ref=e26]: •
+            - generic [ref=e27]: …
+          - generic [ref=e29]: ">"
+        - button "Horas pendientes de aprobar … >" [ref=e30]:
+          - heading "Horas pendientes de aprobar" [level=3] [ref=e31]
+          - generic [ref=e32]: …
+          - generic [ref=e34]: ">"
+        - button "Horas Rechazadas … >" [ref=e35]:
+          - heading "Horas Rechazadas" [level=3] [ref=e36]
+          - generic [ref=e37]: …
+          - generic [ref=e39]: ">"
+        - article [ref=e40]:
+          - heading "Notas de gasto rechazadas" [level=3] [ref=e41]
+          - generic [ref=e42]: "0"
+          - generic [ref=e44]: ">"
+        - article [ref=e45]:
+          - heading "Notas de gasto pendientes de aprobar" [level=3] [ref=e46]
+          - generic [ref=e47]: "0"
+          - generic [ref=e49]: ">"
+  - generic [ref=e50]:
+    - img [ref=e52]
+    - button "Open Tanstack query devtools" [ref=e120] [cursor=pointer]:
+      - img [ref=e121] [cursor=pointer]
+```
