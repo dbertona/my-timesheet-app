@@ -347,6 +347,7 @@ export default function ProjectCell({
                             top: 0,
                             left: 0,
                             width: "100%",
+                            height: v.size,
                             transform: `translateY(${v.start}px)`,
                           }}
                           onMouseDown={async () => {
