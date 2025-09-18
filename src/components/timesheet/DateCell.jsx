@@ -429,7 +429,8 @@ export default function DateCell({
               left: dropdownRect?.left ?? 0,
               top: dropdownRect?.top ?? 0,
               width: dropdownRect?.width ?? 300,
-              maxHeight: dropdownRect?.maxHeight ?? 280,
+              height: dropdownRect?.maxHeight ?? 280,
+              overflow: "hidden",
               zIndex: 5000,
             }}>
               <div className="ts-calendar">
