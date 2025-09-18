@@ -711,6 +711,22 @@ export default function ApprovalPage() {
             ))}
           </select>
         </div>
+
+        <div className="filter-actions">
+          <button
+            className="ts-btn ts-btn--secondary ts-btn--small"
+            onClick={() => {
+              setFilters({
+                resource: "",
+                period: "",
+                project: "",
+                task: "",
+              });
+            }}
+          >
+            Limpiar
+          </button>
+        </div>
       </div>
 
       {/* Grilla de Headers (tabla) */}

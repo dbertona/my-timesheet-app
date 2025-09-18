@@ -80,6 +80,12 @@
   box-shadow: 0 0 0 2px rgba(0, 126, 135, 0.12);
 }
 
+.filter-actions {
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 2px;
+}
+
 /* Headers Grid */
 .approval-headers {
   margin-bottom: 16px;
