@@ -248,8 +248,9 @@ export default function ApprovalPage() {
       }));
     },
     enabled: selectedHeaders.length > 0,
-    staleTime: 30000, // 30 segundos - evita refrescos innecesarios
+    staleTime: 60000, // 1 minuto - evita refrescos innecesarios
     refetchOnWindowFocus: false, // No refrescar al cambiar de ventana
+    refetchOnMount: false, // No refrescar al montar si ya hay datos
   });
 
   // Obtener recursos para filtro (solo los que tienen líneas pendientes de aprobación)
@@ -309,7 +310,7 @@ export default function ApprovalPage() {
 
   // Obtener proyectos para filtro (solo los que están en líneas pendientes de aprobación)
   const { data: projects } = useQuery({
-    queryKey: ["projects", user?.username],
+    queryKey: ["projects", user?.username, selectedHeaders.length],
     queryFn: async () => {
       if (!user?.username) return [];
 
@@ -357,8 +358,9 @@ export default function ApprovalPage() {
       return result;
     },
     enabled: !!user?.username,
-    staleTime: 2 * 60 * 1000, // 2 minutos - proyectos en líneas cambian moderadamente
+    staleTime: 10 * 60 * 1000, // 10 minutos - proyectos cambian poco en aprobación
     refetchOnWindowFocus: false,
+    refetchOnMount: false, // No refrescar al montar si ya hay datos
   });
 
   // Obtener tareas para filtro (solo del proyecto seleccionado)
