@@ -14,18 +14,20 @@ const packageJsonWatcher = () => {
     configureServer(server) {
       const packageJsonPath = resolve(process.cwd(), 'package.json'); // eslint-disable-line no-undef
       let lastVersion = null;
-
+      
       try {
         lastVersion = JSON.parse(readFileSync(packageJsonPath, 'utf-8')).version;
+        console.log(`📦 Watching package.json version: ${lastVersion}`);
       } catch {
         console.warn('Could not read package.json version');
       }
-
+      
       const checkVersion = () => {
         try {
           const currentVersion = JSON.parse(readFileSync(packageJsonPath, 'utf-8')).version;
           if (lastVersion && currentVersion !== lastVersion) {
             console.log(`🔄 Version changed from ${lastVersion} to ${currentVersion}, reloading...`);
+            // Forzar recarga completa
             server.ws.send({
               type: 'full-reload'
             });
@@ -35,9 +37,9 @@ const packageJsonWatcher = () => {
           // Ignore errors
         }
       };
-
-      // Check every 2 seconds
-      setInterval(checkVersion, 2000);
+      
+      // Check every 1 second for faster response
+      setInterval(checkVersion, 1000);
     }
   };
 };
@@ -56,6 +58,7 @@ export default defineConfig({
   base: envBasePath,
   define: {
     __APP_VERSION__: JSON.stringify(require("./package.json").version),
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(require("./package.json").version),
   },
   server: {
     watch: {

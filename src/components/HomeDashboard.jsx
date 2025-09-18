@@ -1,5 +1,4 @@
 // cspell:ignore msal useMsal
-/* global __APP_VERSION__ */
 import { useMsal } from "@azure/msal-react";
 import React, {
     useEffect,
@@ -642,7 +641,7 @@ const HomeDashboard = () => {
               border: "1px solid #ddd",
             }}
           >
-            v{typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.0.0"}
+            v{import.meta.env.VITE_APP_VERSION || "0.0.0"}
           </div>
           <button
             aria-haspopup="menu"
