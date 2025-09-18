@@ -32,6 +32,11 @@ const HomeDashboard = () => {
   const [loadingRejected, setLoadingRejected] = useState(true);
   const [errorRejected, setErrorRejected] = useState(null);
 
+  // Versión de la app: en dev se lee en runtime desde /package.json para evitar reinicios
+  const [appVersion, setAppVersion] = useState(
+    (typeof import.meta !== "undefined" && import.meta.env?.VITE_APP_VERSION) || "0.0.0"
+  );
+
   // 🆕 Estados para partes de trabajo pendientes de aprobar
   const [pendingLinesCount, setPendingLinesCount] = useState(0);
   const [pendingHeadersCount, setPendingHeadersCount] = useState(0);
@@ -63,6 +68,31 @@ const HomeDashboard = () => {
       return "";
     }
   }, [activeAccount, accounts]);
+
+  // En desarrollo, actualizar versión leyendo /package.json periódicamente
+  useEffect(() => {
+    const isDev = typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)/.test(window.location.hostname || "");
+    if (!isDev) return;
+
+    let cancelled = false;
+    async function refreshVersion() {
+      try {
+        const res = await fetch("/package.json", { cache: "no-store" });
+        if (!res.ok) return;
+        const pkg = await res.json();
+        if (!cancelled && pkg?.version) setAppVersion(pkg.version);
+      } catch {
+        // ignore
+      }
+    }
+
+    refreshVersion();
+    const id = setInterval(refreshVersion, 1500);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
 
   // Cargar fecha del servidor al montar el componente
   useEffect(() => {
@@ -641,7 +671,7 @@ const HomeDashboard = () => {
               border: "1px solid #ddd",
             }}
           >
-            v{import.meta.env.VITE_APP_VERSION || "0.0.0"}
+            v{appVersion}
           </div>
           <button
             aria-haspopup="menu"
