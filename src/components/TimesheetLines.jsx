@@ -22,6 +22,7 @@ import TaskCell from "./timesheet/TaskCell";
 import BcModal from "./ui/BcModal";
 import DecimalInput from "./ui/DecimalInput";
 import EditableCell from "./ui/EditableCell";
+import WorkTypeCell from "./timesheet/WorkTypeCell";
 
 export default function TimesheetLines({
   lines,
@@ -102,8 +103,7 @@ export default function TimesheetLines({
   // Eliminado estado local de workTypes: usamos React Query
   const [wtFilter, setWtFilter] = useState({}); // { [lineId]: "filtro" }
   const [wtOpenFor, setWtOpenFor] = useState(null); // lineId con dropdown abierto
-  const [wtDropdownRect, setWtDropdownRect] = useState(null); // Portal-like positioning
-  const wtCellWrapperRef = useRef(null);
+  // movido a WorkTypeCell
 
   // React Query: Carga y cache de proyectos por recurso (hook reutilizable)
   const jobsQuery = useJobs((header || editableHeader)?.resource_no);
@@ -163,11 +163,7 @@ export default function TimesheetLines({
     );
   };
 
-  const getVisibleWorkTypes = (lineId) => {
-    const q = (wtFilter[lineId] || "").toLowerCase();
-    if (!q) return workTypes;
-    return workTypes.filter((wt) => wt?.toLowerCase().includes(q));
-  };
+  // visibilidad de tipos se maneja en WorkTypeCell
 
   const findWorkType = (val) => {
     if (!val) return null;
@@ -448,44 +444,7 @@ export default function TimesheetLines({
     return undefined;
   };
 
-  // Posicionamiento inteligente para Tipo trabajo (portal-like)
-  useEffect(() => {
-    const updateRect = () => {
-      if (wtOpenFor === null) return;
-      const el = wtCellWrapperRef.current || document.querySelector(`[data-line-id="${wtOpenFor}"] .ts-cell`);
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const viewportWidth = window.innerWidth;
-      const spaceBelow = viewportHeight - rect.bottom;
-      const spaceAbove = rect.top;
-      const dropdownHeight = 220;
-      const dropdownWidth = Math.max(rect.width, 420);
-
-      let top = rect.bottom + window.scrollY;
-      let left = rect.left + window.scrollX;
-      let maxHeight = dropdownHeight;
-      if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
-        top = rect.top + window.scrollY - dropdownHeight;
-        if (top < 0) top = 0;
-      } else if (spaceBelow < dropdownHeight) {
-        maxHeight = Math.max(50, spaceBelow - 10);
-      }
-      const maxLeft = window.scrollX + viewportWidth - dropdownWidth - 8;
-      const minLeft = window.scrollX + 8;
-      left = Math.max(minLeft, Math.min(left, maxLeft));
-      setWtDropdownRect({ left, top, width: dropdownWidth, maxHeight });
-    };
-    updateRect();
-    if (wtOpenFor !== null) {
-      window.addEventListener("scroll", updateRect, true);
-      window.addEventListener("resize", updateRect);
-    }
-    return () => {
-      window.removeEventListener("scroll", updateRect, true);
-      window.removeEventListener("resize", updateRect);
-    };
-  }, [wtOpenFor]);
+  // Posicionamiento de Tipo trabajo movido a WorkTypeCell
 
   return (
     <div className="ts-lines-wrap">
@@ -1008,209 +967,35 @@ export default function TimesheetLines({
               </EditableCell>
 
               {/* ----- Servicio (work_type): combo por recurso ----- */}
-              <EditableCell
-                style={{
-                  ...colStyles.work_type,
-                  textAlign: getAlign("work_type"),
-                }}
+              <WorkTypeCell
+                line={line}
+                lineIndex={lineIndex}
+                colStyle={colStyles.work_type}
+                align={getAlign("work_type")}
+                editFormData={editFormData}
+                inputRefs={inputRefs}
+                hasRefs={hasRefs}
+                setSafeRef={setSafeRef}
                 error={localErrors[line.id]?.work_type}
-              >
-                {isLineEditable(line) ? (
-                  <div className="ts-cell" ref={wtCellWrapperRef} data-line-id={line.id}>
-                    <div className="ts-cell">
-                      <input
-                        type="text"
-                        name="work_type"
-                        value={editFormData[line.id]?.work_type || ""}
-                        onChange={(e) => {
-                          handleInputChange(line.id, e);
-                          clearFieldError(line.id, "work_type");
-                          setWtFilter((prev) => ({
-                            ...prev,
-                            [line.id]: e.target.value,
-                          }));
-                        }}
-                        onBlur={() => {
-                          const raw = (
-                            editFormData[line.id]?.work_type || ""
-                          ).trim();
-                          if (!raw) return; // permitir vacío sin error
-                          const found = findWorkType(raw);
-                          if (!found) {
-                            setFieldError(
-                              line.id,
-                              "work_type",
-                              "Servicio inválido. Debe seleccionar uno de la lista."
-                            );
-                            const el =
-                              inputRefs?.current?.[line.id]?.["work_type"];
-                            if (el)
-                              setTimeout(() => {
-                                el.focus();
-                                el.select();
-                              }, 0);
-                            return;
-                          }
-                          if (found !== raw) {
-                            handleInputChange(line.id, {
-                              target: { name: "work_type", value: found },
-                            });
-                          }
-                          clearFieldError(line.id, "work_type");
-                          if (typeof saveLineNow === "function")
-                            saveLineNow(line.id);
-                          else if (typeof scheduleAutosave === "function")
-                            scheduleAutosave(line.id);
-                        }}
-                        onFocus={(e) => {
-                          handleInputFocus(line.id, "work_type", e);
-                        }}
-                        onKeyDown={(e) => {
-                          const isAdvance =
-                            e.key === "Enter" || e.key === "Tab";
-                          if (isAdvance) {
-                            const raw = (
-                              editFormData[line.id]?.work_type || ""
-                            ).trim();
-                            // Permitir vacío
-                            if (!raw) {
-                              clearFieldError(line.id, "work_type");
-                              if (typeof saveLineNow === "function")
-                                saveLineNow(line.id);
-                              else if (typeof scheduleAutosave === "function")
-                                scheduleAutosave(line.id);
-                              handleKeyDown(
-                                e,
-                                lineIndex,
-                                TIMESHEET_FIELDS.indexOf("work_type")
-                              );
-                              return;
-                            }
-                            // 🆕 Usar la función findWorkType mejorada para autocompletado inteligente
-                            const found = findWorkType(raw);
-                            if (found) {
-                              if (found !== raw) {
-                                handleInputChange(line.id, {
-                                  target: { name: "work_type", value: found },
-                                });
-                              }
-                              clearFieldError(line.id, "work_type");
-                              setWtFilter((prev) => ({
-                                ...prev,
-                                [line.id]: found,
-                              }));
-                              setWtOpenFor(null);
-                              if (typeof saveLineNow === "function")
-                                saveLineNow(line.id);
-                              else if (typeof scheduleAutosave === "function")
-                                scheduleAutosave(line.id);
-                              e.preventDefault();
-                              handleKeyDown(
-                                e,
-                                lineIndex,
-                                TIMESHEET_FIELDS.indexOf("work_type")
-                              );
-                              return;
-                            }
-                            // Inválido → no avanzar, marcar error
-                            e.preventDefault();
-                            setFieldError(
-                              line.id,
-                              "work_type",
-                              "Servicio inválido. Debe seleccionar uno de la lista."
-                            );
-                            const el =
-                              inputRefs?.current?.[line.id]?.["work_type"];
-                            if (el)
-                              setTimeout(() => {
-                                try {
-                                  el.focus();
-                                  el.select();
-                                } catch {
-                                  /* ignore */
-                                }
-                              }, 0);
-                            return;
-                          }
-                          // Alt + ArrowDown: abrir dropdown de servicios
-                          if (e.altKey && e.key === "ArrowDown") {
-                            setWtOpenFor((prev) =>
-                              prev === line.id ? null : line.id
-                            );
-                            e.preventDefault();
-                            return;
-                          }
-                          handleKeyDown(
-                            e,
-                            lineIndex,
-                            TIMESHEET_FIELDS.indexOf("work_type")
-                          );
-                        }}
-                        ref={
-                          hasRefs
-                            ? (el) => setSafeRef(line.id, "work_type", el)
-                            : null
-                        }
-                        className={`ts-input ${localErrors[line.id]?.work_type ? "has-error" : ""}`}
-                        autoComplete="off"
-                        style={{
-                          textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
-                        }}
-                      />
-                      <FiChevronDown
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          setWtOpenFor((prev) =>
-                            prev === line.id ? null : line.id
-                          );
-                        }}
-                        className="ts-icon ts-icon--chevron"
-                      />
-                    </div>
-
-                    {wtOpenFor === line.id && (
-                      <div
-                        className="ts-dropdown"
-                        onMouseDown={(e) => e.preventDefault()}
-                        style={{ position: "fixed", left: wtDropdownRect?.left ?? 0, top: wtDropdownRect?.top ?? 0, width: wtDropdownRect?.width ?? 420, height: wtDropdownRect?.maxHeight ?? 220, overflow: "hidden", zIndex: 5000 }}
-                      >
-                        <div className="ts-dropdown__header">
-                          <FiSearch />
-                          <input
-                            value={wtFilter[line.id] || ""}
-                            onChange={(e) =>
-                              setWtFilter((prev) => ({
-                                ...prev,
-                                [line.id]: e.target.value,
-                              }))
-                            }
-                            placeholder="Buscar servicio..."
-                            style={{
-                              width: "100%",
-                              border: "none",
-                              outline: "none",
-                            }}
-                          />
-                        </div>
-                        <div style={{ maxHeight: Math.max(40, (wtDropdownRect?.maxHeight ?? 220) - 40), overflowY: "auto" }}>
-                          {(workTypesLoaded ? getVisibleWorkTypes(line.id) : []).map((wt) => (
-                            <div key={wt} className="ts-dropdown__item" onMouseDown={() => { handleInputChange(line.id, { target: { name: "work_type", value: wt } }); clearFieldError(line.id, "work_type"); setWtFilter((prev) => ({ ...prev, [line.id]: wt })); setWtOpenFor(null); }} title={wt}>
-                              {wt}
-                            </div>
-                          ))}
-                          {workTypesLoaded && getVisibleWorkTypes(line.id).length === 0 && (
-                            <div style={{ padding: "8px", color: "#999" }}>Sin resultados…</div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="ts-cell ts-readonly">
-                    {line.work_type || ""}
-                  </div>
-                )}
-              </EditableCell>
+                isEditable={isLineEditable(line)}
+                handlers={{
+                  handleInputChange,
+                  handleInputFocus,
+                  handleKeyDown,
+                  setFieldError,
+                  clearFieldError,
+                }}
+                wtState={{
+                  workTypesLoaded,
+                  workTypes,
+                  wtFilter,
+                  setWtFilter,
+                  wtOpenFor,
+                  setWtOpenFor,
+                  findWorkType,
+                }}
+                saving={{ saveLineNow, scheduleAutosave }}
+              />
 
               {/* ----- Fecha (derecha) ----- */}
               <DateCell
