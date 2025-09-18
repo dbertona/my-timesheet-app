@@ -47,6 +47,14 @@
 .ts-responsive * {
   transform: none !important;
 }
+
+/* Forzar sticky con mayor especificidad sobre .ts-th (que establece position:relative) */
+.ts-table thead .ts-th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background: #ffffff !important;
+}
 .ts-td {
   border: 1px solid #ddd;
   padding: 2px 3px !important; /* ✅ Padding mínimo forzado */
