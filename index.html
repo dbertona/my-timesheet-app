@@ -15,6 +15,25 @@
 
     <title>Timesheet</title>
     <script>
+      // Forzar HTTPS en entornos de powersolution.es para que MSAL tenga crypto seguro
+      (function () {
+        try {
+          var host = window.location.hostname || "";
+          var isLocal = /^(localhost|127\.0\.0\.1)$/.test(host);
+          var isHttps = window.location.protocol === "https:";
+          var shouldBeHttps = /powersolution\.es$/i.test(host);
+          if (!isLocal && shouldBeHttps && !isHttps) {
+            window.location.replace(
+              "https://" + window.location.host + window.location.pathname + window.location.search + window.location.hash
+            );
+            return; // Evitar ejecutar el resto del HTML en HTTP
+          }
+        } catch (e) {
+          // no-op
+        }
+      })();
+    </script>
+    <script>
       // Reparar rutas profundas SOLO en GitHub Pages (evitar afectar servidores reales)
       (function() {
         var l = window.location;

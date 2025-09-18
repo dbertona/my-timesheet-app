@@ -1,15 +1,22 @@
+/* eslint-env node */
 /// <reference types="vitest/config" />
-import { defineConfig } from "vite";
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
 import react from "@vitejs/plugin-react";
+import { createRequire } from "module";
+import { defineConfig } from "vite";
+const require = createRequire(import.meta.url);
 
 // https://vite.dev/config/
 // Nota: no usamos __dirname en esta configuración
 
+// Preferir import.meta.env en contexto ESM; fallback a process.env a través de globalThis para no romper el linter
+const envBasePath =
+  (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_BASE_PATH) ||
+  (globalThis && globalThis.process && globalThis.process.env && globalThis.process.env.VITE_BASE_PATH) ||
+  "/"; // Debe terminar con '/'
+
 export default defineConfig({
   plugins: [react()],
-  base: "./",
+  base: envBasePath,
   define: {
     __APP_VERSION__: JSON.stringify(require("./package.json").version),
   },

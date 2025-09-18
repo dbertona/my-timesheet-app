@@ -98,4 +98,30 @@ Ejecutar `scripts/context-dump.sh` para imprimir:
 - Commits pequeños y descriptivos; versión en `package.json` con sufijo `-beta.X` antes de subir a Testing.
 - Reutilizar componentes/funciones existentes (DRY). Semanas empiezan en lunes en controles de calendario.
 
+### 11) Despliegue robusto a Testing (subruta)
+- Base path por entorno:
+  - `VITE_BASE_PATH=/my-timesheet-app/` en testing; `/` en local/prod.
+  - Vite usa `VITE_BASE_PATH` como `base`;
+  - Router usa `VITE_BASE_PATH` como `basename`;
+  - MSAL calcula `redirectUri` y `postLogoutRedirectUri` como `${origin}${VITE_BASE_PATH}` (o se sobreescriben con `VITE_MSAL_*`).
+- Nginx sirve SOLO desde `/usr/share/nginx/html/my-timesheet-app/` con fallback SPA a `index.html` y cache immutable para `assets/*`.
+- Variables recomendadas en `.env.testing`:
+```env
+VITE_BASE_PATH=/my-timesheet-app/
+VITE_MSAL_REDIRECT_URI=https://testingapp.powersolution.es/my-timesheet-app/
+VITE_MSAL_POSTLOGOUT=https://testingapp.powersolution.es/my-timesheet-app/
+```
+- Despliegue:
+```bash
+ops/testing/deploy.sh --host 192.168.88.68 --user dbertona
+```
+  - Limpia y copia build en `/usr/share/nginx/html/my-timesheet-app/`.
+  - Reinicia backend y hace verificación inicial.
+- Smoke tests manuales/automáticos:
+```bash
+ops/testing/smoke.sh
+# Valida: 200 en base, 200 en asset principal, 200 en rutas profundas
+```
+- Azure AD: mantener registradas las URIs de redirección con subruta para testing.
+
 
