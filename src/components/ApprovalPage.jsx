@@ -248,9 +248,10 @@ export default function ApprovalPage() {
       }));
     },
     enabled: selectedHeaders.length > 0,
-    staleTime: 60000, // 1 minuto - evita refrescos innecesarios
+    staleTime: 2 * 60 * 1000, // 2 minutos - más tiempo para evitar refrescos
     refetchOnWindowFocus: false, // No refrescar al cambiar de ventana
     refetchOnMount: false, // No refrescar al montar si ya hay datos
+    refetchInterval: false, // No refrescar automáticamente
   });
 
   // Obtener recursos para filtro (solo los que tienen líneas pendientes de aprobación)
@@ -325,18 +326,14 @@ export default function ApprovalPage() {
       if (!resourceRow?.code) return [];
 
       // Obtener solo proyectos que están en líneas pendientes donde el aprobador es responsable
-      console.log("🔍 Buscando proyectos para aprobador:", resourceRow.code);
-      
-      // Primero probemos una consulta más simple
+      // Primero obtener job numbers de líneas pendientes
       const { data: simpleData, error: simpleError } = await supabaseClient
         .from("timesheet")
         .select("job_no")
         .eq("status", "Pending")
         .eq("resource_responsible", resourceRow.code)
         .not("job_no", "is", null)
-        .limit(10);
-      
-      console.log("📊 Consulta simple:", simpleData?.length || 0, simpleData);
+        .limit(100);
       
       if (simpleError) {
         console.error("❌ Error en consulta simple:", simpleError);
@@ -344,13 +341,11 @@ export default function ApprovalPage() {
       }
       
       if (!simpleData || simpleData.length === 0) {
-        console.log("❌ No hay líneas pendientes para este aprobador");
         return [];
       }
       
-      // Ahora obtener los proyectos
+      // Obtener los proyectos únicos
       const jobNos = [...new Set(simpleData.map(line => line.job_no).filter(Boolean))];
-      console.log("📊 Job numbers únicos:", jobNos);
       
       const { data, error } = await supabaseClient
         .from("job")
@@ -363,14 +358,11 @@ export default function ApprovalPage() {
         throw error;
       }
 
-      console.log("📊 Datos de proyectos:", data?.length || 0, data);
-
       const result = (data || []).map(job => ({
         no: job.no,
         description: job.description
       }));
       
-      console.log("📊 Proyectos finales:", result.length, result);
       return result;
     },
     enabled: !!user?.username,
@@ -455,7 +447,7 @@ export default function ApprovalPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedFilters(filters);
-    }, 300); // 300ms de delay
+    }, 500); // 500ms de delay - más tiempo para evitar refrescos invasivos
 
     return () => clearTimeout(timer);
   }, [filters]);
