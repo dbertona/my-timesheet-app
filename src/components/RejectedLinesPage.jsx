@@ -1,6 +1,7 @@
 import { useMsal } from "@azure/msal-react";
 import { useQuery } from "@tanstack/react-query";
 import React, {
+    useEffect,
     useLayoutEffect,
     useMemo,
     useRef,
@@ -62,6 +63,20 @@ export default function RejectedLinesPage() {
   // Filtros locales (patrón similar a otras páginas)
   const [filterPeriod, setFilterPeriod] = useState("");
   const [filterProject, setFilterProject] = useState("");
+  
+  // Filtros con debounce para evitar refrescos invasivos
+  const [debouncedFilterPeriod, setDebouncedFilterPeriod] = useState("");
+  const [debouncedFilterProject, setDebouncedFilterProject] = useState("");
+
+  // Debounce para filtros (evita refrescos invasivos)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilterPeriod(filterPeriod);
+      setDebouncedFilterProject(filterProject);
+    }, 500); // 500ms de delay - más tiempo para evitar refrescos invasivos
+
+    return () => clearTimeout(timer);
+  }, [filterPeriod, filterProject]);
 
   // Resolver resource_no del usuario actual para filtros dependientes
   const { data: resourceCode } = useQuery({
@@ -78,30 +93,55 @@ export default function RejectedLinesPage() {
     },
   });
 
-  // Proyectos para select: solo donde el recurso sea miembro (tabla job_team)
+  // Proyectos para select: solo los que están en líneas rechazadas
   const { data: projects } = useQuery({
-    queryKey: ["projects-by-member", resourceCode],
+    queryKey: ["projects-in-rejected", resourceCode],
     queryFn: async () => {
       if (!resourceCode) return [];
-      // 1) job_team → recoger job_no del miembro
-      const { data: jtRows, error: jtErr } = await supabaseClient
-        .from("job_team")
+      
+      // Primero obtener job numbers de líneas rechazadas
+      const { data: simpleData, error: simpleError } = await supabaseClient
+        .from("timesheet")
         .select("job_no")
-        .eq("resource_no", resourceCode);
-      if (jtErr) throw jtErr;
-      const jobNos = Array.from(new Set((jtRows || []).map((r) => r.job_no))).filter(Boolean);
-      if (jobNos.length === 0) return [];
-      // 2) job → traer descripciones
-      const { data: jobs, error: jobsErr } = await supabaseClient
+        .eq("status", "Rejected")
+        .eq("resource_responsible", resourceCode)
+        .not("job_no", "is", null)
+        .limit(100);
+      
+      if (simpleError) {
+        console.error("❌ Error en consulta simple:", simpleError);
+        throw simpleError;
+      }
+      
+      if (!simpleData || simpleData.length === 0) {
+        return [];
+      }
+      
+      // Obtener los proyectos únicos
+      const jobNos = [...new Set(simpleData.map(line => line.job_no).filter(Boolean))];
+      
+      const { data, error } = await supabaseClient
         .from("job")
         .select("no, description")
         .in("no", jobNos)
         .order("description");
-      if (jobsErr) throw jobsErr;
-      return jobs || [];
+
+      if (error) {
+        console.error("❌ Error cargando proyectos:", error);
+        throw error;
+      }
+
+      const result = (data || []).map(job => ({
+        no: job.no,
+        description: job.description
+      }));
+      
+      return result;
     },
     enabled: !!resourceCode,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000, // 10 minutos - proyectos cambian poco
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const { data: rejectedLinesRaw, isLoading, error } = useQuery({
@@ -190,16 +230,16 @@ export default function RejectedLinesPage() {
 
   const rejectedLines = useMemo(() => {
     let list = Array.isArray(rejectedLinesRaw) ? rejectedLinesRaw : [];
-    if (filterPeriod) {
+    if (debouncedFilterPeriod) {
       list = list.filter(
-        (l) => l?.resource_timesheet_header?.allocation_period === filterPeriod
+        (l) => l?.resource_timesheet_header?.allocation_period === debouncedFilterPeriod
       );
     }
-    if (filterProject) {
-      list = list.filter((l) => String(l.job_no || "") === filterProject);
+    if (debouncedFilterProject) {
+      list = list.filter((l) => String(l.job_no || "") === debouncedFilterProject);
     }
     return list;
-  }, [rejectedLinesRaw, filterPeriod, filterProject]);
+  }, [rejectedLinesRaw, debouncedFilterPeriod, debouncedFilterProject]);
 
   const totalLines = rejectedLines?.length || 0;
   const totalHours = (rejectedLines || []).reduce(
