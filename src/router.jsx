@@ -32,6 +32,8 @@ function AppWrapper() {
   );
 }
 
+const BASENAME = import.meta.env.VITE_BASE_PATH || "/";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -87,4 +89,4 @@ export const router = createBrowserRouter([
       },
     ],
   },
-]);
+], { basename: BASENAME });

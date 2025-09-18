@@ -21,6 +21,7 @@ if [ -f ".env.testing" ]; then
   echo "🧩 Cargando variables desde .env.testing"
   export $(grep -v '^#' .env.testing | xargs)
 fi
+export VITE_BASE_PATH=${VITE_BASE_PATH:-/my-timesheet-app/}
 npm run build
 
 PKG_FILE="timesheet_bundle_$(date +%F_%H%M%S).tar.gz"
@@ -84,13 +85,15 @@ echo "== Copiar artefacto y server.js =="
 scp "$PKG" server.js "$SERVER:$REMOTE_DIR/"
 
 echo "== Actualizar estáticos en contenedor y reiniciar backend =="
-ssh "$SERVER" bash -s <<EOF
+ssh "$SERVER" bash -s <<'EOF'
 set -e
 cd "$REMOTE_DIR"
 tar -xzf $PKG
-tar -czf timesheet-update.tar.gz index.html assets/ 404.html vite.svg
-docker cp timesheet-update.tar.gz timesheet-web-1:/tmp/
-docker exec timesheet-web-1 sh -c 'cd /usr/share/nginx/html && tar -xzf /tmp/timesheet-update.tar.gz && rm /tmp/timesheet-update.tar.gz'
+BASE_PATH="/usr/share/nginx/html/my-timesheet-app"
+rm -rf "$BASE_PATH"/* || true
+mkdir -p "$BASE_PATH"
+cp -f index.html vite.svg "$BASE_PATH"/
+mkdir -p "$BASE_PATH/assets" && cp -r assets/* "$BASE_PATH/assets/"
 rm -f timesheet-update.tar.gz "$PKG"
 
 sudo systemctl restart timesheet-backend || true

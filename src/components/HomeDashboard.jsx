@@ -2,11 +2,11 @@
 /* global __APP_VERSION__ */
 import { useMsal } from "@azure/msal-react";
 import React, {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { generateAllocationPeriod, getServerDate } from "../api/date";
@@ -538,18 +538,16 @@ const HomeDashboard = () => {
 
   const handleLogout = async () => {
     try {
-      const basePath = window.location.pathname.includes("/my-timesheet-app/")
-        ? "/my-timesheet-app/"
-        : "/";
+      const host = window.location.hostname || "";
+      const basePath = /powersolution\.es$/i.test(host) ? "/my-timesheet-app/" : "/";
       const postLogout =
         (typeof import.meta !== "undefined" && import.meta.env?.VITE_MSAL_POSTLOGOUT) ||
         `${window.location.origin}${basePath}`;
       await instance.logoutRedirect({ postLogoutRedirectUri: postLogout });
     } catch {
       try {
-        const basePath = window.location.pathname.includes("/my-timesheet-app/")
-          ? "/my-timesheet-app/"
-          : "/";
+        const host = window.location.hostname || "";
+        const basePath = /powersolution\.es$/i.test(host) ? "/my-timesheet-app/" : "/";
         const postLogout =
           (typeof import.meta !== "undefined" && import.meta.env?.VITE_MSAL_POSTLOGOUT) ||
           `${window.location.origin}${basePath}`;

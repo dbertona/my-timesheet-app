@@ -1,22 +1,17 @@
 // Configuración de MSAL con crypto nativo
-const BASE_PATH =
-  typeof window !== "undefined"
-    ? (window.location.pathname.includes("/my-timesheet-app/")
-        ? "/my-timesheet-app/"
-        : "/")
-    : "/";
+const BASE_PATH = (typeof import.meta !== "undefined" && import.meta.env?.VITE_BASE_PATH) || "/";
 
 const REDIRECT_URI =
   (typeof import.meta !== "undefined" && import.meta.env?.VITE_MSAL_REDIRECT_URI) ||
   (typeof window !== "undefined"
     ? `${window.location.origin}${BASE_PATH}`
-    : "http://localhost:5173/");
+    : `http://localhost:5173${BASE_PATH}`);
 
 const POST_LOGOUT_URI =
   (typeof import.meta !== "undefined" && import.meta.env?.VITE_MSAL_POSTLOGOUT) ||
   (typeof window !== "undefined"
     ? `${window.location.origin}${BASE_PATH}`
-    : "http://localhost:5173/");
+    : `http://localhost:5173${BASE_PATH}`);
 
 export const msalConfig = {
   auth: {
