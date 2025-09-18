@@ -12,7 +12,6 @@ const POST_LOGOUT_URI =
   (typeof window !== "undefined"
     ? `${window.location.origin}${BASE_PATH}`
     : `http://localhost:5173${BASE_PATH}`);
-
 export const msalConfig = {
   auth: {
     clientId: "3975625e-617d-410c-a166-9a3c88563344",
