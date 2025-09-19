@@ -46,7 +46,7 @@ set -e
 cd "$REMOTE_DIR"
 
 echo "→ Instalando dependencias del backend"
-npm install --omit=dev
+npm install --omit=dev --ignore-scripts
 
 echo "→ Desempaquetando frontend"
 tar -xzf "$PKG"
