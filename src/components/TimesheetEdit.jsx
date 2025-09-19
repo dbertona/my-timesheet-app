@@ -606,7 +606,7 @@ function TimesheetEdit({ headerId }) {
 
               if (availableHours > 0) {
                 const taskType = getTaskFromFactorialType(vacation.tipo);
-                
+
                 // 🆕 DETECTAR MEDIO DÍA: imputar la mitad de las horas máximas del día, sin exceder lo disponible
                 const isHalfDay = vacation.half_day !== null && vacation.half_day !== undefined;
                 const halfOfMax = Math.max(0, Number(maxHours) / 2);
