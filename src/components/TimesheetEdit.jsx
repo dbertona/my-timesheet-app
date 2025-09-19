@@ -607,9 +607,10 @@ function TimesheetEdit({ headerId }) {
               if (availableHours > 0) {
                 const taskType = getTaskFromFactorialType(vacation.tipo);
                 
-                // 🆕 DETECTAR MEDIO DÍA: Si half_day no es null, usar 4 horas en lugar de todas las disponibles
+                // 🆕 DETECTAR MEDIO DÍA: imputar la mitad de las horas máximas del día, sin exceder lo disponible
                 const isHalfDay = vacation.half_day !== null && vacation.half_day !== undefined;
-                const hoursToAssign = isHalfDay ? 4 : availableHours;
+                const halfOfMax = Math.max(0, Number(maxHours) / 2);
+                const hoursToAssign = isHalfDay ? Math.min(availableHours, halfOfMax) : availableHours;
 
                 const newLine = {
                   id: `tmp-${crypto.randomUUID()}`,
@@ -631,9 +632,10 @@ function TimesheetEdit({ headerId }) {
                 // No hay horas disponibles para este día
               }
             } else {
-              // Si no hay calendario disponible, usar 8 horas por defecto (o 4 si es medio día)
+              // Si no hay calendario disponible, usar 8 horas por defecto (o la mitad si es medio día)
               const isHalfDay = vacation.half_day !== null && vacation.half_day !== undefined;
-              const defaultHours = isHalfDay ? 4.0 : 8.0;
+              const defaultHoursFull = 8.0;
+              const defaultHours = isHalfDay ? defaultHoursFull / 2 : defaultHoursFull;
               const taskType = getTaskFromFactorialType(vacation.tipo);
 
               const newLine = {
