@@ -117,3 +117,6 @@ secrets/
 
 # build artifacts
 my-timesheet-app-*.tar.gz
+
+.env.testing
+timesheet.conf.remote
