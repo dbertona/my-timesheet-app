@@ -265,23 +265,14 @@ app.post("/api/factorial/vacations", async (req, res) => {
 
 // Endpoint para recibir webhooks de Factorial (solo validación y logging inicial)
 app.post("/webhooks/factorial", async (req, res) => {
-  const webhookSecret = process.env.FACTORIAL_WEBHOOK_SECRET;
-  const requestToken = req.headers["x-webhook-token"];
-
-  // 1. Verificación de seguridad
-  if (!webhookSecret || !requestToken || requestToken !== webhookSecret) {
-    console.warn("Webhook de Factorial recibido con token inválido o faltante.");
-    return res.status(401).send("Unauthorized");
-  }
-
-  // 2. Challenge de verificación de Factorial
+  // 1. Challenge de verificación de Factorial (esto es lo que realmente usa Factorial)
   const challenge = req.headers["x-factorial-wh-challenge"] || req.query.challenge;
   if (challenge) {
     console.log(`Webhook de Factorial: Challenge recibido y verificado: ${challenge}`);
     return res.status(200).send(String(challenge));
   }
 
-  // 3. Logging estructurado del evento
+  // 2. Logging estructurado del evento
   const { id, type, payload, created_at } = req.body;
   const leave = payload?.leave || {}; // El objeto de la ausencia está anidado
 
