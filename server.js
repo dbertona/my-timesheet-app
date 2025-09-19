@@ -11,7 +11,11 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf; // Guardar body crudo para hash/auditoría
+  },
+}));
 
 // Servir archivos estáticos desde dist
 app.use(express.static(path.join(__dirname, "dist")));
@@ -254,8 +258,51 @@ app.post("/api/factorial/vacations", async (req, res) => {
   }
 });
 
+// Endpoint para recibir webhooks de Factorial (solo validación y logging inicial)
+app.post("/webhooks/factorial", async (req, res) => {
+  const webhookSecret = process.env.FACTORIAL_WEBHOOK_SECRET;
+  const requestToken = req.headers["x-webhook-token"];
+
+  // 1. Verificación de seguridad
+  if (!webhookSecret || !requestToken || requestToken !== webhookSecret) {
+    console.warn("Webhook de Factorial recibido con token inválido o faltante.");
+    return res.status(401).send("Unauthorized");
+  }
+
+  // 2. Challenge de verificación de Factorial
+  const challenge = req.headers["x-factorial-wh-challenge"] || req.query.challenge;
+  if (challenge) {
+    console.log(`Webhook de Factorial: Challenge recibido y verificado: ${challenge}`);
+    return res.status(200).send(String(challenge));
+  }
+
+  // 3. Logging estructurado del evento
+  const { id, type, payload, created_at } = req.body;
+  const leave = payload?.leave || {}; // El objeto de la ausencia está anidado
+
+  console.log(`
+    -----------------------------------------
+    Webhook de Factorial recibido
+    -----------------------------------------
+    - Evento ID: ${id}
+    - Tipo: ${type}
+    - Creado en: ${created_at}
+    - Leave ID: ${leave.id}
+    - Empleado ID: ${leave.employee_id}
+    - Fechas: ${leave.start_on} a ${leave.finish_on}
+    - Medio día: ${leave.half_day}
+    - Estado: ${leave.status}
+    - Actualizado en: ${leave.updated_at}
+    -----------------------------------------
+  `);
+
+  // Por ahora, solo confirmamos recepción sin procesar
+  res.status(200).json({ received: true, processed: false, message: "Evento loggeado, no procesado." });
+});
+
+
 // Fallback para SPA
-app.get("*", (req, res) => {
+app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
