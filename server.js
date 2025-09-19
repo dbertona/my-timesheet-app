@@ -124,6 +124,7 @@ app.post("/api/factorial/vacations", async (req, res) => {
   try {
     const { userEmail, startDate, endDate } = req.body || {};
     const debug = String(req?.query?.debug || "").toLowerCase() === "1" || String(req?.query?.debug || "").toLowerCase() === "true";
+    const ffwdRaw = typeof req?.query?.ffwd === "string" ? req.query.ffwd : ""; // p.ej.: include=days,include_leave_type
 
     console.log(
       `Factorial request: ${userEmail} from ${startDate} to ${endDate}`
@@ -213,11 +214,19 @@ app.post("/api/factorial/vacations", async (req, res) => {
     }
 
     // 2) Obtener ausencias aprobadas en el rango para ese empleado
-    const leavesUrl = `${apiBase}/resources/timeoff/leaves?from=${encodeURIComponent(
+    let leavesUrl = `${apiBase}/resources/timeoff/leaves?from=${encodeURIComponent(
       startDate
     )}&to=${encodeURIComponent(endDate)}&approved=true&include_leave_type=true&employee_id=${encodeURIComponent(
       employee.id
     )}`;
+    // En modo debug permitimos anexar parámetros adicionales crudos hacia Factorial para inspección
+    if (debug && ffwdRaw) {
+      // Sanitizar mínimamente: solo permitir caracteres seguros en query
+      const safe = ffwdRaw.replace(/[^a-zA-Z0-9_,=&-]/g, "");
+      if (safe) {
+        leavesUrl += `&${safe}`;
+      }
+    }
     const leavesResp = await fetch(leavesUrl, {
       headers: { "x-api-key": apiKey },
     });
