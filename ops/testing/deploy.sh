@@ -38,12 +38,17 @@ echo "→ Creando directorio en remoto $REMOTE_DIR"
 ssh "$USER@$HOST" "mkdir -p '$REMOTE_DIR'"
 
 echo "→ Subiendo artefactos"
-scp "$PKG" server.js "$USER@$HOST:$REMOTE_DIR/"
+scp "$PKG" server.js package.json package-lock.json "$USER@$HOST:$REMOTE_DIR/"
 
-echo "→ Actualizando estáticos en contenedor"
+echo "→ Actualizando estáticos y dependencias del backend"
 ssh "$USER@$HOST" "REMOTE_DIR='$REMOTE_DIR' PKG='$PKG' SUDO='$SUDO' bash -s" <<'EOF'
 set -e
 cd "$REMOTE_DIR"
+
+echo "→ Instalando dependencias del backend"
+npm install --omit=dev
+
+echo "→ Desempaquetando frontend"
 tar -xzf "$PKG"
 # Empaquetar actualización y copiar al contenedor con privilegios
 	# Se requiere sudo porque el usuario del servicio es dbertona
@@ -60,6 +65,7 @@ tar -xzf "$PKG"
 	'
 	rm -f timesheet-update.tar.gz "$PKG"
 
+	echo "→ Reiniciando servicios"
 	$SUDO systemctl restart timesheet-backend || true
 	sleep 2
 	curl -sS https://testingapp.powersolution.es/my-timesheet-app/ | head -n 5 || true
