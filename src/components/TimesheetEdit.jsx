@@ -606,6 +606,10 @@ function TimesheetEdit({ headerId }) {
 
               if (availableHours > 0) {
                 const taskType = getTaskFromFactorialType(vacation.tipo);
+                
+                // 🆕 DETECTAR MEDIO DÍA: Si half_day no es null, usar 4 horas en lugar de todas las disponibles
+                const isHalfDay = vacation.half_day !== null && vacation.half_day !== undefined;
+                const hoursToAssign = isHalfDay ? 4 : availableHours;
 
                 const newLine = {
                   id: `tmp-${crypto.randomUUID()}`,
@@ -613,10 +617,10 @@ function TimesheetEdit({ headerId }) {
                   job_no: vacationProject?.no || "", // Asignar el proyecto de vacaciones encontrado
                   job_no_description: vacationProject?.description || "", // Asignar la descripción del proyecto
                   job_task_no: taskType, // 🆕 Usar la tarea mapeada en lugar de 'GASTO' fijo
-                  description: `${taskType} - ${vacation.tipo}`,
+                  description: `${taskType} - ${vacation.tipo}${isHalfDay ? ' (Medio día)' : ''}`,
                   work_type: taskType, // Usar la tarea mapeada en lugar de 'VACACIONES' fijo
                   date: toDisplayDate(dateStr),
-                  quantity: availableHours.toFixed(2), // Horas disponibles del calendario
+                  quantity: hoursToAssign.toFixed(2), // 4 horas si es medio día, sino horas disponibles
                   department_code: resourceDepartment, // Usar el departamento del recurso actual
                   isFactorialLine: true, // 🆕 Marcar como línea de Factorial (no editable)
                   status: "Approved", // 🆕 Marcar como aprobado automáticamente
@@ -627,8 +631,9 @@ function TimesheetEdit({ headerId }) {
                 // No hay horas disponibles para este día
               }
             } else {
-              // Si no hay calendario disponible, usar 8 horas por defecto
-              const defaultHours = 8.0;
+              // Si no hay calendario disponible, usar 8 horas por defecto (o 4 si es medio día)
+              const isHalfDay = vacation.half_day !== null && vacation.half_day !== undefined;
+              const defaultHours = isHalfDay ? 4.0 : 8.0;
               const taskType = getTaskFromFactorialType(vacation.tipo);
 
               const newLine = {
@@ -637,10 +642,10 @@ function TimesheetEdit({ headerId }) {
                 job_no: vacationProject?.no || "", // Asignar el proyecto de vacaciones encontrado
                 job_no_description: vacationProject?.description || "", // Asignar la descripción del proyecto
                 job_task_no: taskType, // 🆕 Usar la tarea mapeada en lugar de 'GASTO' fijo
-                description: `${taskType} - ${vacation.tipo}`,
+                description: `${taskType} - ${vacation.tipo}${isHalfDay ? ' (Medio día)' : ''}`,
                 work_type: taskType, // Usar la tarea mapeada en lugar de 'VACACIONES' fijo
                 date: toDisplayDate(dateStr),
-                quantity: defaultHours.toFixed(2), // 8 horas por defecto
+                quantity: defaultHours.toFixed(2), // 4 horas si es medio día, 8 si es día completo
                 department_code: resourceDepartment, // Usar el departamento del recurso actual
                 isFactorialLine: true, // 🆕 Marcar como línea de Factorial (no editable)
                 status: "Approved", // 🆕 Marcar como aprobado automáticamente
