@@ -123,6 +123,7 @@ app.get("/api/server-date", (req, res) => {
 app.post("/api/factorial/vacations", async (req, res) => {
   try {
     const { userEmail, startDate, endDate } = req.body || {};
+    const debug = String(req?.query?.debug || "").toLowerCase() === "1" || String(req?.query?.debug || "").toLowerCase() === "true";
 
     console.log(
       `Factorial request: ${userEmail} from ${startDate} to ${endDate}`
@@ -239,13 +240,14 @@ app.post("/api/factorial/vacations", async (req, res) => {
       const desde = desdeRaw < startDate ? startDate : desdeRaw;
       const hasta = hastaRaw > endDate ? endDate : hastaRaw;
       const tipo = l?.leave_type_name || "Vacaciones";
-      
-      return { 
-        desde, 
-        hasta, 
+      const base = {
+        desde,
+        hasta,
         tipo,
-        half_day: l?.half_day // Campo para detectar medio día
+        half_day: l?.half_day,
       };
+      // En modo debug devolvemos también el objeto bruto para diagnóstico
+      return debug ? { ...base, raw_data: l } : base;
     });
 
     return res.json(result);
