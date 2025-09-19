@@ -239,7 +239,23 @@ app.post("/api/factorial/vacations", async (req, res) => {
       const desde = desdeRaw < startDate ? startDate : desdeRaw;
       const hasta = hastaRaw > endDate ? endDate : hastaRaw;
       const tipo = l?.leave_type_name || "Vacaciones";
-      return { desde, hasta, tipo };
+      
+      // 🆕 DEBUG: Devolver todos los campos disponibles para investigar
+      return { 
+        desde, 
+        hasta, 
+        tipo,
+        // Campos adicionales de Factorial para investigar
+        raw_data: l,
+        duration_days: l?.duration_days,
+        hours: l?.hours,
+        half_day: l?.half_day,
+        is_half_day: l?.is_half_day,
+        leave_type: l?.leave_type,
+        status: l?.status,
+        approved_at: l?.approved_at,
+        created_at: l?.created_at
+      };
     });
 
     return res.json(result);
