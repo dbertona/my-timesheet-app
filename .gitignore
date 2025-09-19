@@ -114,3 +114,6 @@ secrets/
 *.bak
 *.backup
 *.old
+
+# build artifacts
+my-timesheet-app-*.tar.gz
