@@ -2,6 +2,11 @@ import cors from "cors";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
+import dotenv from 'dotenv';
+
+// Carga forzada de .env.testing para depuración
+dotenv.config({ path: '/home/dbertona/timesheet/.env.testing' });
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
