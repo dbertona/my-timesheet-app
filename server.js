@@ -109,7 +109,7 @@ async function getResourceDepartmentByEmail(email) {
     const baseUrl = process.env.SUPABASE_PROJECT_URL;
     const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
     if (!baseUrl || !apiKey) return null;
-    const url = `${baseUrl}/rest/v1/resource?select=department_code,company_name&email=eq.${encodeURIComponent(email)}&limit=1`;
+    const url = `${baseUrl}/rest/v1/resource?select=department_code,company_name,code&email=eq.${encodeURIComponent(email)}&limit=1`;
     const resp = await fetch(url, { headers: { apikey: apiKey, Authorization: `Bearer ${apiKey}` } });
     if (!resp.ok) return null;
     const data = await resp.json();
@@ -117,12 +117,31 @@ async function getResourceDepartmentByEmail(email) {
       return {
         department_code: data[0]?.department_code || null,
         company_name: data[0]?.company_name || null,
+        resource_code: data[0]?.code || null,
       };
     }
     return null;
   } catch {
     return null;
   }
+}
+
+async function resolveHeaderIdForResource(companyName, resourceCode, targetDateISO) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return { headerId: null, syncedBlocked: false };
+  // Buscar headers del recurso y compañía, preferir no sincronizado
+  const url = `${cfg.baseUrl}/rest/v1/resource_timesheet_header?select=id,synced_to_bc,allocation_period,company_name,resource_no&company_name=eq.${encodeURIComponent(
+    companyName
+  )}&resource_no=eq.${encodeURIComponent(resourceCode || '')}&order=creado.desc&limit=5`;
+  const resp = await fetch(url, { headers: cfg.headers });
+  if (!resp.ok) return { headerId: null, syncedBlocked: false };
+  const rows = await fetchJsonSafe(resp);
+  if (!Array.isArray(rows) || rows.length === 0) return { headerId: null, syncedBlocked: false };
+  // Tomar el primer no sincronizado si existe, si no, marcar bloqueo
+  const firstNotSynced = rows.find(r => r?.synced_to_bc === false);
+  if (firstNotSynced) return { headerId: firstNotSynced.id, syncedBlocked: false };
+  // Si todos están sincronizados, bloquear
+  return { headerId: null, syncedBlocked: true };
 }
 
 async function findVacationProjectForDepartment(departmentCode, companyName) {
@@ -333,6 +352,11 @@ async function syncLeaveToTimesheet({
   const resourceInfo = await getResourceDepartmentByEmail(employeeEmail || '');
   const departmentCode = resourceInfo?.department_code || null;
   const vacationProject = await findVacationProjectForDepartment(departmentCode, companyName);
+  const { headerId, syncedBlocked } = await resolveHeaderIdForResource(companyName, resourceInfo?.resource_code || '', startOn);
+  if (syncedBlocked) {
+    // No crear líneas si el último header está sincronizado a BC
+    return { blocked: true, reason: 'header_synced', insertedOrUpdated: 0, deleted: 0 };
+  }
 
   const dates = expandDateRange(startOn, finishOn);
   const quantity = computeDailyQuantity(companyId, dates.length, halfDay);
@@ -372,6 +396,7 @@ async function syncLeaveToTimesheet({
       department_code: departmentCode || undefined,
       factorial_leave_id: factorialLeaveId,
       factorial_employee_id: Number.isFinite(Number(resourceInfo?.employee_id)) ? Number(resourceInfo?.employee_id) : undefined,
+      header_id: headerId || undefined,
     };
 
     if (exists) {
@@ -387,6 +412,7 @@ async function syncLeaveToTimesheet({
       if (exists.factorial_leave_id !== factorialLeaveId) changes.factorial_leave_id = factorialLeaveId;
       if (String(exists.status || '') !== 'Approved') changes.status = 'Approved';
       if (Object.keys(changes).length > 0) {
+        if (headerId && !exists.header_id) changes.header_id = headerId;
         await supabasePatchLine(exists.id, changes);
       }
     } else {
