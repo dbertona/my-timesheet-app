@@ -109,7 +109,7 @@ async function getResourceDepartmentByEmail(email) {
     const baseUrl = process.env.SUPABASE_PROJECT_URL;
     const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
     if (!baseUrl || !apiKey) return null;
-    const url = `${baseUrl}/rest/v1/resource?select=department_code,company_name,code&email=eq.${encodeURIComponent(email)}&limit=1`;
+    const url = `${baseUrl}/rest/v1/resource?select=department_code,company_name,code,calendar_type&email=eq.${encodeURIComponent(email)}&limit=1`;
     const resp = await fetch(url, { headers: { apikey: apiKey, Authorization: `Bearer ${apiKey}` } });
     if (!resp.ok) return null;
     const data = await resp.json();
@@ -118,6 +118,7 @@ async function getResourceDepartmentByEmail(email) {
         department_code: data[0]?.department_code || null,
         company_name: data[0]?.company_name || null,
         resource_code: data[0]?.code || null,
+        calendar_type: data[0]?.calendar_type || null,
       };
     }
     return null;
@@ -126,40 +127,47 @@ async function getResourceDepartmentByEmail(email) {
   }
 }
 
-function deriveAllocationPeriodFormats(targetDateISO) {
+async function findAllocationPeriodByCalendar(companyName, calendarCode, targetDateISO) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return null;
   try {
     const d = new Date(`${targetDateISO}T00:00:00Z`);
-    if (Number.isNaN(d.getTime())) return [];
-    const y = d.getUTCFullYear();
-    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const yyyyMm = `${y}-${m}`; // formato 1: 2025-09
-    const yy = String(y).slice(-2);
-    const myyMmm = `M${yy}-M${m}`; // formato 2: M25-M09
-    return [yyyyMm, myyMmm];
+    if (Number.isNaN(d.getTime())) return null;
+    const dayNum = d.getUTCDate();
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const isoDay = `${yyyy}-${mm}-${String(dayNum).padStart(2, '0')}`;
+    const orParam = `or=(day.eq.${dayNum},day.eq.${isoDay})`;
+    const url = `${cfg.baseUrl}/rest/v1/calendar_period_days?select=allocation_period,day&company_name=eq.${encodeURIComponent(
+      companyName
+    )}&calendar_code=eq.${encodeURIComponent(calendarCode || '')}&${orParam}&limit=1`;
+    const resp = await fetch(url, { headers: cfg.headers });
+    if (!resp.ok) return null;
+    const rows = await fetchJsonSafe(resp);
+    if (Array.isArray(rows) && rows.length > 0) return rows[0]?.allocation_period || null;
+    return null;
   } catch {
-    return [];
+    return null;
   }
 }
 
-async function resolveHeaderIdForResource(companyName, resourceCode, targetDateISO) {
+async function resolveHeaderIdForResource(companyName, resourceCode, targetDateISO, calendarCode) {
   const cfg = supabaseHeaders();
   if (!cfg) return { headerId: null, syncedBlocked: false };
-  const [ap1, ap2] = deriveAllocationPeriodFormats(targetDateISO);
-  const filters = [];
-  if (ap1) filters.push(`allocation_period.eq.${ap1}`);
-  if (ap2) filters.push(`allocation_period.eq.${ap2}`);
-  const orParam = filters.length > 0 ? `&or=(${filters.join(',')})` : '';
-  // Buscar headers del recurso y compañía para el período objetivo, priorizando no sincronizados
+  // Determinar allocation_period desde calendario
+  const ap = await findAllocationPeriodByCalendar(companyName, calendarCode || '', targetDateISO);
+  if (!ap) return { headerId: null, syncedBlocked: false };
+  // Buscar header del período exacto
   const url = `${cfg.baseUrl}/rest/v1/resource_timesheet_header?select=id,synced_to_bc,allocation_period,company_name,resource_no&company_name=eq.${encodeURIComponent(
     companyName
-  )}&resource_no=eq.${encodeURIComponent(resourceCode || '')}${orParam}&order=creado.desc&limit=5`;
+  )}&resource_no=eq.${encodeURIComponent(resourceCode || '')}&allocation_period=eq.${encodeURIComponent(ap)}&limit=1`;
   const resp = await fetch(url, { headers: cfg.headers });
   if (!resp.ok) return { headerId: null, syncedBlocked: false };
-  const rows = await fetchJsonSafe(resp);
-  if (!Array.isArray(rows) || rows.length === 0) return { headerId: null, syncedBlocked: false };
-  const firstNotSynced = rows.find(r => r?.synced_to_bc === false);
-  if (firstNotSynced) return { headerId: firstNotSynced.id, syncedBlocked: false };
-  return { headerId: null, syncedBlocked: true };
+  const row = await fetchJsonSafe(resp);
+  const header = Array.isArray(row) && row.length > 0 ? row[0] : null;
+  if (!header) return { headerId: null, syncedBlocked: false };
+  if (header?.synced_to_bc === true) return { headerId: null, syncedBlocked: true };
+  return { headerId: header.id, syncedBlocked: false };
 }
 
 async function findVacationProjectForDepartment(departmentCode, companyName) {
@@ -377,9 +385,13 @@ async function syncLeaveToTimesheet({
   const resourceInfo = await getResourceDepartmentByEmail(employeeEmail || '');
   const departmentCode = resourceInfo?.department_code || null;
   const vacationProject = await findVacationProjectForDepartment(departmentCode, companyName);
-  const { headerId, syncedBlocked } = await resolveHeaderIdForResource(companyName, resourceInfo?.resource_code || '', startOn);
+  const { headerId, syncedBlocked } = await resolveHeaderIdForResource(
+    companyName,
+    resourceInfo?.resource_code || '',
+    startOn,
+    resourceInfo?.calendar_type || ''
+  );
   if (syncedBlocked) {
-    // No crear líneas si el último header está sincronizado a BC
     return { blocked: true, reason: 'header_synced', insertedOrUpdated: 0, deleted: 0 };
   }
 
