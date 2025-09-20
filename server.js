@@ -104,6 +104,64 @@ async function getResourceCompanyByEmail(email) {
   }
 }
 
+async function getResourceDepartmentByEmail(email) {
+  try {
+    const baseUrl = process.env.SUPABASE_PROJECT_URL;
+    const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+    if (!baseUrl || !apiKey) return null;
+    const url = `${baseUrl}/rest/v1/resource?select=department_code,company_name&email=eq.${encodeURIComponent(email)}&limit=1`;
+    const resp = await fetch(url, { headers: { apikey: apiKey, Authorization: `Bearer ${apiKey}` } });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (Array.isArray(data) && data.length > 0) {
+      return {
+        department_code: data[0]?.department_code || null,
+        company_name: data[0]?.company_name || null,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function findVacationProjectForDepartment(departmentCode) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return null;
+  // 1) Buscar por departamento y no %-VAC%
+  const url1 = `${cfg.baseUrl}/rest/v1/job?select=no,description,departamento,status&departamento=eq.${encodeURIComponent(
+    departmentCode || ''
+  )}&no=ilike.*-VAC*&status=eq.Open&limit=1`;
+  const r1 = await fetch(url1, { headers: cfg.headers });
+  if (r1.ok) {
+    const j1 = await fetchJsonSafe(r1);
+    if (Array.isArray(j1) && j1.length > 0) return j1[0];
+  }
+  // 2) Fallback genérico abierto
+  const url2 = `${cfg.baseUrl}/rest/v1/job?select=no,description,departamento,status&no=ilike.*-VAC*&status=eq.Open&limit=1`;
+  const r2 = await fetch(url2, { headers: cfg.headers });
+  if (r2.ok) {
+    const j2 = await fetchJsonSafe(r2);
+    if (Array.isArray(j2) && j2.length > 0) return j2[0];
+  }
+  return null;
+}
+
+function mapTaskFromFactorialType(leaveTypeName) {
+  const mapping = {
+    'Vacaciones': 'VACACIONES',
+    'Enfermedad': 'BAJAS',
+    'Maternidad / Paternidad': 'BAJAS',
+    'Día de cumpleaños': 'PERMISOS',
+    'Asuntos personales (1,5 días por año trabajado)': 'PERMISOS',
+    'Permiso de mudanza': 'PERMISOS',
+    'Permiso por accidente, enfermedad grave u hospitalización de un familiar (PAS)': 'PERMISOS',
+    'Permiso por matrimonio': 'PERMISOS',
+    'Otro': 'PERMISOS',
+  };
+  return mapping[leaveTypeName] || 'PERMISOS';
+}
+
 async function fetchJsonSafe(response) {
   try {
     return await response.json();
@@ -262,11 +320,19 @@ async function syncLeaveToTimesheet({
     return { deleted: existing.length };
   }
 
+  // Obtener depto y proyecto de vacaciones para replicar la UI
+  const resourceInfo = await getResourceDepartmentByEmail(employeeEmail || '');
+  const departmentCode = resourceInfo?.department_code || null;
+  const vacationProject = await findVacationProjectForDepartment(departmentCode);
+
   // Create/Update aprobado: calcular conjunto objetivo
   const dates = expandDateRange(startOn, finishOn);
   const quantity = computeDailyQuantity(companyId, dates.length, halfDay);
-  const desc = buildFactorialDescription(leaveTypeName, eventId, null, employeeFullName);
-  const { jobNo, jobTaskNo, workType } = getJobConfig(companyId);
+  const taskType = mapTaskFromFactorialType(leaveTypeName);
+  const desc = `${taskType} - ${leaveTypeName || taskType} [factorial:leave=${eventId}]`;
+  const jobNo = vacationProject?.no || '';
+  const jobTaskNo = taskType;
+  const workType = taskType;
 
   const existing = await supabaseFetchExistingLinesByLeave(companyName, eventId);
   const existingByDate = new Map(existing.map(r => [String(r.date), r]));
@@ -296,16 +362,21 @@ async function syncLeaveToTimesheet({
       resource_name: employeeFullName || '',
       isFactorialLine: true,
       processed: false,
-      status: 'Open'
+      status: 'Approved',
+      department_code: departmentCode || undefined,
     };
 
     if (exists) {
-      // Actualizar si cambió quantity/description/etc.
       const changes = {};
       if (Number(exists.quantity) !== Number(quantity)) changes.quantity = quantity;
       if (String(exists.description) !== String(desc)) changes.description = desc;
       if (String(exists.resource_no || '') !== String(employeeEmail || '')) changes.resource_no = employeeEmail || '';
       if (String(exists.resource_name || '') !== String(employeeFullName || '')) changes.resource_name = employeeFullName || '';
+      if (String(exists.job_no || '') !== String(jobNo || '')) changes.job_no = jobNo || '';
+      if (String(exists.job_task_no || '') !== String(jobTaskNo || '')) changes.job_task_no = jobTaskNo || '';
+      if (String(exists.work_type || '') !== String(workType || '')) changes.work_type = workType || '';
+      if ((exists.department_code || null) !== (departmentCode || null)) changes.department_code = departmentCode || null;
+      if (String(exists.status || '') !== 'Approved') changes.status = 'Approved';
       if (Object.keys(changes).length > 0) {
         await supabasePatchLine(exists.id, changes);
       }
