@@ -113,8 +113,8 @@ async function fetchJsonSafe(response) {
 }
 
 function getCompanyNameFromId(companyId) {
-  if (companyId === 'psi') return process.env.COMPANY_NAME_PSI || 'PSI';
-  if (companyId === 'psl') return process.env.COMPANY_NAME_PSL || 'PSL';
+  if (companyId === 'psi') return process.env.COMPANY_NAME_PSI || 'Power Solution Iberia SL';
+  if (companyId === 'psl') return process.env.COMPANY_NAME_PSL || 'PS LAB CONSULTING SL';
   return companyId.toUpperCase();
 }
 
