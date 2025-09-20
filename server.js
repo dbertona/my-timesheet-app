@@ -109,7 +109,7 @@ async function getResourceDepartmentByEmail(email) {
     const baseUrl = process.env.SUPABASE_PROJECT_URL;
     const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
     if (!baseUrl || !apiKey) return null;
-    const url = `${baseUrl}/rest/v1/resource?select=department_code,company_name,code,calendar_type&email=eq.${encodeURIComponent(email)}&limit=1`;
+    const url = `${baseUrl}/rest/v1/resource?select=department_code,company_name,code,calendar_type,name&email=eq.${encodeURIComponent(email)}&limit=1`;
     const resp = await fetch(url, { headers: { apikey: apiKey, Authorization: `Bearer ${apiKey}` } });
     if (!resp.ok) return null;
     const data = await resp.json();
@@ -119,6 +119,7 @@ async function getResourceDepartmentByEmail(email) {
         company_name: data[0]?.company_name || null,
         resource_code: data[0]?.code || null,
         calendar_type: data[0]?.calendar_type || null,
+        resource_name: data[0]?.name || null,
       };
     }
     return null;
@@ -151,7 +152,7 @@ async function findAllocationPeriodByCalendar(companyName, calendarCode, targetD
   }
 }
 
-async function resolveHeaderIdForResource(companyName, resourceCode, targetDateISO, calendarCode) {
+async function resolveHeaderIdForResource(companyName, resourceCode, targetDateISO, calendarCode, resourceName, departmentCode) {
   const cfg = supabaseHeaders();
   if (!cfg) return { headerId: null, syncedBlocked: false };
   // Determinar allocation_period desde calendario
@@ -165,7 +166,25 @@ async function resolveHeaderIdForResource(companyName, resourceCode, targetDateI
   if (!resp.ok) return { headerId: null, syncedBlocked: false };
   const row = await fetchJsonSafe(resp);
   const header = Array.isArray(row) && row.length > 0 ? row[0] : null;
-  if (!header) return { headerId: null, syncedBlocked: false };
+  if (!header) {
+    // Crear header si no existe
+    const newHeaderData = {
+      resource_no: resourceCode || '',
+      resource_name: resourceName || resourceCode || '',
+      company_name: companyName,
+      allocation_period: ap,
+      calendar_code: calendarCode || '',
+      department_code: departmentCode || null,
+      synced_to_bc: false,
+      status: 'Open',
+    };
+    try {
+      const created = await supabaseInsertHeader(newHeaderData);
+      if (created?.id) return { headerId: created.id, syncedBlocked: false };
+    } catch {
+      return { headerId: null, syncedBlocked: false };
+    }
+  }
   if (header?.synced_to_bc === true) return { headerId: null, syncedBlocked: true };
   return { headerId: header.id, syncedBlocked: false };
 }
@@ -335,6 +354,19 @@ async function supabaseInsertLine(row) {
   return Array.isArray(json) ? json[0] : json;
 }
 
+async function supabaseInsertHeader(row) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return null;
+  const url = `${cfg.baseUrl}/rest/v1/resource_timesheet_header`;
+  const resp = await fetch(url, { method: 'POST', headers: cfg.headers, body: JSON.stringify(row) });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`Insert header failed: ${resp.status} ${resp.statusText} - ${text}`);
+  }
+  const json = await fetchJsonSafe(resp);
+  return Array.isArray(json) ? json[0] : json;
+}
+
 async function supabasePatchLine(id, patch) {
   const cfg = supabaseHeaders();
   if (!cfg) return null;
@@ -389,7 +421,9 @@ async function syncLeaveToTimesheet({
     companyName,
     resourceInfo?.resource_code || '',
     startOn,
-    resourceInfo?.calendar_type || ''
+    resourceInfo?.calendar_type || '',
+    resourceInfo?.resource_name || employeeFullName || '',
+    departmentCode || null
   );
   if (syncedBlocked) {
     return { blocked: true, reason: 'header_synced', insertedOrUpdated: 0, deleted: 0 };
@@ -425,8 +459,8 @@ async function syncLeaveToTimesheet({
       resource_responsible: 'factorial',
       work_type: workType,
       quantity,
-      resource_no: employeeEmail || '',
-      resource_name: employeeFullName || '',
+      resource_no: resourceInfo?.resource_code || '',
+      resource_name: resourceInfo?.resource_name || employeeFullName || '',
       isFactorialLine: true,
       processed: false,
       status: 'Approved',
@@ -440,8 +474,8 @@ async function syncLeaveToTimesheet({
       const changes = {};
       if (Number(exists.quantity) !== Number(quantity)) changes.quantity = quantity;
       if (String(exists.description) !== String(desc)) changes.description = desc;
-      if (String(exists.resource_no || '') !== String(employeeEmail || '')) changes.resource_no = employeeEmail || '';
-      if (String(exists.resource_name || '') !== String(employeeFullName || '')) changes.resource_name = employeeFullName || '';
+      if (String(exists.resource_no || '') !== String(resourceInfo?.resource_code || '')) changes.resource_no = resourceInfo?.resource_code || '';
+      if (String(exists.resource_name || '') !== String(resourceInfo?.resource_name || employeeFullName || '')) changes.resource_name = resourceInfo?.resource_name || employeeFullName || '';
       if (String(exists.job_no || '') !== String(jobNo || '')) changes.job_no = jobNo || '';
       if (String(exists.job_task_no || '') !== String(jobTaskNo || '')) changes.job_task_no = jobTaskNo || '';
       if (String(exists.work_type || '') !== String(workType || '')) changes.work_type = workType || '';
