@@ -4,8 +4,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from 'dotenv';
 
-// Carga forzada de .env.testing para depuración
-dotenv.config({ path: '/home/dbertona/timesheet/.env.testing' });
+// Carga las variables de entorno del fichero .env en el directorio actual
+dotenv.config();
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -264,35 +264,115 @@ app.post("/api/factorial/vacations", async (req, res) => {
 });
 
 // Endpoint para recibir webhooks de Factorial (solo validación y logging inicial)
-app.post("/webhooks/factorial", async (req, res) => {
-  // 1. Challenge de verificación de Factorial (esto es lo que realmente usa Factorial)
+app.post("/webhooks/factorial/:companyId/:eventType", async (req, res) => {
+  const { companyId, eventType } = req.params;
+
+  // Validar que el companyId y el eventType sean esperados
+  if (!['psi', 'psl'].includes(companyId)) {
+    console.warn(`Webhook recibido para empresa no válida: ${companyId}`);
+    return res.status(400).json({ error: "Empresa no válida" });
+  }
+  if (!['leave_create', 'leave_update', 'leave_delete'].includes(eventType)) {
+    console.warn(`Webhook recibido con tipo de evento no válido: ${eventType}`);
+    return res.status(400).json({ error: "Tipo de evento no válido" });
+  }
+
+  // Obtener la API key correspondiente a la empresa
+  const apiKeys = {
+    psi: process.env.FACTORIAL_API_KEY_PSI,
+    psl: process.env.FACTORIAL_API_KEY_PSL
+  };
+  const apiKey = apiKeys[companyId];
+  let apiBase = companyId === 'psi' ? process.env.FACTORIAL_API_BASE_PSI : process.env.FACTORIAL_API_BASE_PSL;
+  if (!apiBase) {
+    apiBase = "https://api.factorialhr.com/api/v1";
+  }
+
+  if (!apiKey) {
+    console.error(`No se encontró API key para la empresa: ${companyId}`);
+    return res.status(400).send('Empresa no configurada');
+  }
+
+  console.log(`Procesando webhook para ${companyId} usando la API Key que empieza con: ${apiKey.substring(0, 5)}... y base URL: ${apiBase}`);
+
+  // El payload viene directamente en el body para los webhooks de Factorial
+  const absenceData = req.body;
+  console.log('Payload del webhook:', absenceData);
+
+  // 1. Challenge de verificación de Factorial
   const challenge = req.headers["x-factorial-wh-challenge"] || req.query.challenge;
   if (challenge) {
-    console.log(`Webhook de Factorial: Challenge recibido y verificado: ${challenge}`);
+    console.log(`Webhook [${companyId}/${eventType}]: Challenge recibido y verificado: ${challenge}`);
     return res.status(200).send(String(challenge));
   }
 
-  // 2. Logging estructurado del evento
-  const { id, type, payload, created_at } = req.body;
-  const leave = payload?.leave || {}; // El objeto de la ausencia está anidado
+  // 2. Logging estructurado del evento (ajustado al payload real)
+  const {
+    id: eventId, // Renombramos 'id' para evitar confusión con el 'id' de la ausencia
+    employee_id,
+    start_on,
+    finish_on,
+    half_day,
+    approved,
+    updated_at,
+    created_at,
+  } = req.body;
+
+  let employeeEmail = null;
+
+  // Si hay un employee_id, buscamos el email
+  if (employee_id) {
+    try {
+      // Estrategia de fallback: obtener todos los empleados y buscar por ID
+      // Esto es menos eficiente pero puede funcionar si el endpoint directo falla por permisos.
+      const employeesUrl = `${apiBase}/employees`;
+      const response = await fetch(employeesUrl, {
+        headers: { "Authorization": `Bearer ${apiKey}` }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error al obtener la lista de empleados: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const employeesData = await response.json();
+      const employee = employeesData.find(emp => emp.id === employee_id);
+
+      if (employee) {
+        employeeEmail = employee.email;
+      } else {
+        throw new Error(`Empleado con ID ${employee_id} no encontrado en la lista de la compañía.`);
+      }
+
+    } catch (error) {
+      console.error("Error al procesar la información del empleado desde Factorial:", error);
+      // Continuamos sin el email si falla
+    }
+  }
+
+
+  console.log('--- INICIO PAYLOAD CRUDO ---');
+  console.log(JSON.stringify(req.body, null, 2));
+  console.log('--- FIN PAYLOAD CRUDO ---');
 
   console.log(`
     -----------------------------------------
-    Webhook de Factorial recibido
+    Webhook de Factorial recibido [${companyId}]
     -----------------------------------------
-    - Evento ID: ${id}
-    - Tipo: ${type}
+    - Evento ID: ${eventId}
+    - Tipo: ${eventType}
     - Creado en: ${created_at}
-    - Leave ID: ${leave.id}
-    - Empleado ID: ${leave.employee_id}
-    - Fechas: ${leave.start_on} a ${leave.finish_on}
-    - Medio día: ${leave.half_day}
-    - Estado: ${leave.status}
-    - Actualizado en: ${leave.updated_at}
+    - Empleado ID: ${employee_id}
+    - Empleado Email: ${employeeEmail || 'No encontrado'}
+    - Fechas: ${start_on} a ${finish_on}
+    - Medio día: ${half_day}
+    - Estado: ${approved ? 'Aprobado' : 'No aprobado'}
+    - Actualizado en: ${updated_at}
     -----------------------------------------
   `);
 
-  // Por ahora, solo confirmamos recepción sin procesar
+  // Aquí iría la lógica para procesar el evento en Supabase,
+  // diferenciando por `companyId` y `eventType`
   res.status(200).json({ received: true, processed: false, message: "Evento loggeado, no procesado." });
 });
 
