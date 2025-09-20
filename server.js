@@ -283,9 +283,14 @@ app.post("/webhooks/factorial/:companyId/:eventType", async (req, res) => {
     psl: process.env.FACTORIAL_API_KEY_PSL
   };
   const apiKey = apiKeys[companyId];
+
+  // Detectar tipo de API key: JWT (x-api-key) vs Bearer
+  const isJwtKey = typeof apiKey === 'string' && apiKey.startsWith('eyJ');
+
+  // Seleccionar base por empresa o aplicar fallback según tipo de key
   let apiBase = companyId === 'psi' ? process.env.FACTORIAL_API_BASE_PSI : process.env.FACTORIAL_API_BASE_PSL;
   if (!apiBase) {
-    apiBase = "https://api.factorialhr.com/api/v1";
+    apiBase = isJwtKey ? 'https://api.factorialhr.com/api/2025-07-01' : 'https://api.factorialhr.com/api/v1';
   }
 
   if (!apiKey) {
@@ -320,32 +325,33 @@ app.post("/webhooks/factorial/:companyId/:eventType", async (req, res) => {
 
   let employeeEmail = null;
 
-  // Si hay un employee_id, buscamos el email
+  // Si hay un employee_id, buscamos el email con la API adecuada
   if (employee_id) {
     try {
-      // Estrategia de fallback: obtener todos los empleados y buscar por ID
-      // Esto es menos eficiente pero puede funcionar si el endpoint directo falla por permisos.
-      const employeesUrl = `${apiBase}/employees`;
-      const response = await fetch(employeesUrl, {
-        headers: { "Authorization": `Bearer ${apiKey}` }
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Error al obtener la lista de empleados: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-
-      const employeesData = await response.json();
-      const employee = employeesData.find(emp => emp.id === employee_id);
-
-      if (employee) {
-        employeeEmail = employee.email;
+      if (isJwtKey) {
+        // API moderna (x-api-key) → usar resources/employees con include=user y buscar por ID
+        const employees = await fetchAllEmployees(apiBase, apiKey);
+        const employee = employees.find((e) => String(e?.id) === String(employee_id));
+        employeeEmail = employee?.user?.email
+          || employee?.email
+          || employee?.work_email
+          || employee?.login_email
+          || employee?.personal_email
+          || null;
       } else {
-        throw new Error(`Empleado con ID ${employee_id} no encontrado en la lista de la compañía.`);
+        // API v1 (Bearer) → endpoint directo por ID
+        const employeeUrl = `${apiBase}/employees/${employee_id}`;
+        const response = await fetch(employeeUrl, { headers: { Authorization: `Bearer ${apiKey}` } });
+        if (response.ok) {
+          const employeeData = await response.json();
+          employeeEmail = employeeData?.email || null;
+        } else {
+          const errorText = await response.text().catch(() => '');
+          throw new Error(`Error al obtener empleado ${employee_id}: ${response.status} ${response.statusText} - ${errorText}`);
+        }
       }
-
     } catch (error) {
-      console.error("Error al procesar la información del empleado desde Factorial:", error);
+      console.error("Error resolviendo email del empleado desde Factorial:", error);
       // Continuamos sin el email si falla
     }
   }
