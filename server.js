@@ -125,20 +125,21 @@ async function getResourceDepartmentByEmail(email) {
   }
 }
 
-async function findVacationProjectForDepartment(departmentCode) {
+async function findVacationProjectForDepartment(departmentCode, companyName) {
   const cfg = supabaseHeaders();
   if (!cfg) return null;
-  // 1) Buscar por departamento y no %-VAC%
-  const url1 = `${cfg.baseUrl}/rest/v1/job?select=no,description,departamento,status&departamento=eq.${encodeURIComponent(
+  const companyFilter = companyName ? `&company_name=eq.${encodeURIComponent(companyName)}` : '';
+  // 1) Buscar por departamento y no %-VAC% limitado por company_name
+  const url1 = `${cfg.baseUrl}/rest/v1/job?select=no,description,departamento,status,company_name&departamento=eq.${encodeURIComponent(
     departmentCode || ''
-  )}&no=ilike.*-VAC*&status=eq.Open&limit=1`;
+  )}&no=ilike.*-VAC*&status=eq.Open${companyFilter}&limit=1`;
   const r1 = await fetch(url1, { headers: cfg.headers });
   if (r1.ok) {
     const j1 = await fetchJsonSafe(r1);
     if (Array.isArray(j1) && j1.length > 0) return j1[0];
   }
-  // 2) Fallback genérico abierto
-  const url2 = `${cfg.baseUrl}/rest/v1/job?select=no,description,departamento,status&no=ilike.*-VAC*&status=eq.Open&limit=1`;
+  // 2) Fallback genérico abierto por company_name
+  const url2 = `${cfg.baseUrl}/rest/v1/job?select=no,description,departamento,status,company_name&no=ilike.*-VAC*&status=eq.Open${companyFilter}&limit=1`;
   const r2 = await fetch(url2, { headers: cfg.headers });
   if (r2.ok) {
     const j2 = await fetchJsonSafe(r2);
@@ -246,23 +247,27 @@ function supabaseHeaders() {
   };
 }
 
-async function supabaseFetchExistingLinesByLeave(companyName, eventId) {
+async function supabaseFetchExistingLinesByLeave(companyName, factorialLeaveId) {
   const cfg = supabaseHeaders();
   if (!cfg) return [];
-  const marker = encodeURIComponent(`*factorial:leave=${eventId}*`);
-  const url = `${cfg.baseUrl}/rest/v1/timesheet?company_name=eq.${encodeURIComponent(companyName)}&isFactorialLine=eq.true&description=ilike.${marker}`;
+  const url = `${cfg.baseUrl}/rest/v1/timesheet?company_name=eq.${encodeURIComponent(companyName)}&factorial_leave_id=eq.${encodeURIComponent(
+    factorialLeaveId
+  )}`;
   const resp = await fetch(url, { headers: cfg.headers });
   if (!resp.ok) return [];
   const json = await fetchJsonSafe(resp);
   return Array.isArray(json) ? json : [];
 }
 
-async function supabaseDeleteLineById(id) {
+async function supabaseDeleteLinesByLeave(companyName, factorialLeaveId) {
   const cfg = supabaseHeaders();
-  if (!cfg) return false;
-  const url = `${cfg.baseUrl}/rest/v1/timesheet?id=eq.${encodeURIComponent(id)}`;
+  if (!cfg) return 0;
+  const url = `${cfg.baseUrl}/rest/v1/timesheet?company_name=eq.${encodeURIComponent(companyName)}&factorial_leave_id=eq.${encodeURIComponent(
+    factorialLeaveId
+  )}`;
   const resp = await fetch(url, { method: 'DELETE', headers: cfg.headers });
-  return resp.ok;
+  if (!resp.ok) return 0;
+  return 1; // aproximado
 }
 
 async function supabaseInsertLine(row) {
@@ -291,6 +296,14 @@ async function supabasePatchLine(id, patch) {
   return Array.isArray(json) ? json[0] : json;
 }
 
+async function supabaseDeleteLineById(id) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return false;
+  const url = `${cfg.baseUrl}/rest/v1/timesheet?id=eq.${encodeURIComponent(id)}`;
+  const resp = await fetch(url, { method: 'DELETE', headers: cfg.headers });
+  return resp.ok;
+}
+
 async function syncLeaveToTimesheet({
   companyId,
   companyName,
@@ -304,47 +317,40 @@ async function syncLeaveToTimesheet({
   leaveTypeName,
   approved,
 }) {
-  // Si no hay Supabase configurado, no hacemos nada (ambiente testing sin credenciales)
   const cfg = supabaseHeaders();
   if (!cfg) {
     console.warn('Supabase env no configurado. Se omite la sincronización de líneas.');
     return { skipped: true };
   }
 
-  // Para delete o no aprobado, eliminamos todas las líneas de ese leave
+  const factorialLeaveId = Number(eventId);
+
   if (eventType === 'leave_delete' || approved !== true) {
-    const existing = await supabaseFetchExistingLinesByLeave(companyName, eventId);
-    for (const row of existing) {
-      await supabaseDeleteLineById(row.id);
-    }
-    return { deleted: existing.length };
+    const deleted = await supabaseDeleteLinesByLeave(companyName, factorialLeaveId);
+    return { deleted };
   }
 
-  // Obtener depto y proyecto de vacaciones para replicar la UI
   const resourceInfo = await getResourceDepartmentByEmail(employeeEmail || '');
   const departmentCode = resourceInfo?.department_code || null;
-  const vacationProject = await findVacationProjectForDepartment(departmentCode);
+  const vacationProject = await findVacationProjectForDepartment(departmentCode, companyName);
 
-  // Create/Update aprobado: calcular conjunto objetivo
   const dates = expandDateRange(startOn, finishOn);
   const quantity = computeDailyQuantity(companyId, dates.length, halfDay);
   const taskType = mapTaskFromFactorialType(leaveTypeName);
-  const desc = `${taskType} - ${leaveTypeName || taskType} [factorial:leave=${eventId}]`;
+  const desc = `${taskType} - ${leaveTypeName || taskType}`;
   const jobNo = vacationProject?.no || '';
   const jobTaskNo = taskType;
   const workType = taskType;
 
-  const existing = await supabaseFetchExistingLinesByLeave(companyName, eventId);
+  const existing = await supabaseFetchExistingLinesByLeave(companyName, factorialLeaveId);
   const existingByDate = new Map(existing.map(r => [String(r.date), r]));
   const targetDates = new Set(dates);
 
-  // 1) Borrar fechas sobrantes
   const toDelete = existing.filter(r => !targetDates.has(String(r.date)));
   for (const row of toDelete) {
     await supabaseDeleteLineById(row.id);
   }
 
-  // 2) Insertar/Actualizar fechas objetivo
   for (const dateStr of dates) {
     const exists = existingByDate.get(dateStr);
     const baseRow = {
@@ -364,6 +370,8 @@ async function syncLeaveToTimesheet({
       processed: false,
       status: 'Approved',
       department_code: departmentCode || undefined,
+      factorial_leave_id: factorialLeaveId,
+      factorial_employee_id: Number.isFinite(Number(resourceInfo?.employee_id)) ? Number(resourceInfo?.employee_id) : undefined,
     };
 
     if (exists) {
@@ -376,6 +384,7 @@ async function syncLeaveToTimesheet({
       if (String(exists.job_task_no || '') !== String(jobTaskNo || '')) changes.job_task_no = jobTaskNo || '';
       if (String(exists.work_type || '') !== String(workType || '')) changes.work_type = workType || '';
       if ((exists.department_code || null) !== (departmentCode || null)) changes.department_code = departmentCode || null;
+      if (exists.factorial_leave_id !== factorialLeaveId) changes.factorial_leave_id = factorialLeaveId;
       if (String(exists.status || '') !== 'Approved') changes.status = 'Approved';
       if (Object.keys(changes).length > 0) {
         await supabasePatchLine(exists.id, changes);
