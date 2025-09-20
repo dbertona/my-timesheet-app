@@ -126,43 +126,68 @@ async function getResourceDepartmentByEmail(email) {
   }
 }
 
+function deriveAllocationPeriodFormats(targetDateISO) {
+  try {
+    const d = new Date(`${targetDateISO}T00:00:00Z`);
+    if (Number.isNaN(d.getTime())) return [];
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const yyyyMm = `${y}-${m}`; // formato 1: 2025-09
+    const yy = String(y).slice(-2);
+    const myyMmm = `M${yy}-M${m}`; // formato 2: M25-M09
+    return [yyyyMm, myyMmm];
+  } catch {
+    return [];
+  }
+}
+
 async function resolveHeaderIdForResource(companyName, resourceCode, targetDateISO) {
   const cfg = supabaseHeaders();
   if (!cfg) return { headerId: null, syncedBlocked: false };
-  // Buscar headers del recurso y compañía, preferir no sincronizado
+  const [ap1, ap2] = deriveAllocationPeriodFormats(targetDateISO);
+  const filters = [];
+  if (ap1) filters.push(`allocation_period.eq.${ap1}`);
+  if (ap2) filters.push(`allocation_period.eq.${ap2}`);
+  const orParam = filters.length > 0 ? `&or=(${filters.join(',')})` : '';
+  // Buscar headers del recurso y compañía para el período objetivo, priorizando no sincronizados
   const url = `${cfg.baseUrl}/rest/v1/resource_timesheet_header?select=id,synced_to_bc,allocation_period,company_name,resource_no&company_name=eq.${encodeURIComponent(
     companyName
-  )}&resource_no=eq.${encodeURIComponent(resourceCode || '')}&order=creado.desc&limit=5`;
+  )}&resource_no=eq.${encodeURIComponent(resourceCode || '')}${orParam}&order=creado.desc&limit=5`;
   const resp = await fetch(url, { headers: cfg.headers });
   if (!resp.ok) return { headerId: null, syncedBlocked: false };
   const rows = await fetchJsonSafe(resp);
   if (!Array.isArray(rows) || rows.length === 0) return { headerId: null, syncedBlocked: false };
-  // Tomar el primer no sincronizado si existe, si no, marcar bloqueo
   const firstNotSynced = rows.find(r => r?.synced_to_bc === false);
   if (firstNotSynced) return { headerId: firstNotSynced.id, syncedBlocked: false };
-  // Si todos están sincronizados, bloquear
   return { headerId: null, syncedBlocked: true };
 }
 
 async function findVacationProjectForDepartment(departmentCode, companyName) {
   const cfg = supabaseHeaders();
   if (!cfg) return null;
-  const companyFilter = companyName ? `&company_name=eq.${encodeURIComponent(companyName)}` : '';
-  // 1) Buscar por departamento y no %-VAC% limitado por company_name
-  const url1 = `${cfg.baseUrl}/rest/v1/job?select=no,description,departamento,status,company_name&departamento=eq.${encodeURIComponent(
-    departmentCode || ''
-  )}&no=ilike.*-VAC*&status=eq.Open${companyFilter}&limit=1`;
-  const r1 = await fetch(url1, { headers: cfg.headers });
-  if (r1.ok) {
-    const j1 = await fetchJsonSafe(r1);
-    if (Array.isArray(j1) && j1.length > 0) return j1[0];
+  const dept = (departmentCode || '').trim();
+  const comp = (companyName || '').trim();
+  // 1) Estricto: mismo departamento y misma empresa
+  if (dept && comp) {
+    const url = `${cfg.baseUrl}/rest/v1/job?select=no,description,departamento,status,company_name&departamento=eq.${encodeURIComponent(
+      dept
+    )}&company_name=eq.${encodeURIComponent(comp)}&no=ilike.*-VAC*&status=eq.Open&limit=1`;
+    const r = await fetch(url, { headers: cfg.headers });
+    if (r.ok) {
+      const j = await fetchJsonSafe(r);
+      if (Array.isArray(j) && j.length > 0) return j[0];
+    }
   }
-  // 2) Fallback genérico abierto por company_name
-  const url2 = `${cfg.baseUrl}/rest/v1/job?select=no,description,departamento,status,company_name&no=ilike.*-VAC*&status=eq.Open${companyFilter}&limit=1`;
-  const r2 = await fetch(url2, { headers: cfg.headers });
-  if (r2.ok) {
-    const j2 = await fetchJsonSafe(r2);
-    if (Array.isArray(j2) && j2.length > 0) return j2[0];
+  // 2) Fallback: cualquier departamento de la misma empresa
+  if (comp) {
+    const url2 = `${cfg.baseUrl}/rest/v1/job?select=no,description,departamento,status,company_name&company_name=eq.${encodeURIComponent(
+      comp
+    )}&no=ilike.*-VAC*&status=eq.Open&limit=1`;
+    const r2 = await fetch(url2, { headers: cfg.headers });
+    if (r2.ok) {
+      const j2 = await fetchJsonSafe(r2);
+      if (Array.isArray(j2) && j2.length > 0) return j2[0];
+    }
   }
   return null;
 }
