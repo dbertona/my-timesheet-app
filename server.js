@@ -143,10 +143,12 @@ async function findAllocationPeriodByCalendar(companyName, calendarCode, targetD
       companyName
     )}&calendar_code=eq.${encodeURIComponent(calendarCode || '')}&${orParam}&limit=1`;
     const resp = await fetch(url, { headers: cfg.headers });
-    if (!resp.ok) return null;
-    const rows = await fetchJsonSafe(resp);
-    if (Array.isArray(rows) && rows.length > 0) return rows[0]?.allocation_period || null;
-    return null;
+    if (resp.ok) {
+      const rows = await fetchJsonSafe(resp);
+      if (Array.isArray(rows) && rows.length > 0) return rows[0]?.allocation_period || null;
+    }
+    // Fallback mensual: YYYY-MM
+    return `${yyyy}-${mm}`;
   } catch {
     return null;
   }
@@ -203,17 +205,6 @@ async function findVacationProjectForDepartment(departmentCode, companyName) {
     if (r.ok) {
       const j = await fetchJsonSafe(r);
       if (Array.isArray(j) && j.length > 0) return j[0];
-    }
-  }
-  // 2) Fallback: cualquier departamento de la misma empresa
-  if (comp) {
-    const url2 = `${cfg.baseUrl}/rest/v1/job?select=no,description,departamento,status,company_name&company_name=eq.${encodeURIComponent(
-      comp
-    )}&no=ilike.*-VAC*&status=eq.Open&limit=1`;
-    const r2 = await fetch(url2, { headers: cfg.headers });
-    if (r2.ok) {
-      const j2 = await fetchJsonSafe(r2);
-      if (Array.isArray(j2) && j2.length > 0) return j2[0];
     }
   }
   return null;
