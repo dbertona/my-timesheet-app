@@ -104,6 +104,219 @@ async function getResourceCompanyByEmail(email) {
   }
 }
 
+async function fetchJsonSafe(response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function getCompanyNameFromId(companyId) {
+  if (companyId === 'psi') return process.env.COMPANY_NAME_PSI || 'PSI';
+  if (companyId === 'psl') return process.env.COMPANY_NAME_PSL || 'PSL';
+  return companyId.toUpperCase();
+}
+
+function getWorkingDayHours(companyId) {
+  const envKey = companyId === 'psi' ? 'WORKING_DAY_HOURS_PSI' : 'WORKING_DAY_HOURS_PSL';
+  const v = Number(process.env[envKey]);
+  return Number.isFinite(v) && v > 0 ? v : 8;
+}
+
+function getJobConfig(companyId) {
+  if (companyId === 'psi') {
+    return {
+      jobNo: process.env.FACTORIAL_JOB_NO_PSI || 'VAC',
+      jobTaskNo: process.env.FACTORIAL_JOB_TASK_NO_PSI || 'VAC',
+      workType: process.env.FACTORIAL_WORK_TYPE_PSI || 'Vacaciones'
+    };
+  }
+  return {
+    jobNo: process.env.FACTORIAL_JOB_NO_PSL || 'VAC',
+    jobTaskNo: process.env.FACTORIAL_JOB_TASK_NO_PSL || 'VAC',
+    workType: process.env.FACTORIAL_WORK_TYPE_PSL || 'Vacaciones'
+  };
+}
+
+function expandDateRange(startIso, finishIso) {
+  const dates = [];
+  const start = new Date(startIso + 'T00:00:00Z');
+  const finish = new Date(finishIso + 'T00:00:00Z');
+  if (Number.isNaN(start.getTime()) || Number.isNaN(finish.getTime())) return dates;
+  let d = start;
+  while (d.getTime() <= finish.getTime()) {
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    dates.push(`${y}-${m}-${day}`);
+    d = new Date(d.getTime() + 86400000);
+  }
+  return dates;
+}
+
+function computeDailyQuantity(companyId, dateCount, halfDayFlag) {
+  const hours = getWorkingDayHours(companyId);
+  const isHalf = Boolean(halfDayFlag) && dateCount === 1;
+  return isHalf ? hours * 0.5 : hours;
+}
+
+function buildFactorialDescription(leaveTypeName, eventId, originalDescription, employeeFullName) {
+  const safeType = leaveTypeName || 'Vacaciones';
+  const pieces = [
+    `Vacaciones Factorial - ${safeType}`,
+  ];
+  if (employeeFullName) pieces.push(`(${employeeFullName})`);
+  if (originalDescription) pieces.push(`- ${String(originalDescription).trim()}`);
+  // Marcador estable para correlación por leave
+  pieces.push(`[factorial:leave=${eventId}]`);
+  return pieces.join(' ');
+}
+
+function supabaseHeaders() {
+  const baseUrl = process.env.SUPABASE_PROJECT_URL;
+  const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!baseUrl || !apiKey) return null;
+  return {
+    baseUrl,
+    headers: {
+      apikey: apiKey,
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation'
+    }
+  };
+}
+
+async function supabaseFetchExistingLinesByLeave(companyName, eventId) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return [];
+  const marker = encodeURIComponent(`*factorial:leave=${eventId}*`);
+  const url = `${cfg.baseUrl}/rest/v1/timesheet?company_name=eq.${encodeURIComponent(companyName)}&isFactorialLine=eq.true&description=ilike.${marker}`;
+  const resp = await fetch(url, { headers: cfg.headers });
+  if (!resp.ok) return [];
+  const json = await fetchJsonSafe(resp);
+  return Array.isArray(json) ? json : [];
+}
+
+async function supabaseDeleteLineById(id) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return false;
+  const url = `${cfg.baseUrl}/rest/v1/timesheet?id=eq.${encodeURIComponent(id)}`;
+  const resp = await fetch(url, { method: 'DELETE', headers: cfg.headers });
+  return resp.ok;
+}
+
+async function supabaseInsertLine(row) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return null;
+  const url = `${cfg.baseUrl}/rest/v1/timesheet`;
+  const resp = await fetch(url, { method: 'POST', headers: cfg.headers, body: JSON.stringify(row) });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`Insert line failed: ${resp.status} ${resp.statusText} - ${text}`);
+  }
+  const json = await fetchJsonSafe(resp);
+  return Array.isArray(json) ? json[0] : json;
+}
+
+async function supabasePatchLine(id, patch) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return null;
+  const url = `${cfg.baseUrl}/rest/v1/timesheet?id=eq.${encodeURIComponent(id)}`;
+  const resp = await fetch(url, { method: 'PATCH', headers: cfg.headers, body: JSON.stringify(patch) });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`Patch line failed: ${resp.status} ${resp.statusText} - ${text}`);
+  }
+  const json = await fetchJsonSafe(resp);
+  return Array.isArray(json) ? json[0] : json;
+}
+
+async function syncLeaveToTimesheet({
+  companyId,
+  companyName,
+  eventType,
+  eventId,
+  employeeEmail,
+  employeeFullName,
+  startOn,
+  finishOn,
+  halfDay,
+  leaveTypeName,
+  approved,
+}) {
+  // Si no hay Supabase configurado, no hacemos nada (ambiente testing sin credenciales)
+  const cfg = supabaseHeaders();
+  if (!cfg) {
+    console.warn('Supabase env no configurado. Se omite la sincronización de líneas.');
+    return { skipped: true };
+  }
+
+  // Para delete o no aprobado, eliminamos todas las líneas de ese leave
+  if (eventType === 'leave_delete' || approved !== true) {
+    const existing = await supabaseFetchExistingLinesByLeave(companyName, eventId);
+    for (const row of existing) {
+      await supabaseDeleteLineById(row.id);
+    }
+    return { deleted: existing.length };
+  }
+
+  // Create/Update aprobado: calcular conjunto objetivo
+  const dates = expandDateRange(startOn, finishOn);
+  const quantity = computeDailyQuantity(companyId, dates.length, halfDay);
+  const desc = buildFactorialDescription(leaveTypeName, eventId, null, employeeFullName);
+  const { jobNo, jobTaskNo, workType } = getJobConfig(companyId);
+
+  const existing = await supabaseFetchExistingLinesByLeave(companyName, eventId);
+  const existingByDate = new Map(existing.map(r => [String(r.date), r]));
+  const targetDates = new Set(dates);
+
+  // 1) Borrar fechas sobrantes
+  const toDelete = existing.filter(r => !targetDates.has(String(r.date)));
+  for (const row of toDelete) {
+    await supabaseDeleteLineById(row.id);
+  }
+
+  // 2) Insertar/Actualizar fechas objetivo
+  for (const dateStr of dates) {
+    const exists = existingByDate.get(dateStr);
+    const baseRow = {
+      company: companyName,
+      company_name: companyName,
+      date: dateStr,
+      description: desc,
+      job_no: jobNo,
+      job_task_no: jobTaskNo,
+      job_responsible: 'factorial',
+      resource_responsible: 'factorial',
+      work_type: workType,
+      quantity,
+      resource_no: employeeEmail || '',
+      resource_name: employeeFullName || '',
+      isFactorialLine: true,
+      processed: false,
+      status: 'Open'
+    };
+
+    if (exists) {
+      // Actualizar si cambió quantity/description/etc.
+      const changes = {};
+      if (Number(exists.quantity) !== Number(quantity)) changes.quantity = quantity;
+      if (String(exists.description) !== String(desc)) changes.description = desc;
+      if (String(exists.resource_no || '') !== String(employeeEmail || '')) changes.resource_no = employeeEmail || '';
+      if (String(exists.resource_name || '') !== String(employeeFullName || '')) changes.resource_name = employeeFullName || '';
+      if (Object.keys(changes).length > 0) {
+        await supabasePatchLine(exists.id, changes);
+      }
+    } else {
+      await supabaseInsertLine(baseRow);
+    }
+  }
+
+  return { insertedOrUpdated: dates.length, deleted: toDelete.length };
+}
+
 // Endpoint para obtener la fecha del servidor
 // Si existe FORCE_SERVER_DATE se usa como fecha forzada (útil para testing)
 app.get("/api/server-date", (req, res) => {
@@ -321,6 +534,9 @@ app.post("/webhooks/factorial/:companyId/:eventType", async (req, res) => {
     approved,
     updated_at,
     created_at,
+    leave_type_name,
+    employee_full_name,
+    description,
   } = req.body;
 
   let employeeEmail = null;
@@ -377,9 +593,30 @@ app.post("/webhooks/factorial/:companyId/:eventType", async (req, res) => {
     -----------------------------------------
   `);
 
+  // Sincronización con Supabase
+  try {
+    const companyName = getCompanyNameFromId(companyId);
+    const syncResult = await syncLeaveToTimesheet({
+      companyId,
+      companyName,
+      eventType,
+      eventId,
+      employeeEmail,
+      employeeFullName: employee_full_name || '',
+      startOn: start_on,
+      finishOn: finish_on,
+      halfDay: half_day,
+      leaveTypeName: leave_type_name,
+      approved: approved === true,
+    });
+    try { console.log('Resultado sincronización Supabase:', syncResult); } catch {}
+  } catch (err) {
+    console.error('Error sincronizando líneas en Supabase:', err);
+  }
+
   // Aquí iría la lógica para procesar el evento en Supabase,
   // diferenciando por `companyId` y `eventType`
-  res.status(200).json({ received: true, processed: false, message: "Evento loggeado, no procesado." });
+  res.status(200).json({ received: true, processed: true });
 });
 
 
