@@ -128,7 +128,7 @@ async function getResourceDepartmentByEmail(email) {
   }
 }
 
-async function findAllocationPeriodByCalendar(companyName, calendarCode, targetDateISO) {
+async function findCalendarRecord(companyName, calendarCode, targetDateISO) {
   const cfg = supabaseHeaders();
   if (!cfg) return null;
   try {
@@ -137,29 +137,42 @@ async function findAllocationPeriodByCalendar(companyName, calendarCode, targetD
     const dayNum = d.getUTCDate();
     const yyyy = d.getUTCFullYear();
     const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const isoDay = `${yyyy}-${mm}-${String(dayNum).padStart(2, '0')}`;
+    const dd = String(dayNum).padStart(2, '0');
+    const isoDay = `${yyyy}-${mm}-${dd}`;
+    // 1) Intentar día exacto o número de día
     const orParam = `or=(day.eq.${dayNum},day.eq.${isoDay})`;
-    const url = `${cfg.baseUrl}/rest/v1/calendar_period_days?select=allocation_period,day&company_name=eq.${encodeURIComponent(
+    let url = `${cfg.baseUrl}/rest/v1/calendar_period_days?select=allocation_period,day,calendar_code&company_name=eq.${encodeURIComponent(
       companyName
     )}&calendar_code=eq.${encodeURIComponent(calendarCode || '')}&${orParam}&limit=1`;
-    const resp = await fetch(url, { headers: cfg.headers });
+    let resp = await fetch(url, { headers: cfg.headers });
     if (resp.ok) {
       const rows = await fetchJsonSafe(resp);
-      if (Array.isArray(rows) && rows.length > 0) return rows[0]?.allocation_period || null;
+      if (Array.isArray(rows) && rows.length > 0) return rows[0];
     }
-    // Fallback mensual: YYYY-MM
-    return `${yyyy}-${mm}`;
+    // 2) Fallback: primer registro del período conocido
+    const ap = `${yyyy}-${mm}`;
+    url = `${cfg.baseUrl}/rest/v1/calendar_period_days?select=allocation_period,day,calendar_code&company_name=eq.${encodeURIComponent(
+      companyName
+    )}&calendar_code=eq.${encodeURIComponent(calendarCode || '')}&allocation_period=eq.${encodeURIComponent(ap)}&order=day.asc&limit=1`;
+    resp = await fetch(url, { headers: cfg.headers });
+    if (resp.ok) {
+      const rows = await fetchJsonSafe(resp);
+      if (Array.isArray(rows) && rows.length > 0) return rows[0];
+    }
+    // 3) Último recurso: construir registro artificial con el día objetivo
+    return { allocation_period: ap, day: isoDay, calendar_code: calendarCode || '' };
   } catch {
     return null;
   }
 }
 
-async function resolveHeaderIdForResource(companyName, resourceCode, targetDateISO, calendarCode, resourceName, departmentCode) {
+async function resolveHeaderIdForResource(companyName, resourceCode, targetDateISO, calendarCode, resourceName, departmentCode, employeeEmail) {
   const cfg = supabaseHeaders();
   if (!cfg) return { headerId: null, syncedBlocked: false };
-  // Determinar allocation_period desde calendario
-  const ap = await findAllocationPeriodByCalendar(companyName, calendarCode || '', targetDateISO);
-  if (!ap) return { headerId: null, syncedBlocked: false };
+  // Obtener registro de calendario (día exacto y período)
+  const cal = await findCalendarRecord(companyName, calendarCode || '', targetDateISO);
+  if (!cal || !cal.allocation_period) return { headerId: null, syncedBlocked: false };
+  const ap = cal.allocation_period;
   // Buscar header del período exacto
   const url = `${cfg.baseUrl}/rest/v1/resource_timesheet_header?select=id,synced_to_bc,allocation_period,company_name,resource_no&company_name=eq.${encodeURIComponent(
     companyName
@@ -170,12 +183,22 @@ async function resolveHeaderIdForResource(companyName, resourceCode, targetDateI
   const header = Array.isArray(row) && row.length > 0 ? row[0] : null;
   if (!header) {
     // Crear header si no existe
+    const todayIso = new Date().toISOString().split('T')[0];
+    const postingDay = cal.day || `${targetDateISO}` || todayIso;
     const newHeaderData = {
       resource_no: resourceCode || '',
       resource_name: resourceName || resourceCode || '',
       company_name: companyName,
+      description: resourceName || resourceCode || '',
+      posting_description: `Parte de trabajo ${ap}`,
+      posting_date: postingDay,
+      from_date: postingDay,
+      to_date: postingDay,
       allocation_period: ap,
-      calendar_code: calendarCode || '',
+      resource_calendar: cal.calendar_code || calendarCode || '',
+      user_email: employeeEmail || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       department_code: departmentCode || null,
       synced_to_bc: false,
       status: 'Open',
@@ -414,7 +437,8 @@ async function syncLeaveToTimesheet({
     startOn,
     resourceInfo?.calendar_type || '',
     resourceInfo?.resource_name || employeeFullName || '',
-    departmentCode || null
+    departmentCode || null,
+    employeeEmail || null
   );
   try { console.log("Resolución recurso/header:", { resource_code: resourceInfo?.resource_code, dept: departmentCode, calendar: resourceInfo?.calendar_type, headerId, syncedBlocked, companyName }); } catch {}
   if (syncedBlocked) {
