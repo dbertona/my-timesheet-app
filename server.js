@@ -141,9 +141,7 @@ async function findCalendarRecord(companyName, calendarCode, targetDateISO) {
     const isoDay = `${yyyy}-${mm}-${dd}`;
     // 1) Intentar día exacto o número de día
     const orParam = `or=(day.eq.${dayNum},day.eq.${isoDay})`;
-    let url = `${cfg.baseUrl}/rest/v1/calendar_period_days?select=allocation_period,day,calendar_code&company_name=eq.${encodeURIComponent(
-      companyName
-    )}&calendar_code=eq.${encodeURIComponent(calendarCode || '')}&${orParam}&limit=1`;
+    let url = `${cfg.baseUrl}/rest/v1/calendar_period_days?select=allocation_period,day,calendar_code&calendar_code=eq.${encodeURIComponent(calendarCode || '')}&${orParam}&limit=1`;
     let resp = await fetch(url, { headers: cfg.headers });
     if (resp.ok) {
       const rows = await fetchJsonSafe(resp);
@@ -151,9 +149,7 @@ async function findCalendarRecord(companyName, calendarCode, targetDateISO) {
     }
     // 2) Fallback: primer registro del período conocido
     const ap = `${yyyy}-${mm}`;
-    url = `${cfg.baseUrl}/rest/v1/calendar_period_days?select=allocation_period,day,calendar_code&company_name=eq.${encodeURIComponent(
-      companyName
-    )}&calendar_code=eq.${encodeURIComponent(calendarCode || '')}&allocation_period=eq.${encodeURIComponent(ap)}&order=day.asc&limit=1`;
+    url = `${cfg.baseUrl}/rest/v1/calendar_period_days?select=allocation_period,day,calendar_code&calendar_code=eq.${encodeURIComponent(calendarCode || '')}&allocation_period=eq.${encodeURIComponent(ap)}&order=day.asc&limit=1`;
     resp = await fetch(url, { headers: cfg.headers });
     if (resp.ok) {
       const rows = await fetchJsonSafe(resp);
