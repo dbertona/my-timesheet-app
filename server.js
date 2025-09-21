@@ -207,6 +207,17 @@ async function findVacationProjectForDepartment(departmentCode, companyName) {
       if (Array.isArray(j) && j.length > 0) return j[0];
     }
   }
+  // 2) Fallback: misma empresa, cualquier departamento (como en la UI)
+  if (comp) {
+    const fallbackUrl = `${cfg.baseUrl}/rest/v1/job?select=no,description,departamento,status,company_name&company_name=eq.${encodeURIComponent(
+      comp
+    )}&no=ilike.*-VAC*&status=eq.Open&limit=1`;
+    const r2 = await fetch(fallbackUrl, { headers: cfg.headers });
+    if (r2.ok) {
+      const j2 = await fetchJsonSafe(r2);
+      if (Array.isArray(j2) && j2.length > 0) return j2[0];
+    }
+  }
   return null;
 }
 
@@ -416,8 +427,17 @@ async function syncLeaveToTimesheet({
     resourceInfo?.resource_name || employeeFullName || '',
     departmentCode || null
   );
+  try { console.log("Resolución recurso/header:", { resource_code: resourceInfo?.resource_code, dept: departmentCode, calendar: resourceInfo?.calendar_type, headerId, syncedBlocked, companyName }); } catch {}
   if (syncedBlocked) {
     return { blocked: true, reason: 'header_synced', insertedOrUpdated: 0, deleted: 0 };
+  }
+  if (!vacationProject) {
+    try { console.warn(`Proyecto VAC no encontrado para dept=${departmentCode} empresa=${companyName}. Se omite inserción.`); } catch {}
+    return { insertedOrUpdated: 0, deleted: 0, reason: 'vacation_project_not_found' };
+  }
+  if (!headerId) {
+    try { console.warn(`Header no resuelto/creado para recurso=${resourceInfo?.resource_code} fecha=${startOn}. Se omite inserción.`); } catch {}
+    return { insertedOrUpdated: 0, deleted: 0, reason: 'header_not_resolved' };
   }
 
   const dates = expandDateRange(startOn, finishOn);
@@ -427,6 +447,7 @@ async function syncLeaveToTimesheet({
   const jobNo = vacationProject?.no || '';
   const jobTaskNo = taskType;
   const workType = taskType;
+  try { console.log("Proyecto de vacaciones:", { jobNo, departmentCode, companyName }); } catch {}
 
   const existing = await supabaseFetchExistingLinesByLeave(companyName, factorialLeaveId);
   const existingByDate = new Map(existing.map(r => [String(r.date), r]));

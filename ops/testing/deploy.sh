@@ -29,6 +29,19 @@ fi
 export VITE_BASE_PATH=${VITE_BASE_PATH:-/my-timesheet-app/}
 npm run build
 
+# Crear contenido del fichero .env para el remoto
+echo "→ Preparando configuración de entorno para el servidor remoto"
+ENV_CONTENT=""
+while IFS= read -r line || [[ -n "$line" ]]; do
+    # Ignorar comentarios y líneas vacías
+    if [[ "$line" =~ ^\s*# ]] || [[ -z "$line" ]]; then
+        continue
+    fi
+    # Añadir cada línea válida al contenido del .env
+    ENV_CONTENT="${ENV_CONTENT}${line}"$'\n'
+done < .env.testing
+
+
 TS=$(date +%Y%m%d_%H%M%S)
 PKG="my-timesheet-app-$TS.tar.gz"
 echo "→ Empaquetando: $PKG"
@@ -37,7 +50,10 @@ tar -czf "$PKG" -C dist .
 echo "→ Creando directorio en remoto $REMOTE_DIR"
 ssh "$USER@$HOST" "mkdir -p '$REMOTE_DIR'"
 
-echo "→ Subiendo artefactos"
+echo "→ Subiendo artefactos y configurando entorno remoto"
+# Transferir el contenido de .env al servidor remoto de forma segura
+echo "$ENV_CONTENT" | ssh "$USER@$HOST" "cat > '$REMOTE_DIR/.env'"
+
 scp "$PKG" server.js package.json package-lock.json "$USER@$HOST:$REMOTE_DIR/"
 
 echo "→ Actualizando estáticos y dependencias del backend"
