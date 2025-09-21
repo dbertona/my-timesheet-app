@@ -270,12 +270,28 @@ function TimesheetListPage() {
                   </td>
                   <td className="ts-td" style={{ textAlign: "left" }}>{formatDate(header.created_at)}</td>
                   <td className="ts-td" style={{ textAlign: "left" }}>
-                    <button
-                      onClick={() => handleSelectTimesheet(header.id)}
-                      className="ts-btn ts-btn--primary ts-btn--small"
-                    >
-                      Editar
-                    </button>
+                    {(() => {
+                      // Normalizamos el tipo: puede venir como boolean o como string
+                      const isSynced = header.synced_to_bc === true || header.synced_to_bc === "true";
+                      if (isSynced) {
+                        return (
+                          <button
+                            onClick={() => navigate(`/view/${header.id}`)}
+                            className="ts-btn ts-btn--secondary ts-btn--small"
+                          >
+                            Ver
+                          </button>
+                        );
+                      }
+                      return (
+                        <button
+                          onClick={() => handleSelectTimesheet(header.id)}
+                          className="ts-btn ts-btn--primary ts-btn--small"
+                        >
+                          Editar
+                        </button>
+                      );
+                    })()}
                   </td>
                 </tr>
               ))}
