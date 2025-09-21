@@ -1,11 +1,12 @@
 import cors from "cors";
+import { randomUUID } from 'crypto';
+import dotenv from 'dotenv';
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import dotenv from 'dotenv';
 
-// Carga forzada de .env.testing para depuración
-dotenv.config({ path: '/home/dbertona/timesheet/.env.testing' });
+// Carga las variables de entorno del fichero .env en el directorio actual
+dotenv.config();
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -102,6 +103,453 @@ async function getResourceCompanyByEmail(email) {
   } catch {
     return null;
   }
+}
+
+async function getResourceDepartmentByEmail(email) {
+  try {
+    const baseUrl = process.env.SUPABASE_PROJECT_URL;
+    const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+    if (!baseUrl || !apiKey) return null;
+    const url = `${baseUrl}/rest/v1/resource?select=department_code,company_name,code,calendar_type,name&email=eq.${encodeURIComponent(email)}&limit=1`;
+    const resp = await fetch(url, { headers: { apikey: apiKey, Authorization: `Bearer ${apiKey}` } });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (Array.isArray(data) && data.length > 0) {
+      return {
+        department_code: data[0]?.department_code || null,
+        company_name: data[0]?.company_name || null,
+        resource_code: data[0]?.code || null,
+        calendar_type: data[0]?.calendar_type || null,
+        resource_name: data[0]?.name || null,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function findCalendarRecord(companyName, calendarCode, targetDateISO) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return null;
+  try {
+    const d = new Date(`${targetDateISO}T00:00:00Z`);
+    if (Number.isNaN(d.getTime())) return null;
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    const isoDay = `${yyyy}-${mm}-${dd}`;
+    const periodCode = `M${String(yyyy).slice(-2)}-M${mm}`; // p.ej., M25-M09
+
+    // 1) Buscar por período y día exactos, sin filtrar calendar_code
+    let url = `${cfg.baseUrl}/rest/v1/calendar_period_days?select=allocation_period,day,calendar_code&allocation_period=eq.${encodeURIComponent(periodCode)}&day=eq.${encodeURIComponent(isoDay)}&limit=10`;
+    let resp = await fetch(url, { headers: cfg.headers });
+    if (resp.ok) {
+      const rows = (await fetchJsonSafe(resp)) || [];
+      if (Array.isArray(rows) && rows.length > 0) {
+        // Intentar match exacto por calendar_code; si no, devolver el primero y loguear
+        const exact = rows.find(r => String(r.calendar_code) === String(calendarCode));
+        if (exact) return exact;
+        try { console.warn(`calendar_period_days devuelve ${rows.length} filas para ${periodCode} ${isoDay} sin match exacto de calendar_code='${calendarCode}'. Usando la primera fila: ${rows[0]?.calendar_code}`); } catch {}
+        return rows[0];
+      }
+    }
+
+    try { console.error(`calendar_period_days sin filas para period=${periodCode}, day=${isoDay}. No se puede crear header.`); } catch {}
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveHeaderIdForResource(companyName, resourceCode, targetDateISO, calendarCode, resourceName, departmentCode, employeeEmail) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return { headerId: null, syncedBlocked: false };
+  // Obtener registro de calendario (día exacto y período)
+  const cal = await findCalendarRecord(companyName, calendarCode || '', targetDateISO);
+  if (!cal || !cal.allocation_period) return { headerId: null, syncedBlocked: false };
+  const ap = cal.allocation_period;
+  try { console.log('Calendario resuelto para header:', { ap, calendar_code: cal.calendar_code, day: cal.day }); } catch {}
+  // Buscar header del período exacto
+  const url = `${cfg.baseUrl}/rest/v1/resource_timesheet_header?select=id,synced_to_bc,allocation_period,company_name,resource_no&company_name=eq.${encodeURIComponent(
+    companyName
+  )}&resource_no=eq.${encodeURIComponent(resourceCode || '')}&allocation_period=eq.${encodeURIComponent(ap)}&limit=1`;
+  const resp = await fetch(url, { headers: cfg.headers });
+  if (!resp.ok) return { headerId: null, syncedBlocked: false };
+  const row = await fetchJsonSafe(resp);
+  const header = Array.isArray(row) && row.length > 0 ? row[0] : null;
+  if (!header) {
+    // Crear header si no existe
+    const todayIso = new Date().toISOString().split('T')[0];
+    const postingDay = cal.day || `${targetDateISO}` || todayIso;
+    const newHeaderData = {
+      id: randomUUID(),
+      resource_no: resourceCode || '',
+      company_name: companyName,
+      description: resourceName || resourceCode || '',
+      posting_description: `Parte de trabajo ${ap}`,
+      posting_date: postingDay,
+      from_date: postingDay,
+      to_date: postingDay,
+      allocation_period: ap,
+      resource_calendar: cal.calendar_code || calendarCode || '',
+      user_email: employeeEmail || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      department_code: departmentCode || null,
+      synced_to_bc: false,
+    };
+    try {
+      const created = await supabaseInsertHeader(newHeaderData);
+      if (created?.id) return { headerId: created.id, syncedBlocked: false };
+    } catch (e) {
+      try { console.error('Error creando resource_timesheet_header:', e?.message || e); } catch {}
+      return { headerId: null, syncedBlocked: false };
+    }
+  }
+  if (header?.synced_to_bc === true) return { headerId: null, syncedBlocked: true };
+  return { headerId: header.id, syncedBlocked: false };
+}
+
+async function findVacationProjectForDepartment(departmentCode, companyName) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return null;
+  const dept = (departmentCode || '').trim();
+  const comp = (companyName || '').trim();
+  // 1) Estricto: mismo departamento y misma empresa
+  if (dept && comp) {
+    const url = `${cfg.baseUrl}/rest/v1/job?select=no,description,departamento,status,company_name&departamento=eq.${encodeURIComponent(
+      dept
+    )}&company_name=eq.${encodeURIComponent(comp)}&no=ilike.*-VAC*&status=eq.Open&limit=1`;
+    const r = await fetch(url, { headers: cfg.headers });
+    if (r.ok) {
+      const j = await fetchJsonSafe(r);
+      if (Array.isArray(j) && j.length > 0) return j[0];
+    }
+  }
+  return null;
+}
+
+function mapTaskFromFactorialType(leaveTypeName) {
+  const mapping = {
+    'Vacaciones': 'VACACIONES',
+    'Enfermedad': 'BAJAS',
+    'Maternidad / Paternidad': 'BAJAS',
+    'Día de cumpleaños': 'PERMISOS',
+    'Asuntos personales (1,5 días por año trabajado)': 'PERMISOS',
+    'Permiso de mudanza': 'PERMISOS',
+    'Permiso por accidente, enfermedad grave u hospitalización de un familiar (PAS)': 'PERMISOS',
+    'Permiso por matrimonio': 'PERMISOS',
+    'Otro': 'PERMISOS',
+  };
+  return mapping[leaveTypeName] || 'PERMISOS';
+}
+
+async function fetchJsonSafe(response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function getCompanyNameFromId(companyId) {
+  if (companyId === 'psi') return process.env.COMPANY_NAME_PSI || 'Power Solution Iberia SL';
+  if (companyId === 'psl') return process.env.COMPANY_NAME_PSL || 'PS LAB CONSULTING SL';
+  return companyId.toUpperCase();
+}
+
+function getWorkingDayHours(companyId) {
+  const envKey = companyId === 'psi' ? 'WORKING_DAY_HOURS_PSI' : 'WORKING_DAY_HOURS_PSL';
+  const v = Number(process.env[envKey]);
+  return Number.isFinite(v) && v > 0 ? v : 8;
+}
+
+async function getCalendarWorkingHours(calendarCode, dateISO) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return null;
+  try {
+    const d = new Date(`${dateISO}T00:00:00Z`);
+    if (Number.isNaN(d.getTime())) return null;
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    const periodCode = `M${String(yyyy).slice(-2)}-M${mm}`;
+    const isoDay = `${yyyy}-${mm}-${dd}`;
+    const url = `${cfg.baseUrl}/rest/v1/calendar_period_days?select=hours_working,holiday&allocation_period=eq.${encodeURIComponent(periodCode)}&day=eq.${encodeURIComponent(isoDay)}&calendar_code=eq.${encodeURIComponent(calendarCode || '')}&limit=1`;
+    const resp = await fetch(url, { headers: cfg.headers });
+    if (!resp.ok) return null;
+    const rows = await fetchJsonSafe(resp);
+    const row = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+    if (!row) return null;
+    if (row.holiday === true) return 0;
+    const hw = Number(row.hours_working);
+    return Number.isFinite(hw) ? hw : null;
+  } catch {
+    return null;
+  }
+}
+
+function getJobConfig(companyId) {
+  if (companyId === 'psi') {
+    return {
+      jobNo: process.env.FACTORIAL_JOB_NO_PSI || 'VAC',
+      jobTaskNo: process.env.FACTORIAL_JOB_TASK_NO_PSI || 'VAC',
+      workType: process.env.FACTORIAL_WORK_TYPE_PSI || 'Vacaciones'
+    };
+  }
+  return {
+    jobNo: process.env.FACTORIAL_JOB_NO_PSL || 'VAC',
+    jobTaskNo: process.env.FACTORIAL_JOB_TASK_NO_PSL || 'VAC',
+    workType: process.env.FACTORIAL_WORK_TYPE_PSL || 'Vacaciones'
+  };
+}
+
+function expandDateRange(startIso, finishIso) {
+  const dates = [];
+  const start = new Date(startIso + 'T00:00:00Z');
+  const finish = new Date(finishIso + 'T00:00:00Z');
+  if (Number.isNaN(start.getTime()) || Number.isNaN(finish.getTime())) return dates;
+  let d = start;
+  while (d.getTime() <= finish.getTime()) {
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    dates.push(`${y}-${m}-${day}`);
+    d = new Date(d.getTime() + 86400000);
+  }
+  return dates;
+}
+
+function computeDailyQuantity(companyId, dateCount, halfDayFlag) {
+  const hours = getWorkingDayHours(companyId);
+  const isHalf = Boolean(halfDayFlag) && dateCount === 1;
+  return isHalf ? hours * 0.5 : hours;
+}
+
+function buildFactorialDescription(leaveTypeName, eventId, originalDescription, employeeFullName) {
+  const safeType = leaveTypeName || 'Vacaciones';
+  const pieces = [
+    `Vacaciones Factorial - ${safeType}`,
+  ];
+  if (employeeFullName) pieces.push(`(${employeeFullName})`);
+  if (originalDescription) pieces.push(`- ${String(originalDescription).trim()}`);
+  // Marcador estable para correlación por leave
+  pieces.push(`[factorial:leave=${eventId}]`);
+  return pieces.join(' ');
+}
+
+function supabaseHeaders() {
+  const baseUrl = process.env.SUPABASE_PROJECT_URL;
+  const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!baseUrl || !apiKey) return null;
+  return {
+    baseUrl,
+    headers: {
+      apikey: apiKey,
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation'
+    }
+  };
+}
+
+async function supabaseFetchExistingLinesByLeave(companyName, factorialLeaveId) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return [];
+  const url = `${cfg.baseUrl}/rest/v1/timesheet?company_name=eq.${encodeURIComponent(companyName)}&factorial_leave_id=eq.${encodeURIComponent(
+    factorialLeaveId
+  )}`;
+  const resp = await fetch(url, { headers: cfg.headers });
+  if (!resp.ok) return [];
+  const json = await fetchJsonSafe(resp);
+  return Array.isArray(json) ? json : [];
+}
+
+async function supabaseDeleteLinesByLeave(companyName, factorialLeaveId) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return 0;
+  const url = `${cfg.baseUrl}/rest/v1/timesheet?company_name=eq.${encodeURIComponent(companyName)}&factorial_leave_id=eq.${encodeURIComponent(
+    factorialLeaveId
+  )}`;
+  const resp = await fetch(url, { method: 'DELETE', headers: cfg.headers });
+  if (!resp.ok) return 0;
+  return 1; // aproximado
+}
+
+async function supabaseInsertLine(row) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return null;
+  const url = `${cfg.baseUrl}/rest/v1/timesheet`;
+  const resp = await fetch(url, { method: 'POST', headers: cfg.headers, body: JSON.stringify(row) });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`Insert line failed: ${resp.status} ${resp.statusText} - ${text}`);
+  }
+  const json = await fetchJsonSafe(resp);
+  return Array.isArray(json) ? json[0] : json;
+}
+
+async function supabaseInsertHeader(row) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return null;
+  const url = `${cfg.baseUrl}/rest/v1/resource_timesheet_header`;
+  const resp = await fetch(url, { method: 'POST', headers: cfg.headers, body: JSON.stringify(row) });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`Insert header failed: ${resp.status} ${resp.statusText} - ${text}`);
+  }
+  const json = await fetchJsonSafe(resp);
+  return Array.isArray(json) ? json[0] : json;
+}
+
+async function supabasePatchLine(id, patch) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return null;
+  const url = `${cfg.baseUrl}/rest/v1/timesheet?id=eq.${encodeURIComponent(id)}`;
+  const resp = await fetch(url, { method: 'PATCH', headers: cfg.headers, body: JSON.stringify(patch) });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`Patch line failed: ${resp.status} ${resp.statusText} - ${text}`);
+  }
+  const json = await fetchJsonSafe(resp);
+  return Array.isArray(json) ? json[0] : json;
+}
+
+async function supabaseDeleteLineById(id) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return false;
+  const url = `${cfg.baseUrl}/rest/v1/timesheet?id=eq.${encodeURIComponent(id)}`;
+  const resp = await fetch(url, { method: 'DELETE', headers: cfg.headers });
+  return resp.ok;
+}
+
+async function syncLeaveToTimesheet({
+  companyId,
+  companyName,
+  eventType,
+  eventId,
+  employeeEmail,
+  employeeFullName,
+  startOn,
+  finishOn,
+  halfDay,
+  leaveTypeName,
+  approved,
+  originalDescription,
+}) {
+  const cfg = supabaseHeaders();
+  if (!cfg) {
+    console.warn('Supabase env no configurado. Se omite la sincronización de líneas.');
+    return { skipped: true };
+  }
+
+  const factorialLeaveId = Number(eventId);
+
+  if (eventType === 'leave_delete' || approved !== true) {
+    const deleted = await supabaseDeleteLinesByLeave(companyName, factorialLeaveId);
+    return { deleted };
+  }
+
+  const resourceInfo = await getResourceDepartmentByEmail(employeeEmail || '');
+  const departmentCode = resourceInfo?.department_code || null;
+  const vacationProject = await findVacationProjectForDepartment(departmentCode, companyName);
+  const { headerId, syncedBlocked } = await resolveHeaderIdForResource(
+    companyName,
+    resourceInfo?.resource_code || '',
+    startOn,
+    resourceInfo?.calendar_type || '',
+    resourceInfo?.resource_name || employeeFullName || '',
+    departmentCode || null,
+    employeeEmail || null
+  );
+  try { console.log("Resolución recurso/header:", { resource_code: resourceInfo?.resource_code, dept: departmentCode, calendar: resourceInfo?.calendar_type, headerId, syncedBlocked, companyName }); } catch {}
+  if (syncedBlocked) {
+    return { blocked: true, reason: 'header_synced', insertedOrUpdated: 0, deleted: 0 };
+  }
+  if (!vacationProject) {
+    try { console.warn(`Proyecto VAC no encontrado para dept=${departmentCode} empresa=${companyName}. Se omite inserción.`); } catch {}
+    return { insertedOrUpdated: 0, deleted: 0, reason: 'vacation_project_not_found' };
+  }
+  if (!headerId) {
+    try { console.warn(`Header no resuelto/creado para recurso=${resourceInfo?.resource_code} fecha=${startOn}. Se omite inserción.`); } catch {}
+    return { insertedOrUpdated: 0, deleted: 0, reason: 'header_not_resolved' };
+  }
+
+  const dates = expandDateRange(startOn, finishOn);
+  const isHalf = Boolean(halfDay) && dates.length === 1;
+  const taskType = mapTaskFromFactorialType(leaveTypeName);
+  const userDesc = (originalDescription ?? '').toString().trim();
+  const fallbackDesc = leaveTypeName || (taskType === 'VACACIONES' ? 'Vacaciones' : taskType === 'BAJAS' ? 'Bajas' : 'Permisos');
+  const desc = userDesc || fallbackDesc;
+  const jobNo = vacationProject?.no || '';
+  const jobTaskNo = taskType;
+  const workType = taskType;
+  const projectDescription = vacationProject?.description || '';
+  try { console.log("Proyecto de vacaciones:", { jobNo, departmentCode, companyName }); } catch {}
+
+  const existing = await supabaseFetchExistingLinesByLeave(companyName, factorialLeaveId);
+  const existingByDate = new Map(existing.map(r => [String(r.date), r]));
+  const targetDates = new Set(dates);
+
+  const toDelete = existing.filter(r => !targetDates.has(String(r.date)));
+  for (const row of toDelete) {
+    await supabaseDeleteLineById(row.id);
+  }
+
+  for (const dateStr of dates) {
+    const exists = existingByDate.get(dateStr);
+    // Calcular horas reales para el día según calendario; fallback a env
+    let hoursWorking = await getCalendarWorkingHours(resourceInfo?.calendar_type || '', dateStr);
+    if (!Number.isFinite(hoursWorking)) hoursWorking = getWorkingDayHours(companyId);
+    const quantity = isHalf ? hoursWorking * 0.5 : hoursWorking;
+    const baseRow = {
+      company: companyName,
+      company_name: companyName,
+      date: dateStr,
+      description: desc,
+      job_no: jobNo,
+      job_no_and_description: projectDescription ? `${jobNo} - ${projectDescription}` : jobNo,
+      job_task_no: jobTaskNo,
+      job_responsible: 'factorial',
+      resource_responsible: 'factorial',
+      work_type: workType,
+      quantity,
+      resource_no: resourceInfo?.resource_code || '',
+      resource_name: resourceInfo?.resource_name || employeeFullName || '',
+      isFactorialLine: true,
+      processed: false,
+      status: 'Approved',
+      department_code: departmentCode || undefined,
+      factorial_leave_id: factorialLeaveId,
+      factorial_employee_id: Number.isFinite(Number(resourceInfo?.employee_id)) ? Number(resourceInfo?.employee_id) : undefined,
+      header_id: headerId || undefined,
+    };
+
+    if (exists) {
+      const changes = {};
+      if (Number(exists.quantity) !== Number(quantity)) changes.quantity = quantity;
+      if (String(exists.description) !== String(desc)) changes.description = desc;
+      if (String(exists.resource_no || '') !== String(resourceInfo?.resource_code || '')) changes.resource_no = resourceInfo?.resource_code || '';
+      if (String(exists.resource_name || '') !== String(resourceInfo?.resource_name || employeeFullName || '')) changes.resource_name = resourceInfo?.resource_name || employeeFullName || '';
+      if (String(exists.job_no || '') !== String(jobNo || '')) changes.job_no = jobNo || '';
+      const desiredJoin = projectDescription ? `${jobNo} - ${projectDescription}` : jobNo;
+      if (String(exists.job_no_and_description || '') !== String(desiredJoin)) changes.job_no_and_description = desiredJoin;
+      if (String(exists.job_task_no || '') !== String(jobTaskNo || '')) changes.job_task_no = jobTaskNo || '';
+      if (String(exists.work_type || '') !== String(workType || '')) changes.work_type = workType || '';
+      if ((exists.department_code || null) !== (departmentCode || null)) changes.department_code = departmentCode || null;
+      if (exists.factorial_leave_id !== factorialLeaveId) changes.factorial_leave_id = factorialLeaveId;
+      if (String(exists.status || '') !== 'Approved') changes.status = 'Approved';
+      if (Object.keys(changes).length > 0) {
+        if (headerId && !exists.header_id) changes.header_id = headerId;
+        await supabasePatchLine(exists.id, changes);
+      }
+    } else {
+      await supabaseInsertLine(baseRow);
+    }
+  }
+
+  return { insertedOrUpdated: dates.length, deleted: toDelete.length };
 }
 
 // Endpoint para obtener la fecha del servidor
@@ -264,36 +712,147 @@ app.post("/api/factorial/vacations", async (req, res) => {
 });
 
 // Endpoint para recibir webhooks de Factorial (solo validación y logging inicial)
-app.post("/webhooks/factorial", async (req, res) => {
-  // 1. Challenge de verificación de Factorial (esto es lo que realmente usa Factorial)
+app.post("/webhooks/factorial/:companyId/:eventType", async (req, res) => {
+  const { companyId, eventType } = req.params;
+
+  // Validar que el companyId y el eventType sean esperados
+  if (!['psi', 'psl'].includes(companyId)) {
+    console.warn(`Webhook recibido para empresa no válida: ${companyId}`);
+    return res.status(400).json({ error: "Empresa no válida" });
+  }
+  if (!['leave_create', 'leave_update', 'leave_delete'].includes(eventType)) {
+    console.warn(`Webhook recibido con tipo de evento no válido: ${eventType}`);
+    return res.status(400).json({ error: "Tipo de evento no válido" });
+  }
+
+  // Obtener la API key correspondiente a la empresa
+  const apiKeys = {
+    psi: process.env.FACTORIAL_API_KEY_PSI,
+    psl: process.env.FACTORIAL_API_KEY_PSL
+  };
+  const apiKey = apiKeys[companyId];
+
+  // Detectar tipo de API key: JWT (x-api-key) vs Bearer
+  const isJwtKey = typeof apiKey === 'string' && apiKey.startsWith('eyJ');
+
+  // Seleccionar base por empresa o aplicar fallback según tipo de key
+  let apiBase = companyId === 'psi' ? process.env.FACTORIAL_API_BASE_PSI : process.env.FACTORIAL_API_BASE_PSL;
+  if (!apiBase) {
+    apiBase = isJwtKey ? 'https://api.factorialhr.com/api/2025-07-01' : 'https://api.factorialhr.com/api/v1';
+  }
+
+  if (!apiKey) {
+    console.error(`No se encontró API key para la empresa: ${companyId}`);
+    return res.status(400).send('Empresa no configurada');
+  }
+
+  console.log(`Procesando webhook para ${companyId} usando la API Key que empieza con: ${apiKey.substring(0, 5)}... y base URL: ${apiBase}`);
+
+  // El payload viene directamente en el body para los webhooks de Factorial
+  const absenceData = req.body;
+  console.log('Payload del webhook:', absenceData);
+
+  // 1. Challenge de verificación de Factorial
   const challenge = req.headers["x-factorial-wh-challenge"] || req.query.challenge;
   if (challenge) {
-    console.log(`Webhook de Factorial: Challenge recibido y verificado: ${challenge}`);
+    console.log(`Webhook [${companyId}/${eventType}]: Challenge recibido y verificado: ${challenge}`);
     return res.status(200).send(String(challenge));
   }
 
-  // 2. Logging estructurado del evento
-  const { id, type, payload, created_at } = req.body;
-  const leave = payload?.leave || {}; // El objeto de la ausencia está anidado
+  // 2. Logging estructurado del evento (ajustado al payload real)
+  const {
+    id: eventId, // Renombramos 'id' para evitar confusión con el 'id' de la ausencia
+    employee_id,
+    start_on,
+    finish_on,
+    half_day,
+    approved,
+    updated_at,
+    created_at,
+    leave_type_name,
+    employee_full_name,
+    description,
+  } = req.body;
+
+  let employeeEmail = null;
+
+  // Si hay un employee_id, buscamos el email con la API adecuada
+  if (employee_id) {
+    try {
+      if (isJwtKey) {
+        // API moderna (x-api-key) → usar resources/employees con include=user y buscar por ID
+        const employees = await fetchAllEmployees(apiBase, apiKey);
+        const employee = employees.find((e) => String(e?.id) === String(employee_id));
+        employeeEmail = employee?.user?.email
+          || employee?.email
+          || employee?.work_email
+          || employee?.login_email
+          || employee?.personal_email
+          || null;
+      } else {
+        // API v1 (Bearer) → endpoint directo por ID
+        const employeeUrl = `${apiBase}/employees/${employee_id}`;
+        const response = await fetch(employeeUrl, { headers: { Authorization: `Bearer ${apiKey}` } });
+        if (response.ok) {
+          const employeeData = await response.json();
+          employeeEmail = employeeData?.email || null;
+        } else {
+          const errorText = await response.text().catch(() => '');
+          throw new Error(`Error al obtener empleado ${employee_id}: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error resolviendo email del empleado desde Factorial:", error);
+      // Continuamos sin el email si falla
+    }
+  }
+
+
+  console.log('--- INICIO PAYLOAD CRUDO ---');
+  console.log(JSON.stringify(req.body, null, 2));
+  console.log('--- FIN PAYLOAD CRUDO ---');
 
   console.log(`
     -----------------------------------------
-    Webhook de Factorial recibido
+    Webhook de Factorial recibido [${companyId}]
     -----------------------------------------
-    - Evento ID: ${id}
-    - Tipo: ${type}
+    - Evento ID: ${eventId}
+    - Tipo: ${eventType}
     - Creado en: ${created_at}
-    - Leave ID: ${leave.id}
-    - Empleado ID: ${leave.employee_id}
-    - Fechas: ${leave.start_on} a ${leave.finish_on}
-    - Medio día: ${leave.half_day}
-    - Estado: ${leave.status}
-    - Actualizado en: ${leave.updated_at}
+    - Empleado ID: ${employee_id}
+    - Empleado Email: ${employeeEmail || 'No encontrado'}
+    - Fechas: ${start_on} a ${finish_on}
+    - Medio día: ${half_day}
+    - Estado: ${approved ? 'Aprobado' : 'No aprobado'}
+    - Actualizado en: ${updated_at}
     -----------------------------------------
   `);
 
-  // Por ahora, solo confirmamos recepción sin procesar
-  res.status(200).json({ received: true, processed: false, message: "Evento loggeado, no procesado." });
+  // Sincronización con Supabase
+  try {
+    const companyName = getCompanyNameFromId(companyId);
+    const syncResult = await syncLeaveToTimesheet({
+      companyId,
+      companyName,
+      eventType,
+      eventId,
+      employeeEmail,
+      employeeFullName: employee_full_name || '',
+      startOn: start_on,
+      finishOn: finish_on,
+      halfDay: half_day,
+      leaveTypeName: leave_type_name,
+      approved: approved === true,
+      originalDescription: description || '',
+    });
+    try { console.log('Resultado sincronización Supabase:', syncResult); } catch {}
+  } catch (err) {
+    console.error('Error sincronizando líneas en Supabase:', err);
+  }
+
+  // Aquí iría la lógica para procesar el evento en Supabase,
+  // diferenciando por `companyId` y `eventType`
+  res.status(200).json({ received: true, processed: true });
 });
 
 
