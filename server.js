@@ -411,6 +411,7 @@ async function syncLeaveToTimesheet({
   halfDay,
   leaveTypeName,
   approved,
+  originalDescription,
 }) {
   const cfg = supabaseHeaders();
   if (!cfg) {
@@ -453,7 +454,9 @@ async function syncLeaveToTimesheet({
   const dates = expandDateRange(startOn, finishOn);
   const quantity = computeDailyQuantity(companyId, dates.length, halfDay);
   const taskType = mapTaskFromFactorialType(leaveTypeName);
-  const desc = `${taskType} - ${leaveTypeName || taskType}`;
+  const userDesc = (originalDescription ?? '').toString().trim();
+  const fallbackDesc = leaveTypeName || (taskType === 'VACACIONES' ? 'Vacaciones' : taskType === 'BAJAS' ? 'Bajas' : 'Permisos');
+  const desc = userDesc || fallbackDesc;
   const jobNo = vacationProject?.no || '';
   const jobTaskNo = taskType;
   const workType = taskType;
@@ -807,6 +810,7 @@ app.post("/webhooks/factorial/:companyId/:eventType", async (req, res) => {
       halfDay: half_day,
       leaveTypeName: leave_type_name,
       approved: approved === true,
+      originalDescription: description || '',
     });
     try { console.log('Resultado sincronización Supabase:', syncResult); } catch {}
   } catch (err) {
