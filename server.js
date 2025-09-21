@@ -185,7 +185,6 @@ async function resolveHeaderIdForResource(companyName, resourceCode, targetDateI
     const newHeaderData = {
       id: randomUUID(),
       resource_no: resourceCode || '',
-      resource_name: resourceName || resourceCode || '',
       company_name: companyName,
       description: resourceName || resourceCode || '',
       posting_description: `Parte de trabajo ${ap}`,
