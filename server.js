@@ -198,7 +198,6 @@ async function resolveHeaderIdForResource(companyName, resourceCode, targetDateI
       updated_at: new Date().toISOString(),
       department_code: departmentCode || null,
       synced_to_bc: false,
-      status: 'Open',
     };
     try {
       const created = await supabaseInsertHeader(newHeaderData);
