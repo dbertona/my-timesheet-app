@@ -6,18 +6,31 @@ import { supabaseClient } from "../supabaseClient.js";
 
 function TimesheetHeaderList({ headers: propHeaders }) {
   // Componente TimesheetHeaderList renderizado
+  console.log("🔍 TimesheetHeaderList renderizado con headers:", propHeaders);
   const { accounts } = useMsal();
   const [headers, setHeaders] = useState(propHeaders || []);
   const navigate = useNavigate();
+  
+  console.log("🔍 Headers state:", headers);
+  console.log("🔍 Accounts:", accounts);
 
   useEffect(() => {
-    if (propHeaders) return; // No cargar datos si vienen por prop
+    console.log("🔍 useEffect ejecutado, propHeaders:", propHeaders);
+    if (propHeaders) {
+      console.log("🔍 Usando propHeaders, no cargando datos");
+      return; // No cargar datos si vienen por prop
+    }
 
     const fetchData = async () => {
       const email = accounts[0]?.username;
+      console.log("🔍 Email del usuario:", email);
       // Usuario logueado
-      if (!email) return;
+      if (!email) {
+        console.log("🔍 No hay email, saliendo");
+        return;
+      }
 
+      console.log("🔍 Cargando datos de Supabase...");
       const { data, error } = await supabaseClient
         .from("resource_timesheet_header")
         .select("*")
@@ -26,6 +39,7 @@ function TimesheetHeaderList({ headers: propHeaders }) {
       if (error) {
         console.error("❌ Error al cargar cabeceras:", error.message);
       } else {
+        console.log("🔍 Cabeceras recibidas de Supabase:", data);
         // Cabeceras recibidas
         setHeaders(data);
       }
@@ -34,6 +48,8 @@ function TimesheetHeaderList({ headers: propHeaders }) {
     fetchData();
   }, [accounts, propHeaders]);
 
+  console.log("🔍 Renderizando componente, headers.length:", headers.length);
+  
   return (
     <div>
       <h2 className="timesheet-title">Partes de Horas</h2>
