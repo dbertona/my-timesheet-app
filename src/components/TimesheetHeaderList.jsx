@@ -69,7 +69,12 @@ function TimesheetHeaderList({ headers: propHeaders }) {
                   <td>{header.department_code}</td>
                   <td>{header.synced_to_bc ? "✅" : "❌"}</td>
                   <td>
-                    {header.synced_to_bc ? (
+                    {(() => {
+                      // Debug: mostrar el valor y tipo
+                      console.log(`Header ${header.id}: synced_to_bc =`, header.synced_to_bc, typeof header.synced_to_bc);
+                      const isSynced = header.synced_to_bc === true || header.synced_to_bc === 'true';
+                      return isSynced;
+                    })() ? (
                       <button
                         onClick={() => {
                           // Ver pulsado - vista de solo lectura
