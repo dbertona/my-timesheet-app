@@ -207,17 +207,6 @@ async function findVacationProjectForDepartment(departmentCode, companyName) {
       if (Array.isArray(j) && j.length > 0) return j[0];
     }
   }
-  // 2) Fallback: misma empresa, cualquier departamento (como en la UI)
-  if (comp) {
-    const fallbackUrl = `${cfg.baseUrl}/rest/v1/job?select=no,description,departamento,status,company_name&company_name=eq.${encodeURIComponent(
-      comp
-    )}&no=ilike.*-VAC*&status=eq.Open&limit=1`;
-    const r2 = await fetch(fallbackUrl, { headers: cfg.headers });
-    if (r2.ok) {
-      const j2 = await fetchJsonSafe(r2);
-      if (Array.isArray(j2) && j2.length > 0) return j2[0];
-    }
-  }
   return null;
 }
 
