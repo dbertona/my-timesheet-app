@@ -3,6 +3,7 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from 'dotenv';
+import { randomUUID } from 'crypto';
 
 // Carga las variables de entorno del fichero .env en el directorio actual
 dotenv.config();
@@ -182,6 +183,7 @@ async function resolveHeaderIdForResource(companyName, resourceCode, targetDateI
     const todayIso = new Date().toISOString().split('T')[0];
     const postingDay = cal.day || `${targetDateISO}` || todayIso;
     const newHeaderData = {
+      id: randomUUID(),
       resource_no: resourceCode || '',
       resource_name: resourceName || resourceCode || '',
       company_name: companyName,
@@ -202,7 +204,8 @@ async function resolveHeaderIdForResource(companyName, resourceCode, targetDateI
     try {
       const created = await supabaseInsertHeader(newHeaderData);
       if (created?.id) return { headerId: created.id, syncedBlocked: false };
-    } catch {
+    } catch (e) {
+      try { console.error('Error creando resource_timesheet_header:', e?.message || e); } catch {}
       return { headerId: null, syncedBlocked: false };
     }
   }
