@@ -156,8 +156,9 @@ async function findCalendarRecord(companyName, calendarCode, targetDateISO) {
       const rows = await fetchJsonSafe(resp);
       if (Array.isArray(rows) && rows.length > 0) return rows[0];
     }
-    // 3) Último recurso: construir registro artificial con el día objetivo
-    return { allocation_period: ap, day: isoDay, calendar_code: calendarCode || '' };
+    // 3) Sin registro válido, devolver null para evitar violar la FK
+    try { console.warn(`calendar_period_days no tiene registros para calendar_code=${calendarCode} en ${yyyy}-${mm}`); } catch {}
+    return null;
   } catch {
     return null;
   }
@@ -170,6 +171,7 @@ async function resolveHeaderIdForResource(companyName, resourceCode, targetDateI
   const cal = await findCalendarRecord(companyName, calendarCode || '', targetDateISO);
   if (!cal || !cal.allocation_period) return { headerId: null, syncedBlocked: false };
   const ap = cal.allocation_period;
+  try { console.log('Calendario resuelto para header:', { ap, calendar_code: cal.calendar_code, day: cal.day }); } catch {}
   // Buscar header del período exacto
   const url = `${cfg.baseUrl}/rest/v1/resource_timesheet_header?select=id,synced_to_bc,allocation_period,company_name,resource_no&company_name=eq.${encodeURIComponent(
     companyName
