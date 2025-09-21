@@ -10,7 +10,7 @@ function TimesheetHeaderList({ headers: propHeaders }) {
   const { accounts } = useMsal();
   const [headers, setHeaders] = useState(propHeaders || []);
   const navigate = useNavigate();
-  
+
   console.log("🔍 Headers state:", headers);
   console.log("🔍 Accounts:", accounts);
 
@@ -49,7 +49,7 @@ function TimesheetHeaderList({ headers: propHeaders }) {
   }, [accounts, propHeaders]);
 
   console.log("🔍 Renderizando componente, headers.length:", headers.length);
-  
+
   return (
     <div>
       <h2 className="timesheet-title">Partes de Horas</h2>
