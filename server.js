@@ -135,29 +135,27 @@ async function findCalendarRecord(companyName, calendarCode, targetDateISO) {
   try {
     const d = new Date(`${targetDateISO}T00:00:00Z`);
     if (Number.isNaN(d.getTime())) return null;
-    const dayNum = d.getUTCDate();
     const yyyy = d.getUTCFullYear();
     const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(dayNum).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
     const isoDay = `${yyyy}-${mm}-${dd}`;
-    // 1) Intentar día exacto o número de día
-    const orParam = `or=(day.eq.${dayNum},day.eq.${isoDay})`;
-    let url = `${cfg.baseUrl}/rest/v1/calendar_period_days?select=allocation_period,day,calendar_code&calendar_code=eq.${encodeURIComponent(calendarCode || '')}&${orParam}&limit=1`;
+    const periodCode = `M${String(yyyy).slice(-2)}-M${mm}`; // p.ej., M25-M09
+
+    // 1) Buscar por período y día exactos, sin filtrar calendar_code
+    let url = `${cfg.baseUrl}/rest/v1/calendar_period_days?select=allocation_period,day,calendar_code&allocation_period=eq.${encodeURIComponent(periodCode)}&day=eq.${encodeURIComponent(isoDay)}&limit=10`;
     let resp = await fetch(url, { headers: cfg.headers });
     if (resp.ok) {
-      const rows = await fetchJsonSafe(resp);
-      if (Array.isArray(rows) && rows.length > 0) return rows[0];
+      const rows = (await fetchJsonSafe(resp)) || [];
+      if (Array.isArray(rows) && rows.length > 0) {
+        // Intentar match exacto por calendar_code; si no, devolver el primero y loguear
+        const exact = rows.find(r => String(r.calendar_code) === String(calendarCode));
+        if (exact) return exact;
+        try { console.warn(`calendar_period_days devuelve ${rows.length} filas para ${periodCode} ${isoDay} sin match exacto de calendar_code='${calendarCode}'. Usando la primera fila: ${rows[0]?.calendar_code}`); } catch {}
+        return rows[0];
+      }
     }
-    // 2) Fallback: primer registro del período conocido
-    const ap = `${yyyy}-${mm}`;
-    url = `${cfg.baseUrl}/rest/v1/calendar_period_days?select=allocation_period,day,calendar_code&calendar_code=eq.${encodeURIComponent(calendarCode || '')}&allocation_period=eq.${encodeURIComponent(ap)}&order=day.asc&limit=1`;
-    resp = await fetch(url, { headers: cfg.headers });
-    if (resp.ok) {
-      const rows = await fetchJsonSafe(resp);
-      if (Array.isArray(rows) && rows.length > 0) return rows[0];
-    }
-    // 3) Sin registro válido, devolver null para evitar violar la FK
-    try { console.warn(`calendar_period_days no tiene registros para calendar_code=${calendarCode} en ${yyyy}-${mm}`); } catch {}
+
+    try { console.error(`calendar_period_days sin filas para period=${periodCode}, day=${isoDay}. No se puede crear header.`); } catch {}
     return null;
   } catch {
     return null;
