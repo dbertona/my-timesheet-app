@@ -1,5 +1,5 @@
 import { useMsal } from "@azure/msal-react";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/TimesheetHeaderList.css";
 import { supabaseClient } from "../supabaseClient.js";
@@ -69,16 +69,27 @@ function TimesheetHeaderList({ headers: propHeaders }) {
                   <td>{header.department_code}</td>
                   <td>{header.synced_to_bc ? "✅" : "❌"}</td>
                   <td>
-                    <button
-                      onClick={() => {
-                        // Editar pulsado
-                        navigate(`/edit/${header.id}`);
-                      }}
-                      disabled={header.synced_to_bc}
-                      className="edit-button"
-                    >
-                      Editar
-                    </button>
+                    {header.synced_to_bc ? (
+                      <button
+                        onClick={() => {
+                          // Ver pulsado - vista de solo lectura
+                          navigate(`/view/${header.id}`);
+                        }}
+                        className="view-button"
+                      >
+                        Ver
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          // Editar pulsado
+                          navigate(`/edit/${header.id}`);
+                        }}
+                        className="edit-button"
+                      >
+                        Editar
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
