@@ -1,9 +1,9 @@
 import cors from "cors";
+import { randomUUID } from 'crypto';
+import dotenv from 'dotenv';
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import dotenv from 'dotenv';
-import { randomUUID } from 'crypto';
 
 // Carga las variables de entorno del fichero .env en el directorio actual
 dotenv.config();
@@ -265,6 +265,31 @@ function getWorkingDayHours(companyId) {
   return Number.isFinite(v) && v > 0 ? v : 8;
 }
 
+async function getCalendarWorkingHours(calendarCode, dateISO) {
+  const cfg = supabaseHeaders();
+  if (!cfg) return null;
+  try {
+    const d = new Date(`${dateISO}T00:00:00Z`);
+    if (Number.isNaN(d.getTime())) return null;
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    const periodCode = `M${String(yyyy).slice(-2)}-M${mm}`;
+    const isoDay = `${yyyy}-${mm}-${dd}`;
+    const url = `${cfg.baseUrl}/rest/v1/calendar_period_days?select=hours_working,holiday&allocation_period=eq.${encodeURIComponent(periodCode)}&day=eq.${encodeURIComponent(isoDay)}&calendar_code=eq.${encodeURIComponent(calendarCode || '')}&limit=1`;
+    const resp = await fetch(url, { headers: cfg.headers });
+    if (!resp.ok) return null;
+    const rows = await fetchJsonSafe(resp);
+    const row = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+    if (!row) return null;
+    if (row.holiday === true) return 0;
+    const hw = Number(row.hours_working);
+    return Number.isFinite(hw) ? hw : null;
+  } catch {
+    return null;
+  }
+}
+
 function getJobConfig(companyId) {
   if (companyId === 'psi') {
     return {
@@ -452,7 +477,7 @@ async function syncLeaveToTimesheet({
   }
 
   const dates = expandDateRange(startOn, finishOn);
-  const quantity = computeDailyQuantity(companyId, dates.length, halfDay);
+  const isHalf = Boolean(halfDay) && dates.length === 1;
   const taskType = mapTaskFromFactorialType(leaveTypeName);
   const userDesc = (originalDescription ?? '').toString().trim();
   const fallbackDesc = leaveTypeName || (taskType === 'VACACIONES' ? 'Vacaciones' : taskType === 'BAJAS' ? 'Bajas' : 'Permisos');
@@ -460,6 +485,7 @@ async function syncLeaveToTimesheet({
   const jobNo = vacationProject?.no || '';
   const jobTaskNo = taskType;
   const workType = taskType;
+  const projectDescription = vacationProject?.description || '';
   try { console.log("Proyecto de vacaciones:", { jobNo, departmentCode, companyName }); } catch {}
 
   const existing = await supabaseFetchExistingLinesByLeave(companyName, factorialLeaveId);
@@ -473,12 +499,17 @@ async function syncLeaveToTimesheet({
 
   for (const dateStr of dates) {
     const exists = existingByDate.get(dateStr);
+    // Calcular horas reales para el día según calendario; fallback a env
+    let hoursWorking = await getCalendarWorkingHours(resourceInfo?.calendar_type || '', dateStr);
+    if (!Number.isFinite(hoursWorking)) hoursWorking = getWorkingDayHours(companyId);
+    const quantity = isHalf ? hoursWorking * 0.5 : hoursWorking;
     const baseRow = {
       company: companyName,
       company_name: companyName,
       date: dateStr,
       description: desc,
       job_no: jobNo,
+      job_no_and_description: projectDescription ? `${jobNo} - ${projectDescription}` : jobNo,
       job_task_no: jobTaskNo,
       job_responsible: 'factorial',
       resource_responsible: 'factorial',
@@ -502,6 +533,8 @@ async function syncLeaveToTimesheet({
       if (String(exists.resource_no || '') !== String(resourceInfo?.resource_code || '')) changes.resource_no = resourceInfo?.resource_code || '';
       if (String(exists.resource_name || '') !== String(resourceInfo?.resource_name || employeeFullName || '')) changes.resource_name = resourceInfo?.resource_name || employeeFullName || '';
       if (String(exists.job_no || '') !== String(jobNo || '')) changes.job_no = jobNo || '';
+      const desiredJoin = projectDescription ? `${jobNo} - ${projectDescription}` : jobNo;
+      if (String(exists.job_no_and_description || '') !== String(desiredJoin)) changes.job_no_and_description = desiredJoin;
       if (String(exists.job_task_no || '') !== String(jobTaskNo || '')) changes.job_task_no = jobTaskNo || '';
       if (String(exists.work_type || '') !== String(workType || '')) changes.work_type = workType || '';
       if ((exists.department_code || null) !== (departmentCode || null)) changes.department_code = departmentCode || null;
