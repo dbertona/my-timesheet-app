@@ -1,6 +1,6 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { format, isAfter, isBefore, parse } from "date-fns";
+import { useCallback, useEffect, useRef, useState } from "react";
 import TIMESHEET_FIELDS from "../constants/timesheetFields";
-import { parse, isBefore, isAfter, format } from "date-fns";
 import { formatDate, parseDate } from "../utils/dateHelpers";
 
 export default function useTimesheetEdit({
@@ -436,6 +436,16 @@ export default function useTimesheetEdit({
       return !nonEditableColumns.includes(colKey);
     };
 
+    // Función para identificar si una línea es editable en general
+    const isRowEditable = (rowIndex) => {
+      if (readOnly) return false;
+      const ln = lines[rowIndex];
+      if (!ln) return false;
+      if (ln.isFactorialLine) return false;
+      if (ln.status === "Pending") return false;
+      return true;
+    };
+
     // Si el siguiente campo no es editable, saltarlo
     let attempts = 0;
     const maxAttempts = TIMESHEET_FIELDS.length; // Evitar bucle infinito
@@ -460,6 +470,31 @@ export default function useTimesheetEdit({
           nextLineIndex =
             nextLineIndex < lines.length - 1 ? nextLineIndex + 1 : 0;
         }
+      }
+      attempts++;
+    }
+
+    // Si la fila objetivo no es editable, buscar la siguiente fila editable
+    let rowAttempts = 0;
+    const maxRowAttempts = Math.max(1, lines.length);
+    while (!isRowEditable(nextLineIndex) && rowAttempts < maxRowAttempts) {
+      if (key === "ArrowUp") {
+        nextLineIndex = nextLineIndex > 0 ? nextLineIndex - 1 : lines.length - 1;
+      } else {
+        nextLineIndex = nextLineIndex < lines.length - 1 ? nextLineIndex + 1 : 0;
+      }
+      rowAttempts++;
+    }
+
+    // Garantizar que la columna elegida sea editable tras mover de fila
+    attempts = 0;
+    while (!isColumnEditable(TIMESHEET_FIELDS[nextFieldIndex]) && attempts < maxAttempts) {
+      if (key === "ArrowLeft" || key === "ArrowUp") {
+        nextFieldIndex =
+          nextFieldIndex > 0 ? nextFieldIndex - 1 : TIMESHEET_FIELDS.length - 1;
+      } else {
+        nextFieldIndex =
+          nextFieldIndex < TIMESHEET_FIELDS.length - 1 ? nextFieldIndex + 1 : 0;
       }
       attempts++;
     }
