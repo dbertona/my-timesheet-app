@@ -61,6 +61,7 @@ function TimesheetEdit({ headerId }) {
   const { instance, accounts } = useMsal();
 
   const [header, setHeader] = useState(null);
+  const isReadOnly = Boolean(header?.synced_to_bc === true || String(header?.synced_to_bc) === 'true' || String(header?.synced_to_bc) === 't');
   const [lines, setLines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editFormData, setEditFormData] = useState({});
@@ -2752,7 +2753,7 @@ function TimesheetEdit({ headerId }) {
             }}
           >
             {/* Header a la izquierda */}
-            <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, pointerEvents: isReadOnly ? 'none' : 'auto', opacity: isReadOnly ? 0.9 : 1 }}>
               <TimesheetHeader
                 header={header}
                 onHeaderChange={setEditableHeader}
@@ -3144,6 +3145,7 @@ function TimesheetEdit({ headerId }) {
               onDeleteLines={handleDeleteLines}
               addEmptyLine={addEmptyLine} // 🆕 Pasar función para agregar línea vacía
               showResponsible={true}
+              readOnly={isReadOnly}
             />
           </div>
         </div>

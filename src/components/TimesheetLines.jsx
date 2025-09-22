@@ -55,6 +55,7 @@ export default function TimesheetLines({
   showResponsible = false, // 🆕 Mostrar columna de responsable (solo aprobación)
   showResourceColumns = false, // 🆕 Mostrar columnas de recurso (solo aprobación)
   extraColumns = [], // 🆕 Columnas extra (se insertan tras la columna de selección)
+  readOnly = false,
 }) {
   const extraKeys = Array.isArray(extraColumns)
     ? extraColumns.map((c) => String(c.key))
@@ -412,6 +413,7 @@ export default function TimesheetLines({
 
   // 🆕 Función helper para verificar si una línea es editable
   const isLineEditable = (line) => {
+    if (readOnly) return false;
     // Las líneas de Factorial no son editables
     if (line.isFactorialLine) return false;
     // Las líneas con estado "Pending" no son editables
