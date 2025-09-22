@@ -12,6 +12,7 @@ export default function useTimesheetEdit({
   calendarHolidays,
   addEmptyLine, // función sincrónica del padre: crea línea local y devuelve id
   markAsChanged, // función para marcar cambios no guardados
+  readOnly = false,
 }) {
   const inputRefs = useRef({});
   const selectionRef = useRef({ lineId: null, field: null, start: 0, end: 0 });
@@ -383,6 +384,7 @@ export default function useTimesheetEdit({
     } else if (key === "ArrowDown") {
       // si es la última fila, crear nueva y enfocar MISMA columna
       if (
+        !readOnly &&
         lineIndex === lines.length - 1 &&
         typeof addEmptyLine === "function"
       ) {
@@ -390,10 +392,8 @@ export default function useTimesheetEdit({
         const colName = TIMESHEET_FIELDS[fieldIndex]; // misma columna
         setTimeout(() => {
           const input = inputRefs.current?.[newId]?.[colName];
-          if (input) {
-            input.focus();
-            input.select();
-          }
+          input?.focus?.();
+          input?.select?.();
         }, 0);
         return;
       } else {
@@ -411,6 +411,7 @@ export default function useTimesheetEdit({
       if (nextFieldIndex === 0) {
         // hemos envuelto a la primera columna → bajar de fila
         if (
+          !readOnly &&
           lineIndex === lines.length - 1 &&
           typeof addEmptyLine === "function"
         ) {
@@ -418,10 +419,8 @@ export default function useTimesheetEdit({
           const firstCol = TIMESHEET_FIELDS[0]; // al tabular pasa a la primera columna
           setTimeout(() => {
             const input = inputRefs.current?.[newId]?.[firstCol];
-            if (input) {
-              input.focus();
-              input.select();
-            }
+            input?.focus?.();
+            input?.select?.();
           }, 0);
           return;
         } else {
@@ -469,6 +468,7 @@ export default function useTimesheetEdit({
     // el movimiento por Enter/Tab/ArrowRight termina en la primera columna,
     // crear una nueva línea y enfocar `job_no` en esa nueva línea.
     if (
+      !readOnly &&
       (key === "ArrowRight" || key === "Tab" || key === "Enter") &&
       lineIndex === lines.length - 1 &&
       nextFieldIndex === 0 &&

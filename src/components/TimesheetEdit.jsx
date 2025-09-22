@@ -2192,6 +2192,7 @@ function TimesheetEdit({ headerId }) {
     if (!isEffectivelyNewParte) return;
     if (createdInitialLineRef.current) return;
     if (Array.isArray(lines) && lines.length > 0) return;
+    if (isReadOnly) return; // no crear en modo solo lectura
     const id = addEmptyLine();
     if (id) createdInitialLineRef.current = true;
   }, [location.pathname, lines, header, effectiveHeaderId]);
@@ -2203,6 +2204,7 @@ function TimesheetEdit({ headerId }) {
     if (!effectiveHeaderId) return; // sólo cuando ya tenemos header resuelto
     if (createdInitialLineRef.current) return;
     if (!Array.isArray(lines) || lines.length > 0) return;
+    if (isReadOnly) return; // no crear en modo solo lectura
     const id = addEmptyLine();
     if (id) createdInitialLineRef.current = true;
   }, [location.pathname, effectiveHeaderId, lines]);
@@ -2232,6 +2234,7 @@ function TimesheetEdit({ headerId }) {
       });
 
     if (Array.isArray(lines) && lines.length > 0 && !hasEmptyTmp) {
+      if (isReadOnly) return; // no crear en modo solo lectura
       const id = addEmptyLine();
       if (id) createdInitialLineRef.current = true;
     }
@@ -2860,19 +2863,22 @@ function TimesheetEdit({ headerId }) {
                     }
 
                     // Crear nueva si no hay tmp vacía
-                    const newId = addEmptyLine();
-                    setEditFormData((prev) => ({
-                      ...prev,
-                      [newId]: { ...(prev[newId] || {}), date: display },
-                    }));
-                    setLines((prev) =>
-                      sortLines(
-                        prev.map((l) =>
-                          l.id === newId ? { ...l, date: display } : l
+                    if (!isReadOnly) {
+                      const newId = addEmptyLine();
+                      setEditFormData((prev) => ({
+                        ...prev,
+                        [newId]: { ...(prev[newId] || {}), date: display },
+                      }));
+                      setLines((prev) =>
+                        sortLines(
+                          prev.map((l) =>
+                            l.id === newId ? { ...l, date: display } : l
+                          )
                         )
-                      )
-                    );
-                    focusFirstAvailable(newId);
+                      );
+                      focusFirstAvailable(newId);
+                    }
+                    return;
                   } catch {
                     /* ignore */
                   }
