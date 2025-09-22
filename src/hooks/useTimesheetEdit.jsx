@@ -436,8 +436,13 @@ export default function useTimesheetEdit({
 
     // Función para identificar si una columna es editable
     const isColumnEditable = (colKey) => {
-      // Columnas NO editables
-      const nonEditableColumns = ["job_no_description", "department_code"];
+      // Columnas NO editables o NO visibles en el body por defecto
+      const nonEditableColumns = [
+        "job_no_description",
+        "department_code",
+        "resource_no",
+        "resource_name",
+      ];
       return !nonEditableColumns.includes(colKey);
     };
 
@@ -448,6 +453,8 @@ export default function useTimesheetEdit({
       if (!ln) return false;
       if (ln.isFactorialLine) return false;
       if (ln.status === "Pending") return false;
+      // 🆕 Las líneas rechazadas no son editables hasta reabrir
+      if (ln.status === "Rejected") return false;
       return true;
     };
 
