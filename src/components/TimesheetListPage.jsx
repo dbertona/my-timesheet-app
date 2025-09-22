@@ -271,8 +271,8 @@ function TimesheetListPage() {
                   <td className="ts-td" style={{ textAlign: "left" }}>{formatDate(header.created_at)}</td>
                   <td className="ts-td" style={{ textAlign: "left" }}>
                     {(() => {
-                      // Normalizamos el tipo: puede venir como boolean o como string
-                      const isSynced = header.synced_to_bc === true || header.synced_to_bc === "true";
+                      // Mostrar "Ver" si está sincronado o si existe documento en BC
+                      const isSynced = header.synced_to_bc === true || String(header.synced_to_bc) === "true" || String(header.synced_to_bc) === "t" || !!header.bc_document_no;
                       if (isSynced) {
                         return (
                           <button
