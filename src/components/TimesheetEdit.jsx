@@ -83,23 +83,28 @@ function TimesheetEdit({ headerId }) {
       if (tableContainer) {
         const viewportHeight = window.innerHeight;
         const tableTopPosition = tableContainer.getBoundingClientRect().top;
-        const bottomMargin = 20; // Margen más pequeño para evitar espacio extra
+        const bottomMargin = 16; // margen de seguridad
 
-        const availableHeight = viewportHeight - tableTopPosition - bottomMargin;
+        const availableHeight = Math.max(120, Math.floor(viewportHeight - tableTopPosition - bottomMargin));
 
         // Solo establecer max-height, no height fijo
         tableContainer.style.height = 'auto';
         tableContainer.style.maxHeight = `${availableHeight}px`;
-        tableContainer.style.overflow = 'auto';
+        tableContainer.style.overflowY = 'auto';
+        tableContainer.style.overflowX = 'hidden';
       }
     };
 
     // Ejecutar al montar y al cambiar el tamaño de la ventana
-    calculateAndSetHeight();
+    requestAnimationFrame(() => {
+      calculateAndSetHeight();
+      setTimeout(calculateAndSetHeight, 50);
+      setTimeout(calculateAndSetHeight, 120);
+    });
     window.addEventListener('resize', calculateAndSetHeight);
 
     // Ejecutar con un pequeño retraso cuando los datos cambien
-    const timeoutId = setTimeout(calculateAndSetHeight, 50);
+    const timeoutId = setTimeout(calculateAndSetHeight, 80);
 
     return () => {
       window.removeEventListener('resize', calculateAndSetHeight);
@@ -2711,7 +2716,7 @@ function TimesheetEdit({ headerId }) {
   }
 
   return (
-    <div className="ts-responsive timesheet-edit-page">
+    <div className="timesheet-edit-page" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       <div className="timesheet-container ts-page">
         {/* Header de navegación (componente unificado) */}
         <div
