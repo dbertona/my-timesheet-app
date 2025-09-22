@@ -1,5 +1,5 @@
 import { useMsal } from "@azure/msal-react";
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/TimesheetListPage.css";
 import { supabaseClient } from "../supabaseClient";
@@ -276,7 +276,7 @@ function TimesheetListPage() {
                       if (isSynced) {
                         return (
                           <button
-                            onClick={() => navigate(`/view/${header.id}`)}
+                            onClick={() => navigate(`/edit/${header.id}`)}
                             className="ts-btn ts-btn--secondary ts-btn--small"
                           >
                             Ver

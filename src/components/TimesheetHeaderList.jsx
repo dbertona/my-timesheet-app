@@ -93,8 +93,8 @@ function TimesheetHeaderList({ headers: propHeaders }) {
                     })() ? (
                       <button
                         onClick={() => {
-                          // Ver pulsado - vista de solo lectura
-                          navigate(`/view/${header.id}`);
+                          // Ver pulsado - reutilizamos vista de edición como solo lectura
+                          navigate(`/edit/${header.id}`);
                         }}
                         className="view-button"
                       >
