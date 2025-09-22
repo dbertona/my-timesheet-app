@@ -272,11 +272,11 @@ function TimesheetListPage() {
                   <td className="ts-td" style={{ textAlign: "left" }}>
                     {(() => {
                       // Mostrar "Ver" solo si está sincronado (true/'true'/'t')
-                      const isSynced = header.synced_to_bc === true || String(header.synced_to_bc) === "true" || String(header.synced_to_bc) === "t";                                         
+                      const isSynced = header.synced_to_bc === true || String(header.synced_to_bc) === "true" || String(header.synced_to_bc) === "t";
                       if (isSynced) {
                         return (
                           <button
-                            onClick={() => navigate(`/edit/${header.id}`)}
+                            onClick={() => navigate(`/edit/${header.id}`, { state: { readOnly: true } })}
                             className="ts-btn ts-btn--secondary ts-btn--small"
                           >
                             Ver

@@ -61,7 +61,13 @@ function TimesheetEdit({ headerId }) {
   const { instance, accounts } = useMsal();
 
   const [header, setHeader] = useState(null);
-  const isReadOnly = Boolean(header?.synced_to_bc === true || String(header?.synced_to_bc) === 'true' || String(header?.synced_to_bc) === 't');
+  const isReadOnlyFromRoute = Boolean(location.state?.readOnly);
+  const isReadOnly = Boolean(
+    isReadOnlyFromRoute ||
+    header?.synced_to_bc === true ||
+    String(header?.synced_to_bc) === 'true' ||
+    String(header?.synced_to_bc) === 't'
+  );
   const [lines, setLines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editFormData, setEditFormData] = useState({});
