@@ -418,6 +418,8 @@ export default function TimesheetLines({
     if (line.isFactorialLine) return false;
     // Las líneas con estado "Pending" no son editables
     if (line.status === "Pending") return false;
+    // Las líneas con estado "Rejected" no son editables hasta reabrir
+    if (line.status === "Rejected") return false;
     return true;
   };
 

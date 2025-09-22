@@ -353,6 +353,11 @@ export default function useTimesheetEdit({
     ].includes(key);
     if (!isNav) return;
 
+    // Dirección de navegación explícita (soporte Shift+Tab como retroceso)
+    const isBackward = key === "ArrowLeft" || (key === "Tab" && e.shiftKey);
+    const isForward =
+      key === "ArrowRight" || key === "Enter" || (key === "Tab" && !e.shiftKey);
+
     // Si estamos en "date", expandimos y validamos antes de movernos
     const field = TIMESHEET_FIELDS[fieldIndex];
     if (field === "date") {
@@ -399,13 +404,13 @@ export default function useTimesheetEdit({
       } else {
         nextLineIndex = lineIndex + 1;
       }
-    } else if (key === "ArrowLeft") {
+    } else if (isBackward) {
       nextFieldIndex =
         fieldIndex > 0 ? fieldIndex - 1 : TIMESHEET_FIELDS.length - 1;
       if (nextFieldIndex === TIMESHEET_FIELDS.length - 1) {
         nextLineIndex = lineIndex > 0 ? lineIndex - 1 : lines.length - 1;
       }
-    } else if (key === "ArrowRight" || key === "Tab" || key === "Enter") {
+    } else if (isForward) {
       nextFieldIndex =
         fieldIndex < TIMESHEET_FIELDS.length - 1 ? fieldIndex + 1 : 0;
       if (nextFieldIndex === 0) {
@@ -431,8 +436,13 @@ export default function useTimesheetEdit({
 
     // Función para identificar si una columna es editable
     const isColumnEditable = (colKey) => {
-      // Columnas NO editables
-      const nonEditableColumns = ["job_no_description", "department_code"];
+      // Columnas NO editables o NO visibles en el body por defecto
+      const nonEditableColumns = [
+        "job_no_description",
+        "department_code",
+        "resource_no",
+        "resource_name",
+      ];
       return !nonEditableColumns.includes(colKey);
     };
 
@@ -443,6 +453,8 @@ export default function useTimesheetEdit({
       if (!ln) return false;
       if (ln.isFactorialLine) return false;
       if (ln.status === "Pending") return false;
+      // 🆕 Las líneas rechazadas no son editables hasta reabrir
+      if (ln.status === "Rejected") return false;
       return true;
     };
 
@@ -454,7 +466,7 @@ export default function useTimesheetEdit({
       !isColumnEditable(TIMESHEET_FIELDS[nextFieldIndex]) &&
       attempts < maxAttempts
     ) {
-      if (key === "ArrowLeft") {
+      if (isBackward) {
         // Ir a la columna anterior
         nextFieldIndex =
           nextFieldIndex > 0 ? nextFieldIndex - 1 : TIMESHEET_FIELDS.length - 1;
@@ -462,7 +474,7 @@ export default function useTimesheetEdit({
           nextLineIndex =
             nextLineIndex > 0 ? nextLineIndex - 1 : lines.length - 1;
         }
-      } else if (key === "ArrowRight" || key === "Tab" || key === "Enter") {
+      } else if (isForward) {
         // Ir a la columna siguiente
         nextFieldIndex =
           nextFieldIndex < TIMESHEET_FIELDS.length - 1 ? nextFieldIndex + 1 : 0;
@@ -489,7 +501,7 @@ export default function useTimesheetEdit({
     // Garantizar que la columna elegida sea editable tras mover de fila
     attempts = 0;
     while (!isColumnEditable(TIMESHEET_FIELDS[nextFieldIndex]) && attempts < maxAttempts) {
-      if (key === "ArrowLeft" || key === "ArrowUp") {
+      if (isBackward || key === "ArrowUp") {
         nextFieldIndex =
           nextFieldIndex > 0 ? nextFieldIndex - 1 : TIMESHEET_FIELDS.length - 1;
       } else {
@@ -504,7 +516,7 @@ export default function useTimesheetEdit({
     // crear una nueva línea y enfocar `job_no` en esa nueva línea.
     if (
       !readOnly &&
-      (key === "ArrowRight" || key === "Tab" || key === "Enter") &&
+      isForward &&
       lineIndex === lines.length - 1 &&
       nextFieldIndex === 0 &&
       typeof addEmptyLine === "function"

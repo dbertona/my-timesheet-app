@@ -74,8 +74,9 @@ describe('TimesheetLines integration - React Query loading/error and Supabase er
 
   it('renders while jobs/workTypes are loading (no crashes)', () => {
     render(<TimesheetLines {...baseProps} />, { wrapper: createWrapper() });
-    // Solo valida que la tabla exista y no explote aun sin datos cargados
-    expect(screen.getByRole('table')).toBeInTheDocument();
+    // Con header y body separados hay 2 tablas: tomamos el body (índice 1)
+    const tables = screen.getAllByRole('table');
+    expect(tables[1]).toBeInTheDocument();
   });
 
   it('renders with data after loading completes', async () => {

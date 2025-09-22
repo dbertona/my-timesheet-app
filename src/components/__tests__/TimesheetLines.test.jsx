@@ -236,10 +236,10 @@ describe('TimesheetLines', () => {
   it('should render table with correct structure', () => {
     renderWithQueryClient(<TimesheetLines {...defaultProps} />);
 
-    // Should render main table
-    const table = screen.getByRole('table');
-    expect(table).toBeInTheDocument();
-    expect(table).toHaveClass('ts-table');
+    // Header y body rinden 2 tablas; validamos la del body
+    const [, body] = screen.getAllByRole('table');
+    expect(body).toBeInTheDocument();
+    expect(body).toHaveClass('ts-table');
 
     // Should render table headers
     expect(screen.getByText('Fecha')).toBeInTheDocument();
