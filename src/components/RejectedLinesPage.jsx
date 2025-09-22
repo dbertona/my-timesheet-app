@@ -165,6 +165,7 @@ export default function RejectedLinesPage() {
           id,
           header_id,
           status,
+          rejection_cause,
           job_no,
           job_task_no,
           description,
