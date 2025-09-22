@@ -63,7 +63,7 @@ export default function RejectedLinesPage() {
   // Filtros locales (patrón similar a otras páginas)
   const [filterPeriod, setFilterPeriod] = useState("");
   const [filterProject, setFilterProject] = useState("");
-  
+
   // Filtros con debounce para evitar refrescos invasivos
   const [debouncedFilterPeriod, setDebouncedFilterPeriod] = useState("");
   const [debouncedFilterProject, setDebouncedFilterProject] = useState("");
@@ -98,7 +98,7 @@ export default function RejectedLinesPage() {
     queryKey: ["projects-in-rejected", resourceCode],
     queryFn: async () => {
       if (!resourceCode) return [];
-      
+
       // Primero obtener job numbers de líneas rechazadas
       const { data: simpleData, error: simpleError } = await supabaseClient
         .from("timesheet")
@@ -107,19 +107,19 @@ export default function RejectedLinesPage() {
         .eq("resource_responsible", resourceCode)
         .not("job_no", "is", null)
         .limit(100);
-      
+
       if (simpleError) {
         console.error("❌ Error en consulta simple:", simpleError);
         throw simpleError;
       }
-      
+
       if (!simpleData || simpleData.length === 0) {
         return [];
       }
-      
+
       // Obtener los proyectos únicos
       const jobNos = [...new Set(simpleData.map(line => line.job_no).filter(Boolean))];
-      
+
       const { data, error } = await supabaseClient
         .from("job")
         .select("no, description")
@@ -135,7 +135,7 @@ export default function RejectedLinesPage() {
         no: job.no,
         description: job.description
       }));
-      
+
       return result;
     },
     enabled: !!resourceCode,
@@ -165,6 +165,7 @@ export default function RejectedLinesPage() {
           id,
           header_id,
           status,
+          rejection_cause,
           job_no,
           job_task_no,
           description,
