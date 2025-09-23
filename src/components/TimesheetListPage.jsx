@@ -441,28 +441,30 @@ function TimesheetListPage() {
                   </td>
                   <td className="ts-td" style={{ ...colStyles.created_at, textAlign: "center" }}>{formatDate(header.created_at)}</td>
                   <td className="ts-td" style={{ ...colStyles.actions, textAlign: "center" }}>
-                    {(() => {
-                      // Mostrar "Ver" solo si está sincronado (true/'true'/'t')
-                      const isSynced = header.synced_to_bc === true || String(header.synced_to_bc) === "true" || String(header.synced_to_bc) === "t";
-                      if (isSynced) {
+                    <div className="ts-cell-center">
+                      {(() => {
+                        // Mostrar "Ver" solo si está sincronado (true/'true'/'t')
+                        const isSynced = header.synced_to_bc === true || String(header.synced_to_bc) === "true" || String(header.synced_to_bc) === "t";
+                        if (isSynced) {
+                          return (
+                            <button
+                              onClick={() => navigate(`/edit/${header.id}`, { state: { readOnly: true } })}
+                              className="ts-btn ts-btn--secondary ts-btn--small"
+                            >
+                              Ver
+                            </button>
+                          );
+                        }
                         return (
                           <button
-                            onClick={() => navigate(`/edit/${header.id}`, { state: { readOnly: true } })}
-                            className="ts-btn ts-btn--secondary ts-btn--small"
+                            onClick={() => handleSelectTimesheet(header.id)}
+                            className="ts-btn ts-btn--primary ts-btn--small"
                           >
-                            Ver
+                            Editar
                           </button>
                         );
-                      }
-                      return (
-                        <button
-                          onClick={() => handleSelectTimesheet(header.id)}
-                          className="ts-btn ts-btn--primary ts-btn--small"
-                        >
-                          Editar
-                        </button>
-                      );
-                    })()}
+                      })()}
+                    </div>
                   </td>
                 </tr>
               ))}
