@@ -491,7 +491,7 @@ export default function TimesheetLines({
                 <th
                   key={`extra-head-${col.key}`}
                   className="ts-th"
-                  style={{ ...(colStyles[col.key] || {}), textAlign: col.align || "left" }}
+                  style={{ ...(colStyles[col.key] || {}), textAlign: "center" }}
                 >
                   {col.label || col.key}
                   <span
@@ -509,7 +509,7 @@ export default function TimesheetLines({
                   key={key}
                   data-col={key}
                   className="ts-th"
-                  style={{ ...colStyles[key] }}
+                  style={{ ...colStyles[key], textAlign: "center" }}
                 >
                   {TIMESHEET_LABELS?.[key] || key}
                   <span
@@ -522,7 +522,7 @@ export default function TimesheetLines({
               )
             ))}
             {showResponsible && (
-              <th className="ts-th" style={{ width: "160px" }}>
+              <th className="ts-th" style={{ width: "160px", textAlign: "center" }}>
                 Responsable
               </th>
             )}

@@ -736,7 +736,7 @@ export default function ApprovalPage() {
           <table className="ts-table">
             <thead>
               <tr>
-                <th className="ts-th" style={{ width: "40px" }}>
+                <th className="ts-th" style={{ width: "40px", textAlign: "center" }}>
                   <input
                     type="checkbox"
                     checked={
@@ -752,15 +752,15 @@ export default function ApprovalPage() {
                     }}
                   />
                 </th>
-                <th className="ts-th" style={{ textAlign: "left" }}>
+                <th className="ts-th" style={{ textAlign: "center" }}>
                   Recurso
                 </th>
-                <th className="ts-th" style={{ textAlign: "left" }}>
+                <th className="ts-th" style={{ textAlign: "center" }}>
                   Período
                 </th>
                 <th
                   className="ts-th"
-                  style={{ textAlign: "right", width: "140px" }}
+                  style={{ textAlign: "center", width: "140px" }}
                 >
                   Líneas pendientes
                 </th>
