@@ -26,8 +26,47 @@ function TimesheetListPage() {
     "actions"
   ];
 
-  // Hook para redimensionamiento de columnas
-  const { colStyles, onMouseDown, setWidths } = useColumnResize(columns, "timesheet-list-columns", 80);
+  // Límites por columna y defaults (UX consistente)
+  const colInitial = {
+    posting_date: 120,
+    posting_description: 320,
+    allocation_period: 120,
+    synced_to_bc: 90,
+    created_at: 120,
+    actions: 120,
+  };
+  const colMin = {
+    posting_date: 100,
+    posting_description: 220,
+    allocation_period: 100,
+    synced_to_bc: 80,
+    created_at: 100,
+    actions: 110,
+  };
+  const colMax = {
+    posting_date: 160,
+    posting_description: 560,
+    allocation_period: 160,
+    synced_to_bc: 120,
+    created_at: 160,
+    actions: 140,
+  };
+  const fixedCols = new Set(["synced_to_bc", "actions", "posting_date", "created_at"]);
+
+  // Hook para redimensionamiento de columnas con límites y clamp por contenedor
+  const storageKey = `timesheet-list-columns:${userEmail || 'anon'}`;
+  const { colStyles, onMouseDown, setWidths } = useColumnResize(
+    columns,
+    storageKey,
+    80,
+    {
+      initialWidths: colInitial,
+      perColumnMin: colMin,
+      perColumnMax: colMax,
+      getContainerWidth: () => tableContainerRef.current?.clientWidth,
+      disableResizeFor: Array.from(fixedCols),
+    }
+  );
 
   // Función para medir texto (igual que TimesheetLines)
   const measureWithSpan = (element, text) => {
@@ -67,8 +106,8 @@ function TimesheetListPage() {
     });
 
     const EXTRA = 6;
-    const min = 80; // Ancho mínimo por defecto
-    const max = 400; // Ancho máximo por defecto
+    const min = colMin[colKey] ?? 80; // Ancho mínimo por defecto
+    const max = colMax[colKey] ?? 400; // Ancho máximo por defecto
 
     const finalWidth = Math.max(min, Math.min(max, maxContent + EXTRA));
     setWidths((prev) => ({ ...prev, [colKey]: finalWidth }));
@@ -280,6 +319,31 @@ function TimesheetListPage() {
             <option value="no">No</option>
           </select>
         </div>
+        <div style={{ marginLeft: 'auto' }}>
+          <button
+            type="button"
+            className="ts-btn ts-btn--secondary ts-btn--small"
+            onClick={() => {
+              // Reset a defaults y limpiar preferencia del usuario
+              setWidths({
+                posting_date: 120,
+                posting_description: 320,
+                allocation_period: 120,
+                synced_to_bc: 90,
+                created_at: 120,
+                actions: 120,
+              });
+              try {
+                localStorage.removeItem(storageKey);
+              } catch {
+                /* noop */
+              }
+            }}
+            title="Restablecer diseño de columnas"
+          >
+            Reset layout
+          </button>
+        </div>
       </div>
 
       {/* Tabla de partes */}
@@ -300,57 +364,69 @@ function TimesheetListPage() {
               <tr>
                 <th className="ts-th" style={{ ...colStyles.posting_date, textAlign: "center" }}>
                   Fecha
-                  <span
-                    className="ts-resizer"
-                    onMouseDown={(e) => onMouseDown(e, "posting_date")}
-                    onDoubleClick={() => handleAutoFit("posting_date")}
-                    aria-hidden
-                  />
+                  {!fixedCols.has("posting_date") && (
+                    <span
+                      className="ts-resizer"
+                      onMouseDown={(e) => onMouseDown(e, "posting_date")}
+                      onDoubleClick={() => handleAutoFit("posting_date")}
+                      aria-hidden
+                    />
+                  )}
                 </th>
                 <th className="ts-th" style={{ ...colStyles.posting_description, textAlign: "center" }}>
                   Descripción
-                  <span
-                    className="ts-resizer"
-                    onMouseDown={(e) => onMouseDown(e, "posting_description")}
-                    onDoubleClick={() => handleAutoFit("posting_description")}
-                    aria-hidden
-                  />
+                  {!fixedCols.has("posting_description") && (
+                    <span
+                      className="ts-resizer"
+                      onMouseDown={(e) => onMouseDown(e, "posting_description")}
+                      onDoubleClick={() => handleAutoFit("posting_description")}
+                      aria-hidden
+                    />
+                  )}
                 </th>
                 <th className="ts-th" style={{ ...colStyles.allocation_period, textAlign: "center" }}>
                   Período
-                  <span
-                    className="ts-resizer"
-                    onMouseDown={(e) => onMouseDown(e, "allocation_period")}
-                    onDoubleClick={() => handleAutoFit("allocation_period")}
-                    aria-hidden
-                  />
+                  {!fixedCols.has("allocation_period") && (
+                    <span
+                      className="ts-resizer"
+                      onMouseDown={(e) => onMouseDown(e, "allocation_period")}
+                      onDoubleClick={() => handleAutoFit("allocation_period")}
+                      aria-hidden
+                    />
+                  )}
                 </th>
                 <th className="ts-th" style={{ ...colStyles.synced_to_bc, textAlign: "center" }}>
                   En BC
-                  <span
-                    className="ts-resizer"
-                    onMouseDown={(e) => onMouseDown(e, "synced_to_bc")}
-                    onDoubleClick={() => handleAutoFit("synced_to_bc")}
-                    aria-hidden
-                  />
+                  {!fixedCols.has("synced_to_bc") && (
+                    <span
+                      className="ts-resizer"
+                      onMouseDown={(e) => onMouseDown(e, "synced_to_bc")}
+                      onDoubleClick={() => handleAutoFit("synced_to_bc")}
+                      aria-hidden
+                    />
+                  )}
                 </th>
                 <th className="ts-th" style={{ ...colStyles.created_at, textAlign: "center" }}>
                   Creado
-                  <span
-                    className="ts-resizer"
-                    onMouseDown={(e) => onMouseDown(e, "created_at")}
-                    onDoubleClick={() => handleAutoFit("created_at")}
-                    aria-hidden
-                  />
+                  {!fixedCols.has("created_at") && (
+                    <span
+                      className="ts-resizer"
+                      onMouseDown={(e) => onMouseDown(e, "created_at")}
+                      onDoubleClick={() => handleAutoFit("created_at")}
+                      aria-hidden
+                    />
+                  )}
                 </th>
                 <th className="ts-th" style={{ ...colStyles.actions, textAlign: "center" }}>
                   Acciones
-                  <span
-                    className="ts-resizer"
-                    onMouseDown={(e) => onMouseDown(e, "actions")}
-                    onDoubleClick={() => handleAutoFit("actions")}
-                    aria-hidden
-                  />
+                  {!fixedCols.has("actions") && (
+                    <span
+                      className="ts-resizer"
+                      onMouseDown={(e) => onMouseDown(e, "actions")}
+                      onDoubleClick={() => handleAutoFit("actions")}
+                      aria-hidden
+                    />
+                  )}
                 </th>
               </tr>
             </thead>
