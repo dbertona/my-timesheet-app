@@ -130,26 +130,16 @@ function TimesheetListPage() {
     return new Date(dateString).toLocaleDateString("es-ES");
   };
 
-  // Obtener clases CSS para el estado
-  const getStatusClass = (status) => {
-    switch (status) {
-      case "Draft": return "status-draft";
-      case "Pending": return "status-pending";
-      case "Approved": return "status-approved";
-      case "Rejected": return "status-rejected";
-      default: return "status-unknown";
-    }
+  // Obtener clases CSS para el estado de sincronización con BC
+  const getSyncedClass = (syncedToBc) => {
+    const isSynced = syncedToBc === true || String(syncedToBc) === "true" || String(syncedToBc) === "t";
+    return isSynced ? "status-synced" : "status-not-synced";
   };
 
-  // Obtener texto del estado
-  const getStatusText = (status) => {
-    switch (status) {
-      case "Draft": return "Borrador";
-      case "Pending": return "Pendiente";
-      case "Approved": return "Aprobado";
-      case "Rejected": return "Rechazado";
-      default: return status;
-    }
+  // Obtener texto del estado de sincronización con BC
+  const getSyncedText = (syncedToBc) => {
+    const isSynced = syncedToBc === true || String(syncedToBc) === "true" || String(syncedToBc) === "t";
+    return isSynced ? "Sí" : "No";
   };
 
   if (loading) {
@@ -252,7 +242,7 @@ function TimesheetListPage() {
                 <th className="ts-th" style={{ width: 120, textAlign: "left" }}>Fecha</th>
                 <th className="ts-th" style={{ textAlign: "left" }}>Descripción</th>
                 <th className="ts-th" style={{ width: 100, textAlign: "left" }}>Período</th>
-                <th className="ts-th" style={{ width: 110, textAlign: "left" }}>Estado</th>
+                <th className="ts-th" style={{ width: 110, textAlign: "left" }}>En BC</th>
                 <th className="ts-th" style={{ width: 120, textAlign: "left" }}>Creado</th>
                 <th className="ts-th" style={{ width: 110, textAlign: "left" }}>Acciones</th>
               </tr>
@@ -264,8 +254,8 @@ function TimesheetListPage() {
                   <td className="ts-td ts-cell" style={{ textAlign: "left" }}>{header.posting_description || "Sin descripción"}</td>
                   <td className="ts-td" style={{ textAlign: "left" }}>{header.allocation_period}</td>
                   <td className="ts-td" style={{ textAlign: "left" }}>
-                    <span className={`status-badge ${getStatusClass(header.status)}`}>
-                      {getStatusText(header.status)}
+                    <span className={`status-badge ${getSyncedClass(header.synced_to_bc)}`}>
+                      {getSyncedText(header.synced_to_bc)}
                     </span>
                   </td>
                   <td className="ts-td" style={{ textAlign: "left" }}>{formatDate(header.created_at)}</td>
