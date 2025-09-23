@@ -85,7 +85,7 @@
 }
 
 .bc-switch--on {
-  background-color: #28a745;
+  background-color: #007E87;
 }
 
 .bc-switch--on .bc-switch__slider {
@@ -93,7 +93,7 @@
 }
 
 .bc-switch--off {
-  background-color: #dc3545;
+  background-color: rgba(0, 126, 135, 0.3);
 }
 
 .bc-switch--off .bc-switch__slider {
@@ -294,7 +294,7 @@
 }
 
 .bc-switch--on {
-  background-color: #28a745;
+  background-color: #007E87;
 }
 
 .bc-switch--on .bc-switch__slider {
@@ -302,7 +302,7 @@
 }
 
 .bc-switch--off {
-  background-color: #dc3545;
+  background-color: rgba(0, 126, 135, 0.3);
 }
 
 .bc-switch--off .bc-switch__slider {
