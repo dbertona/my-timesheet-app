@@ -6,7 +6,7 @@ import { toast } from "react-hot-toast";
 import useColumnResize from "../hooks/useColumnResize";
 import "../styles/ApprovalPage.css";
 import { supabaseClient } from "../supabaseClient";
-import { formatDate } from "../utils/dateHelpers";
+import { formatDate, toDisplayDate } from "../utils/dateHelpers";
 import TimesheetLines from "./TimesheetLines";
 import BackToDashboard from "./ui/BackToDashboard";
 import BcModal from "./ui/BcModal";
@@ -102,7 +102,9 @@ export default function ApprovalPage() {
           resource_timesheet_header!inner(
             id,
             resource_no,
-            allocation_period
+            allocation_period,
+            from_date,
+            to_date
           )
         `
         )
@@ -127,6 +129,8 @@ export default function ApprovalPage() {
             id: header.id,
             resource_no: header.resource_no,
             allocation_period: header.allocation_period,
+            from_date: header.from_date,
+            to_date: header.to_date,
             pendingCount: 0,
           });
         }
@@ -159,12 +163,12 @@ export default function ApprovalPage() {
   const headerTableContainerRef = useRef(null);
   const headerTableRef = useRef(null);
 
-  const headerColumns = ["sel", "resource", "period", "pending"];
+  const headerColumns = ["sel", "resource", "period", "from_date", "to_date", "pending"];
   const storageKey = `approval-headers-columns:${user?.username || 'anon'}`;
-  const colInitial = { sel: 50, resource: 320, period: 120, pending: 140 };
-  const colMin = { sel: 40, resource: 220, period: 100, pending: 100 };
-  const colMax = { sel: 60, resource: 560, period: 180, pending: 180 };
-  const fixedCols = new Set(["sel", "pending", "period"]);
+  const colInitial = { sel: 50, resource: 320, period: 120, from_date: 100, to_date: 100, pending: 140 };
+  const colMin = { sel: 40, resource: 220, period: 100, from_date: 90, to_date: 90, pending: 100 };
+  const colMax = { sel: 60, resource: 560, period: 180, from_date: 140, to_date: 140, pending: 180 };
+  const fixedCols = new Set(["sel", "pending", "period", "from_date", "to_date"]);
 
   const { colStyles: headerColStyles, onMouseDown: onMouseDownHeader, setWidths: setHeaderWidths } = useColumnResize(
     headerColumns,
@@ -250,7 +254,9 @@ export default function ApprovalPage() {
           resource_timesheet_header!inner(
             id,
             resource_no,
-            allocation_period
+            allocation_period,
+            from_date,
+            to_date
           )
         `
         )
@@ -845,6 +851,12 @@ export default function ApprovalPage() {
                     />
                   )}
                 </th>
+                <th className="ts-th" style={{ ...headerColStyles.from_date, textAlign: "center" }}>
+                  Desde
+                </th>
+                <th className="ts-th" style={{ ...headerColStyles.to_date, textAlign: "center" }}>
+                  Hasta
+                </th>
                 <th className="ts-th" style={{ ...headerColStyles.pending, textAlign: "center" }}>
                   Líneas pendientes
                 </th>
@@ -883,6 +895,12 @@ export default function ApprovalPage() {
                     </td>
                     <td className="ts-td" style={{ ...headerColStyles.period, textAlign: "left" }}>
                       {h.allocation_period}
+                    </td>
+                    <td className="ts-td" style={{ ...headerColStyles.from_date, textAlign: "center" }}>
+                      {toDisplayDate(h.from_date) || "-"}
+                    </td>
+                    <td className="ts-td" style={{ ...headerColStyles.to_date, textAlign: "center" }}>
+                      {toDisplayDate(h.to_date) || "-"}
                     </td>
                     <td className="ts-td" style={{ ...headerColStyles.pending, textAlign: "right" }}>
                       {h.pendingCount}

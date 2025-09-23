@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import useColumnResize from "../hooks/useColumnResize";
 import "../styles/TimesheetListPage.css";
 import { supabaseClient } from "../supabaseClient";
+import { toDisplayDate } from "../utils/dateHelpers";
 import BackToDashboard from "./ui/BackToDashboard";
 
 function TimesheetListPage() {
@@ -21,6 +22,8 @@ function TimesheetListPage() {
     "posting_date",
     "posting_description",
     "allocation_period",
+    "from_date",
+    "to_date",
     "synced_to_bc",
     "created_at",
     "actions"
@@ -31,6 +34,8 @@ function TimesheetListPage() {
     posting_date: 120,
     posting_description: 320,
     allocation_period: 120,
+    from_date: 100,
+    to_date: 100,
     synced_to_bc: 90,
     created_at: 120,
     actions: 120,
@@ -39,6 +44,8 @@ function TimesheetListPage() {
     posting_date: 100,
     posting_description: 220,
     allocation_period: 100,
+    from_date: 90,
+    to_date: 90,
     synced_to_bc: 80,
     created_at: 100,
     actions: 110,
@@ -47,11 +54,13 @@ function TimesheetListPage() {
     posting_date: 160,
     posting_description: 560,
     allocation_period: 160,
+    from_date: 140,
+    to_date: 140,
     synced_to_bc: 120,
     created_at: 160,
     actions: 140,
   };
-  const fixedCols = new Set(["synced_to_bc", "actions", "posting_date", "created_at"]);
+  const fixedCols = new Set(["synced_to_bc", "actions", "posting_date", "created_at", "from_date", "to_date"]);
 
   // Hook para redimensionamiento de columnas con límites y clamp por contenedor
   const storageKey = `timesheet-list-columns:${userEmail || 'anon'}`;
@@ -224,11 +233,7 @@ function TimesheetListPage() {
     navigate(`/edit/${headerId}`);
   };
 
-  // Formatear fecha
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    return new Date(dateString).toLocaleDateString("es-ES");
-  };
+  // (Ya usamos toDisplayDate para renderizar fechas ISO)
 
   // Obtener switch visual del estado de sincronización con BC
   const getSyncedSwitch = (syncedToBc) => {
@@ -329,6 +334,8 @@ function TimesheetListPage() {
                 posting_date: 120,
                 posting_description: 320,
                 allocation_period: 120,
+                from_date: 100,
+                to_date: 100,
                 synced_to_bc: 90,
                 created_at: 120,
                 actions: 120,
@@ -395,6 +402,12 @@ function TimesheetListPage() {
                     />
                   )}
                 </th>
+                <th className="ts-th" style={{ ...colStyles.from_date, textAlign: "center" }}>
+                  Desde
+                </th>
+                <th className="ts-th" style={{ ...colStyles.to_date, textAlign: "center" }}>
+                  Hasta
+                </th>
                 <th className="ts-th" style={{ ...colStyles.synced_to_bc, textAlign: "center" }}>
                   En BC
                   {!fixedCols.has("synced_to_bc") && (
@@ -433,13 +446,15 @@ function TimesheetListPage() {
             <tbody>
               {headers.map((header) => (
                 <tr key={header.id}>
-                  <td className="ts-td" style={{ ...colStyles.posting_date, textAlign: "center" }}>{formatDate(header.posting_date)}</td>
+                  <td className="ts-td" style={{ ...colStyles.posting_date, textAlign: "center" }}>{toDisplayDate(header.posting_date) || "-"}</td>
                   <td className="ts-td ts-cell" style={{ ...colStyles.posting_description, textAlign: "left" }}>{header.posting_description || "Sin descripción"}</td>
                   <td className="ts-td" style={{ ...colStyles.allocation_period, textAlign: "left" }}>{header.allocation_period}</td>
+                  <td className="ts-td" style={{ ...colStyles.from_date, textAlign: "center" }}>{toDisplayDate(header.from_date) || "-"}</td>
+                  <td className="ts-td" style={{ ...colStyles.to_date, textAlign: "center" }}>{toDisplayDate(header.to_date) || "-"}</td>
                   <td className="ts-td" style={{ ...colStyles.synced_to_bc, textAlign: "center" }}>
                     {getSyncedSwitch(header.synced_to_bc)}
                   </td>
-                  <td className="ts-td" style={{ ...colStyles.created_at, textAlign: "center" }}>{formatDate(header.created_at)}</td>
+                  <td className="ts-td" style={{ ...colStyles.created_at, textAlign: "center" }}>{toDisplayDate(header.created_at) || "-"}</td>
                   <td className="ts-td" style={{ ...colStyles.actions, textAlign: "center" }}>
                     <div className="ts-cell-center">
                       {(() => {
