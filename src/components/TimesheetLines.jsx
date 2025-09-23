@@ -2,11 +2,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import TIMESHEET_FIELDS, {
-  COL_MAX_WIDTH,
-  COL_MIN_WIDTH,
-  DEFAULT_COL_WIDTH,
-  TIMESHEET_ALIGN,
-  TIMESHEET_LABELS,
+    COL_MAX_WIDTH,
+    COL_MIN_WIDTH,
+    DEFAULT_COL_WIDTH,
+    TIMESHEET_ALIGN,
+    TIMESHEET_LABELS,
 } from "../constants/timesheetFields";
 import useColumnResize from "../hooks/useColumnResize";
 import { useJobs, useWorkTypes } from "../hooks/useTimesheetQueries";

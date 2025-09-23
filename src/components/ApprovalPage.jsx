@@ -3,13 +3,13 @@ import { useMsal } from "@azure/msal-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+import useColumnResize from "../hooks/useColumnResize";
 import "../styles/ApprovalPage.css";
 import { supabaseClient } from "../supabaseClient";
 import { formatDate } from "../utils/dateHelpers";
 import TimesheetLines from "./TimesheetLines";
 import BackToDashboard from "./ui/BackToDashboard";
 import BcModal from "./ui/BcModal";
-import useColumnResize from "../hooks/useColumnResize";
 
 export default function ApprovalPage() {
   const queryClient = useQueryClient();
@@ -164,7 +164,7 @@ export default function ApprovalPage() {
   const colInitial = { sel: 50, resource: 320, period: 120, pending: 140 };
   const colMin = { sel: 40, resource: 220, period: 100, pending: 100 };
   const colMax = { sel: 60, resource: 560, period: 180, pending: 180 };
-  const fixedCols = new Set(["sel", "pending"]);
+  const fixedCols = new Set(["sel", "pending", "period"]);
 
   const { colStyles: headerColStyles, onMouseDown: onMouseDownHeader, setWidths: setHeaderWidths } = useColumnResize(
     headerColumns,
