@@ -71,6 +71,22 @@ Política de PR (unidad funcional):
   - "Horas pendientes de aprobar"
   - "Horas Rechazadas"
 
+<!-- LISTS_GUIDELINES:START -->
+### 5.1) Normas de Listas (resumen)
+- Contenedor propio `.ts-responsive`; sin scroll global (scroll solo interno).
+- Cabeceras centradas y sticky.
+- Redimensionar con clamp al contenedor (sin desbordes horizontales).
+- Min/Max por columna; columnas fijas: fecha, creado, estado (En BC), acciones.
+- Auto-fit por doble clic; botón “Reset layout”.
+- Persistencia por usuario (localStorage con clave por email).
+- Fechas, iconos, switches y botones centrados (usar `.ts-cell-center`).
+- Tabla: `table-layout: fixed; border-collapse: separate; border-spacing: 0`.
+- Overflow-x oculto; truncado con elipsis cuando aplique.
+- Fuente Segoe UI; botones `.ts-btn` estilo BC (tamaños sobrios).
+
+Fuente: `docs/ui/lists-guidelines.mdc`
+<!-- LISTS_GUIDELINES:END -->
+
 ### 6) Componentes y rutas relevantes
 - `src/components/HomeDashboard.jsx`: tarjetas de dashboard (pendientes de aprobar y rechazadas). Las tarjetas muestran "Horas • Líneas • Partes".
 - `src/components/TimesheetLines.jsx`: edición de líneas; columnas `resource_no` y `resource_name` solo en aprobación (prop `showResourceColumns`).
