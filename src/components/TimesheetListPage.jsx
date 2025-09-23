@@ -433,13 +433,13 @@ function TimesheetListPage() {
             <tbody>
               {headers.map((header) => (
                 <tr key={header.id}>
-                  <td className="ts-td" style={{ ...colStyles.posting_date, textAlign: "left" }}>{formatDate(header.posting_date)}</td>
+                  <td className="ts-td" style={{ ...colStyles.posting_date, textAlign: "center" }}>{formatDate(header.posting_date)}</td>
                   <td className="ts-td ts-cell" style={{ ...colStyles.posting_description, textAlign: "left" }}>{header.posting_description || "Sin descripción"}</td>
                   <td className="ts-td" style={{ ...colStyles.allocation_period, textAlign: "left" }}>{header.allocation_period}</td>
                   <td className="ts-td" style={{ ...colStyles.synced_to_bc, textAlign: "center" }}>
                     {getSyncedSwitch(header.synced_to_bc)}
                   </td>
-                  <td className="ts-td" style={{ ...colStyles.created_at, textAlign: "left" }}>{formatDate(header.created_at)}</td>
+                  <td className="ts-td" style={{ ...colStyles.created_at, textAlign: "center" }}>{formatDate(header.created_at)}</td>
                   <td className="ts-td" style={{ ...colStyles.actions, textAlign: "center" }}>
                     {(() => {
                       // Mostrar "Ver" solo si está sincronado (true/'true'/'t')
