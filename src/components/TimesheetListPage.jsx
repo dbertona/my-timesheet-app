@@ -130,16 +130,14 @@ function TimesheetListPage() {
     return new Date(dateString).toLocaleDateString("es-ES");
   };
 
-  // Obtener clases CSS para el estado de sincronización con BC
-  const getSyncedClass = (syncedToBc) => {
+  // Obtener switch visual del estado de sincronización con BC
+  const getSyncedSwitch = (syncedToBc) => {
     const isSynced = syncedToBc === true || String(syncedToBc) === "true" || String(syncedToBc) === "t";
-    return isSynced ? "status-synced" : "status-not-synced";
-  };
-
-  // Obtener texto del estado de sincronización con BC
-  const getSyncedText = (syncedToBc) => {
-    const isSynced = syncedToBc === true || String(syncedToBc) === "true" || String(syncedToBc) === "t";
-    return isSynced ? "Sí" : "No";
+    return (
+      <div className={`bc-switch ${isSynced ? 'bc-switch--on' : 'bc-switch--off'}`}>
+        <div className="bc-switch__slider"></div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -253,10 +251,8 @@ function TimesheetListPage() {
                   <td className="ts-td" style={{ textAlign: "left" }}>{formatDate(header.posting_date)}</td>
                   <td className="ts-td ts-cell" style={{ textAlign: "left" }}>{header.posting_description || "Sin descripción"}</td>
                   <td className="ts-td" style={{ textAlign: "left" }}>{header.allocation_period}</td>
-                  <td className="ts-td" style={{ textAlign: "left" }}>
-                    <span className={`status-badge ${getSyncedClass(header.synced_to_bc)}`}>
-                      {getSyncedText(header.synced_to_bc)}
-                    </span>
+                  <td className="ts-td" style={{ textAlign: "center" }}>
+                    {getSyncedSwitch(header.synced_to_bc)}
                   </td>
                   <td className="ts-td" style={{ textAlign: "left" }}>{formatDate(header.created_at)}</td>
                   <td className="ts-td" style={{ textAlign: "left" }}>

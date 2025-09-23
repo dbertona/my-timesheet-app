@@ -61,6 +61,45 @@
   .ts-table tbody td:nth-child(3) { display: none; }
 }
 
+/* Switch visual para estado En BC */
+.bc-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.bc-switch__slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.bc-switch--on {
+  background-color: #28a745;
+}
+
+.bc-switch--on .bc-switch__slider {
+  transform: translateX(20px);
+}
+
+.bc-switch--off {
+  background-color: #dc3545;
+}
+
+.bc-switch--off .bc-switch__slider {
+  transform: translateX(0);
+}
+
 /* TimesheetListPage.css */
 .timesheet-list-page {
   padding: 12px;
@@ -229,4 +268,43 @@
 @media (max-width: 480px) {
   .ts-table thead th:nth-child(3),
   .ts-table tbody td:nth-child(3) { display: none; }
+}
+
+/* Switch visual para estado En BC */
+.bc-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.bc-switch__slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.bc-switch--on {
+  background-color: #28a745;
+}
+
+.bc-switch--on .bc-switch__slider {
+  transform: translateX(20px);
+}
+
+.bc-switch--off {
+  background-color: #dc3545;
+}
+
+.bc-switch--off .bc-switch__slider {
+  transform: translateX(0);
 }
