@@ -19,7 +19,7 @@ function TimesheetListPage() {
   // Configuración de columnas para redimensionamiento
   const columns = [
     "posting_date",
-    "posting_description", 
+    "posting_description",
     "allocation_period",
     "synced_to_bc",
     "created_at",
@@ -27,13 +27,59 @@ function TimesheetListPage() {
   ];
 
   // Hook para redimensionamiento de columnas
-  const { colStyles, onMouseDown } = useColumnResize(columns, "timesheet-list-columns");
+  const { colStyles, onMouseDown, setWidths } = useColumnResize(columns, "timesheet-list-columns", 80);
+
+  // Función para medir texto (igual que TimesheetLines)
+  const measureWithSpan = (element, text) => {
+    const span = document.createElement("span");
+    span.style.cssText = window.getComputedStyle(element).cssText;
+    span.style.position = "absolute";
+    span.style.visibility = "hidden";
+    span.style.whiteSpace = "nowrap";
+    span.textContent = text || "";
+
+    document.body.appendChild(span);
+    const width = Math.ceil(span.getBoundingClientRect().width);
+    document.body.removeChild(span);
+    return width;
+  };
+
+  // Función para auto-ajustar columnas (igual que TimesheetLines)
+  const handleAutoFit = (colKey) => {
+    const table = tableRef.current;
+    if (!table) return;
+
+    const colIndex = columns.indexOf(colKey);
+    if (colIndex === -1) return;
+
+    let maxContent = 0;
+
+    const th = table.querySelector(`thead tr th:nth-child(${colIndex + 1})`);
+    const thText = th ? th.childNodes[0]?.textContent?.trim() || "" : "";
+    maxContent = Math.max(maxContent, measureWithSpan(th, thText));
+
+    const tds = table.querySelectorAll(
+      `tbody tr td:nth-child(${colIndex + 1})`
+    );
+    tds.forEach((td) => {
+      const txt = td.textContent?.trim() || "";
+      maxContent = Math.max(maxContent, measureWithSpan(td, txt));
+    });
+
+    const EXTRA = 6;
+    const min = 80; // Ancho mínimo por defecto
+    const max = 400; // Ancho máximo por defecto
+
+    const finalWidth = Math.max(min, Math.min(max, maxContent + EXTRA));
+    setWidths((prev) => ({ ...prev, [colKey]: finalWidth }));
+  };
 
   // Refs para responsive (igual patrón que edición/aprobación)
   const pageRef = useRef(null);
   const headerBarRef = useRef(null);
   const filtersRef = useRef(null);
   const tableContainerRef = useRef(null); // .ts-responsive
+  const tableRef = useRef(null); // Para redimensionamiento
 
   const recalcHeights = () => {
     try {
@@ -248,7 +294,7 @@ function TimesheetListPage() {
             </button>
           </div>
         ) : (
-          <table className="ts-table">
+          <table className="ts-table" ref={tableRef}>
             <thead>
               <tr>
                 <th className="ts-th" style={{ ...colStyles.posting_date, textAlign: "center" }}>
@@ -256,6 +302,7 @@ function TimesheetListPage() {
                   <span
                     className="ts-resizer"
                     onMouseDown={(e) => onMouseDown(e, "posting_date")}
+                    onDoubleClick={() => handleAutoFit("posting_date")}
                     aria-hidden
                   />
                 </th>
@@ -264,6 +311,7 @@ function TimesheetListPage() {
                   <span
                     className="ts-resizer"
                     onMouseDown={(e) => onMouseDown(e, "posting_description")}
+                    onDoubleClick={() => handleAutoFit("posting_description")}
                     aria-hidden
                   />
                 </th>
@@ -272,6 +320,7 @@ function TimesheetListPage() {
                   <span
                     className="ts-resizer"
                     onMouseDown={(e) => onMouseDown(e, "allocation_period")}
+                    onDoubleClick={() => handleAutoFit("allocation_period")}
                     aria-hidden
                   />
                 </th>
@@ -280,6 +329,7 @@ function TimesheetListPage() {
                   <span
                     className="ts-resizer"
                     onMouseDown={(e) => onMouseDown(e, "synced_to_bc")}
+                    onDoubleClick={() => handleAutoFit("synced_to_bc")}
                     aria-hidden
                   />
                 </th>
@@ -288,6 +338,7 @@ function TimesheetListPage() {
                   <span
                     className="ts-resizer"
                     onMouseDown={(e) => onMouseDown(e, "created_at")}
+                    onDoubleClick={() => handleAutoFit("created_at")}
                     aria-hidden
                   />
                 </th>
@@ -296,6 +347,7 @@ function TimesheetListPage() {
                   <span
                     className="ts-resizer"
                     onMouseDown={(e) => onMouseDown(e, "actions")}
+                    onDoubleClick={() => handleAutoFit("actions")}
                     aria-hidden
                   />
                 </th>
