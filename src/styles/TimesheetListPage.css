@@ -120,6 +120,18 @@
   position: relative;
 }
 
+/* Tabla responsive */
+.ts-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Contenedor scrollable para mantener thead sticky visible */
+.ts-responsive {
+  position: relative;
+  overflow: auto;
+}
+
 /* TimesheetListPage.css */
 .timesheet-list-page {
   padding: 12px;
@@ -347,4 +359,16 @@
 
 .ts-th {
   position: relative;
+}
+
+/* Tabla responsive */
+.ts-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Contenedor scrollable para mantener thead sticky visible */
+.ts-responsive {
+  position: relative;
+  overflow: auto;
 }

@@ -94,6 +94,7 @@ function TimesheetListPage() {
       tableContainerRef.current.style.height = `${available}px`;
       tableContainerRef.current.style.maxHeight = `${available}px`;
       tableContainerRef.current.style.overflowY = "auto";
+      tableContainerRef.current.style.overflowX = "hidden";
     } catch {
       /* noop */
     }
