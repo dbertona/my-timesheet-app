@@ -1,8 +1,9 @@
 // src/components/ApprovalPage.jsx
 import { useMsal } from "@azure/msal-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+import useColumnResize from "../hooks/useColumnResize";
 import "../styles/ApprovalPage.css";
 import { supabaseClient } from "../supabaseClient";
 import { formatDate } from "../utils/dateHelpers";
@@ -151,6 +152,66 @@ export default function ApprovalPage() {
     headersData: headersData?.length || 0,
     enabled: !!user?.username,
   });
+
+  // ===============================
+  // Redimensionamiento tabla de headers (normativa listas)
+  // ===============================
+  const headerTableContainerRef = useRef(null);
+  const headerTableRef = useRef(null);
+
+  const headerColumns = ["sel", "resource", "period", "pending"];
+  const storageKey = `approval-headers-columns:${user?.username || 'anon'}`;
+  const colInitial = { sel: 50, resource: 320, period: 120, pending: 140 };
+  const colMin = { sel: 40, resource: 220, period: 100, pending: 100 };
+  const colMax = { sel: 60, resource: 560, period: 180, pending: 180 };
+  const fixedCols = new Set(["sel", "pending", "period"]);
+
+  const { colStyles: headerColStyles, onMouseDown: onMouseDownHeader, setWidths: setHeaderWidths } = useColumnResize(
+    headerColumns,
+    storageKey,
+    80,
+    {
+      initialWidths: colInitial,
+      perColumnMin: colMin,
+      perColumnMax: colMax,
+      getContainerWidth: () => headerTableContainerRef.current?.clientWidth,
+      disableResizeFor: Array.from(fixedCols),
+    }
+  );
+
+  const measureWithSpan = (element, text) => {
+    const span = document.createElement("span");
+    span.style.cssText = window.getComputedStyle(element).cssText;
+    span.style.position = "absolute";
+    span.style.visibility = "hidden";
+    span.style.whiteSpace = "nowrap";
+    span.textContent = text || "";
+    document.body.appendChild(span);
+    const width = Math.ceil(span.getBoundingClientRect().width);
+    document.body.removeChild(span);
+    return width;
+  };
+
+  const handleAutoFitHeader = (colKey) => {
+    const table = headerTableRef.current;
+    if (!table) return;
+    const colIndex = headerColumns.indexOf(colKey);
+    if (colIndex === -1) return;
+    let maxContent = 0;
+    const th = table.querySelector(`thead tr th:nth-child(${colIndex + 1})`);
+    const thText = th ? th.childNodes[0]?.textContent?.trim() || "" : "";
+    maxContent = Math.max(maxContent, measureWithSpan(th, thText));
+    const tds = table.querySelectorAll(`tbody tr td:nth-child(${colIndex + 1})`);
+    tds.forEach((td) => {
+      const txt = td.textContent?.trim() || "";
+      maxContent = Math.max(maxContent, measureWithSpan(td, txt));
+    });
+    const EXTRA = 6;
+    const min = colMin[colKey] ?? 80;
+    const max = colMax[colKey] ?? 400;
+    const finalWidth = Math.max(min, Math.min(max, maxContent + EXTRA));
+    setHeaderWidths((prev) => ({ ...prev, [colKey]: finalWidth }));
+  };
 
   // Obtener líneas pendientes filtradas por headers seleccionados
   const { data: linesData, isLoading: linesLoading } = useQuery({
@@ -712,7 +773,7 @@ export default function ApprovalPage() {
           </select>
         </div>
 
-        <div className="filter-actions">
+        <div className="filter-actions" style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
           <button
             className="ts-btn ts-btn--secondary ts-btn--small"
             onClick={() => {
@@ -726,17 +787,27 @@ export default function ApprovalPage() {
           >
             Limpiar
           </button>
+          <button
+            className="ts-btn ts-btn--secondary ts-btn--small"
+            title="Restablecer diseño de columnas"
+            onClick={() => {
+              setHeaderWidths({ ...colInitial });
+              try { localStorage.removeItem(storageKey); } catch {/* noop */}
+            }}
+          >
+            Reset layout
+          </button>
         </div>
       </div>
 
       {/* Grilla de Headers (tabla) */}
       <div className="approval-headers">
         <h2>📋 Recursos con Líneas Pendientes</h2>
-        <div className="ts-responsive">
-          <table className="ts-table">
+        <div className="ts-responsive" ref={headerTableContainerRef}>
+          <table className="ts-table" ref={headerTableRef}>
             <thead>
               <tr>
-                <th className="ts-th" style={{ width: "40px", textAlign: "center" }}>
+                <th className="ts-th" style={{ ...headerColStyles.sel, textAlign: "center" }}>
                   <input
                     type="checkbox"
                     checked={
@@ -752,16 +823,29 @@ export default function ApprovalPage() {
                     }}
                   />
                 </th>
-                <th className="ts-th" style={{ textAlign: "center" }}>
+                <th className="ts-th" style={{ ...headerColStyles.resource, textAlign: "center" }}>
                   Recurso
+                  {!fixedCols.has("resource") && (
+                    <span
+                      className="ts-resizer"
+                      onMouseDown={(e) => onMouseDownHeader(e, "resource")}
+                      onDoubleClick={() => handleAutoFitHeader("resource")}
+                      aria-hidden
+                    />
+                  )}
                 </th>
-                <th className="ts-th" style={{ textAlign: "center" }}>
+                <th className="ts-th" style={{ ...headerColStyles.period, textAlign: "center" }}>
                   Período
+                  {!fixedCols.has("period") && (
+                    <span
+                      className="ts-resizer"
+                      onMouseDown={(e) => onMouseDownHeader(e, "period")}
+                      onDoubleClick={() => handleAutoFitHeader("period")}
+                      aria-hidden
+                    />
+                  )}
                 </th>
-                <th
-                  className="ts-th"
-                  style={{ textAlign: "center", width: "140px" }}
-                >
+                <th className="ts-th" style={{ ...headerColStyles.pending, textAlign: "center" }}>
                   Líneas pendientes
                 </th>
               </tr>
@@ -773,7 +857,7 @@ export default function ApprovalPage() {
                 );
                 return (
                   <tr key={h.id}>
-                    <td className="ts-td" style={{ textAlign: "center" }}>
+                    <td className="ts-td" style={{ ...headerColStyles.sel, textAlign: "center" }}>
                       <input
                         type="checkbox"
                         checked={selectedHeaders.includes(h.id)}
@@ -784,7 +868,7 @@ export default function ApprovalPage() {
                     </td>
                     <td
                       className="ts-td ts-cell"
-                      style={{ textAlign: "left", cursor: "pointer" }}
+                      style={{ ...headerColStyles.resource, textAlign: "left", cursor: "pointer" }}
                       onClick={() =>
                         handleHeaderSelection(
                           h.id,
@@ -797,10 +881,10 @@ export default function ApprovalPage() {
                         {res?.name || h.resource_no}
                       </div>
                     </td>
-                    <td className="ts-td" style={{ textAlign: "left" }}>
+                    <td className="ts-td" style={{ ...headerColStyles.period, textAlign: "left" }}>
                       {h.allocation_period}
                     </td>
-                    <td className="ts-td" style={{ textAlign: "right" }}>
+                    <td className="ts-td" style={{ ...headerColStyles.pending, textAlign: "right" }}>
                       {h.pendingCount}
                     </td>
                   </tr>

@@ -18,8 +18,9 @@ export default function RejectedLinesPage() {
   const pageRef = useRef(null);
   const tableContainerRef = useRef(null);
 
-  // Lógica de cálculo de altura con margen de seguridad (10%)
+  // Lógica de cálculo de altura con margen de seguridad (10%) y sin scroll global
   useLayoutEffect(() => {
+    try { document.body.classList.add('no-scroll'); } catch { /* noop */ }
     const calculateAndSetHeight = () => {
       const tableContainer = tableContainerRef.current;
       if (tableContainer) {
@@ -34,7 +35,8 @@ export default function RejectedLinesPage() {
         );
 
         tableContainer.style.height = `${availableHeight}px`;
-        tableContainer.style.overflow = "auto";
+        tableContainer.style.overflowY = "auto";
+        tableContainer.style.overflowX = "hidden";
       }
     };
 
@@ -55,6 +57,7 @@ export default function RejectedLinesPage() {
       if (resizeObserver && currentPageRef) {
         resizeObserver.unobserve(currentPageRef);
       }
+      try { document.body.classList.remove('no-scroll'); } catch { /* noop */ }
     };
   }, []);
 

@@ -62,10 +62,18 @@ export default function TimesheetLines({
     : [];
   const allKeys = [...extraKeys, ...TIMESHEET_FIELDS];
 
+  // Normativa listas: clamp por contenedor, límites por columna y desactivar resize para fecha
+  const disabledResizeCols = new Set(["date"]);
   const { colStyles, onMouseDown, setWidths } = useColumnResize(
     allKeys,
     "timesheet_column_widths",
-    DEFAULT_COL_WIDTH
+    DEFAULT_COL_WIDTH,
+    {
+      perColumnMin: COL_MIN_WIDTH,
+      perColumnMax: COL_MAX_WIDTH,
+      getContainerWidth: () => tableRef.current?.parentElement?.clientWidth,
+      disableResizeFor: Array.from(disabledResizeCols),
+    }
   );
 
   // Filtrar líneas "vacías" que puedan venir desde el servidor (todas las celdas vacías y cantidad 0)
@@ -459,7 +467,7 @@ export default function TimesheetLines({
               <col key={`head-col-${k}`} style={{ width: getColWidth(k) }} />
             ))}
           </colgroup>
-          <thead>
+        <thead>
           <tr>
             {/* 🆕 Columna de selección (iconos) */}
             <th
@@ -527,7 +535,7 @@ export default function TimesheetLines({
               </th>
             )}
           </tr>
-          </thead>
+        </thead>
         </table>
       </div>
 
@@ -539,7 +547,7 @@ export default function TimesheetLines({
               <col key={`body-col-${k}`} style={{ width: getColWidth(k) }} />
             ))}
           </colgroup>
-          <tbody>
+        <tbody>
           {/* Líneas existentes */}
           {safeLines.map((line, lineIndex) => (
             <tr key={line.id}>
@@ -1148,8 +1156,8 @@ export default function TimesheetLines({
               )}
             </tr>
           ))}
-          </tbody>
-        </table>
+        </tbody>
+      </table>
       </div>
 
       <BcModal

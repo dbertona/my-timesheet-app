@@ -27,7 +27,7 @@ Alcance: aplica a todas las vistas de listas/tablas (p. ej. `Mis Partes`, `Aprob
   - Doble clic en el resizer = auto-fit al contenido dentro de límites.
   - Botón “Reset layout” restaura `initialWidths` y limpia la preferencia del usuario.
 - Persistencia:
-  - Por defecto en `localStorage` (clave por usuario). Opcionalmente se puede guardar/replicar en BD (Supabase) para roaming entre dispositivos.
+  - Por defecto en `localStorage` (clave por usuario). Opcionalmente, se puede guardar/replicar en BD (Supabase) para roaming entre dispositivos.
 
 ## 4. Columnas especiales vs. flexibles
 - Columnas especiales (fijas, sin resizer; `min=max`):
