@@ -334,19 +334,19 @@ export default function ApprovalPage() {
         .eq("resource_responsible", resourceRow.code)
         .not("job_no", "is", null)
         .limit(100);
-      
+
       if (simpleError) {
         console.error("❌ Error en consulta simple:", simpleError);
         throw simpleError;
       }
-      
+
       if (!simpleData || simpleData.length === 0) {
         return [];
       }
-      
+
       // Obtener los proyectos únicos
       const jobNos = [...new Set(simpleData.map(line => line.job_no).filter(Boolean))];
-      
+
       const { data, error } = await supabaseClient
         .from("job")
         .select("no, description")
@@ -362,7 +362,7 @@ export default function ApprovalPage() {
         no: job.no,
         description: job.description
       }));
-      
+
       return result;
     },
     enabled: !!user?.username,

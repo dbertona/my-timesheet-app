@@ -1,6 +1,7 @@
 // src/components/timesheet/WorkTypeCell.jsx
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
+import TIMESHEET_FIELDS from "../../constants/timesheetFields";
 
 export default function WorkTypeCell({
   line,
@@ -129,7 +130,11 @@ export default function WorkTypeCell({
                     clearFieldError(line.id, "work_type");
                     if (typeof saveLineNow === "function") saveLineNow(line.id);
                     else if (typeof scheduleAutosave === "function") scheduleAutosave(line.id);
-                    handleKeyDown(e, lineIndex, 0);
+                    handleKeyDown(
+                      e,
+                      lineIndex,
+                      TIMESHEET_FIELDS.indexOf("work_type")
+                    );
                     return;
                   }
                   const found = findWorkType(raw);
@@ -143,7 +148,11 @@ export default function WorkTypeCell({
                     if (typeof saveLineNow === "function") saveLineNow(line.id);
                     else if (typeof scheduleAutosave === "function") scheduleAutosave(line.id);
                     e.preventDefault();
-                    handleKeyDown(e, lineIndex, 0);
+                    handleKeyDown(
+                      e,
+                      lineIndex,
+                      TIMESHEET_FIELDS.indexOf("work_type")
+                    );
                     return;
                   }
                   e.preventDefault();
@@ -166,7 +175,11 @@ export default function WorkTypeCell({
                   e.preventDefault();
                   return;
                 }
-                handleKeyDown(e, lineIndex, 0);
+                handleKeyDown(
+                  e,
+                  lineIndex,
+                  TIMESHEET_FIELDS.indexOf("work_type")
+                );
               }}
               ref={hasRefs ? (el) => setSafeRef(line.id, "work_type", el) : null}
               className={`ts-input ${error ? "has-error" : ""}`}
