@@ -1,10 +1,10 @@
 import { useMsal } from "@azure/msal-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import useColumnResize from "../hooks/useColumnResize";
 import "../styles/TimesheetListPage.css";
 import { supabaseClient } from "../supabaseClient";
 import BackToDashboard from "./ui/BackToDashboard";
-import useColumnResize from "../hooks/useColumnResize";
 
 function TimesheetListPage() {
   const { accounts } = useMsal();
@@ -18,16 +18,16 @@ function TimesheetListPage() {
 
   // Configuración de columnas para redimensionamiento
   const columns = [
-    { key: "posting_date", label: "Fecha", width: 120 },
-    { key: "posting_description", label: "Descripción", width: 200 },
-    { key: "allocation_period", label: "Período", width: 100 },
-    { key: "synced_to_bc", label: "En BC", width: 110 },
-    { key: "created_at", label: "Creado", width: 120 },
-    { key: "actions", label: "Acciones", width: 110 }
+    "posting_date",
+    "posting_description", 
+    "allocation_period",
+    "synced_to_bc",
+    "created_at",
+    "actions"
   ];
 
   // Hook para redimensionamiento de columnas
-  const { colStyles, onMouseDown, handleAutoFit } = useColumnResize(columns);
+  const { colStyles, onMouseDown } = useColumnResize(columns, "timesheet-list-columns");
 
   // Refs para responsive (igual patrón que edición/aprobación)
   const pageRef = useRef(null);
@@ -256,7 +256,6 @@ function TimesheetListPage() {
                   <span
                     className="ts-resizer"
                     onMouseDown={(e) => onMouseDown(e, "posting_date")}
-                    onDoubleClick={() => handleAutoFit("posting_date")}
                     aria-hidden
                   />
                 </th>
@@ -265,7 +264,6 @@ function TimesheetListPage() {
                   <span
                     className="ts-resizer"
                     onMouseDown={(e) => onMouseDown(e, "posting_description")}
-                    onDoubleClick={() => handleAutoFit("posting_description")}
                     aria-hidden
                   />
                 </th>
@@ -274,7 +272,6 @@ function TimesheetListPage() {
                   <span
                     className="ts-resizer"
                     onMouseDown={(e) => onMouseDown(e, "allocation_period")}
-                    onDoubleClick={() => handleAutoFit("allocation_period")}
                     aria-hidden
                   />
                 </th>
@@ -283,7 +280,6 @@ function TimesheetListPage() {
                   <span
                     className="ts-resizer"
                     onMouseDown={(e) => onMouseDown(e, "synced_to_bc")}
-                    onDoubleClick={() => handleAutoFit("synced_to_bc")}
                     aria-hidden
                   />
                 </th>
@@ -292,7 +288,6 @@ function TimesheetListPage() {
                   <span
                     className="ts-resizer"
                     onMouseDown={(e) => onMouseDown(e, "created_at")}
-                    onDoubleClick={() => handleAutoFit("created_at")}
                     aria-hidden
                   />
                 </th>
@@ -301,7 +296,6 @@ function TimesheetListPage() {
                   <span
                     className="ts-resizer"
                     onMouseDown={(e) => onMouseDown(e, "actions")}
-                    onDoubleClick={() => handleAutoFit("actions")}
                     aria-hidden
                   />
                 </th>
