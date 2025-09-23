@@ -38,9 +38,17 @@
 .filter-select { height: 28px; padding: 4px 8px; border: 1px solid #c1c1c1; border-radius: 3px; font-size: 9pt; background: #ffffff; }
 
 .ts-responsive { flex: 1; min-height: 0; overflow: auto; }
-.ts-table { width: 100%; border-collapse: collapse; }
+.ts-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
 .ts-th { position: sticky; top: 0; background: #fff; z-index: 1; border-bottom: 1px solid #e5e7eb; padding: 8px; font-weight: 600; }
 .ts-td { border-bottom: 1px solid #f1f3f4; padding: 8px; }
+
+/* Centrado de contenido en celdas que lo requieran (botones, iconos) */
+.ts-cell-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
 
 .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; }
 .loading-spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid rgb(0, 132, 137); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
@@ -59,6 +67,72 @@
 @media (max-width: 480px) {
   .ts-table thead th:nth-child(3),
   .ts-table tbody td:nth-child(3) { display: none; }
+}
+
+/* Switch visual para estado En BC */
+.bc-switch {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.bc-switch__slider {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.bc-switch--on {
+  background-color: #007E87;
+}
+
+.bc-switch--on .bc-switch__slider {
+  transform: translateX(14px);
+}
+
+.bc-switch--off {
+  background-color: rgba(0, 126, 135, 0.3);
+}
+
+.bc-switch--off .bc-switch__slider {
+  transform: translateX(0);
+}
+
+/* Redimensionador de columnas */
+.ts-resizer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: transparent;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.ts-resizer:hover {
+  background: #007E87;
+}
+
+.ts-th {
+  position: relative;
+}
+
+
+/* Contenedor scrollable para mantener thead sticky visible */
+.ts-responsive {
+  position: relative;
+  overflow: auto;
 }
 
 /* TimesheetListPage.css */
@@ -109,7 +183,7 @@
 
 /* Usar la grilla estándar .ts-responsive + .ts-table */
 .ts-responsive { flex: 1; min-height: 0; overflow: auto; }
-.ts-table { width: 100%; border-collapse: collapse; }
+.ts-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
 .ts-th { position: sticky; top: 0; background: #fff; z-index: 1; border-bottom: 1px solid #e5e7eb; padding: 8px; font-weight: 600; }
 .ts-td { border-bottom: 1px solid #f1f3f4; padding: 8px; }
 
@@ -229,4 +303,70 @@
 @media (max-width: 480px) {
   .ts-table thead th:nth-child(3),
   .ts-table tbody td:nth-child(3) { display: none; }
+}
+
+/* Switch visual para estado En BC */
+.bc-switch {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.bc-switch__slider {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.bc-switch--on {
+  background-color: #007E87;
+}
+
+.bc-switch--on .bc-switch__slider {
+  transform: translateX(14px);
+}
+
+.bc-switch--off {
+  background-color: rgba(0, 126, 135, 0.3);
+}
+
+.bc-switch--off .bc-switch__slider {
+  transform: translateX(0);
+}
+
+/* Redimensionador de columnas */
+.ts-resizer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: transparent;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.ts-resizer:hover {
+  background: #007E87;
+}
+
+.ts-th {
+  position: relative;
+}
+
+
+/* Contenedor scrollable para mantener thead sticky visible */
+.ts-responsive {
+  position: relative;
+  overflow: auto;
 }

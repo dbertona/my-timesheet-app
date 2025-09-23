@@ -6,19 +6,32 @@ import { useEffect, useMemo, useRef, useState } from "react";
  * @param {string} storageKey - clave de localStorage.
  * @param {number} minWidth - ancho mínimo en px.
  */
-export default function useColumnResize(columns, storageKey, minWidth = 80) {
+export default function useColumnResize(
+  columns,
+  storageKey,
+  minWidth = 80,
+  options = {}
+) {
+  const {
+    perColumnMin = {},
+    perColumnMax = {},
+    getContainerWidth = null,
+    initialWidths = {},
+    disableResizeFor = [],
+  } = options;
   const [widths, setWidths] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
       const base = {};
       columns.forEach((c) => {
-        base[c] = saved[c] ?? 160;
+        const fallback = initialWidths[c] ?? 160;
+        base[c] = saved[c] ?? fallback;
       });
       return base;
     } catch {
       const base = {};
       columns.forEach((c) => {
-        base[c] = 160;
+        base[c] = initialWidths[c] ?? 160;
       });
       return base;
     }
@@ -32,6 +45,7 @@ export default function useColumnResize(columns, storageKey, minWidth = 80) {
 
   const onMouseDown = (e, colKey) => {
     e.preventDefault();
+    if (disableResizeFor?.includes?.(colKey)) return;
     drag.current = {
       colKey,
       startX: e.clientX,
@@ -44,8 +58,31 @@ export default function useColumnResize(columns, storageKey, minWidth = 80) {
   const onMouseMove = (e) => {
     const { colKey, startX, startWidth } = drag.current;
     if (!colKey) return;
-    const next = Math.max(minWidth, startWidth + (e.clientX - startX));
-    setWidths((prev) => ({ ...prev, [colKey]: next }));
+    const delta = e.clientX - startX;
+    setWidths((prev) => {
+      const current = prev[colKey] ?? startWidth;
+      const raw = startWidth + delta;
+
+      const min = Math.max(minWidth, perColumnMin[colKey] ?? minWidth);
+      const max = perColumnMax[colKey] ?? Infinity;
+      let next = Math.max(min, Math.min(max, raw));
+
+      // Clamp por ancho de contenedor (evitar desbordes)
+      if (getContainerWidth) {
+        const containerW = Number(getContainerWidth()) || 0;
+        if (containerW > 0) {
+          const sumOther = columns
+            .filter((k) => k !== colKey)
+            .reduce((acc, k) => acc + (prev[k] ?? (initialWidths[k] ?? 160)), 0);
+          const maxForThis = Math.max(min, Math.min(max, containerW - sumOther));
+          next = Math.min(next, maxForThis);
+        }
+      }
+
+      // Evitar trabajo innecesario si no cambia
+      if (Math.round(next) === Math.round(current)) return prev;
+      return { ...prev, [colKey]: next };
+    });
   };
 
   const onMouseUp = () => {

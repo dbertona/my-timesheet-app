@@ -1,6 +1,7 @@
 import { useMsal } from "@azure/msal-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import useColumnResize from "../hooks/useColumnResize";
 import "../styles/TimesheetListPage.css";
 import { supabaseClient } from "../supabaseClient";
 import BackToDashboard from "./ui/BackToDashboard";
@@ -15,11 +16,109 @@ function TimesheetListPage() {
 
   const userEmail = accounts[0]?.username;
 
+  // Configuración de columnas para redimensionamiento
+  const columns = [
+    "posting_date",
+    "posting_description",
+    "allocation_period",
+    "synced_to_bc",
+    "created_at",
+    "actions"
+  ];
+
+  // Límites por columna y defaults (UX consistente)
+  const colInitial = {
+    posting_date: 120,
+    posting_description: 320,
+    allocation_period: 120,
+    synced_to_bc: 90,
+    created_at: 120,
+    actions: 120,
+  };
+  const colMin = {
+    posting_date: 100,
+    posting_description: 220,
+    allocation_period: 100,
+    synced_to_bc: 80,
+    created_at: 100,
+    actions: 110,
+  };
+  const colMax = {
+    posting_date: 160,
+    posting_description: 560,
+    allocation_period: 160,
+    synced_to_bc: 120,
+    created_at: 160,
+    actions: 140,
+  };
+  const fixedCols = new Set(["synced_to_bc", "actions", "posting_date", "created_at"]);
+
+  // Hook para redimensionamiento de columnas con límites y clamp por contenedor
+  const storageKey = `timesheet-list-columns:${userEmail || 'anon'}`;
+  const { colStyles, onMouseDown, setWidths } = useColumnResize(
+    columns,
+    storageKey,
+    80,
+    {
+      initialWidths: colInitial,
+      perColumnMin: colMin,
+      perColumnMax: colMax,
+      getContainerWidth: () => tableContainerRef.current?.clientWidth,
+      disableResizeFor: Array.from(fixedCols),
+    }
+  );
+
+  // Función para medir texto (igual que TimesheetLines)
+  const measureWithSpan = (element, text) => {
+    const span = document.createElement("span");
+    span.style.cssText = window.getComputedStyle(element).cssText;
+    span.style.position = "absolute";
+    span.style.visibility = "hidden";
+    span.style.whiteSpace = "nowrap";
+    span.textContent = text || "";
+
+    document.body.appendChild(span);
+    const width = Math.ceil(span.getBoundingClientRect().width);
+    document.body.removeChild(span);
+    return width;
+  };
+
+  // Función para auto-ajustar columnas (igual que TimesheetLines)
+  const handleAutoFit = (colKey) => {
+    const table = tableRef.current;
+    if (!table) return;
+
+    const colIndex = columns.indexOf(colKey);
+    if (colIndex === -1) return;
+
+    let maxContent = 0;
+
+    const th = table.querySelector(`thead tr th:nth-child(${colIndex + 1})`);
+    const thText = th ? th.childNodes[0]?.textContent?.trim() || "" : "";
+    maxContent = Math.max(maxContent, measureWithSpan(th, thText));
+
+    const tds = table.querySelectorAll(
+      `tbody tr td:nth-child(${colIndex + 1})`
+    );
+    tds.forEach((td) => {
+      const txt = td.textContent?.trim() || "";
+      maxContent = Math.max(maxContent, measureWithSpan(td, txt));
+    });
+
+    const EXTRA = 6;
+    const min = colMin[colKey] ?? 80; // Ancho mínimo por defecto
+    const max = colMax[colKey] ?? 400; // Ancho máximo por defecto
+
+    const finalWidth = Math.max(min, Math.min(max, maxContent + EXTRA));
+    setWidths((prev) => ({ ...prev, [colKey]: finalWidth }));
+  };
+
   // Refs para responsive (igual patrón que edición/aprobación)
   const pageRef = useRef(null);
   const headerBarRef = useRef(null);
   const filtersRef = useRef(null);
   const tableContainerRef = useRef(null); // .ts-responsive
+  const tableRef = useRef(null); // Para redimensionamiento
 
   const recalcHeights = () => {
     try {
@@ -34,6 +133,7 @@ function TimesheetListPage() {
       tableContainerRef.current.style.height = `${available}px`;
       tableContainerRef.current.style.maxHeight = `${available}px`;
       tableContainerRef.current.style.overflowY = "auto";
+      tableContainerRef.current.style.overflowX = "hidden";
     } catch {
       /* noop */
     }
@@ -130,16 +230,14 @@ function TimesheetListPage() {
     return new Date(dateString).toLocaleDateString("es-ES");
   };
 
-  // Obtener clases CSS para el estado de sincronización con BC
-  const getSyncedClass = (syncedToBc) => {
+  // Obtener switch visual del estado de sincronización con BC
+  const getSyncedSwitch = (syncedToBc) => {
     const isSynced = syncedToBc === true || String(syncedToBc) === "true" || String(syncedToBc) === "t";
-    return isSynced ? "status-synced" : "status-not-synced";
-  };
-
-  // Obtener texto del estado de sincronización con BC
-  const getSyncedText = (syncedToBc) => {
-    const isSynced = syncedToBc === true || String(syncedToBc) === "true" || String(syncedToBc) === "t";
-    return isSynced ? "Sí" : "No";
+    return (
+      <div className={`bc-switch ${isSynced ? 'bc-switch--on' : 'bc-switch--off'}`}>
+        <div className="bc-switch__slider"></div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -221,6 +319,31 @@ function TimesheetListPage() {
             <option value="no">No</option>
           </select>
         </div>
+        <div style={{ marginLeft: 'auto' }}>
+          <button
+            type="button"
+            className="ts-btn ts-btn--secondary ts-btn--small"
+            onClick={() => {
+              // Reset a defaults y limpiar preferencia del usuario
+              setWidths({
+                posting_date: 120,
+                posting_description: 320,
+                allocation_period: 120,
+                synced_to_bc: 90,
+                created_at: 120,
+                actions: 120,
+              });
+              try {
+                localStorage.removeItem(storageKey);
+              } catch {
+                /* noop */
+              }
+            }}
+            title="Restablecer diseño de columnas"
+          >
+            Reset layout
+          </button>
+        </div>
       </div>
 
       {/* Tabla de partes */}
@@ -236,52 +359,112 @@ function TimesheetListPage() {
             </button>
           </div>
         ) : (
-          <table className="ts-table">
+          <table className="ts-table" ref={tableRef}>
             <thead>
               <tr>
-                <th className="ts-th" style={{ width: 120, textAlign: "center" }}>Fecha</th>
-                <th className="ts-th" style={{ textAlign: "center" }}>Descripción</th>
-                <th className="ts-th" style={{ width: 100, textAlign: "center" }}>Período</th>
-                <th className="ts-th" style={{ width: 110, textAlign: "center" }}>En BC</th>
-                <th className="ts-th" style={{ width: 120, textAlign: "center" }}>Creado</th>
-                <th className="ts-th" style={{ width: 110, textAlign: "center" }}>Acciones</th>
+                <th className="ts-th" style={{ ...colStyles.posting_date, textAlign: "center" }}>
+                  Fecha
+                  {!fixedCols.has("posting_date") && (
+                    <span
+                      className="ts-resizer"
+                      onMouseDown={(e) => onMouseDown(e, "posting_date")}
+                      onDoubleClick={() => handleAutoFit("posting_date")}
+                      aria-hidden
+                    />
+                  )}
+                </th>
+                <th className="ts-th" style={{ ...colStyles.posting_description, textAlign: "center" }}>
+                  Descripción
+                  {!fixedCols.has("posting_description") && (
+                    <span
+                      className="ts-resizer"
+                      onMouseDown={(e) => onMouseDown(e, "posting_description")}
+                      onDoubleClick={() => handleAutoFit("posting_description")}
+                      aria-hidden
+                    />
+                  )}
+                </th>
+                <th className="ts-th" style={{ ...colStyles.allocation_period, textAlign: "center" }}>
+                  Período
+                  {!fixedCols.has("allocation_period") && (
+                    <span
+                      className="ts-resizer"
+                      onMouseDown={(e) => onMouseDown(e, "allocation_period")}
+                      onDoubleClick={() => handleAutoFit("allocation_period")}
+                      aria-hidden
+                    />
+                  )}
+                </th>
+                <th className="ts-th" style={{ ...colStyles.synced_to_bc, textAlign: "center" }}>
+                  En BC
+                  {!fixedCols.has("synced_to_bc") && (
+                    <span
+                      className="ts-resizer"
+                      onMouseDown={(e) => onMouseDown(e, "synced_to_bc")}
+                      onDoubleClick={() => handleAutoFit("synced_to_bc")}
+                      aria-hidden
+                    />
+                  )}
+                </th>
+                <th className="ts-th" style={{ ...colStyles.created_at, textAlign: "center" }}>
+                  Creado
+                  {!fixedCols.has("created_at") && (
+                    <span
+                      className="ts-resizer"
+                      onMouseDown={(e) => onMouseDown(e, "created_at")}
+                      onDoubleClick={() => handleAutoFit("created_at")}
+                      aria-hidden
+                    />
+                  )}
+                </th>
+                <th className="ts-th" style={{ ...colStyles.actions, textAlign: "center" }}>
+                  Acciones
+                  {!fixedCols.has("actions") && (
+                    <span
+                      className="ts-resizer"
+                      onMouseDown={(e) => onMouseDown(e, "actions")}
+                      onDoubleClick={() => handleAutoFit("actions")}
+                      aria-hidden
+                    />
+                  )}
+                </th>
               </tr>
             </thead>
             <tbody>
               {headers.map((header) => (
                 <tr key={header.id}>
-                  <td className="ts-td" style={{ textAlign: "left" }}>{formatDate(header.posting_date)}</td>
-                  <td className="ts-td ts-cell" style={{ textAlign: "left" }}>{header.posting_description || "Sin descripción"}</td>
-                  <td className="ts-td" style={{ textAlign: "left" }}>{header.allocation_period}</td>
-                  <td className="ts-td" style={{ textAlign: "left" }}>
-                    <span className={`status-badge ${getSyncedClass(header.synced_to_bc)}`}>
-                      {getSyncedText(header.synced_to_bc)}
-                    </span>
+                  <td className="ts-td" style={{ ...colStyles.posting_date, textAlign: "center" }}>{formatDate(header.posting_date)}</td>
+                  <td className="ts-td ts-cell" style={{ ...colStyles.posting_description, textAlign: "left" }}>{header.posting_description || "Sin descripción"}</td>
+                  <td className="ts-td" style={{ ...colStyles.allocation_period, textAlign: "left" }}>{header.allocation_period}</td>
+                  <td className="ts-td" style={{ ...colStyles.synced_to_bc, textAlign: "center" }}>
+                    {getSyncedSwitch(header.synced_to_bc)}
                   </td>
-                  <td className="ts-td" style={{ textAlign: "left" }}>{formatDate(header.created_at)}</td>
-                  <td className="ts-td" style={{ textAlign: "left" }}>
-                    {(() => {
-                      // Mostrar "Ver" solo si está sincronado (true/'true'/'t')
-                      const isSynced = header.synced_to_bc === true || String(header.synced_to_bc) === "true" || String(header.synced_to_bc) === "t";
-                      if (isSynced) {
+                  <td className="ts-td" style={{ ...colStyles.created_at, textAlign: "center" }}>{formatDate(header.created_at)}</td>
+                  <td className="ts-td" style={{ ...colStyles.actions, textAlign: "center" }}>
+                    <div className="ts-cell-center">
+                      {(() => {
+                        // Mostrar "Ver" solo si está sincronado (true/'true'/'t')
+                        const isSynced = header.synced_to_bc === true || String(header.synced_to_bc) === "true" || String(header.synced_to_bc) === "t";
+                        if (isSynced) {
+                          return (
+                            <button
+                              onClick={() => navigate(`/edit/${header.id}`, { state: { readOnly: true } })}
+                              className="ts-btn ts-btn--secondary ts-btn--small"
+                            >
+                              Ver
+                            </button>
+                          );
+                        }
                         return (
                           <button
-                            onClick={() => navigate(`/edit/${header.id}`, { state: { readOnly: true } })}
-                            className="ts-btn ts-btn--secondary ts-btn--small"
+                            onClick={() => handleSelectTimesheet(header.id)}
+                            className="ts-btn ts-btn--primary ts-btn--small"
                           >
-                            Ver
+                            Editar
                           </button>
                         );
-                      }
-                      return (
-                        <button
-                          onClick={() => handleSelectTimesheet(header.id)}
-                          className="ts-btn ts-btn--primary ts-btn--small"
-                        >
-                          Editar
-                        </button>
-                      );
-                    })()}
+                      })()}
+                    </div>
                   </td>
                 </tr>
               ))}

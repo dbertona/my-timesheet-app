@@ -1,0 +1,90 @@
+# Listas (Tablas) – Comportamiento, UX y Estándares
+
+Alcance: aplica a todas las vistas de listas/tablas (p. ej. `Mis Partes`, `Aprobación`, listados dentro de Edición). El objetivo es una UX consistente, sin desbordes, con redimensionamiento controlado y persistencia por usuario.
+
+## 1. Contenedor y scroll
+- Cada lista debe ir dentro de un contenedor propio `div.ts-responsive` dentro de la página (`.ts-page`).
+- Se bloquea el scroll del documento (`html, body.no-scroll { overflow: hidden; }`) y se usa scroll solo en el contenedor: `overflow-y: auto; overflow-x: hidden;`.
+- La altura disponible del contenedor se calcula en runtime (viewport − offset superior) y se aplica a `ts-responsive`.
+- Cabeceras sticky: `.ts-th { position: sticky; top: 0; }` para mantener el encabezado visible.
+
+## 2. Cabeceras
+- Texto de todas las cabeceras centrado por norma.
+- Tipografía Segoe UI y tamaños sobrios (ver reglas de botones y estilos globales).
+
+## 3. Redimensionamiento de columnas
+- Usar el hook `useColumnResize(columns, storageKey, minWidth, options)`.
+  - `columns`: array de claves de columna en orden.
+  - `storageKey`: incluir el email del usuario para persistir por usuario (p. ej. `timesheet-list-columns:${email}`).
+  - `minWidth`: ancho mínimo global por defecto (p. ej. `80`).
+  - `options`:
+    - `initialWidths`: anchos por defecto (auto/relativos, pensados para legibilidad).
+    - `perColumnMin` y `perColumnMax`: límites por columna para evitar roturas.
+    - `getContainerWidth`: función que devuelve el ancho del contenedor para aplicar clamp (no permitir que la suma de anchos exceda el contenedor).
+    - `disableResizeFor`: lista de columnas con resize deshabilitado (fijas).
+- Interacciones:
+  - Arrastrar en el resizer (`.ts-resizer`) ajusta el ancho respetando `min/max` y el ancho del contenedor (clamp).
+  - Doble clic en el resizer = auto-fit al contenido dentro de límites.
+  - Botón “Reset layout” restaura `initialWidths` y limpia la preferencia del usuario.
+- Persistencia:
+  - Por defecto en `localStorage` (clave por usuario). Opcionalmente se puede guardar/replicar en BD (Supabase) para roaming entre dispositivos.
+
+## 4. Columnas especiales vs. flexibles
+- Columnas especiales (fijas, sin resizer; `min=max`):
+  - Fecha (`posting_date`), Creado (`created_at`), Estado/En BC (`synced_to_bc`), Acciones (`actions`).
+- Columnas de texto (flexibles): p. ej. `posting_description`, `allocation_period`.
+- Alineación de celdas por tipo:
+  - Fechas, iconos, switches, botones: centrado (`text-align: center`) y `.ts-cell-center` para centrar con Flexbox.
+  - Texto general: izquierda (`text-align: left`).
+  - Números (cuando aplique): derecha (`text-align: right`).
+
+## 5. Responsividad y layout de tabla
+- Usar `table-layout: fixed; width: 100%; border-collapse: separate; border-spacing: 0;` para estabilidad y rendimiento.
+- `overflow-x: hidden` en el contenedor evita scroll horizontal; el clamp del hook impide desbordes al redimensionar.
+- El contenido largo debe truncarse con elipsis cuando corresponda y mostrar `title` o tooltip con el texto completo.
+
+## 6. Estado “En BC” (switch visual)
+- Mostrar un switch visual no interactivo en lista (solo lectura) con clases `.bc-switch`:
+  - Color corporativo `#007E87` para ON (`.bc-switch--on`).
+  - Tamaño pequeño (compacto) por defecto.
+  - Sin múltiples colores; coherencia visual corporativa.
+
+## 7. Botones (Acciones)
+- Usar clases `.ts-btn` y variantes `--primary`, `--secondary`, `--small` siguiendo estilo Business Central (Segoe UI, bordes 3px, tamaño sobrio).
+- Botones y grupos de iconos centrados con `.ts-cell-center` dentro de la celda de acciones.
+
+## 8. Ejemplo (Mis Partes)
+```jsx
+// Fragmento orientativo
+const storageKey = `timesheet-list-columns:${userEmail}`;
+const columns = [
+  "posting_date", "posting_description", "allocation_period", "synced_to_bc", "created_at", "actions"
+];
+const { colStyles, onMouseDown, setWidths } = useColumnResize(columns, storageKey, 80, {
+  initialWidths: { posting_date: 120, posting_description: 320, allocation_period: 120, synced_to_bc: 90, created_at: 120, actions: 120 },
+  perColumnMin:   { posting_date: 100, posting_description: 220, allocation_period: 100, synced_to_bc: 80, created_at: 100, actions: 110 },
+  perColumnMax:   { posting_date: 160, posting_description: 560, allocation_period: 160, synced_to_bc: 120, created_at: 160, actions: 140 },
+  getContainerWidth: () => tableContainerRef.current?.clientWidth,
+  disableResizeFor: ["posting_date", "created_at", "synced_to_bc", "actions"],
+});
+
+// Reset layout
+<button className="ts-btn ts-btn--secondary ts-btn--small" onClick={() => {
+  setWidths({ posting_date: 120, posting_description: 320, allocation_period: 120, synced_to_bc: 90, created_at: 120, actions: 120 });
+  try { localStorage.removeItem(storageKey); } catch {/* noop */}
+}}>Reset layout</button>
+```
+
+## 9. Criterios de aceptación (QA)
+- No existe scroll de página; solo hay scroll en el contenedor de la lista.
+- Cabeceras centradas y sticky; botones/iconos/fechas centrados.
+- Redimensionar nunca provoca desbordes horizontales (ni aparece scroll-x).
+- Doble clic auto-ajusta dentro de límites; Reset restaura defaults.
+- Preferencias persisten por usuario tras recarga del navegador.
+- Columnas fijas no muestran resizer ni cambian de ancho.
+
+## 10. Consideraciones futuras (opcionales)
+- Persistencia en Supabase por usuario para roaming multi-dispositivo.
+- “Auto-fit all” global y presets de layout por rol/empresa.
+- Tooltips accesibles y truncado consistente con `title` o popover.
+
