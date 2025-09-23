@@ -65,23 +65,23 @@
 .bc-switch {
   position: relative;
   display: inline-block;
-  width: 44px;
-  height: 24px;
-  border-radius: 12px;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
   transition: all 0.3s ease;
   cursor: default;
 }
 
 .bc-switch__slider {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
+  top: 1px;
+  left: 1px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background-color: #ffffff;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .bc-switch--on {
@@ -89,7 +89,7 @@
 }
 
 .bc-switch--on .bc-switch__slider {
-  transform: translateX(20px);
+  transform: translateX(14px);
 }
 
 .bc-switch--off {
@@ -274,23 +274,23 @@
 .bc-switch {
   position: relative;
   display: inline-block;
-  width: 44px;
-  height: 24px;
-  border-radius: 12px;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
   transition: all 0.3s ease;
   cursor: default;
 }
 
 .bc-switch__slider {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
+  top: 1px;
+  left: 1px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background-color: #ffffff;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .bc-switch--on {
@@ -298,7 +298,7 @@
 }
 
 .bc-switch--on .bc-switch__slider {
-  transform: translateX(20px);
+  transform: translateX(14px);
 }
 
 .bc-switch--off {
