@@ -38,7 +38,7 @@
 .filter-select { height: 28px; padding: 4px 8px; border: 1px solid #c1c1c1; border-radius: 3px; font-size: 9pt; background: #ffffff; }
 
 .ts-responsive { flex: 1; min-height: 0; overflow: auto; }
-.ts-table { width: 100%; border-collapse: collapse; }
+.ts-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
 .ts-th { position: sticky; top: 0; background: #fff; z-index: 1; border-bottom: 1px solid #e5e7eb; padding: 8px; font-weight: 600; }
 .ts-td { border-bottom: 1px solid #f1f3f4; padding: 8px; }
 
@@ -120,11 +120,6 @@
   position: relative;
 }
 
-/* Tabla responsive */
-.ts-table {
-  width: 100%;
-  table-layout: fixed;
-}
 
 /* Contenedor scrollable para mantener thead sticky visible */
 .ts-responsive {
@@ -180,7 +175,7 @@
 
 /* Usar la grilla estándar .ts-responsive + .ts-table */
 .ts-responsive { flex: 1; min-height: 0; overflow: auto; }
-.ts-table { width: 100%; border-collapse: collapse; }
+.ts-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
 .ts-th { position: sticky; top: 0; background: #fff; z-index: 1; border-bottom: 1px solid #e5e7eb; padding: 8px; font-weight: 600; }
 .ts-td { border-bottom: 1px solid #f1f3f4; padding: 8px; }
 
@@ -361,11 +356,6 @@
   position: relative;
 }
 
-/* Tabla responsive */
-.ts-table {
-  width: 100%;
-  table-layout: fixed;
-}
 
 /* Contenedor scrollable para mantener thead sticky visible */
 .ts-responsive {
