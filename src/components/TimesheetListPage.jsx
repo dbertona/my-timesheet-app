@@ -239,12 +239,12 @@ function TimesheetListPage() {
           <table className="ts-table">
             <thead>
               <tr>
-                <th className="ts-th" style={{ width: 120, textAlign: "left" }}>Fecha</th>
-                <th className="ts-th" style={{ textAlign: "left" }}>Descripción</th>
-                <th className="ts-th" style={{ width: 100, textAlign: "left" }}>Período</th>
-                <th className="ts-th" style={{ width: 110, textAlign: "left" }}>En BC</th>
-                <th className="ts-th" style={{ width: 120, textAlign: "left" }}>Creado</th>
-                <th className="ts-th" style={{ width: 110, textAlign: "left" }}>Acciones</th>
+                <th className="ts-th" style={{ width: 120, textAlign: "center" }}>Fecha</th>
+                <th className="ts-th" style={{ textAlign: "center" }}>Descripción</th>
+                <th className="ts-th" style={{ width: 100, textAlign: "center" }}>Período</th>
+                <th className="ts-th" style={{ width: 110, textAlign: "center" }}>En BC</th>
+                <th className="ts-th" style={{ width: 120, textAlign: "center" }}>Creado</th>
+                <th className="ts-th" style={{ width: 110, textAlign: "center" }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
