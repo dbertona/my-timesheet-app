@@ -100,6 +100,26 @@
   transform: translateX(0);
 }
 
+/* Redimensionador de columnas */
+.ts-resizer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: transparent;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.ts-resizer:hover {
+  background: #007E87;
+}
+
+.ts-th {
+  position: relative;
+}
+
 /* TimesheetListPage.css */
 .timesheet-list-page {
   padding: 12px;
@@ -307,4 +327,24 @@
 
 .bc-switch--off .bc-switch__slider {
   transform: translateX(0);
+}
+
+/* Redimensionador de columnas */
+.ts-resizer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: transparent;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.ts-resizer:hover {
+  background: #007E87;
+}
+
+.ts-th {
+  position: relative;
 }

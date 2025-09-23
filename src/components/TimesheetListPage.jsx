@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import "../styles/TimesheetListPage.css";
 import { supabaseClient } from "../supabaseClient";
 import BackToDashboard from "./ui/BackToDashboard";
+import useColumnResize from "../hooks/useColumnResize";
 
 function TimesheetListPage() {
   const { accounts } = useMsal();
@@ -14,6 +15,19 @@ function TimesheetListPage() {
   const [filterSynced, setFilterSynced] = useState("all"); // 'all' | 'yes' | 'no'
 
   const userEmail = accounts[0]?.username;
+
+  // Configuración de columnas para redimensionamiento
+  const columns = [
+    { key: "posting_date", label: "Fecha", width: 120 },
+    { key: "posting_description", label: "Descripción", width: 200 },
+    { key: "allocation_period", label: "Período", width: 100 },
+    { key: "synced_to_bc", label: "En BC", width: 110 },
+    { key: "created_at", label: "Creado", width: 120 },
+    { key: "actions", label: "Acciones", width: 110 }
+  ];
+
+  // Hook para redimensionamiento de columnas
+  const { colStyles, onMouseDown, handleAutoFit } = useColumnResize(columns);
 
   // Refs para responsive (igual patrón que edición/aprobación)
   const pageRef = useRef(null);
@@ -237,25 +251,73 @@ function TimesheetListPage() {
           <table className="ts-table">
             <thead>
               <tr>
-                <th className="ts-th" style={{ width: 120, textAlign: "center" }}>Fecha</th>
-                <th className="ts-th" style={{ textAlign: "center" }}>Descripción</th>
-                <th className="ts-th" style={{ width: 100, textAlign: "center" }}>Período</th>
-                <th className="ts-th" style={{ width: 110, textAlign: "center" }}>En BC</th>
-                <th className="ts-th" style={{ width: 120, textAlign: "center" }}>Creado</th>
-                <th className="ts-th" style={{ width: 110, textAlign: "center" }}>Acciones</th>
+                <th className="ts-th" style={{ ...colStyles.posting_date, textAlign: "center" }}>
+                  Fecha
+                  <span
+                    className="ts-resizer"
+                    onMouseDown={(e) => onMouseDown(e, "posting_date")}
+                    onDoubleClick={() => handleAutoFit("posting_date")}
+                    aria-hidden
+                  />
+                </th>
+                <th className="ts-th" style={{ ...colStyles.posting_description, textAlign: "center" }}>
+                  Descripción
+                  <span
+                    className="ts-resizer"
+                    onMouseDown={(e) => onMouseDown(e, "posting_description")}
+                    onDoubleClick={() => handleAutoFit("posting_description")}
+                    aria-hidden
+                  />
+                </th>
+                <th className="ts-th" style={{ ...colStyles.allocation_period, textAlign: "center" }}>
+                  Período
+                  <span
+                    className="ts-resizer"
+                    onMouseDown={(e) => onMouseDown(e, "allocation_period")}
+                    onDoubleClick={() => handleAutoFit("allocation_period")}
+                    aria-hidden
+                  />
+                </th>
+                <th className="ts-th" style={{ ...colStyles.synced_to_bc, textAlign: "center" }}>
+                  En BC
+                  <span
+                    className="ts-resizer"
+                    onMouseDown={(e) => onMouseDown(e, "synced_to_bc")}
+                    onDoubleClick={() => handleAutoFit("synced_to_bc")}
+                    aria-hidden
+                  />
+                </th>
+                <th className="ts-th" style={{ ...colStyles.created_at, textAlign: "center" }}>
+                  Creado
+                  <span
+                    className="ts-resizer"
+                    onMouseDown={(e) => onMouseDown(e, "created_at")}
+                    onDoubleClick={() => handleAutoFit("created_at")}
+                    aria-hidden
+                  />
+                </th>
+                <th className="ts-th" style={{ ...colStyles.actions, textAlign: "center" }}>
+                  Acciones
+                  <span
+                    className="ts-resizer"
+                    onMouseDown={(e) => onMouseDown(e, "actions")}
+                    onDoubleClick={() => handleAutoFit("actions")}
+                    aria-hidden
+                  />
+                </th>
               </tr>
             </thead>
             <tbody>
               {headers.map((header) => (
                 <tr key={header.id}>
-                  <td className="ts-td" style={{ textAlign: "left" }}>{formatDate(header.posting_date)}</td>
-                  <td className="ts-td ts-cell" style={{ textAlign: "left" }}>{header.posting_description || "Sin descripción"}</td>
-                  <td className="ts-td" style={{ textAlign: "left" }}>{header.allocation_period}</td>
-                  <td className="ts-td" style={{ textAlign: "center" }}>
+                  <td className="ts-td" style={{ ...colStyles.posting_date, textAlign: "left" }}>{formatDate(header.posting_date)}</td>
+                  <td className="ts-td ts-cell" style={{ ...colStyles.posting_description, textAlign: "left" }}>{header.posting_description || "Sin descripción"}</td>
+                  <td className="ts-td" style={{ ...colStyles.allocation_period, textAlign: "left" }}>{header.allocation_period}</td>
+                  <td className="ts-td" style={{ ...colStyles.synced_to_bc, textAlign: "center" }}>
                     {getSyncedSwitch(header.synced_to_bc)}
                   </td>
-                  <td className="ts-td" style={{ textAlign: "left" }}>{formatDate(header.created_at)}</td>
-                  <td className="ts-td" style={{ textAlign: "left" }}>
+                  <td className="ts-td" style={{ ...colStyles.created_at, textAlign: "left" }}>{formatDate(header.created_at)}</td>
+                  <td className="ts-td" style={{ ...colStyles.actions, textAlign: "center" }}>
                     {(() => {
                       // Mostrar "Ver" solo si está sincronado (true/'true'/'t')
                       const isSynced = header.synced_to_bc === true || String(header.synced_to_bc) === "true" || String(header.synced_to_bc) === "t";
