@@ -334,19 +334,19 @@ export default function ApprovalPage() {
         .eq("resource_responsible", resourceRow.code)
         .not("job_no", "is", null)
         .limit(100);
-      
+
       if (simpleError) {
         console.error("❌ Error en consulta simple:", simpleError);
         throw simpleError;
       }
-      
+
       if (!simpleData || simpleData.length === 0) {
         return [];
       }
-      
+
       // Obtener los proyectos únicos
       const jobNos = [...new Set(simpleData.map(line => line.job_no).filter(Boolean))];
-      
+
       const { data, error } = await supabaseClient
         .from("job")
         .select("no, description")
@@ -362,7 +362,7 @@ export default function ApprovalPage() {
         no: job.no,
         description: job.description
       }));
-      
+
       return result;
     },
     enabled: !!user?.username,
@@ -736,7 +736,7 @@ export default function ApprovalPage() {
           <table className="ts-table">
             <thead>
               <tr>
-                <th className="ts-th" style={{ width: "40px" }}>
+                <th className="ts-th" style={{ width: "40px", textAlign: "center" }}>
                   <input
                     type="checkbox"
                     checked={
@@ -752,15 +752,15 @@ export default function ApprovalPage() {
                     }}
                   />
                 </th>
-                <th className="ts-th" style={{ textAlign: "left" }}>
+                <th className="ts-th" style={{ textAlign: "center" }}>
                   Recurso
                 </th>
-                <th className="ts-th" style={{ textAlign: "left" }}>
+                <th className="ts-th" style={{ textAlign: "center" }}>
                   Período
                 </th>
                 <th
                   className="ts-th"
-                  style={{ textAlign: "right", width: "140px" }}
+                  style={{ textAlign: "center", width: "140px" }}
                 >
                   Líneas pendientes
                 </th>

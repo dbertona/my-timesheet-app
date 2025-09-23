@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
 import { useMsal } from "@azure/msal-react";
-import { supabaseClient } from "../supabaseClient";
+import React, { useEffect, useState } from "react";
 import "../styles/TimesheetHeader.css";
+import { supabaseClient } from "../supabaseClient";
 
 function TimesheetHeader({ header, onHeaderChange, serverDate }) {
   const { instance, accounts } = useMsal();
@@ -286,7 +286,7 @@ function TimesheetHeader({ header, onHeaderChange, serverDate }) {
           </label>
           <input
             type="text"
-            value={effectiveHeader.resource_no}
+            value={effectiveHeader.resource_no || ""}
             readOnly
             style={{
               width: "100%",
@@ -314,7 +314,7 @@ function TimesheetHeader({ header, onHeaderChange, serverDate }) {
           </label>
           <input
             type="text"
-            value={effectiveHeader.resource_name}
+            value={effectiveHeader.resource_name || ""}
             readOnly
             style={{
               width: "100%",
@@ -342,7 +342,7 @@ function TimesheetHeader({ header, onHeaderChange, serverDate }) {
           </label>
           <input
             type="text"
-            value={effectiveHeader.calendar_type}
+            value={effectiveHeader.calendar_type || ""}
             readOnly
             style={{
               width: "100%",
@@ -370,7 +370,7 @@ function TimesheetHeader({ header, onHeaderChange, serverDate }) {
           </label>
           <input
             type="date"
-            value={effectiveHeader.posting_date}
+            value={effectiveHeader.posting_date || ""}
             readOnly // ✅ Fecha no editable ni en inserción ni en edición
             style={{
               width: "100%",
@@ -411,7 +411,7 @@ function TimesheetHeader({ header, onHeaderChange, serverDate }) {
           </label>
           <input
             type="text"
-            value={effectiveHeader.allocation_period}
+            value={effectiveHeader.allocation_period || ""}
             readOnly
             style={{
               width: "100%",
@@ -439,7 +439,7 @@ function TimesheetHeader({ header, onHeaderChange, serverDate }) {
           </label>
           <input
             type="text"
-            value={effectiveHeader.posting_description}
+            value={effectiveHeader.posting_description || ""}
             onChange={(e) =>
               handleFieldChange("posting_description", e.target.value)
             }
