@@ -711,6 +711,87 @@ app.post("/api/factorial/vacations", async (req, res) => {
   }
 });
 
+// Notificación de solicitud de aprobación (envía a n8n webhook)
+app.post("/api/notify/approval-request", async (req, res) => {
+  try {
+    const { header_id, requester_email } = req.body || {};
+    if (!header_id) {
+      return res.status(400).json({ error: "header_id requerido" });
+    }
+
+    const cfg = supabaseHeaders();
+    if (!cfg) {
+      return res.status(500).json({ error: "supabase_env_missing" });
+    }
+
+    // 1) Obtener responsables (codes) de las líneas Pending del header
+    const urlLines = `${cfg.baseUrl}/rest/v1/timesheet?select=resource_responsible&header_id=eq.${encodeURIComponent(
+      header_id
+    )}&status=eq.Pending`;
+    const respLines = await fetch(urlLines, { headers: cfg.headers });
+    if (!respLines.ok) {
+      const txt = await respLines.text().catch(() => "");
+      return res
+        .status(502)
+        .json({ error: `lines_fetch_failed: ${respLines.status} ${txt}` });
+    }
+    const rows = (await fetchJsonSafe(respLines)) || [];
+    const approverCodes = Array.from(
+      new Set(
+        rows
+          .map((r) => (r && r.resource_responsible ? String(r.resource_responsible) : ""))
+          .filter(Boolean)
+      )
+    );
+
+    // 2) Resolver emails de responsables
+    let recipients = [];
+    if (approverCodes.length > 0) {
+      const inList = approverCodes.map((c) => `"${c}"`).join(",");
+      const urlRes = `${cfg.baseUrl}/rest/v1/resource?select=code,email,name&code=in.(${inList})`;
+      const respRes = await fetch(urlRes, { headers: cfg.headers });
+      if (respRes.ok) {
+        const resRows = (await fetchJsonSafe(respRes)) || [];
+        recipients = resRows
+          .map((r) => (r && r.email ? String(r.email).trim() : ""))
+          .filter(Boolean);
+      }
+    }
+
+    const webhook = process.env.N8N_WEBHOOK_NOTIFY_APPROVAL;
+    const payload = {
+      header_id,
+      requester_email: requester_email || null,
+      approver_codes: approverCodes,
+      recipients,
+      env: process.env.VITE_APP_ENV || process.env.NODE_ENV || "unknown",
+    };
+
+    // 3) Si no hay webhook configurado, responder 202 con skip
+    if (!webhook) {
+      try {
+        console.warn("N8N_WEBHOOK_NOTIFY_APPROVAL no configurado. Notificación omitida.");
+      } catch {}
+      return res.status(202).json({ ok: true, skipped: "n8n_webhook_missing", ...payload });
+    }
+
+    const wr = await fetch(webhook, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!wr.ok) {
+      const wtxt = await wr.text().catch(() => "");
+      return res.status(502).json({ error: `webhook_failed: ${wr.status} ${wtxt}` });
+    }
+
+    return res.json({ ok: true, notified: recipients.length, approver_codes: approverCodes });
+  } catch (e) {
+    console.error("Error en notify approval:", e);
+    return res.status(500).json({ error: "internal_error" });
+  }
+});
+
 // Endpoint para recibir webhooks de Factorial (solo validación y logging inicial)
 app.post("/webhooks/factorial/:companyId/:eventType", async (req, res) => {
   const { companyId, eventType } = req.params;

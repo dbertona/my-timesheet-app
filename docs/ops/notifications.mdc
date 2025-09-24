@@ -1,0 +1,26 @@
+## Notificaciones por email al solicitar aprobación
+
+### Flujo
+- UI (TimesheetEdit) cambia líneas a Pending y llama a `/api/notify/approval-request`.
+- Backend (server.js) resuelve responsables y envía payload a n8n.
+- n8n (SMTP O365) construye plantilla y envía email a responsables.
+
+### Variables
+- `N8N_WEBHOOK_NOTIFY_APPROVAL`: URL webhook n8n con secret.
+- SMTP en n8n: `smtp.office365.com:587` TLS, usuario/contraseña de cuenta técnica.
+
+### Payload
+```json
+{
+  "header_id": "<uuid>",
+  "requester_email": "user@powersolution.es",
+  "approver_codes": ["REC0001"],
+  "recipients": ["aprobador@powersolution.es"],
+  "env": "testing"
+}
+```
+
+### Recomendaciones
+- Proteger webhook con secret y validar HMAC si es posible.
+- Idempotencia por `header_id` en n8n para evitar duplicados.
+- Logging en tabla `notifications_log` (Supabase) con timestamp/estado.
