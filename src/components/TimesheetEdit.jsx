@@ -1103,9 +1103,20 @@ function TimesheetEdit({ headerId }) {
           return newData;
         });
 
-        toast.success(
-          `${linesToUpdate.length} líneas enviadas para aprobación`
-        );
+        // Notificar a backend para enviar emails (best-effort)
+        try {
+          const acct = instance.getActiveAccount() || accounts[0];
+          const requesterEmail = acct?.username || acct?.email || "";
+          await fetch("/api/notify/approval-request", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ header_id: effectiveHeaderId, requester_email: requesterEmail }),
+          });
+        } catch (e) {
+          // noop: no bloquea la UI
+        }
+
+        toast.success(`${linesToUpdate.length} líneas enviadas para aprobación`);
 
         // Invalidar queries para refrescar datos
         queryClient.invalidateQueries({
