@@ -67,25 +67,22 @@
     },
     {
       "parameters": {
-        "operation": "insert",
-        "tableId": "job_task",
-        "options": {
-          "onConflict": "company_name,job_no,task_no",
-          "returning": "representation"
-        }
+        "operation": "executeQuery",
+        "query": "INSERT INTO job_task (company_name, job_no, no, description)\nVALUES ('{{ $json.company_name }}', '{{ $json.job_no }}', '{{ $json.task_no }}', '{{ $json.description }}')\nON CONFLICT (company_name, job_no, no) \nDO UPDATE SET \n  description = EXCLUDED.description\nRETURNING *;",
+        "options": {}
       },
       "id": "bc8f4f53-5078-4155-abab-5455e6167f32",
-      "name": "HTTP - Upsert job_task (Supabase REST)",
-      "type": "n8n-nodes-base.supabase",
+      "name": "HTTP - Upsert job_task (Postgres REST)",
+      "type": "n8n-nodes-base.postgres",
       "typeVersion": 1,
       "position": [
         1328,
         -784
       ],
       "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
+        "postgres": {
+          "id": "Postgres Timesheet",
+          "name": "Postgres Timesheet"
         }
       }
     },
@@ -211,25 +208,22 @@
     },
     {
       "parameters": {
-        "operation": "insert",
-        "tableId": "resource",
-        "options": {
-          "onConflict": "company_name,code",
-          "returning": "representation"
-        }
+        "operation": "executeQuery",
+        "query": "INSERT INTO resource (company_name, code, name, type)\nVALUES ('{{ $json.company_name }}', '{{ $json.code }}', '{{ $json.name }}', '{{ $json.type }}')\nON CONFLICT (company_name, code) \nDO UPDATE SET \n  name = EXCLUDED.name,\n  type = EXCLUDED.type\nRETURNING *;",
+        "options": {}
       },
       "id": "e7ae76a5-1f3b-4d87-b69b-6635cf1b525e",
-      "name": "HTTP - Upsert resource (Supabase REST)",
-      "type": "n8n-nodes-base.supabase",
+      "name": "HTTP - Upsert resource (Postgres REST)",
+      "type": "n8n-nodes-base.postgres",
       "typeVersion": 1,
       "position": [
         -464,
         -1008
       ],
       "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
+        "postgres": {
+          "id": "Postgres Timesheet",
+          "name": "Postgres Timesheet"
         }
       }
     },
@@ -315,7 +309,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName; // <- dinámico\nconst data = input[0].json;\nconst proyectos = data.value || [];\nconst items = [];\n\nconst allowed = new Set(['Open','Planning','Completed','Lost']);\n\nfor (const p of proyectos) {\n  const statusRaw = p.estado ?? p.Estado ?? p.status ?? '';\n  const status = String(statusRaw).trim();\n  if (!allowed.has(status)) continue;\n\n  // Filtrar proyectos que comienzan por PP o PY\n  const projectNo = String(p.no || '').trim();\n  if (projectNo.startsWith('PP') || projectNo.startsWith('PY')) {\n    continue;\n  }\n\n  items.push({\n    json: {\n      no: projectNo,\n      description: p.description || '',\n      status,\n      responsible: p.Responsible || p.responsible || '',\n      departamento: p.departamento || p.GlobalDimension1Code || '',\n      company_name: companyName, // <- aquí\n    },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName; // <- dinámico\nconst data = input[0].json;\nconst proyectos = data.value || [];\nconst items = [];\n\nconst allowed = new Set(['Planning','Quote','Open','Completed','Lost']);\n\nfor (const p of proyectos) {\n  const statusRaw = p.estado ?? p.Estado ?? p.status ?? '';\n  const status = String(statusRaw).trim();\n  \n  // DEBUG: Log el status original\n  console.log('Status original:', JSON.stringify(statusRaw), '-> Normalizado:', status);\n  \n  // Normalizar status: si no está en la lista permitida, usar 'Open'\n  const normalizedStatus = allowed.has(status) ? status : 'Open';\n  \n  // DEBUG: Log el status final\n  console.log('Status final:', normalizedStatus);\n\n  // Filtrar proyectos que comienzan por PP o PY\n  const projectNo = String(p.no || '').trim();\n  if (projectNo.startsWith('PP') || projectNo.startsWith('PY')) {\n    continue;\n  }\n\n  items.push({\n    json: {\n      no: projectNo,\n      description: p.description || '',\n      status: normalizedStatus, // <- usar el status normalizado\n      responsible: p.Responsible || p.responsible || '',\n      departamento: p.departamento || p.GlobalDimension1Code || '',\n      company_name: companyName, // <- aquí\n    },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
       },
       "id": "7fa4a1f1-e541-46fb-905f-8949f5e61aa6",
       "name": "Transformar Proyectos",
@@ -355,16 +349,13 @@
     },
     {
       "parameters": {
-        "operation": "insert",
-        "tableId": "job",
-        "options": {
-          "onConflict": "company_name,no",
-          "returning": "representation"
-        }
+        "operation": "executeQuery",
+        "query": "INSERT INTO job (company_name, no, description, status, responsible)\nVALUES ('{{ $json.company_name }}', '{{ $json.no || $json.job_no }}', '{{ $json.description || '' }}', '{{ $json.status || 'Open' }}', '{{ $json.responsible || '' }}')\nON CONFLICT (company_name, no) \nDO UPDATE SET \n  description = EXCLUDED.description,\n  status = EXCLUDED.status,\n  responsible = EXCLUDED.responsible\nRETURNING *;",
+        "options": {}
       },
       "id": "d52f6651-90cd-4c5f-abda-c8412e52dc9c",
-      "name": "HTTP - Upsert job (Supabase REST)",
-      "type": "n8n-nodes-base.supabase",
+      "name": "HTTP - Upsert job (Postgres REST)",
+      "type": "n8n-nodes-base.postgres",
       "typeVersion": 1,
       "position": [
         -464,
@@ -372,9 +363,9 @@
       ],
       "onError": "continueErrorOutput",
       "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
+        "postgres": {
+          "id": "Postgres Timesheet",
+          "name": "Postgres Timesheet"
         }
       }
     },
@@ -487,25 +478,22 @@
     },
     {
       "parameters": {
-        "operation": "insert",
-        "tableId": "job_team",
-        "options": {
-          "onConflict": "company_name,job_no,resource_no",
-          "returning": "representation"
-        }
+        "operation": "executeQuery",
+        "query": "INSERT INTO job_team (company_name, job_no, resource_no, role)\nVALUES ('{{ $json.company_name }}', '{{ $json.job_no }}', '{{ $json.resource_no }}', '{{ $json.role }}')\nON CONFLICT (company_name, job_no, resource_no) \nDO UPDATE SET \n  role = EXCLUDED.role\nRETURNING *;",
+        "options": {}
       },
       "id": "33d1c1c9-55e4-4dd0-abe6-42cce4cd7507",
-      "name": "HTTP - Upsert job_team (Supabase REST)",
-      "type": "n8n-nodes-base.supabase",
+      "name": "HTTP - Upsert job_team (Postgres REST)",
+      "type": "n8n-nodes-base.postgres",
       "typeVersion": 1,
       "position": [
         1328,
         -1072
       ],
       "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
+        "postgres": {
+          "id": "Postgres Timesheet",
+          "name": "Postgres Timesheet"
         }
       }
     },
@@ -631,25 +619,22 @@
     },
     {
       "parameters": {
-        "operation": "insert",
-        "tableId": "resource_cost",
-        "options": {
-          "onConflict": "company_name,resource_no,cost_center",
-          "returning": "representation"
-        }
+        "operation": "executeQuery",
+        "query": "INSERT INTO resource_cost (company_name, resource_no, work_type, cost_per_hour)\nVALUES ('{{ $json.company_name }}', '{{ $json.resource_no }}', '{{ $json.work_type || $json.cost_center }}', {{ $json.cost_per_hour }})\nON CONFLICT (company_name, resource_no, work_type) \nDO UPDATE SET \n  cost_per_hour = EXCLUDED.cost_per_hour\nRETURNING *;",
+        "options": {}
       },
       "id": "e093c5fb-60ed-46ca-a77c-7eb440b02175",
-      "name": "HTTP - Upsert resource_cost (Supabase REST)",
-      "type": "n8n-nodes-base.supabase",
+      "name": "HTTP - Upsert resource_cost (Postgres REST)",
+      "type": "n8n-nodes-base.postgres",
       "typeVersion": 1,
       "position": [
         1328,
         -496
       ],
       "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
+        "postgres": {
+          "id": "Postgres Timesheet",
+          "name": "Postgres Timesheet"
         }
       }
     },
@@ -735,7 +720,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\n\nconst data = input[0].json;\nconst rows = Array.isArray(data.value) ? data.value : [];\nconst items = [];\n\nfor (const r of rows) {\n  const calendar_type = String(r.calendar_code ?? r.calendarCode ?? '').trim();\n  const dayRaw = r.day ?? r.Day ?? r.date ?? '';\n  const date = String(dayRaw).trim();\n  if (!date) continue;\n\n  const hours_working = Number(r.hours_working ?? r.hoursWorking ?? 0);\n  const is_working_day = hours_working > 0;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      date,\n      is_working_day,\n      calendar_type\n    }\n  });\n}\n\nreturn items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\n\nconst data = input[0].json;\nconst rows = Array.isArray(data.value) ? data.value : [];\nconst items = [];\n\nfor (const r of rows) {\n  const calendar_code = String(r.calendar_code ?? r.calendarCode ?? r.calendar_type ?? r.calendarType ?? '').trim() || 'DEFAULT';\n  const day = String(r.day ?? r.Day ?? r.date ?? '').trim();\n  if (!day) continue;\n  const allocation_period = day.slice(0, 7);\n  const hours_working = Number(r.hours_working ?? r.hoursWorking ?? (r.is_working_day === false ? 0 : 8));\n  const holiday = !(hours_working > 0);\n\n  items.push({ json: { company_name: companyName, calendar_code, allocation_period, day, holiday, hours_working } });\n}\n\nreturn items;"
       },
       "id": "af42a909-709e-471a-82fa-e1231284f3b9",
       "name": "Transformar CalendarPeriodDays",
@@ -775,25 +760,22 @@
     },
     {
       "parameters": {
-        "operation": "insert",
-        "tableId": "calendar_period_days",
-        "options": {
-          "onConflict": "company_name,date,calendar_type",
-          "returning": "representation"
-        }
+        "operation": "executeQuery",
+        "query": "INSERT INTO calendar_period_days (company_name, calendar_code, allocation_period, day, holiday, hours_working)\nVALUES ('{{ $json.company_name }}', '{{ $json.calendar_code }}', '{{ $json.allocation_period }}', '{{ $json.day }}', {{ $json.holiday }}, {{ $json.hours_working }})\nON CONFLICT (company_name, calendar_code, allocation_period, day) \nDO UPDATE SET \n  holiday = EXCLUDED.holiday,\n  hours_working = EXCLUDED.hours_working\nRETURNING *;",
+        "options": {}
       },
       "id": "23b6ed32-2f47-47bd-92e2-195f574e7fc5",
-      "name": "HTTP - Upsert calendar_period_days (Supabase REST)",
-      "type": "n8n-nodes-base.supabase",
+      "name": "HTTP - Upsert calendar_period_days (Postgres REST)",
+      "type": "n8n-nodes-base.postgres",
       "typeVersion": 1,
       "position": [
         1328,
         160
       ],
       "credentials": {
-        "supabaseApi": {
-          "id": "Qa0kL8CVFxjwQVZ5",
-          "name": "Supabase account"
+        "postgres": {
+          "id": "Postgres Timesheet",
+          "name": "Postgres Timesheet"
         }
       }
     },
@@ -1095,14 +1077,14 @@
       "main": [
         [
           {
-            "node": "HTTP - Upsert job_task (Supabase REST)",
+            "node": "HTTP - Upsert job_task (Postgres REST)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP - Upsert job_task (Supabase REST)": {
+    "HTTP - Upsert job_task (Postgres REST)": {
       "main": [
         [
           {
@@ -1177,14 +1159,14 @@
       "main": [
         [
           {
-            "node": "HTTP - Upsert resource (Supabase REST)",
+            "node": "HTTP - Upsert resource (Postgres REST)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP - Upsert resource (Supabase REST)": {
+    "HTTP - Upsert resource (Postgres REST)": {
       "main": [
         [
           {
@@ -1217,7 +1199,7 @@
           {
             "node": "Wait jobs+resources",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -1264,14 +1246,14 @@
       "main": [
         [
           {
-            "node": "HTTP - Upsert job (Supabase REST)",
+            "node": "HTTP - Upsert job (Postgres REST)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP - Upsert job (Supabase REST)": {
+    "HTTP - Upsert job (Postgres REST)": {
       "main": [
         [
           {
@@ -1360,7 +1342,7 @@
         ]
       ]
     },
-    "HTTP - Upsert job_team (Supabase REST)": {
+    "HTTP - Upsert job_team (Postgres REST)": {
       "main": [
         [
           {
@@ -1435,14 +1417,14 @@
       "main": [
         [
           {
-            "node": "HTTP - Upsert resource_cost (Supabase REST)",
+            "node": "HTTP - Upsert resource_cost (Postgres REST)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP - Upsert resource_cost (Supabase REST)": {
+    "HTTP - Upsert resource_cost (Postgres REST)": {
       "main": [
         [
           {
@@ -1506,14 +1488,14 @@
       "main": [
         [
           {
-            "node": "HTTP - Upsert calendar_period_days (Supabase REST)",
+            "node": "HTTP - Upsert calendar_period_days (Postgres REST)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP - Upsert calendar_period_days (Supabase REST)": {
+    "HTTP - Upsert calendar_period_days (Postgres REST)": {
       "main": [
         [
           {
@@ -1566,7 +1548,7 @@
       "main": [
         [
           {
-            "node": "HTTP - Upsert job_team (Supabase REST)",
+            "node": "HTTP - Upsert job_team (Postgres REST)",
             "type": "main",
             "index": 0
           }
