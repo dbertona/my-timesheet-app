@@ -350,17 +350,8 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO job (company_name, no, description, status, responsible)\nVALUES ($1, $2, $3, $4, $5)\nON CONFLICT (company_name, no) \nDO UPDATE SET \n  description = EXCLUDED.description,\n  status = EXCLUDED.status,\n  responsible = EXCLUDED.responsible\nRETURNING *;",
-        "options": {},
-        "queryParameters": {
-          "values": [
-            "{{ $json.company_name }}",
-            "{{ $json.no || $json.job_no }}", 
-            "{{ $json.description || \"\" }}",
-            "{{ $json.status || \"Open\" }}",
-            "{{ $json.responsible || \"\" }}"
-          ]
-        }
+        "query": "INSERT INTO job (company_name, no, description, status, responsible)\nVALUES ('Power Solution Iberia SL', 'PSI-AR-24-1200', 'PS Argentina 2024', 'Completed', 'REC0037')\nON CONFLICT (company_name, no) \nDO UPDATE SET \n  description = EXCLUDED.description,\n  status = EXCLUDED.status,\n  responsible = EXCLUDED.responsible\nRETURNING *;",
+        "options": {}
       },
       "id": "d52f6651-90cd-4c5f-abda-c8412e52dc9c",
       "name": "HTTP - Upsert job (Postgres REST)",
