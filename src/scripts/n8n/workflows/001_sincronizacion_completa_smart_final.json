@@ -27,7 +27,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\nconst jobSet = new Set(($('Build job set').first().json.jobNos || []).map(s => String(s).trim()));\n\nconst data = input[0].json;\nconst tareas = data.value || [];\nconst items = [];\n\nfor (const t of tareas) {\n  const job_no = String(t.projectNo ?? t.jobNo ?? t.job_no ?? '').trim();\n  const task_no = String(t.no ?? '').trim();\n  const description = String(t.description ?? '').trim() || 'Sin descripción';\n  if (!job_no || !task_no) continue;\n  if (!jobSet.has(job_no)) continue;\n\n  items.push({\n    json: { job_no, task_no, description, company_name: companyName },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\nconst jobSet = new Set(($('Build job set').first().json.jobNos || []).map(s => String(s).trim()));\n\nconst data = input[0].json;\nconst tareas = data.value || [];\nconst items = [];\n\nfor (const t of tareas) {\n  const job_no = String(t.projectNo ?? t.jobNo ?? t.job_no ?? '').trim();\n  const no = String(t.no ?? '').trim();\n  const description = String(t.description ?? '').trim() || 'Sin descripción';\n  if (!job_no || !no) continue;\n  if (!jobSet.has(job_no)) continue;\n\n  items.push({\n    json: { job_no, no, description, company_name: companyName },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
       },
       "id": "036cd795-aa75-40d7-9642-e521a8a6ad04",
       "name": "Transformar ProyectosTareas",
@@ -74,11 +74,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
             },
             {
               "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
             },
             {
               "name": "Content-Type",
@@ -188,7 +188,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst first = input[0];\nconst data = first.json;\nconst recursos = data.value || [];\nconst items = [];\n\nconst company = $('Resolve Company').first().json.companyName; // <- dinámico\n\nfor (const r of recursos) {\n  const code = r.no || '';\n  const name = r.name || '';\n  const email = String(r.email ?? r.arbvrneMail ?? '').trim(); // prioriza email\n  const department = String(r.globalDimension1Code ?? r.department ?? '').trim();\n  const calendarRaw = r.calendar_type ?? r.calendarType ?? r.Calendario ?? r.calendario ?? '';\n  const calendar_type = String(calendarRaw).trim();\n\n  if (!email || !email.includes('@')) continue;\n  if (!department) continue;\n\n  items.push({\n    json: {\n      code,\n      name,\n      email,\n      department_code: department,\n      company_name: company, // <- aquí\n      calendar_type,\n    },\n  });\n}\n\nreturn items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst first = input[0];\nconst data = first.json;\nconst recursos = data.value || [];\nconst items = [];\n\nconst company = $('Resolve Company').first().json.companyName; // <- dinámico\n\nfor (const r of recursos) {\n  const code = r.no || '';\n  const name = r.name || '';\n  const email = String(r.email ?? r.arbvrneMail ?? '').trim(); // prioriza email\n  const department = String(r.globalDimension1Code ?? r.department ?? '').trim();\n  const calendarRaw = r.calendar_code ?? r.calendarType ?? r.Calendario ?? r.calendario ?? '';\n  const calendar_code = String(calendarRaw).trim();\n\n  if (!email || !email.includes('@')) continue;\n  if (!department) continue;\n\n  items.push({\n    json: {\n      code,\n      name,\n      email,\n      department_code: department,\n      company_name: company, // <- aquí\n      calendar_code,\n    },\n  });\n}\n\nreturn items;"
       },
       "id": "7ae9e50a-c78b-41d6-aee4-ee4fcb856b7d",
       "name": "Transformar Recursos",
@@ -215,7 +215,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const rows = $input.all().map(i => {\n  const j = i.json || {};\n  return {\n    ...j,\n    calendar_type: (j.calendar_type && String(j.calendar_type).trim())\n      || (j.calendarType && String(j.calendarType).trim())\n      || 'DEFAULT' // valor por defecto\n  };\n});\nreturn [{ json: { payload: rows } }];"
+        "jsCode": "const rows = $input.all().map(i => {\n  const j = i.json || {};\n  return {\n    ...j,\n    calendar_code: (j.calendar_code && String(j.calendar_code).trim())\n      || (j.calendarType && String(j.calendarType).trim())\n      || 'DEFAULT' // valor por defecto\n  };\n});\nreturn [{ json: { payload: rows } }];"
       },
       "id": "8a8ac98e-0623-4e0b-a4e7-63fad549fe02",
       "name": "Pack batch",
@@ -235,11 +235,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
             },
             {
               "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
             },
             {
               "name": "Content-Type",
@@ -396,11 +396,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
             },
             {
               "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
             },
             {
               "name": "Content-Type",
@@ -545,11 +545,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
             },
             {
               "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
             },
             {
               "name": "Content-Type",
@@ -659,7 +659,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst data = input[0].json;\nconst rows = data.value || [];\nconst items = [];\n\nconst companyName = $('Resolve Company').first().json.companyName; // dinámico\n\nfor (const r of rows) {\n  const resource_no = String(r.resource_no ?? r.resourceNo ?? r.noRecurso ?? '').trim();\n  const cost_center = String(r.work_type ?? r.workType ?? r.tipoTrabajo ?? '').trim();\n  const cost_per_hour = Number(r.unit_cost ?? r.unitCost ?? r.costoUnitario ?? 0);\n\n  if (!resource_no || !cost_center) continue;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      resource_no,\n      cost_center,\n      cost_per_hour,\n    },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst data = input[0].json;\nconst rows = data.value || [];\nconst items = [];\n\nconst companyName = $('Resolve Company').first().json.companyName; // dinámico\n\nfor (const r of rows) {\n  const resource_no = String(r.resource_no ?? r.resourceNo ?? r.noRecurso ?? '').trim();\n  const work_type = String(r.work_type ?? r.workType ?? r.tipoTrabajo ?? '').trim();\n  const unit_cost = Number(r.unit_cost ?? r.unitCost ?? r.costoUnitario ?? 0);\n\n  if (!resource_no || !work_type) continue;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      resource_no,\n      work_type,\n      unit_cost,\n    },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
       },
       "id": "15238363-f59c-455d-809f-0b5d773b0238",
       "name": "Transformar RecursosCostos",
@@ -706,11 +706,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
             },
             {
               "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
             },
             {
               "name": "Content-Type",
@@ -820,7 +820,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\n\nconst data = input[0].json;\nconst rows = Array.isArray(data.value) ? data.value : [];\nconst items = [];\n\nfor (const r of rows) {\n  const calendar_type = String(r.calendar_code ?? r.calendarCode ?? '').trim();\n  const dayRaw = r.day ?? r.Day ?? r.date ?? '';\n  const date = String(dayRaw).trim();\n  if (!date) continue;\n\n  const hours_working = Number(r.hours_working ?? r.hoursWorking ?? 0);\n  const is_working_day = hours_working > 0;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      date,\n      is_working_day,\n      calendar_type\n    }\n  });\n}\n\nreturn items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\n\nconst data = input[0].json;\nconst rows = Array.isArray(data.value) ? data.value : [];\nconst items = [];\n\nfor (const r of rows) {\n  const calendar_code = String(r.calendar_code ?? r.calendarCode ?? r.calendar_type ?? '').trim();\n  const dayRaw = r.day ?? r.Day ?? r.date ?? '';\n  const day = String(dayRaw).trim();\n  if (!day) continue;\n\n  const hours_working = Number(r.hours_working ?? r.hoursWorking ?? 8);\n  const holiday = !(r.is_working_day ?? r.holiday ?? true);\n  const allocation_period = String(r.allocation_period ?? r.allocationPeriod ?? '2025-01').trim();\n\n  items.push({\n    json: {\n      company_name: companyName,\n      calendar_code,\n      allocation_period,\n      day,\n      holiday,\n      hours_working\n    }\n  });\n}\n\nreturn items;"
       },
       "id": "af42a909-709e-471a-82fa-e1231284f3b9",
       "name": "Transformar CalendarPeriodDays",
@@ -867,11 +867,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
             },
             {
               "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
             },
             {
               "name": "Content-Type",
