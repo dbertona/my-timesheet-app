@@ -39,7 +39,7 @@ export const TIMESHEET_ALIGN = {
   work_type: "left",
   quantity: "right",
   date: "right",
-  department_code: "right", // nos pediste este a la derecha
+  department_code: "center", // Cambiado de "right" a "center"
 };
 
 // Límites de auto-ajuste por doble clic
