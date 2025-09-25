@@ -350,7 +350,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO job (company_name, no, description, status, responsible)\nVALUES ('{{ $json.company_name }}', '{{ $json.no || $json.job_no }}', '{{ $json.description || \"\" }}', '{{ $json.status || \"Open\" }}', '{{ $json.responsible || \"\" }}')\nON CONFLICT (company_name, no) \nDO UPDATE SET \n  description = EXCLUDED.description,\n  status = EXCLUDED.status,\n  responsible = EXCLUDED.responsible\nRETURNING *;",
+        "query": "DO $$\nBEGIN\n  IF '{{ $json.status || \"Open\" }}' NOT IN ('Planning','Quote','Open','Completed','Lost') THEN\n    RAISE EXCEPTION 'INVALID STATUS: %', '{{ $json.status || \"Open\" }}';\n  END IF;\nEND $$;\n\nINSERT INTO job (company_name, no, description, status, responsible)\nVALUES ('{{ $json.company_name }}', '{{ $json.no || $json.job_no }}', '{{ $json.description || \"\" }}', '{{ $json.status || \"Open\" }}', '{{ $json.responsible || \"\" }}')\nON CONFLICT (company_name, no) \nDO UPDATE SET \n  description = EXCLUDED.description,\n  status = EXCLUDED.status,\n  responsible = EXCLUDED.responsible\nRETURNING *;",
         "options": {}
       },
       "id": "d52f6651-90cd-4c5f-abda-c8412e52dc9c",
