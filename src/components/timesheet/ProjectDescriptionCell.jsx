@@ -31,7 +31,7 @@ export default function ProjectDescriptionCell({
       data-col="job_no_description"
       title={projectDescription}
     >
-      <div className="ts-readonly" style={{ padding: "2px 4px" }}>
+      <div className="ts-readonly" style={{ padding: "0px 4px", textAlign: "inherit" }}>
         {projectDescription || (
           <span style={{ fontStyle: "italic", color: "#adb5bd" }}>
             Sin descripción

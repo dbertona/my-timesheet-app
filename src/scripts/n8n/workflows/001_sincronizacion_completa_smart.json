@@ -67,44 +67,27 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://192.168.88.68:8000/rest/v1/job_task?on_conflict=company_name,job_no,task_no",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Prefer",
-              "value": "resolution=merge-duplicates,return=representation"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ $json.payload }}",
+        "operation": "insert",
+        "tableId": "job_task",
         "options": {
-          "timeout": 60000
+          "onConflict": "company_name,job_no,task_no",
+          "returning": "representation"
         }
       },
       "id": "bc8f4f53-5078-4155-abab-5455e6167f32",
       "name": "HTTP - Upsert job_task (Supabase REST)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
       "position": [
         1328,
         -784
-      ]
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
     },
     {
       "parameters": {
@@ -228,44 +211,27 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://192.168.88.68:8000/rest/v1/resource?on_conflict=company_name,code",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Prefer",
-              "value": "resolution=merge-duplicates,return=representation"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ $json.payload }}",
+        "operation": "insert",
+        "tableId": "resource",
         "options": {
-          "timeout": 60000
+          "onConflict": "company_name,code",
+          "returning": "representation"
         }
       },
       "id": "e7ae76a5-1f3b-4d87-b69b-6635cf1b525e",
       "name": "HTTP - Upsert resource (Supabase REST)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
       "position": [
         -464,
         -1008
-      ]
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
     },
     {
       "parameters": {
@@ -389,45 +355,28 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://192.168.88.68:8000/rest/v1/job?on_conflict=company_name,no",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Prefer",
-              "value": "resolution=merge-duplicates,return=representation"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ $json.payload }}",
+        "operation": "insert",
+        "tableId": "job",
         "options": {
-          "timeout": 60000
+          "onConflict": "company_name,no",
+          "returning": "representation"
         }
       },
       "id": "d52f6651-90cd-4c5f-abda-c8412e52dc9c",
       "name": "HTTP - Upsert job (Supabase REST)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
       "position": [
         -464,
         -64
       ],
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
     },
     {
       "parameters": {
@@ -538,44 +487,27 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://192.168.88.68:8000/rest/v1/job_team?on_conflict=company_name,job_no,resource_no",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Prefer",
-              "value": "resolution=merge-duplicates,return=representation"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ $json.payload }}",
+        "operation": "insert",
+        "tableId": "job_team",
         "options": {
-          "timeout": 60000
+          "onConflict": "company_name,job_no,resource_no",
+          "returning": "representation"
         }
       },
       "id": "33d1c1c9-55e4-4dd0-abe6-42cce4cd7507",
       "name": "HTTP - Upsert job_team (Supabase REST)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
       "position": [
         1328,
         -1072
-      ]
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
     },
     {
       "parameters": {
@@ -699,44 +631,27 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://192.168.88.68:8000/rest/v1/resource_cost?on_conflict=company_name,resource_no,cost_center",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Prefer",
-              "value": "resolution=merge-duplicates,return=representation"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ $json.payload }}",
+        "operation": "insert",
+        "tableId": "resource_cost",
         "options": {
-          "timeout": 60000
+          "onConflict": "company_name,resource_no,cost_center",
+          "returning": "representation"
         }
       },
       "id": "e093c5fb-60ed-46ca-a77c-7eb440b02175",
       "name": "HTTP - Upsert resource_cost (Supabase REST)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
       "position": [
         1328,
         -496
-      ]
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
     },
     {
       "parameters": {
@@ -860,44 +775,27 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://192.168.88.68:8000/rest/v1/calendar_period_days?on_conflict=company_name,date,calendar_type",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.5z-pJI1qwZg1LE5yavGLqum65WOnnaaI5eZ3V00pLww"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Prefer",
-              "value": "resolution=merge-duplicates,return=representation"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ $json.payload }}",
+        "operation": "insert",
+        "tableId": "calendar_period_days",
         "options": {
-          "timeout": 60000
+          "onConflict": "company_name,date,calendar_type",
+          "returning": "representation"
         }
       },
       "id": "23b6ed32-2f47-47bd-92e2-195f574e7fc5",
       "name": "HTTP - Upsert calendar_period_days (Supabase REST)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
       "position": [
         1328,
         160
-      ]
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
     },
     {
       "parameters": {

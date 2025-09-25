@@ -482,3 +482,32 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* 🆕 Estilos para celdas de solo lectura - alineación consistente */
+.ts-readonly {
+  width: 100%;
+  height: 100%;
+  padding: 0px 4px;
+  box-sizing: border-box;
+  text-align: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  display: flex;
+  align-items: center;
+}
+
+.ts-cell-content {
+  width: 100%;
+  height: 100%;
+  padding: 0px 4px;
+  box-sizing: border-box;
+  text-align: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  display: flex;
+  align-items: center;
+}

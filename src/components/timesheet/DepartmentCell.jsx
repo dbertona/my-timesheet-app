@@ -26,9 +26,10 @@ export default function DepartmentCell({
       <div
         className="ts-cell-content"
         style={{
-          padding: "0px 1px",
-          fontSize: "10px",
+          padding: "0px 4px",
+          fontSize: "12px",
           fontWeight: "500",
+          textAlign: "inherit",
         }}
       >
         {departmentCode || (
