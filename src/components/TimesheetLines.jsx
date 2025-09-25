@@ -1133,7 +1133,7 @@ export default function TimesheetLines({
                     />
                   </div>
                 ) : (
-                  <div className="ts-readonly" style={{ textAlign: "right" }}>
+                  <div className="ts-readonly" style={{ textAlign: "inherit" }}>
                     {line.quantity ?? ""}
                   </div>
                 )}
