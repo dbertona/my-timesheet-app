@@ -1,5 +1,10 @@
 {
+  "createdAt": "2025-09-03T06:32:12.599Z",
+  "updatedAt": "2025-09-08T15:43:03.000Z",
+  "id": "XSYOmZ8mRuaXl6sg",
   "name": "001_sincronizacion_completa_smart",
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -10,13 +15,13 @@
           "timeout": 60000
         }
       },
-      "id": "60ecb5ed-40bf-4063-92ba-8460dfc95f28",
+      "id": "33d9cee8-1210-488d-8674-5c37f6aecc72",
       "name": "HTTP - ProyectosTareas (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        432,
-        -880
+        -3392,
+        1440
       ],
       "credentials": {
         "oAuth2Api": {
@@ -27,15 +32,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\nconst jobSet = new Set(($('Build job set').first().json.jobNos || []).map(s => String(s).trim()));\n\nconst data = input[0].json;\nconst tareas = data.value || [];\nconst items = [];\n\nfor (const t of tareas) {\n  const job_no = String(t.projectNo ?? t.jobNo ?? t.job_no ?? '').trim();\n  const task_no = String(t.no ?? '').trim();\n  const description = String(t.description ?? '').trim() || 'Sin descripción';\n  if (!job_no || !task_no) continue;\n  if (!jobSet.has(job_no)) continue;\n\n  items.push({\n    json: { job_no, task_no, description, company_name: companyName },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\nconst jobSet = new Set(($('Build job set').first().json.jobNos || []).map(s => String(s).trim()));\n\nconst data = input[0].json;\nconst tareas = data.value || [];\nconst items = [];\n\nfor (const t of tareas) {\n  const job_no = String(t.projectNo ?? t.jobNo ?? t.job_no ?? '').trim();\n  const no = String(t.no ?? '').trim();\n  const description = String(t.description ?? '').trim() || 'Sin descripción';\n  if (!job_no || !no) continue;\n  if (!jobSet.has(job_no)) continue; // evita violar la FK\n\n  items.push({\n    json: { job_no, no, description, company_name: companyName },\n    pairedItem: { item: 0 },\n  });\n}\nreturn items;"
       },
-      "id": "036cd795-aa75-40d7-9642-e521a8a6ad04",
+      "id": "e2284673-17d9-4762-9fe3-87ff0cfdb618",
       "name": "Transformar ProyectosTareas",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        656,
-        -784
+        -3168,
+        1536
       ]
     },
     {
@@ -43,60 +48,107 @@
         "batchSize": 100,
         "options": {}
       },
-      "id": "9bc1791c-14b7-4cfa-88f5-e959be1ee5b4",
+      "id": "a06b9239-b42f-4306-a9ca-145c6fc152db",
       "name": "Split In Batches (upsert tasks)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        880,
-        -784
+        -2944,
+        1536
       ]
     },
     {
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json); return [{ json: { payload: rows } }];"
       },
-      "id": "0c4282d0-6d72-4ff3-bf0c-205402c48dd9",
+      "id": "f9d4f617-cf60-4154-b004-935ceae11d12",
       "name": "Pack batch (tasks)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1104,
-        -864
+        -2720,
+        1464
       ]
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO job_task (company_name, job_no, no, description)\nVALUES ('{{ $json.company_name }}', '{{ $json.job_no }}', '{{ $json.task_no }}', '{{ $json.description }}')\nON CONFLICT (company_name, job_no, no) \nDO UPDATE SET \n  description = EXCLUDED.description\nRETURNING *;",
+        "batchSize": 100,
         "options": {}
       },
-      "id": "bc8f4f53-5078-4155-abab-5455e6167f32",
-      "name": "HTTP - Upsert job_task (Postgres REST)",
-      "type": "n8n-nodes-base.postgres",
+      "id": "a06b9239-b42f-4306-a9ca-145c6fc152db",
+      "name": "Split In Batches (upsert tasks)",
+      "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        1328,
-        -784
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "Postgres Timesheet",
-          "name": "Postgres Timesheet"
+        -2944,
+        1536
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json); return [{ json: { payload: rows } }];"
+      },
+      "id": "f9d4f617-cf60-4154-b004-935ceae11d12",
+      "name": "Pack batch (tasks)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2720,
+        1464
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.88.68:8000/rest/v1/job_task?on_conflict=company_name,job_no,no",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 60000
         }
-      }
+      },
+      "id": "6c114323-50de-41d2-ae79-9bd1329da2a9",
+      "name": "HTTP - Upsert job_task (Supabase REST)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2496,
+        1536
+      ]
     },
     {
       "parameters": {
         "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "42788064-ce5d-4cd4-94ab-d9f7a73dec15",
+      "id": "9cfa15ae-b127-4827-a31c-585b794c740e",
       "name": "Compute now ISO (tasks)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1552,
-        -784
+        -2720,
+        1272
       ]
     },
     {
@@ -109,7 +161,7 @@
             {
               "keyName": "company_name",
               "condition": "eq",
-              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+              "keyValue": "= {{ $('Resolve Company').first().json.companyName }}"
             },
             {
               "keyName": "entity",
@@ -127,13 +179,13 @@
           ]
         }
       },
-      "id": "e8702a81-ed7c-40d4-998c-4d5b038b90b3",
+      "id": "c0be5d90-3f87-43b7-9eee-96fe68ec7dcf",
       "name": "Update sync_state (tasks)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        1776,
-        -784
+        -2496,
+        1272
       ],
       "credentials": {
         "supabaseApi": {
@@ -151,13 +203,13 @@
           "timeout": 60000
         }
       },
-      "id": "cb136f48-4e84-4c8c-b445-3c46a8a7012c",
+      "id": "c12db487-29db-42bc-a853-26dfa527f53a",
       "name": "HTTP - Recursos (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        -1360,
-        -1008
+        -4064,
+        648
       ],
       "credentials": {
         "oAuth2Api": {
@@ -170,13 +222,13 @@
       "parameters": {
         "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst first = input[0];\nconst data = first.json;\nconst recursos = data.value || [];\nconst items = [];\n\nconst company = $('Resolve Company').first().json.companyName; // <- dinámico\n\nfor (const r of recursos) {\n  const code = r.no || '';\n  const name = r.name || '';\n  const email = String(r.email ?? r.arbvrneMail ?? '').trim(); // prioriza email\n  const department = String(r.globalDimension1Code ?? r.department ?? '').trim();\n  const calendarRaw = r.calendar_type ?? r.calendarType ?? r.Calendario ?? r.calendario ?? '';\n  const calendar_type = String(calendarRaw).trim();\n\n  if (!email || !email.includes('@')) continue;\n  if (!department) continue;\n\n  items.push({\n    json: {\n      code,\n      name,\n      email,\n      department_code: department,\n      company_name: company, // <- aquí\n      calendar_type,\n    },\n  });\n}\n\nreturn items;"
       },
-      "id": "7ae9e50a-c78b-41d6-aee4-ee4fcb856b7d",
+      "id": "f9e3e1cc-c933-44b2-90d9-28703bbe82f0",
       "name": "Transformar Recursos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1136,
-        -1008
+        -3840,
+        552
       ]
     },
     {
@@ -184,60 +236,80 @@
         "batchSize": 100,
         "options": {}
       },
-      "id": "a8739a63-bb6b-44a6-b470-1c5e45696830",
+      "id": "9fc500b0-b9e3-4f47-b639-65c49e50ce40",
       "name": "Split In Batches (upsert)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        -912,
-        -1008
+        -3616,
+        552
       ]
     },
     {
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => {\n  const j = i.json || {};\n  return {\n    ...j,\n    calendar_type: (j.calendar_type && String(j.calendar_type).trim())\n      || (j.calendarType && String(j.calendarType).trim())\n      || 'DEFAULT' // valor por defecto\n  };\n});\nreturn [{ json: { payload: rows } }];"
       },
-      "id": "8a8ac98e-0623-4e0b-a4e7-63fad549fe02",
+      "id": "2e7662da-3127-41e5-b4e7-aab374faf280",
       "name": "Pack batch",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -688,
-        -1024
+        -3392,
+        192
       ]
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO resource (company_name, code, name, type)\nVALUES ('{{ $json.company_name }}', '{{ $json.code }}', '{{ $json.name }}', '{{ $json.type }}')\nON CONFLICT (company_name, code) \nDO UPDATE SET \n  name = EXCLUDED.name,\n  type = EXCLUDED.type\nRETURNING *;",
-        "options": {}
-      },
-      "id": "e7ae76a5-1f3b-4d87-b69b-6635cf1b525e",
-      "name": "HTTP - Upsert resource (Postgres REST)",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 1,
-      "position": [
-        -464,
-        -1008
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "Postgres Timesheet",
-          "name": "Postgres Timesheet"
+        "method": "POST",
+        "url": "http://192.168.88.68:8000/rest/v1/resource?on_conflict=company_name,code",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 60000
         }
-      }
+      },
+      "id": "1ccec861-dd4f-466f-a971-09816eff3bb4",
+      "name": "HTTP - Upsert resource (Supabase REST)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -3168,
+        552
+      ]
     },
     {
       "parameters": {
         "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "00033b2f-8a6f-4345-bd0c-32a0e15dd83d",
+      "id": "fc55774e-d48a-4cfd-996c-c05307cfcc19",
       "name": "Compute now ISO (resource)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -240,
-        -1008
+        -2720,
+        1080
       ]
     },
     {
@@ -250,7 +322,7 @@
             {
               "keyName": "company_name",
               "condition": "eq",
-              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+              "keyValue": "= {{ $('Resolve Company').first().json.companyName }}"
             },
             {
               "keyName": "entity",
@@ -268,13 +340,13 @@
           ]
         }
       },
-      "id": "5de41ae9-b519-4634-9dab-cd46bf92a4ac",
+      "id": "cd58abc3-36ce-4623-9387-f86ff93c576a",
       "name": "Update sync_state (resource)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -16,
-        -1008
+        -2496,
+        1080
       ],
       "credentials": {
         "supabaseApi": {
@@ -292,13 +364,13 @@
           "timeout": 60000
         }
       },
-      "id": "c4557795-cc59-4b0b-97cb-3d5f7fe74bae",
+      "id": "d80bcc9a-d994-4ac3-bf2b-3cbe5a6ced9d",
       "name": "HTTP - Proyectos (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        -1360,
-        -160
+        -5184,
+        816
       ],
       "credentials": {
         "oAuth2Api": {
@@ -309,15 +381,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName; // <- dinámico\nconst data = input[0].json;\nconst proyectos = data.value || [];\nconst items = [];\n\nconst allowed = new Set(['Planning','Quote','Open','Completed','Lost']);\n\nfor (const p of proyectos) {\n  const statusRaw = p.estado ?? p.Estado ?? p.status ?? '';\n  const status = String(statusRaw).trim();\n  \n  // DEBUG: Log el status original\n  console.log('Status original:', JSON.stringify(statusRaw), '-> Normalizado:', status);\n  \n  // Normalizar status: si no está en la lista permitida, usar 'Open'\n  const normalizedStatus = allowed.has(status) ? status : 'Open';\n  \n  // DEBUG: Log el status final\n  console.log('Status final:', normalizedStatus);\n\n  // Filtrar proyectos que comienzan por PP o PY\n  const projectNo = String(p.no || '').trim();\n  if (projectNo.startsWith('PP') || projectNo.startsWith('PY')) {\n    continue;\n  }\n\n  items.push({\n    json: {\n      no: projectNo,\n      description: p.description || '',\n      status: normalizedStatus, // <- usar el status normalizado\n      responsible: p.Responsible || p.responsible || '',\n      departamento: p.departamento || p.GlobalDimension1Code || '',\n      company_name: companyName, // <- aquí\n    },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName; // <- dinámico\nconst data = input[0].json;\nconst proyectos = data.value || [];\nconst items = [];\n\nconst allowed = new Set(['Planning','Quote','Open','Completed','Lost']);\n\nfor (const p of proyectos) {\n  const statusRaw = p.estado ?? p.Estado ?? p.status ?? '';\n  const status = String(statusRaw).trim();\n  \n  // Normalizar status: si no está en la lista permitida, usar 'Open'\n  const normalizedStatus = allowed.has(status) ? status : 'Open';\n\n  // Filtrar proyectos que comienzan por PP o PY\n  const projectNo = String(p.no || '').trim();\n  if (projectNo.startsWith('PP') || projectNo.startsWith('PY')) {\n    continue;\n  }\n\n  items.push({\n    json: {\n      no: projectNo,\n      description: p.description || '',\n      status: normalizedStatus, // <- usar el status normalizado\n      responsible: p.Responsible || p.responsible || '',\n      departamento: p.departamento || p.GlobalDimension1Code || '',\n      company_name: companyName, // <- aquí\n    },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
       },
-      "id": "7fa4a1f1-e541-46fb-905f-8949f5e61aa6",
+      "id": "289795f8-d7bd-4658-b98b-95e3f6123538",
       "name": "Transformar Proyectos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1136,
-        -160
+        -4960,
+        912
       ]
     },
     {
@@ -325,74 +397,80 @@
         "batchSize": 100,
         "options": {}
       },
-      "id": "4e8cad1a-d2f6-49cc-8643-b5fb789bf94d",
+      "id": "227aa0c8-6536-4aec-bf8b-35e588154aa9",
       "name": "Split In Batches (upsert jobs)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        -912,
-        -64
+        -4736,
+        912
       ]
     },
     {
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json); return [{ json: { payload: rows } }];"
       },
-      "id": "7f92766e-31b7-4081-9746-f9b5be1e5fec",
+      "id": "4e0dc608-2cf9-4710-9b7f-ae543495a425",
       "name": "Pack batch (jobs)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -688,
-        -208
+        -4512,
+        192
       ]
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst items = [];\nfor (const item of input) {\n  const data = item.json;\n  \n  // DEBUG: Log todo el objeto\n  console.log('DEBUG - Data completo:', JSON.stringify(data, null, 2));\n  \n  // Normalizar status con debug\n  const allowed = ['Planning','Quote','Open','Completed','Lost'];\n  const statusRaw = data.status || 'Open';\n  const status = allowed.includes(statusRaw) ? statusRaw : 'Open';\n  \n  console.log('DEBUG - Status raw:', JSON.stringify(statusRaw), 'Final:', JSON.stringify(status));\n  \n  // Forzar status válido\n  const finalStatus = 'Open'; // <- FORZAR para debug\n  \n  items.push({\n    json: {\n      company_name: data.company_name || '',\n      no: data.no || data.job_no || '',\n      description: data.description || '',\n      status: finalStatus, // <- usar valor forzado\n      responsible: data.responsible || ''\n    }\n  });\n}\n\nconsole.log('DEBUG - Items finales:', JSON.stringify(items, null, 2));\nreturn items;"
-      },
-      "id": "prepare-job-data",
-      "name": "Prepare Job Data",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -688,
-        -64
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO job (company_name, no, description, status, responsible)\nVALUES ('Power Solution Iberia SL', 'PSI-AR-24-1200', 'PS Argentina 2024', 'Open', 'REC0037')\nON CONFLICT (company_name, no) \nDO UPDATE SET \n  description = EXCLUDED.description,\n  status = EXCLUDED.status,\n  responsible = EXCLUDED.responsible\nRETURNING *;",
-        "options": {}
-      },
-      "id": "d52f6651-90cd-4c5f-abda-c8412e52dc9c",
-      "name": "HTTP - Upsert job (Postgres REST)",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 1,
-      "position": [
-        -464,
-        -64
-      ],
-      "onError": "continueErrorOutput",
-      "credentials": {
-        "postgres": {
-          "id": "Postgres Timesheet",
-          "name": "Postgres Timesheet"
+        "method": "POST",
+        "url": "http://192.168.88.68:8000/rest/v1/job?on_conflict=company_name,no",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmcHN3eGp1bm9lcHpucnBzbHR0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg3MTA3OSwiZXhwIjoyMDY5NDQ3MDc5fQ.PxpfuFsfvpeEPHCEiWhRn0SD1WxngTAEppJ-65QTTOQ"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 60000
         }
-      }
+      },
+      "id": "f254476e-9ab2-4747-be31-601704b34c08",
+      "name": "HTTP - Upsert job (Supabase REST)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -4288,
+        912
+      ]
     },
     {
       "parameters": {
         "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "b26d24ba-324e-4373-b8b7-63559daf4f00",
+      "id": "723cebfa-dee7-4496-9a2c-8d2ee610c9b1",
       "name": "Compute now ISO (jobs)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -240,
-        16
+        -2720,
+        0
       ]
     },
     {
@@ -405,7 +483,7 @@
             {
               "keyName": "company_name",
               "condition": "eq",
-              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+              "keyValue": "== {{ $('Resolve Company').first().json.companyName }}"
             },
             {
               "keyName": "entity",
@@ -423,13 +501,13 @@
           ]
         }
       },
-      "id": "76c96c70-e632-4cc7-8501-68cd83e1d70d",
+      "id": "28b58af8-94c8-4f67-805e-2ff331d81ee8",
       "name": "Update sync_state (jobs)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -16,
-        16
+        -2496,
+        0
       ],
       "credentials": {
         "supabaseApi": {
@@ -447,13 +525,13 @@
           "timeout": 60000
         }
       },
-      "id": "975d1eb7-695e-4958-a2b9-2d52e8e0f951",
+      "id": "9057faa2-5463-4f51-b55e-4e01826382bb",
       "name": "HTTP - ProyectosEquipos (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        432,
-        -1168
+        -2944,
+        336
       ],
       "credentials": {
         "oAuth2Api": {
@@ -464,15 +542,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\nconst jobSet = new Set(($('Build job set').first().json.jobNos || []).map(s => String(s).trim()));\n\nconst data = input[0].json;\nconst equipos = data.value || [];\nconst items = [];\n\nfor (const e of equipos) {\n  const job_no = String(e.job_no ?? e.jobNo ?? e.NoProyecto ?? '').trim();\n  const resource_no = String(e.resource_no ?? e.resourceNo ?? e.NoRecurso ?? '').trim();\n\n  if (!job_no || !resource_no) continue;\n  if (!jobSet.has(job_no)) continue;\n\n  items.push({\n    json: { company_name: companyName, job_no, resource_no },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst data = input[0].json;\nconst equipos = data.value || [];\nconst items = [];\n\nconst companyName = $('Resolve Company').first().json.companyName; // compañía dinámica\n\nfor (const e of equipos) {\n  const job_no = String(e.job_no ?? e.jobNo ?? e.NoProyecto ?? '').trim();\n  const resource_no = String(e.resource_no ?? e.resourceNo ?? e.NoRecurso ?? '').trim();\n  if (!job_no || !resource_no) continue;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      job_no,\n      resource_no,\n    },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
       },
-      "id": "7b7495e8-6f1f-41f2-a67e-488466daac4a",
+      "id": "704c14bf-44fc-4b08-bde2-2ea73b64d763",
       "name": "Transformar ProyectosEquipos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        656,
-        -1072
+        -2720,
+        432
       ]
     },
     {
@@ -480,47 +558,67 @@
         "batchSize": 100,
         "options": {}
       },
-      "id": "a45aa8e5-e4ca-4658-8908-30a443b595c4",
+      "id": "aa664906-4841-46d8-bf1e-d7b5e76cbfde",
       "name": "Split In Batches (upsert team)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        880,
-        -1072
+        -2496,
+        432
       ]
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO job_team (company_name, job_no, resource_no, role)\nVALUES ('{{ $json.company_name }}', '{{ $json.job_no }}', '{{ $json.resource_no }}', '{{ $json.role }}')\nON CONFLICT (company_name, job_no, resource_no) \nDO UPDATE SET \n  role = EXCLUDED.role\nRETURNING *;",
-        "options": {}
-      },
-      "id": "33d1c1c9-55e4-4dd0-abe6-42cce4cd7507",
-      "name": "HTTP - Upsert job_team (Postgres REST)",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 1,
-      "position": [
-        1328,
-        -1072
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "Postgres Timesheet",
-          "name": "Postgres Timesheet"
+        "method": "POST",
+        "url": "http://192.168.88.68:8000/rest/v1/job_team?on_conflict=company_name,job_no,resource_no",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmcHN3eGp1bm9lcHpucnBzbHR0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg3MTA3OSwiZXhwIjoyMDY5NDQ3MDc5fQ.PxpfuFsfvpeEPHCEiWhRn0SD1WxngTAEppJ-65QTTOQ"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 60000
         }
-      }
+      },
+      "id": "235dfcf5-1b7f-4697-bb07-2ea169e9e1e9",
+      "name": "HTTP - Upsert job_team (Supabase REST)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2048,
+        432
+      ]
     },
     {
       "parameters": {
         "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "c897b185-d8c3-4818-ad22-df6f0705dc5f",
+      "id": "c3297565-5607-49cb-8770-58ff6ad94beb",
       "name": "Compute now ISO (team)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1552,
-        -1072
+        -2720,
+        192
       ]
     },
     {
@@ -533,7 +631,7 @@
             {
               "keyName": "company_name",
               "condition": "eq",
-              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+              "keyValue": "= {{ $('Resolve Company').first().json.companyName }}"
             },
             {
               "keyName": "entity",
@@ -551,13 +649,13 @@
           ]
         }
       },
-      "id": "c99c0fef-4a22-435f-b06f-db2ade33ef4a",
+      "id": "e0c39d4f-0087-4e55-a69b-de313ed67b36",
       "name": "Update sync_state (team)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        1776,
-        -1072
+        -2496,
+        192
       ],
       "credentials": {
         "supabaseApi": {
@@ -575,13 +673,13 @@
           "timeout": 60000
         }
       },
-      "id": "963ac79f-6da6-4151-9a5e-3e1c128d6df3",
+      "id": "31acb2b9-81f1-4778-a0a3-c8388c2a77b7",
       "name": "HTTP - RecursosCostos (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        432,
-        -592
+        -2944,
+        768
       ],
       "credentials": {
         "oAuth2Api": {
@@ -592,15 +690,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst data = input[0].json;\nconst rows = data.value || [];\nconst items = [];\n\nconst companyName = $('Resolve Company').first().json.companyName; // dinámico\n\nfor (const r of rows) {\n  const resource_no = String(r.resource_no ?? r.resourceNo ?? r.noRecurso ?? '').trim();\n  const cost_center = String(r.work_type ?? r.workType ?? r.tipoTrabajo ?? '').trim();\n  const cost_per_hour = Number(r.unit_cost ?? r.unitCost ?? r.costoUnitario ?? 0);\n\n  if (!resource_no || !cost_center) continue;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      resource_no,\n      cost_center,\n      cost_per_hour,\n    },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst data = input[0].json;\nconst rows = data.value || [];\nconst items = [];\n\nconst companyName = $('Resolve Company').first().json.companyName; // dinámico\n\nfor (const r of rows) {\n  const resource_no = String(r.resource_no ?? r.resourceNo ?? r.noRecurso ?? '').trim();\n  const work_type = String(r.work_type ?? r.workType ?? r.tipoTrabajo ?? '').trim();\n  const unit_cost = Number(r.unit_cost ?? r.unitCost ?? r.costoUnitario ?? 0);\n\n  if (!resource_no || !work_type) continue;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      resource_no,\n      work_type,\n      unit_cost,\n    },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
       },
-      "id": "15238363-f59c-455d-809f-0b5d773b0238",
+      "id": "8a27212b-cfb5-4fcb-8cdf-e11bb71ce800",
       "name": "Transformar RecursosCostos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        656,
-        -496
+        -2720,
+        864
       ]
     },
     {
@@ -608,60 +706,80 @@
         "batchSize": 100,
         "options": {}
       },
-      "id": "412e5f3c-ca2d-43dc-bdde-5a6ac23fcc0a",
+      "id": "23b012b1-f464-4d88-98cc-207ff1ff92c1",
       "name": "Split In Batches (upsert resource_cost)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        880,
-        -496
+        -2496,
+        864
       ]
     },
     {
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json || {}); return [{ json: { payload: rows } }];"
       },
-      "id": "64331bb1-28cb-4ad7-868b-ed6362de213f",
+      "id": "830c5de8-15f2-4b8b-a0ff-567704499de2",
       "name": "Pack batch (resource_cost)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1104,
-        -576
+        -2272,
+        792
       ]
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO resource_cost (company_name, resource_no, work_type, cost_per_hour)\nVALUES ('{{ $json.company_name }}', '{{ $json.resource_no }}', '{{ $json.work_type || $json.cost_center }}', {{ $json.cost_per_hour }})\nON CONFLICT (company_name, resource_no, work_type) \nDO UPDATE SET \n  cost_per_hour = EXCLUDED.cost_per_hour\nRETURNING *;",
-        "options": {}
-      },
-      "id": "e093c5fb-60ed-46ca-a77c-7eb440b02175",
-      "name": "HTTP - Upsert resource_cost (Postgres REST)",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 1,
-      "position": [
-        1328,
-        -496
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "Postgres Timesheet",
-          "name": "Postgres Timesheet"
+        "method": "POST",
+        "url": "http://192.168.88.68:8000/rest/v1/resource_cost?on_conflict=company_name,resource_no,work_type",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmcHN3eGp1bm9lcHpucnBzbHR0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg3MTA3OSwiZXhwIjoyMDY5NDQ3MDc5fQ.PxpfuFsfvpeEPHCEiWhRn0SD1WxngTAEppJ-65QTTOQ"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 60000
         }
-      }
+      },
+      "id": "524fd6dc-264d-4071-9d24-c5aa59e2838e",
+      "name": "HTTP - Upsert resource_cost (Supabase REST)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2048,
+        864
+      ]
     },
     {
       "parameters": {
         "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "ab8636b1-fa56-4c39-8091-f888b3102558",
+      "id": "82b8dc41-5d31-4c3e-ab1a-a7a54aa4fef1",
       "name": "Compute now ISO (resource_cost)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1552,
-        -496
+        -2720,
+        648
       ]
     },
     {
@@ -674,7 +792,7 @@
             {
               "keyName": "company_name",
               "condition": "eq",
-              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+              "keyValue": "= {{ $('Resolve Company').first().json.companyName }}"
             },
             {
               "keyName": "entity",
@@ -692,13 +810,13 @@
           ]
         }
       },
-      "id": "3b970e36-3ddb-4738-8a90-e04c7005499d",
+      "id": "c2bda7db-68f7-42b4-beab-73d759fe661a",
       "name": "Update sync_state (resource_cost)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        1776,
-        -496
+        -2496,
+        648
       ],
       "credentials": {
         "supabaseApi": {
@@ -716,13 +834,13 @@
           "timeout": 60000
         }
       },
-      "id": "ba321c73-7239-4762-8341-a52e5829f53d",
+      "id": "476a94b7-0788-434a-a2e1-848f87cd70dc",
       "name": "HTTP - CalendarPeriodDays (filtrado)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        432,
-        160
+        -2944,
+        1896
       ],
       "credentials": {
         "oAuth2Api": {
@@ -733,15 +851,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\n\nconst data = input[0].json;\nconst rows = Array.isArray(data.value) ? data.value : [];\nconst items = [];\n\nfor (const r of rows) {\n  const calendar_code = String(r.calendar_code ?? r.calendarCode ?? r.calendar_type ?? r.calendarType ?? '').trim() || 'DEFAULT';\n  const day = String(r.day ?? r.Day ?? r.date ?? '').trim();\n  if (!day) continue;\n  const allocation_period = day.slice(0, 7);\n  const hours_working = Number(r.hours_working ?? r.hoursWorking ?? (r.is_working_day === false ? 0 : 8));\n  const holiday = !(hours_working > 0);\n\n  items.push({ json: { company_name: companyName, calendar_code, allocation_period, day, holiday, hours_working } });\n}\n\nreturn items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName; // <- añade esto\n\nconst data = input[0].json;\nconst rows = Array.isArray(data.value) ? data.value : [];\nconst items = [];\n\nfor (const r of rows) {\n  const allocation_period = String(r.allocation_period ?? r.allocationPeriod ?? '').trim();\n  const calendar_code = String(r.calendar_code ?? r.calendarCode ?? '').trim();\n  const dayRaw = r.day ?? r.Day ?? r.date ?? '';\n  const dayStr = String(dayRaw).trim();\n\n  if (!allocation_period) continue;\n  if (!dayStr) continue;\n\n  const holiday = Boolean(r.holiday ?? r.Holiday ?? false);\n  const hours_working = Number(r.hours_working ?? r.hoursWorking ?? 0);\n\n  const dayNum = Number(dayStr);\n  const day = Number.isNaN(dayNum) ? dayStr : dayNum;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      allocation_period,\n      calendar_code,\n      day,\n      holiday,\n      hours_working,\n    },\n  });\n}\n\nreturn items;"
       },
-      "id": "af42a909-709e-471a-82fa-e1231284f3b9",
+      "id": "9a99de97-a00e-4bd0-887c-d680d77e497e",
       "name": "Transformar CalendarPeriodDays",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        656,
-        160
+        -2720,
+        1992
       ]
     },
     {
@@ -749,60 +867,80 @@
         "batchSize": 100,
         "options": {}
       },
-      "id": "d802a670-c549-4c90-a245-cf8856700bed",
+      "id": "4101651d-9ca9-4e53-9f9e-8875b14cdc62",
       "name": "Split In Batches (upsert calendar)",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 1,
       "position": [
-        880,
-        160
+        -2496,
+        1992
       ]
     },
     {
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json || {}); return [{ json: { payload: rows } }];"
       },
-      "id": "28b156fe-9876-4d35-b17a-f3b24b48e1d7",
+      "id": "295e60dc-eb55-4e87-aa35-b69104aec057",
       "name": "Pack batch (calendar)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1104,
-        80
+        -2272,
+        1920
       ]
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO calendar_period_days (company_name, calendar_code, allocation_period, day, holiday, hours_working)\nVALUES ('{{ $json.company_name }}', '{{ $json.calendar_code }}', '{{ $json.allocation_period }}', '{{ $json.day }}', {{ $json.holiday }}, {{ $json.hours_working }})\nON CONFLICT (company_name, calendar_code, allocation_period, day) \nDO UPDATE SET \n  holiday = EXCLUDED.holiday,\n  hours_working = EXCLUDED.hours_working\nRETURNING *;",
-        "options": {}
-      },
-      "id": "23b6ed32-2f47-47bd-92e2-195f574e7fc5",
-      "name": "HTTP - Upsert calendar_period_days (Postgres REST)",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 1,
-      "position": [
-        1328,
-        160
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "Postgres Timesheet",
-          "name": "Postgres Timesheet"
+        "method": "POST",
+        "url": "http://192.168.88.68:8000/rest/v1/calendar_period_days?on_conflict=company_name,allocation_period,calendar_code,day",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmcHN3eGp1bm9lcHpucnBzbHR0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg3MTA3OSwiZXhwIjoyMDY5NDQ3MDc5fQ.PxpfuFsfvpeEPHCEiWhRn0SD1WxngTAEppJ-65QTTOQ"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 60000
         }
-      }
+      },
+      "id": "b6d52d78-0f6f-4320-af41-5c3ecb1fa36f",
+      "name": "HTTP - Upsert calendar_period_days (Supabase REST)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2048,
+        1992
+      ]
     },
     {
       "parameters": {
         "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
       },
-      "id": "aeea1b55-4189-49c2-9fad-f851c997d607",
+      "id": "de696069-4ef9-40d7-aa45-488fc57f797f",
       "name": "Compute now ISO (calendar)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1552,
-        160
+        -2720,
+        1776
       ]
     },
     {
@@ -815,7 +953,7 @@
             {
               "keyName": "company_name",
               "condition": "eq",
-              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+              "keyValue": "= {{ $('Resolve Company').first().json.companyName }}"
             },
             {
               "keyName": "entity",
@@ -833,13 +971,13 @@
           ]
         }
       },
-      "id": "a15ba316-215e-4b22-98b9-3baa3c21619e",
+      "id": "8674c2c2-cebb-4e44-aba8-35845ce25b65",
       "name": "Update sync_state (calendar)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        1776,
-        160
+        -2496,
+        1776
       ],
       "credentials": {
         "supabaseApi": {
@@ -858,10 +996,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -2256,
-        -64
+        -6304,
+        1128
       ],
-      "id": "a0e6df3d-5357-4c06-842b-29b59a27954b",
+      "id": "530ec4b5-2b6b-4270-919f-5284f71d1a4e",
       "name": "Webhook Trigger",
       "webhookId": "8a27722f-ef0b-42c3-abb3-32ab91bda2a3"
     },
@@ -869,67 +1007,41 @@
       "parameters": {
         "jsCode": "const p = $json.params || {};\nconst slugRaw = (p.company || $json.query?.company || '').toString().trim().toLowerCase();\nconst slug = encodeURI(slugRaw);\nconst map = {\n  'psi': { companyName: 'Power Solution Iberia SL', companyId: 'ca9dc1bf-54ee-ed11-884a-000d3a455d5b' },\n  'pslab': { companyName: 'PS LAB CONSULTING SL', companyId: '656f8f0e-2bf4-ed11-8848-000d3a4baf18' }\n};\nconst chosen = map[slug];\nif (!chosen) {\n  return [{ json: { error: 'Invalid company', slug } }];\n}\nreturn [{ json: { companyName: chosen.companyName, companyId: chosen.companyId, slug } }];"
       },
-      "id": "c804002a-c455-47c0-a1ab-9493c6cf576a",
+      "id": "e68bc62f-5a90-4623-99e1-5e3fabd80c8b",
       "name": "Resolve Company",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2032,
-        -160
+        -5856,
+        1032
       ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { success: true, message: \"Sincronización BC a Supabase completada exitosamente\", timestamp: new Date().toISOString(), errors: $('Collect Errors').first().json.errors || [] } }}",
+        "responseBody": "={{ { success: true, message: \"Sincronización BC a Supabase completada exitosamente\", timestamp: new Date().toISOString() } }}",
         "options": {}
       },
-      "id": "6f23f500-500a-4be8-92d4-b5f4e3ed5fec",
+      "id": "812ed6ed-8277-448a-9d2f-49238f93f892",
       "name": "Webhook Response",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        2448,
-        -496
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Recopilar errores de todas las entidades\nconst errors = [];\n\n// Función para extraer errores de una respuesta HTTP\nfunction extractErrors(response, entity) {\n  if (!response || !response.error) return;\n  \n  const error = response.error;\n  let message = error.message || 'Error desconocido';\n  \n  // Detectar duplicados específicamente\n  if (message.includes('duplicate') || message.includes('conflict') || message.includes('already exists')) {\n    message = `DUPLICADO: ${message}`;\n  }\n  \n  // Extraer detalles del proyecto si es posible\n  let projectInfo = '';\n  if (response.body) {\n    try {\n      const body = typeof response.body === 'string' ? JSON.parse(response.body) : response.body;\n      if (body.no) projectInfo = ` (Proyecto: ${body.no})`;\n      if (body.job_no) projectInfo = ` (Job: ${body.job_no})`;\n      if (body.resource_no) projectInfo = ` (Recurso: ${body.resource_no})`;\n    } catch (e) {\n      // Ignorar errores de parsing\n    }\n  }\n  \n  errors.push({\n    entity,\n    error: message + projectInfo,\n    timestamp: new Date().toISOString()\n  });\n}\n\n// Recopilar errores de todas las entidades\nconst allInputs = $input.all();\nfor (const input of allInputs) {\n  if (input.json && input.json.error) {\n    extractErrors(input.json, 'General');\n  }\n}\n\nreturn [{ json: { errors, totalErrors: errors.length } }];"
-      },
-      "id": "9d48f976-75d1-46a1-a7e8-e505f5ed4ae5",
-      "name": "Collect Errors",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2224,
-        -496
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Manejar errores específicos de proyectos\nconst input = $input.all();\nconst errors = [];\n\n// Obtener datos del nodo HTTP anterior\nconst httpData = $('HTTP - Upsert job (Supabase REST)').all();\n\nfor (const httpItem of httpData) {\n  // Verificar si hay error en la respuesta HTTP\n  if (httpItem.json && httpItem.json.error) {\n    const error = httpItem.json.error;\n    let message = error.message || 'Error desconocido en proyecto';\n    \n    // Detectar duplicados\n    if (message.includes('duplicate') || message.includes('conflict') || message.includes('already exists') || message.includes('unique constraint')) {\n      message = `DUPLICADO: ${message}`;\n    }\n    \n    // Extraer información del proyecto del payload original\n    let projectInfo = '';\n    try {\n      // Buscar en el payload original que se envió\n      const payload = httpItem.json.body || httpItem.json.payload || {};\n      let projectData = {};\n      \n      if (Array.isArray(payload)) {\n        // Si es un array, tomar el primer elemento\n        projectData = payload[0] || {};\n      } else if (typeof payload === 'object') {\n        projectData = payload;\n      }\n      \n      if (projectData.no) projectInfo = ` (Proyecto: ${projectData.no})`;\n      if (projectData.description) projectInfo += ` (${projectData.description})`;\n    } catch (e) {\n      // Ignorar errores de parsing\n    }\n    \n    errors.push({\n      entity: 'job',\n      error: message + projectInfo,\n      timestamp: new Date().toISOString()\n    });\n  }\n}\n\n// Si no hay errores, devolver array vacío\nreturn [{ json: { errors, totalErrors: errors.length } }];"
-      },
-      "id": "fa48e5ec-f5fe-4c56-bb83-b4e6ccda2502",
-      "name": "Error Handler (Jobs)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1776,
-        -144
+        -2272,
+        144
       ]
     },
     {
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json || {}); return [{ json: { payload: rows } }];"
       },
-      "id": "e01ccd2e-ea7a-4a5a-b442-ec8663e7be09",
+      "id": "fff090c4-3e61-4a18-884b-911b6e1f9844",
       "name": "Pack batch (team)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1104,
-        -1152
+        -2272,
+        360
       ]
     },
     {
@@ -939,10 +1051,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1584,
-        -160
+        -5408,
+        1032
       ],
-      "id": "ead10554-f5c7-4257-ac1a-9918bb96c4d9",
+      "id": "22843e90-3109-4b05-a4ec-6f6285eafeaa",
       "name": "Build sync_state map"
     },
     {
@@ -950,10 +1062,10 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -2480,
-        -256
+        -6304,
+        936
       ],
-      "id": "54e7f8ec-ed15-45cb-9a19-9e542638770e",
+      "id": "667b95fd-4e1e-4c24-a092-fb72690c6db4",
       "name": "When clicking ‘Execute workflow’"
     },
     {
@@ -963,7 +1075,7 @@
             {
               "id": "18ae6cd4-9853-4694-ac15-bcf52e8e4597",
               "name": "query.company",
-              "value": "psi",
+              "value": "pslab",
               "type": "string"
             }
           ]
@@ -974,10 +1086,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -2256,
-        -256
+        -6080,
+        1032
       ],
-      "id": "1170033b-0d9c-451e-8d4b-f0f3b2fbe850",
+      "id": "93f41d73-8eb6-4f9d-8355-3926f5479013",
       "name": "Set Company"
     },
     {
@@ -990,18 +1102,18 @@
             {
               "keyName": "company_name",
               "condition": "eq",
-              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+              "keyValue": "={{ $('Resolve Company').item.json.companyName }}"
             }
           ]
         }
       },
-      "id": "4fa1e328-036e-4e2b-81b1-3cb9a3c43957",
+      "id": "40475ad7-c61f-4663-b440-9f44de6f1527",
       "name": "Get sync_state ALL",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -1808,
-        -160
+        -5632,
+        1032
       ],
       "credentials": {
         "supabaseApi": {
@@ -1017,47 +1129,24 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        432,
-        -400
+        -3616,
+        1440
       ],
-      "id": "2c2db7d8-f164-42c7-b2c2-eee194d27d9d",
+      "id": "5cf16407-d234-4c0e-bef6-9323ec8a2476",
       "name": "Build job set"
-    },
-    {
-      "parameters": {
-        "mode": "chooseBranch"
-      },
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        208,
-        -1008
-      ],
-      "id": "0ae7c24d-43d0-41df-b7f1-e609f882f405",
-      "name": "Wait jobs+resources"
-    },
-    {
-      "parameters": {
-        "mode": "chooseBranch",
-        "numberInputs": 5
-      },
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        2000,
-        -544
-      ],
-      "id": "d6d00076-8a12-4b9a-804d-99c3a7b0f6d5",
-      "name": "Wait All Complete"
     }
   ],
-  "pinData": {},
   "connections": {
     "HTTP - ProyectosTareas (filtrado)": {
       "main": [
         [
           {
             "node": "Transformar ProyectosTareas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compute now ISO (tasks)",
             "type": "main",
             "index": 0
           }
@@ -1090,14 +1179,14 @@
       "main": [
         [
           {
-            "node": "HTTP - Upsert job_task (Postgres REST)",
+            "node": "HTTP - Upsert job_task (Supabase REST)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP - Upsert job_task (Postgres REST)": {
+    "HTTP - Upsert job_task (Supabase REST)": {
       "main": [
         [
           {
@@ -1106,7 +1195,7 @@
             "index": 0
           },
           {
-            "node": "Compute now ISO (tasks)",
+            "node": "Webhook Response",
             "type": "main",
             "index": 0
           }
@@ -1128,7 +1217,7 @@
       "main": [
         [
           {
-            "node": "Wait All Complete",
+            "node": "Webhook Response",
             "type": "main",
             "index": 0
           }
@@ -1138,6 +1227,11 @@
     "HTTP - Recursos (filtrado)": {
       "main": [
         [
+          {
+            "node": "Compute now ISO (resource)",
+            "type": "main",
+            "index": 0
+          },
           {
             "node": "Transformar Recursos",
             "type": "main",
@@ -1172,14 +1266,14 @@
       "main": [
         [
           {
-            "node": "HTTP - Upsert resource (Postgres REST)",
+            "node": "HTTP - Upsert resource (Supabase REST)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP - Upsert resource (Postgres REST)": {
+    "HTTP - Upsert resource (Supabase REST)": {
       "main": [
         [
           {
@@ -1188,7 +1282,12 @@
             "index": 0
           },
           {
-            "node": "Compute now ISO (resource)",
+            "node": "HTTP - ProyectosEquipos (filtrado)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - RecursosCostos (filtrado)",
             "type": "main",
             "index": 0
           }
@@ -1210,9 +1309,9 @@
       "main": [
         [
           {
-            "node": "Wait jobs+resources",
+            "node": "Webhook Response",
             "type": "main",
-            "index": 1
+            "index": 0
           }
         ]
       ]
@@ -1224,6 +1323,11 @@
             "node": "Transformar Proyectos",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Compute now ISO (jobs)",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -1232,23 +1336,7 @@
       "main": [
         [
           {
-            "node": "Prepare Job Data",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Build job set",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare Job Data": {
-      "main": [
-        [
-          {
-            "node": "HTTP - Upsert job (Postgres REST)",
+            "node": "Split In Batches (upsert jobs)",
             "type": "main",
             "index": 0
           }
@@ -1270,43 +1358,30 @@
       "main": [
         [
           {
-            "node": "HTTP - Upsert job (Postgres REST)",
+            "node": "HTTP - Upsert job (Supabase REST)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP - Upsert job (Postgres REST)": {
+    "HTTP - Upsert job (Supabase REST)": {
       "main": [
         [
-          {
-            "node": "Compute now ISO (jobs)",
-            "type": "main",
-            "index": 0
-          },
           {
             "node": "Split In Batches (upsert jobs)",
             "type": "main",
             "index": 0
-          }
-        ],
-        [
+          },
           {
-            "node": "Error Handler (Jobs)",
+            "node": "HTTP - Recursos (filtrado)",
             "type": "main",
             "index": 0
-          }
-        ]
-      ]
-    },
-    "Error Handler (Jobs)": {
-      "main": [
-        [
+          },
           {
-            "node": "Wait All Complete",
+            "node": "Build job set",
             "type": "main",
-            "index": 4
+            "index": 0
           }
         ]
       ]
@@ -1326,9 +1401,9 @@
       "main": [
         [
           {
-            "node": "Wait jobs+resources",
+            "node": "Webhook Response",
             "type": "main",
-            "index": 1
+            "index": 0
           }
         ]
       ]
@@ -1338,6 +1413,11 @@
         [
           {
             "node": "Transformar ProyectosEquipos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compute now ISO (team)",
             "type": "main",
             "index": 0
           }
@@ -1366,16 +1446,11 @@
         ]
       ]
     },
-    "HTTP - Upsert job_team (Postgres REST)": {
+    "HTTP - Upsert job_team (Supabase REST)": {
       "main": [
         [
           {
             "node": "Split In Batches (upsert team)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Compute now ISO (team)",
             "type": "main",
             "index": 0
           }
@@ -1397,9 +1472,9 @@
       "main": [
         [
           {
-            "node": "Wait All Complete",
+            "node": "Webhook Response",
             "type": "main",
-            "index": 1
+            "index": 0
           }
         ]
       ]
@@ -1409,6 +1484,11 @@
         [
           {
             "node": "Transformar RecursosCostos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compute now ISO (resource_cost)",
             "type": "main",
             "index": 0
           }
@@ -1441,23 +1521,18 @@
       "main": [
         [
           {
-            "node": "HTTP - Upsert resource_cost (Postgres REST)",
+            "node": "HTTP - Upsert resource_cost (Supabase REST)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP - Upsert resource_cost (Postgres REST)": {
+    "HTTP - Upsert resource_cost (Supabase REST)": {
       "main": [
         [
           {
             "node": "Split In Batches (upsert resource_cost)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Compute now ISO (resource_cost)",
             "type": "main",
             "index": 0
           }
@@ -1475,11 +1550,27 @@
         ]
       ]
     },
+    "Update sync_state (resource_cost)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "HTTP - CalendarPeriodDays (filtrado)": {
       "main": [
         [
           {
             "node": "Transformar CalendarPeriodDays",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compute now ISO (calendar)",
             "type": "main",
             "index": 0
           }
@@ -1512,23 +1603,18 @@
       "main": [
         [
           {
-            "node": "HTTP - Upsert calendar_period_days (Postgres REST)",
+            "node": "HTTP - Upsert calendar_period_days (Supabase REST)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP - Upsert calendar_period_days (Postgres REST)": {
+    "HTTP - Upsert calendar_period_days (Supabase REST)": {
       "main": [
         [
           {
             "node": "Split In Batches (upsert calendar)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Compute now ISO (calendar)",
             "type": "main",
             "index": 0
           }
@@ -1546,11 +1632,22 @@
         ]
       ]
     },
+    "Update sync_state (calendar)": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Webhook Trigger": {
       "main": [
         [
           {
-            "node": "Resolve Company",
+            "node": "Set Company",
             "type": "main",
             "index": 0
           }
@@ -1572,7 +1669,7 @@
       "main": [
         [
           {
-            "node": "HTTP - Upsert job_team (Postgres REST)",
+            "node": "HTTP - Upsert job_team (Supabase REST)",
             "type": "main",
             "index": 0
           }
@@ -1589,11 +1686,6 @@
           },
           {
             "node": "HTTP - CalendarPeriodDays (filtrado)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "HTTP - Recursos (filtrado)",
             "type": "main",
             "index": 0
           }
@@ -1637,94 +1729,70 @@
       "main": [
         [
           {
-            "node": "Transformar ProyectosEquipos",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Transformar ProyectosTareas",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait jobs+resources": {
-      "main": [
-        [
-          {
             "node": "HTTP - ProyectosTareas (filtrado)",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "HTTP - ProyectosEquipos (filtrado)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "HTTP - RecursosCostos (filtrado)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait All Complete": {
-      "main": [
-        [
-          {
-            "node": "Collect Errors",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Collect Errors": {
-      "main": [
-        [
-          {
-            "node": "Webhook Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update sync_state (resource_cost)": {
-      "main": [
-        [
-          {
-            "node": "Wait All Complete",
-            "type": "main",
-            "index": 2
-          }
-        ]
-      ]
-    },
-    "Update sync_state (calendar)": {
-      "main": [
-        [
-          {
-            "node": "Wait All Complete",
-            "type": "main",
-            "index": 3
           }
         ]
       ]
     }
   },
-  "active": true,
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "b3bb2d8d-adbc-4512-b783-f48731aa9dda",
+  "staticData": null,
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "5f4a76193498dfc211473f5de0a4e75faf68e0d1feb31e98054dc9c9b3f6aa8c"
+    "templateCredsSetupCompleted": true
   },
-  "id": "XSYOmZ8mRuaXl6sg",
+  "pinData": {},
+  "versionId": "285382fa-d0f6-4ca9-a6cf-dffc9c1a4407",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "createdAt": "2025-09-03T06:32:12.601Z",
+      "updatedAt": "2025-09-03T06:32:12.601Z",
+      "role": "workflow:owner",
+      "workflowId": "XSYOmZ8mRuaXl6sg",
+      "projectId": "ijP8FvHt2ZVVaBt9",
+      "project": {
+        "createdAt": "2025-08-25T17:25:17.353Z",
+        "updatedAt": "2025-08-25T17:27:29.880Z",
+        "id": "ijP8FvHt2ZVVaBt9",
+        "name": "Daniel Bertona Sanchez <dbertona@powersolution.es>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-08-25T17:25:17.353Z",
+            "updatedAt": "2025-08-25T17:25:17.353Z",
+            "role": "project:personalOwner",
+            "userId": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
+            "projectId": "ijP8FvHt2ZVVaBt9",
+            "user": {
+              "createdAt": "2025-08-25T17:25:16.887Z",
+              "updatedAt": "2025-09-24T15:53:57.000Z",
+              "id": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
+              "email": "dbertona@powersolution.es",
+              "firstName": "Daniel",
+              "lastName": "Bertona Sanchez",
+              "personalizationAnswers": null,
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "71xpeeX1apKTpNe0",
+                "userActivatedAt": 1756717935545
+              },
+              "role": "global:owner",
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-09-23",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
   "tags": []
 }
