@@ -368,7 +368,7 @@
         "queryParameters": {
           "values": [
             "{{ $json.company_name }}",
-            "{{ $json.no }}", 
+            "{{ $json.no }}",
             "{{ $json.description }}",
             "{{ $json.status }}",
             "{{ $json.responsible }}"
@@ -1241,12 +1241,23 @@
       "main": [
         [
           {
-            "node": "Split In Batches (upsert jobs)",
+            "node": "Prepare Job Data",
             "type": "main",
             "index": 0
           },
           {
             "node": "Build job set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Job Data": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert job (Postgres REST)",
             "type": "main",
             "index": 0
           }
