@@ -24,12 +24,10 @@ export default function DepartmentCell({
       data-col="department_code"
     >
       <div
-        className="ts-cell-content"
+        className="ts-readonly"
         style={{
-          padding: "0px 4px",
           fontSize: "12px",
           fontWeight: "500",
-          textAlign: "inherit",
         }}
       >
         {departmentCode || (
