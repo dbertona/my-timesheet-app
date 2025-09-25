@@ -18,7 +18,7 @@ ssh ${VM_USER}@${VM_HOST} "mkdir -p ${VM_PATH}"
 # Copiar archivos a la VM
 echo "📤 Copiando archivos a la VM..."
 scp docker-compose-full-supabase.yml ${VM_USER}@${VM_HOST}:${VM_PATH}/docker-compose.yml
-scp kong-simple.yml ${VM_USER}@${VM_HOST}:${VM_PATH}/kong.yml
+scp kong-simple.yml ${VM_USER}@${VM_HOST}:${VM_PATH}/kong-simple.yml
 scp -r init-scripts ${VM_USER}@${VM_HOST}:${VM_PATH}/
 scp migrate-data.sh ${VM_USER}@${VM_HOST}:${VM_PATH}/
 
