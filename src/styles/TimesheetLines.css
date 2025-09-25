@@ -494,8 +494,7 @@
   font-size: inherit;
   line-height: inherit;
   color: inherit;
-  display: flex;
-  align-items: center;
+  display: block;
 }
 
 .ts-cell-content {
