@@ -26,6 +26,8 @@ if [ -f ".env.testing" ]; then
   echo "🧩 Cargando variables desde .env.testing"
   export $(grep -v '^#' .env.testing | xargs)
 fi
+# Evitar que builds de testing arrastren puertos locales de desarrollo
+unset VITE_DEV_PORT || true
 export VITE_BASE_PATH=${VITE_BASE_PATH:-/my-timesheet-app/}
 npm run build
 

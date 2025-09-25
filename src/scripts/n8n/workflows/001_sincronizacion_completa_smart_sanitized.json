@@ -1158,7 +1158,6 @@
       "name": "Wait All Complete"
     }
   ],
-  "pinData": {},
   "connections": {
     "HTTP - ProyectosTareas (filtrado)": {
       "main": [
@@ -1811,16 +1810,8 @@
       ]
     }
   },
-  "active": true,
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner"
-  },
-  "versionId": "b3bb2d8d-adbc-4512-b783-f48731aa9dda",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "5f4a76193498dfc211473f5de0a4e75faf68e0d1feb31e98054dc9c9b3f6aa8c"
-  },
-  "id": "XSYOmZ8mRuaXl6sg",
-  "tags": []
+  }
 }

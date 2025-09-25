@@ -44,3 +44,8 @@ rm -rf "$BACKUP_DIR"
 
 echo "✅ Backup completado: backups/metabase_backup_$TIMESTAMP.tar.gz"
 echo "📊 Tamaño del backup: $(du -h "backups/metabase_backup_$TIMESTAMP.tar.gz" | cut -f1)"
+
+
+
+
+

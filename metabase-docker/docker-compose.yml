@@ -29,6 +29,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    extra_hosts:
+      - "db.qfpswxjunoepznrpsltt.supabase.co:104.18.38.10"
 
   postgres:
     image: postgres:15

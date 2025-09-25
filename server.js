@@ -720,41 +720,31 @@ app.post("/api/notify/approval-request", async (req, res) => {
     }
 
     const cfg = supabaseHeaders();
-    if (!cfg) {
-      return res.status(500).json({ error: "supabase_env_missing" });
-    }
-
-    // 1) Obtener responsables (codes) de las líneas Pending del header
-    const urlLines = `${cfg.baseUrl}/rest/v1/timesheet?select=resource_responsible&header_id=eq.${encodeURIComponent(
-      header_id
-    )}&status=eq.Pending`;
-    const respLines = await fetch(urlLines, { headers: cfg.headers });
-    if (!respLines.ok) {
-      const txt = await respLines.text().catch(() => "");
-      return res
-        .status(502)
-        .json({ error: `lines_fetch_failed: ${respLines.status} ${txt}` });
-    }
-    const rows = (await fetchJsonSafe(respLines)) || [];
-    const approverCodes = Array.from(
-      new Set(
-        rows
-          .map((r) => (r && r.resource_responsible ? String(r.resource_responsible) : ""))
-          .filter(Boolean)
-      )
-    );
-
-    // 2) Resolver emails de responsables
+    let approverCodes = [];
     let recipients = [];
-    if (approverCodes.length > 0) {
-      const inList = approverCodes.map((c) => `"${c}"`).join(",");
-      const urlRes = `${cfg.baseUrl}/rest/v1/resource?select=code,email,name&code=in.(${inList})`;
-      const respRes = await fetch(urlRes, { headers: cfg.headers });
-      if (respRes.ok) {
-        const resRows = (await fetchJsonSafe(respRes)) || [];
-        recipients = resRows
-          .map((r) => (r && r.email ? String(r.email).trim() : ""))
-          .filter(Boolean);
+
+    if (!cfg) {
+      try { console.warn("SUPABASE env no configurado. Degradando notificación (local dev)"); } catch {}
+    } else {
+      // 1) Obtener responsables (codes) de las líneas Pending del header
+      const urlLines = `${cfg.baseUrl}/rest/v1/timesheet?select=resource_responsible&header_id=eq.${encodeURIComponent(header_id)}&status=eq.Pending`;
+      const respLines = await fetch(urlLines, { headers: cfg.headers });
+      if (!respLines.ok) {
+        const txt = await respLines.text().catch(() => "");
+        return res.status(502).json({ error: `lines_fetch_failed: ${respLines.status} ${txt}` });
+      }
+      const rows = (await fetchJsonSafe(respLines)) || [];
+      approverCodes = Array.from(new Set(rows.map((r) => (r && r.resource_responsible ? String(r.resource_responsible) : "")).filter(Boolean)));
+
+      // 2) Resolver emails de responsables
+      if (approverCodes.length > 0) {
+        const inList = approverCodes.map((c) => `"${c}"`).join(",");
+        const urlRes = `${cfg.baseUrl}/rest/v1/resource?select=code,email,name&code=in.(${inList})`;
+        const respRes = await fetch(urlRes, { headers: cfg.headers });
+        if (respRes.ok) {
+          const resRows = (await fetchJsonSafe(respRes)) || [];
+          recipients = resRows.map((r) => (r && r.email ? String(r.email).trim() : "")).filter(Boolean);
+        }
       }
     }
 
@@ -772,7 +762,8 @@ app.post("/api/notify/approval-request", async (req, res) => {
       try {
         console.warn("N8N_WEBHOOK_NOTIFY_APPROVAL no configurado. Notificación omitida.");
       } catch {}
-      return res.status(202).json({ ok: true, skipped: "n8n_webhook_missing", ...payload });
+      // Si no hay Supabase ni webhook, devolvemos 202 (degradación local)
+      return res.status(202).json({ ok: true, skipped: cfg ? "n8n_webhook_missing" : "supabase_env_missing", ...payload });
     }
 
     const wr = await fetch(webhook, {

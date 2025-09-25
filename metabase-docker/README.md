@@ -84,3 +84,8 @@ docker-compose logs postgres
 ```bash
 docker-compose restart
 ```
+
+
+
+
+
