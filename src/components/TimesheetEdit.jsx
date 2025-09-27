@@ -1615,11 +1615,16 @@ function TimesheetEdit({ headerId }) {
         // No se guardó nada
         if (filteredLines > 0) {
           const lineText = filteredLines === 1 ? "línea" : "líneas";
-          toast.warning(
-            `No se guardó nada (${filteredLines} ${lineText} incompleta${filteredLines > 1 ? 's' : ''})`
-          );
+          toast((t) => (
+            <div>
+              <strong>No se guardó nada</strong>
+              <div style={{ fontSize: 12 }}>
+                ({filteredLines} {lineText} incompleta{filteredLines > 1 ? 's' : ''})
+              </div>
+            </div>
+          ));
         } else {
-          toast.info("No hay cambios para guardar");
+          toast("No hay cambios para guardar");
         }
       } else if (filteredLines > 0) {
         // Se guardó algo pero se omitieron líneas incompletas
