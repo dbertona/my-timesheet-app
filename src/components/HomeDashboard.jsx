@@ -477,6 +477,7 @@ const HomeDashboard = () => {
     };
   }, [activeAccount, instance]);
 
+  // 🆕 Calcular horas pendientes usando la misma lógica que el resumen del mes
   useEffect(() => {
     let cancelled = false;
 
@@ -484,25 +485,83 @@ const HomeDashboard = () => {
       try {
         setLoadingHours(true);
         setErrorHours("");
-        if (!userEmail) {
+        if (!userEmail || !allocationPeriod) {
           console.log(
-            "🔍 No hay userEmail, estableciendo horas pendientes a 0"
+            "🔍 No hay userEmail o allocationPeriod, estableciendo horas pendientes a 0"
           );
           setPendingHours(0);
           return;
         }
 
-        const { data, error } = await supabaseClient.rpc("pending_hours", {
-          p_email: userEmail,
-        });
+        // Obtener el recurso del usuario actual
+        const { data: resourceData, error: resourceError } =
+          await supabaseClient
+            .from("resource")
+            .select("code, calendar_type")
+            .eq("email", userEmail)
+            .single();
 
-        if (error) throw error;
-        const pendientes =
-          data && data[0] && typeof data[0].pendientes === "number"
-            ? data[0].pendientes
-            : 0;
+        if (resourceError || !resourceData) {
+          console.error("Error obteniendo recurso:", resourceError);
+          setErrorHours("No se pudo obtener el recurso");
+          return;
+        }
 
-        if (!cancelled) setPendingHours(pendientes);
+        const resourceNo = resourceData.code;
+        const calendarType = resourceData.calendar_type;
+
+        // Obtener el header del período actual
+        const { data: headerData, error: headerError } = await supabaseClient
+          .from("resource_timesheet_header")
+          .select("id, resource_calendar")
+          .eq("resource_no", resourceNo)
+          .eq("allocation_period", allocationPeriod)
+          .single();
+
+        if (headerError || !headerData) {
+          console.error("Error obteniendo header:", headerError);
+          setErrorHours("No se encontró header para el período");
+          return;
+        }
+
+        // Obtener días del calendario para calcular horas requeridas
+        const { data: calendarDays, error: calendarError } = await supabaseClient
+          .from("calendar_period_days")
+          .select("day, hours_working, holiday")
+          .eq("allocation_period", allocationPeriod)
+          .eq("calendar_code", headerData.resource_calendar || calendarType);
+
+        if (calendarError) {
+          console.error("Error obteniendo días del calendario:", calendarError);
+          setErrorHours("Error cargando calendario");
+          return;
+        }
+
+        // Obtener líneas de timesheet para calcular horas imputadas
+        const { data: timesheetLines, error: timesheetError } = await supabaseClient
+          .from("timesheet")
+          .select("date, quantity")
+          .eq("header_id", headerData.id);
+
+        if (timesheetError) {
+          console.error("Error obteniendo líneas de timesheet:", timesheetError);
+          setErrorHours("Error cargando timesheet");
+          return;
+        }
+
+        // Calcular horas requeridas (suma de hours_working, excluyendo festivos)
+        const requiredSum = (calendarDays || [])
+          .filter(day => day.holiday !== true)
+          .reduce((sum, day) => sum + (Number(day.hours_working) || 0), 0);
+
+        // Calcular horas imputadas (suma de quantity)
+        const imputedSum = (timesheetLines || [])
+          .reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
+
+        // Calcular horas pendientes (requeridas - imputadas)
+        const pendingHours = Math.max(0, requiredSum - imputedSum);
+
+        if (!cancelled) setPendingHours(pendingHours);
       } catch (e) {
         console.error("Error en loadPendingHours:", e);
         if (!cancelled)
@@ -516,7 +575,7 @@ const HomeDashboard = () => {
     return () => {
       cancelled = true;
     };
-  }, [userEmail]);
+  }, [userEmail, allocationPeriod]);
 
   // allocationPeriod ahora viene del servidor via useState
   const goToEditParte = () => {
