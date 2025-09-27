@@ -1,0 +1,65 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: timesheet-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - timesheet-network
+
+  # REST API
+  rest:
+    image: postgrest/postgrest:v12.2.0
+    container_name: timesheet-rest
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@postgres:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+    ports:
+      - "3002:3000"
+    depends_on:
+      - postgres
+    networks:
+      - timesheet-network
+
+  # pgAdmin - Interfaz Gráfica para PostgreSQL
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: timesheet-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@powersolution.es
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - timesheet-network
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+
+networks:
+  timesheet-network:
+    driver: bridge
+
+
+

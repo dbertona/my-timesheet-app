@@ -19,6 +19,13 @@
 		},
 		"window.restoreWindows": "all",
 		"workbench.startupEditor": "none",
-		"workbench.editor.restoreViewState": true
+		"workbench.editor.restoreViewState": true,
+		"al.enableCodeAnalysis": false,
+		"al.packageCachePath": "./Power_Solution_BC/.alpackages"
+	},
+	"extensions": {
+		"recommendations": [
+			"ms-dynamics-smb.al"
+		]
 	}
 }
