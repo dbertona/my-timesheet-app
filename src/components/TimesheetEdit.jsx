@@ -1553,8 +1553,27 @@ function TimesheetEdit({ headerId }) {
       
       // Contar líneas nuevas (tmp-) vs existentes que se procesaron
       const newLinesProcessed = validLinesToProcess.filter(id => id.startsWith("tmp-")).length;
-      const existingLinesProcessed = validLinesToProcess.filter(id => !id.startsWith("tmp-")).length;
-      const totalProcessed = newLinesProcessed + existingLinesProcessed + deletedLines;
+      const existingLinesWithChanges = validLinesToProcess.filter(id => {
+        if (id.startsWith("tmp-")) return false; // No son existentes
+        
+        // Verificar si la línea existente realmente tiene cambios
+        const lineData = editFormData[id];
+        const originalLine = lines.find((l) => l.id === id);
+        
+        if (!lineData || !originalLine) return false;
+        
+        // Comparar campos para detectar cambios reales
+        const hasChanges = Object.keys(lineData).some((key) => {
+          if (key === "date" && lineData[key]) {
+            return toIsoFromInput(lineData[key]) !== originalLine.date;
+          }
+          return lineData[key] !== originalLine[key];
+        });
+        
+        return hasChanges;
+      }).length;
+      
+      const totalProcessed = newLinesProcessed + existingLinesWithChanges + deletedLines;
       
       if (totalProcessed === 0) {
         // No se guardó nada
@@ -1569,20 +1588,39 @@ function TimesheetEdit({ headerId }) {
       } else if (filteredLines > 0) {
         // Se guardó algo pero se omitieron líneas incompletas
         const lineText = filteredLines === 1 ? "línea" : "líneas";
-        const savedText = newLinesProcessed > 0 ? 
-          (newLinesProcessed === 1 ? "1 línea nueva guardada" : `${newLinesProcessed} líneas nuevas guardadas`) :
-          (existingLinesProcessed > 0 ? "cambios guardados" : "");
+        const savedParts = [];
         
-        const message = savedText ? 
-          `${TOAST.SUCCESS.SAVE_ALL} (${savedText}, ${filteredLines} ${lineText} incompleta${filteredLines > 1 ? 's' : ''} omitida${filteredLines > 1 ? 's' : ''})` :
-          `${TOAST.SUCCESS.SAVE_ALL} (${filteredLines} ${lineText} incompleta${filteredLines > 1 ? 's' : ''} omitida${filteredLines > 1 ? 's' : ''})`;
+        if (newLinesProcessed > 0) {
+          savedParts.push(newLinesProcessed === 1 ? "1 línea nueva guardada" : `${newLinesProcessed} líneas nuevas guardadas`);
+        }
+        if (existingLinesWithChanges > 0) {
+          savedParts.push(existingLinesWithChanges === 1 ? "1 línea actualizada" : `${existingLinesWithChanges} líneas actualizadas`);
+        }
+        if (deletedLines > 0) {
+          savedParts.push(deletedLines === 1 ? "1 línea eliminada" : `${deletedLines} líneas eliminadas`);
+        }
+        
+        const savedText = savedParts.join(", ");
+        const message = `${TOAST.SUCCESS.SAVE_ALL} (${savedText}, ${filteredLines} ${lineText} incompleta${filteredLines > 1 ? 's' : ''} omitida${filteredLines > 1 ? 's' : ''})`;
         
         toast.success(message);
       } else {
         // Se guardó todo correctamente
+        const savedParts = [];
+        
         if (newLinesProcessed > 0) {
-          const lineText = newLinesProcessed === 1 ? "línea nueva" : "líneas nuevas";
-          toast.success(`${TOAST.SUCCESS.SAVE_ALL} (${newLinesProcessed} ${lineText})`);
+          savedParts.push(newLinesProcessed === 1 ? "1 línea nueva" : `${newLinesProcessed} líneas nuevas`);
+        }
+        if (existingLinesWithChanges > 0) {
+          savedParts.push(existingLinesWithChanges === 1 ? "1 línea actualizada" : `${existingLinesWithChanges} líneas actualizadas`);
+        }
+        if (deletedLines > 0) {
+          savedParts.push(deletedLines === 1 ? "1 línea eliminada" : `${deletedLines} líneas eliminadas`);
+        }
+        
+        if (savedParts.length > 0) {
+          const savedText = savedParts.join(", ");
+          toast.success(`${TOAST.SUCCESS.SAVE_ALL} (${savedText})`);
         } else {
           toast.success(TOAST.SUCCESS.SAVE_ALL);
         }
