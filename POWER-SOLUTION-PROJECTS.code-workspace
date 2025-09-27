@@ -24,7 +24,8 @@
 		"workbench.editor.restoreViewState": true,
 		"al.enableCodeAnalysis": true,
 		"al.packageCachePath": "./Power_Solution_BC/.alpackages",
-		"al.codeAnalyzers": ["${PerTenantExtensionCop}", "${UICop}"]
+		"al.codeAnalyzers": ["${PerTenantExtensionCop}", "${UICop}"],
+		"al.projectSearchPaths": ["./Power_Solution_BC"]
 	},
 	"extensions": {
 		"recommendations": [
