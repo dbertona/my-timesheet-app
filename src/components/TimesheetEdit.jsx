@@ -1555,13 +1555,13 @@ function TimesheetEdit({ headerId }) {
       const newLinesProcessed = validLinesToProcess.filter(id => id.startsWith("tmp-")).length;
       const existingLinesWithChanges = validLinesToProcess.filter(id => {
         if (id.startsWith("tmp-")) return false; // No son existentes
-        
+
         // Verificar si la línea existente realmente tiene cambios
         const lineData = editFormData[id];
         const serverSnapshot = serverSnapshotRef.current[id];
-        
+
         if (!lineData || !serverSnapshot) return false;
-        
+
         // Comparar campos para detectar cambios reales usando el snapshot del servidor
         const hasChanges = Object.keys(lineData).some((key) => {
           if (key === "date" && lineData[key]) {
@@ -1569,21 +1569,28 @@ function TimesheetEdit({ headerId }) {
           }
           return lineData[key] !== serverSnapshot[key];
         });
-        
+
         // DEBUG: Log para entender qué está pasando
         if (hasChanges) {
+          const differences = Object.keys(lineData).filter(key => {
+            if (key === "date" && lineData[key]) {
+              return toIsoFromInput(lineData[key]) !== serverSnapshot.date;
+            }
+            return lineData[key] !== serverSnapshot[key];
+          });
+          
           console.log(`🔍 Línea ${id} tiene cambios:`, {
-            lineData: lineData,
-            serverSnapshot: serverSnapshot,
-            differences: Object.keys(lineData).filter(key => {
-              if (key === "date" && lineData[key]) {
-                return toIsoFromInput(lineData[key]) !== serverSnapshot.date;
-              }
-              return lineData[key] !== serverSnapshot[key];
-            })
+            differences: differences,
+            detailed: differences.map(key => ({
+              field: key,
+              lineData: lineData[key],
+              serverSnapshot: serverSnapshot[key],
+              isDate: key === "date",
+              lineDataIso: key === "date" && lineData[key] ? toIsoFromInput(lineData[key]) : null
+            }))
           });
         }
-        
+
         return hasChanges;
       }).length;
 
