@@ -1550,7 +1550,11 @@ function TimesheetEdit({ headerId }) {
       // 🆕 Informar sobre líneas filtradas por campos requeridos incompletos
       const filteredLines = linesToProcess.length - validLinesToProcess.length;
       const deletedLines = deletedLineIds.length;
-      const totalProcessed = validLinesToProcess.length + deletedLines;
+      
+      // Contar líneas nuevas (tmp-) vs existentes que se procesaron
+      const newLinesProcessed = validLinesToProcess.filter(id => id.startsWith("tmp-")).length;
+      const existingLinesProcessed = validLinesToProcess.filter(id => !id.startsWith("tmp-")).length;
+      const totalProcessed = newLinesProcessed + existingLinesProcessed + deletedLines;
       
       if (totalProcessed === 0) {
         // No se guardó nada
@@ -1565,12 +1569,23 @@ function TimesheetEdit({ headerId }) {
       } else if (filteredLines > 0) {
         // Se guardó algo pero se omitieron líneas incompletas
         const lineText = filteredLines === 1 ? "línea" : "líneas";
-        toast.success(
-          `${TOAST.SUCCESS.SAVE_ALL} (${filteredLines} ${lineText} incompleta${filteredLines > 1 ? 's' : ''} omitida${filteredLines > 1 ? 's' : ''})`
-        );
+        const savedText = newLinesProcessed > 0 ? 
+          (newLinesProcessed === 1 ? "1 línea nueva guardada" : `${newLinesProcessed} líneas nuevas guardadas`) :
+          (existingLinesProcessed > 0 ? "cambios guardados" : "");
+        
+        const message = savedText ? 
+          `${TOAST.SUCCESS.SAVE_ALL} (${savedText}, ${filteredLines} ${lineText} incompleta${filteredLines > 1 ? 's' : ''} omitida${filteredLines > 1 ? 's' : ''})` :
+          `${TOAST.SUCCESS.SAVE_ALL} (${filteredLines} ${lineText} incompleta${filteredLines > 1 ? 's' : ''} omitida${filteredLines > 1 ? 's' : ''})`;
+        
+        toast.success(message);
       } else {
         // Se guardó todo correctamente
-        toast.success(TOAST.SUCCESS.SAVE_ALL);
+        if (newLinesProcessed > 0) {
+          const lineText = newLinesProcessed === 1 ? "línea nueva" : "líneas nuevas";
+          toast.success(`${TOAST.SUCCESS.SAVE_ALL} (${newLinesProcessed} ${lineText})`);
+        } else {
+          toast.success(TOAST.SUCCESS.SAVE_ALL);
+        }
       }
 
       // 🆕 CRÍTICO: Invalidar el cache de React Query para que se recarguen las líneas
