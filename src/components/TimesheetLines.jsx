@@ -1150,7 +1150,7 @@ export default function TimesheetLines({
               {showResponsible && (
                 <td className="ts-td" style={{ width: "160px" }}>
                   <div className="ts-readonly">
-                    {line.job_responsible || ""}
+                    {editFormData[line.id]?.job_responsible || line.job_responsible || ""}
                   </div>
                 </td>
               )}
