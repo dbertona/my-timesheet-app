@@ -64,7 +64,21 @@ const envBasePath =
   "/"; // Debe terminar con '/'
 
 export default defineConfig({
-  plugins: [react(), packageJsonWatcher()],
+  plugins: [react(), packageJsonWatcher(), {
+    name: 'dev-block-legacy-base-path',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = req.url || '';
+        if (url === '/my-timesheet-app' || url === '/my-timesheet-app/' || url.startsWith('/my-timesheet-app/')) {
+          res.statusCode = 404;
+          res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+          res.end('Not Found');
+          return;
+        }
+        next();
+      });
+    }
+  }],
   base: envBasePath,
   define: {
     __APP_VERSION__: JSON.stringify(require("./package.json").version),
