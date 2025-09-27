@@ -1565,21 +1565,35 @@ function TimesheetEdit({ headerId }) {
         // Comparar solo campos esenciales para detectar cambios reales
         const essentialFields = ['date', 'job_no', 'job_task_no', 'description', 'work_type', 'quantity'];
         const hasChanges = essentialFields.some((key) => {
-          if (key === "date" && lineData[key]) {
-            return toIsoFromInput(lineData[key]) !== serverSnapshot.date;
+          if (key === "date") {
+            const left = lineData[key] ? toIsoFromInput(lineData[key]) : "";
+            const right = String(serverSnapshot.date || "");
+            return left !== right;
           }
-          return lineData[key] !== serverSnapshot[key];
+          if (key === "quantity") {
+            const left = Number(lineData[key] ?? 0);
+            const right = Number(serverSnapshot[key] ?? 0);
+            return Math.abs(left - right) > 0.000001;
+          }
+          return (lineData[key] ?? "") !== (serverSnapshot[key] ?? "");
         });
 
         // DEBUG: Log para entender qué está pasando
         if (hasChanges) {
           const differences = essentialFields.filter(key => {
-            if (key === "date" && lineData[key]) {
-              return toIsoFromInput(lineData[key]) !== serverSnapshot.date;
+            if (key === "date") {
+              const left = lineData[key] ? toIsoFromInput(lineData[key]) : "";
+              const right = String(serverSnapshot.date || "");
+              return left !== right;
             }
-            return lineData[key] !== serverSnapshot[key];
+            if (key === "quantity") {
+              const left = Number(lineData[key] ?? 0);
+              const right = Number(serverSnapshot[key] ?? 0);
+              return Math.abs(left - right) > 0.000001;
+            }
+            return (lineData[key] ?? "") !== (serverSnapshot[key] ?? "");
           });
-          
+
           console.log(`🔍 Línea ${id} tiene cambios en campos esenciales:`, {
             differences: differences,
             detailed: differences.map(key => ({
@@ -1988,9 +2002,28 @@ function TimesheetEdit({ headerId }) {
     });
 
     // Snapshot base para detectar cambios por campo (comparación en espacio DB) - solo servidor
+    // Normalizamos date a ISO (YYYY-MM-DD) para evitar falsos positivos por formato
     const snap = {};
     filtered.forEach((line) => {
-      snap[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
+      const isoDate = line.date
+        ? (() => {
+            try {
+              const d = new Date(line.date);
+              if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+            } catch {}
+            // Si llega en display (DD/MM/YYYY), convertir manualmente
+            const m = String(line.date || "").match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+            // fallback: tal cual
+            return String(line.date || "");
+          })()
+        : "";
+
+      snap[line.id] = {
+        ...line,
+        date: isoDate,
+        quantity: toTwoDecimalsString(line.quantity),
+      };
     });
     serverSnapshotRef.current = snap;
 
