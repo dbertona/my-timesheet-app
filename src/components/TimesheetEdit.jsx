@@ -1562,8 +1562,9 @@ function TimesheetEdit({ headerId }) {
 
         if (!lineData || !serverSnapshot) return false;
 
-        // Comparar campos para detectar cambios reales usando el snapshot del servidor
-        const hasChanges = Object.keys(lineData).some((key) => {
+        // Comparar solo campos esenciales para detectar cambios reales
+        const essentialFields = ['date', 'job_no', 'job_task_no', 'description', 'work_type', 'quantity'];
+        const hasChanges = essentialFields.some((key) => {
           if (key === "date" && lineData[key]) {
             return toIsoFromInput(lineData[key]) !== serverSnapshot.date;
           }
@@ -1572,14 +1573,14 @@ function TimesheetEdit({ headerId }) {
 
         // DEBUG: Log para entender qué está pasando
         if (hasChanges) {
-          const differences = Object.keys(lineData).filter(key => {
+          const differences = essentialFields.filter(key => {
             if (key === "date" && lineData[key]) {
               return toIsoFromInput(lineData[key]) !== serverSnapshot.date;
             }
             return lineData[key] !== serverSnapshot[key];
           });
-
-          console.log(`🔍 Línea ${id} tiene cambios:`, {
+          
+          console.log(`🔍 Línea ${id} tiene cambios en campos esenciales:`, {
             differences: differences,
             detailed: differences.map(key => ({
               field: key,
@@ -1587,9 +1588,7 @@ function TimesheetEdit({ headerId }) {
               serverSnapshot: serverSnapshot[key],
               isDate: key === "date",
               lineDataIso: key === "date" && lineData[key] ? toIsoFromInput(lineData[key]) : null
-            })),
-            fullLineData: lineData,
-            fullServerSnapshot: serverSnapshot
+            }))
           });
         }
 
