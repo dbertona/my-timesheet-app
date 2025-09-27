@@ -1549,12 +1549,122 @@ function TimesheetEdit({ headerId }) {
 
       // 🆕 Informar sobre líneas filtradas por campos requeridos incompletos
       const filteredLines = linesToProcess.length - validLinesToProcess.length;
-      if (filteredLines > 0) {
-        toast.success(
-          `${TOAST.SUCCESS.SAVE_ALL} (${filteredLines} líneas con campos requeridos incompletos omitidas)`
-        );
+      const deletedLines = deletedLineIds.length;
+
+      // Contar líneas nuevas (tmp-) vs existentes que se procesaron
+      const newLinesProcessed = validLinesToProcess.filter(id => id.startsWith("tmp-")).length;
+      const existingLinesWithChanges = validLinesToProcess.filter(id => {
+        if (id.startsWith("tmp-")) return false; // No son existentes
+
+        // Verificar si la línea existente realmente tiene cambios
+        const lineData = editFormData[id];
+        const serverSnapshot = serverSnapshotRef.current[id];
+
+        if (!lineData || !serverSnapshot) return false;
+
+        // Comparar solo campos esenciales para detectar cambios reales
+        const essentialFields = ['date', 'job_no', 'job_task_no', 'description', 'work_type', 'quantity'];
+        const hasChanges = essentialFields.some((key) => {
+          if (key === "date") {
+            const left = lineData[key] ? toIsoFromInput(lineData[key]) : "";
+            const right = String(serverSnapshot.date || "");
+            return left !== right;
+          }
+          if (key === "quantity") {
+            const left = Number(lineData[key] ?? 0);
+            const right = Number(serverSnapshot[key] ?? 0);
+            return Math.abs(left - right) > 0.000001;
+          }
+          return (lineData[key] ?? "") !== (serverSnapshot[key] ?? "");
+        });
+
+        // DEBUG: Log para entender qué está pasando
+        if (hasChanges) {
+          const differences = essentialFields.filter(key => {
+            if (key === "date") {
+              const left = lineData[key] ? toIsoFromInput(lineData[key]) : "";
+              const right = String(serverSnapshot.date || "");
+              return left !== right;
+            }
+            if (key === "quantity") {
+              const left = Number(lineData[key] ?? 0);
+              const right = Number(serverSnapshot[key] ?? 0);
+              return Math.abs(left - right) > 0.000001;
+            }
+            return (lineData[key] ?? "") !== (serverSnapshot[key] ?? "");
+          });
+
+          console.log(`🔍 Línea ${id} tiene cambios en campos esenciales:`, {
+            differences: differences,
+            detailed: differences.map(key => ({
+              field: key,
+              lineData: lineData[key],
+              serverSnapshot: serverSnapshot[key],
+              isDate: key === "date",
+              lineDataIso: key === "date" && lineData[key] ? toIsoFromInput(lineData[key]) : null
+            }))
+          });
+        }
+
+        return hasChanges;
+      }).length;
+
+      const totalProcessed = newLinesProcessed + existingLinesWithChanges + deletedLines;
+
+      if (totalProcessed === 0) {
+        // No se guardó nada
+        if (filteredLines > 0) {
+          const lineText = filteredLines === 1 ? "línea" : "líneas";
+          toast((t) => (
+            <div>
+              <strong>No se guardó nada</strong>
+              <div style={{ fontSize: 12 }}>
+                ({filteredLines} {lineText} incompleta{filteredLines > 1 ? 's' : ''})
+              </div>
+            </div>
+          ));
+        } else {
+          toast("No hay cambios para guardar");
+        }
+      } else if (filteredLines > 0) {
+        // Se guardó algo pero se omitieron líneas incompletas
+        const lineText = filteredLines === 1 ? "línea" : "líneas";
+        const savedParts = [];
+
+        if (newLinesProcessed > 0) {
+          savedParts.push(newLinesProcessed === 1 ? "1 línea nueva guardada" : `${newLinesProcessed} líneas nuevas guardadas`);
+        }
+        if (existingLinesWithChanges > 0) {
+          savedParts.push(existingLinesWithChanges === 1 ? "1 línea actualizada" : `${existingLinesWithChanges} líneas actualizadas`);
+        }
+        if (deletedLines > 0) {
+          savedParts.push(deletedLines === 1 ? "1 línea eliminada" : `${deletedLines} líneas eliminadas`);
+        }
+
+        const savedText = savedParts.join(", ");
+        const message = `${TOAST.SUCCESS.SAVE_ALL} (${savedText}, ${filteredLines} ${lineText} incompleta${filteredLines > 1 ? 's' : ''} omitida${filteredLines > 1 ? 's' : ''})`;
+
+        toast.success(message);
       } else {
-        toast.success(TOAST.SUCCESS.SAVE_ALL);
+        // Se guardó todo correctamente
+        const savedParts = [];
+
+        if (newLinesProcessed > 0) {
+          savedParts.push(newLinesProcessed === 1 ? "1 línea nueva" : `${newLinesProcessed} líneas nuevas`);
+        }
+        if (existingLinesWithChanges > 0) {
+          savedParts.push(existingLinesWithChanges === 1 ? "1 línea actualizada" : `${existingLinesWithChanges} líneas actualizadas`);
+        }
+        if (deletedLines > 0) {
+          savedParts.push(deletedLines === 1 ? "1 línea eliminada" : `${deletedLines} líneas eliminadas`);
+        }
+
+        if (savedParts.length > 0) {
+          const savedText = savedParts.join(", ");
+          toast.success(`${TOAST.SUCCESS.SAVE_ALL} (${savedText})`);
+        } else {
+          toast.success(TOAST.SUCCESS.SAVE_ALL);
+        }
       }
 
       // 🆕 CRÍTICO: Invalidar el cache de React Query para que se recarguen las líneas
@@ -1897,9 +2007,28 @@ function TimesheetEdit({ headerId }) {
     });
 
     // Snapshot base para detectar cambios por campo (comparación en espacio DB) - solo servidor
+    // Normalizamos date a ISO (YYYY-MM-DD) para evitar falsos positivos por formato
     const snap = {};
     filtered.forEach((line) => {
-      snap[line.id] = { ...line, quantity: toTwoDecimalsString(line.quantity) };
+      const isoDate = line.date
+        ? (() => {
+            try {
+              const d = new Date(line.date);
+              if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+            } catch {}
+            // Si llega en display (DD/MM/YYYY), convertir manualmente
+            const m = String(line.date || "").match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+            // fallback: tal cual
+            return String(line.date || "");
+          })()
+        : "";
+
+      snap[line.id] = {
+        ...line,
+        date: isoDate,
+        quantity: toTwoDecimalsString(line.quantity),
+      };
     });
     serverSnapshotRef.current = snap;
 

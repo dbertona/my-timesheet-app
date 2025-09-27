@@ -947,7 +947,13 @@ export default function TimesheetLines({
                     type="text"
                     name="description"
                     value={editFormData[line.id]?.description || ""}
-                    onChange={(e) => handleInputChange(line.id, e)}
+                    onChange={(e) => {
+                      // Evitar clonar SyntheticEvent: pasar name y value directamente
+                      const upperValue = (e.target.value || "").toUpperCase();
+                      handleInputChange(line.id, {
+                        target: { name: "description", value: upperValue },
+                      });
+                    }}
                     onBlur={() => {
                       if (typeof saveLineNow === "function")
                         saveLineNow(line.id);
@@ -1150,7 +1156,7 @@ export default function TimesheetLines({
               {showResponsible && (
                 <td className="ts-td" style={{ width: "160px" }}>
                   <div className="ts-readonly">
-                    {line.resource_responsible || ""}
+                    {editFormData[line.id]?.job_responsible || line.job_responsible || ""}
                   </div>
                 </td>
               )}

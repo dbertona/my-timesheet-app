@@ -524,6 +524,17 @@ const HomeDashboard = () => {
           return;
         }
 
+        // 🆕 Usar la misma lógica exacta que useCalendarData
+        // Parsear allocation_period para obtener año y mes
+        const apMatch = /^M(\d{2})-M(\d{2})$/.exec(allocationPeriod);
+        if (!apMatch) {
+          console.error("Formato de allocation_period inválido:", allocationPeriod);
+          setErrorHours("Período inválido");
+          return;
+        }
+        const year = 2000 + parseInt(apMatch[1], 10);
+        const month = parseInt(apMatch[2], 10);
+
         // Obtener días del calendario para calcular horas requeridas
         const { data: calendarDays, error: calendarError } = await supabaseClient
           .from("calendar_period_days")
@@ -537,11 +548,23 @@ const HomeDashboard = () => {
           return;
         }
 
+        // Construir dailyRequired exactamente como useCalendarData
+        const dailyRequired = {};
+        (calendarDays || []).forEach((r) => {
+          const iso = (r.day || "").slice(0, 10);
+          dailyRequired[iso] = Number(r.hours_working) || 0;
+        });
+
         // Obtener líneas de timesheet para calcular horas imputadas
+        const fromIso = `${year}-${String(month).padStart(2, "0")}-01`;
+        const toIso = `${year}-${String(month).padStart(2, "0")}-${new Date(year, month, 0).getDate()}`;
+
         const { data: timesheetLines, error: timesheetError } = await supabaseClient
           .from("timesheet")
           .select("date, quantity")
-          .eq("header_id", headerData.id);
+          .eq("header_id", headerData.id)
+          .gte("date", fromIso)
+          .lte("date", toIso);
 
         if (timesheetError) {
           console.error("Error obteniendo líneas de timesheet:", timesheetError);
@@ -549,14 +572,25 @@ const HomeDashboard = () => {
           return;
         }
 
-        // Calcular horas requeridas (suma de hours_working, excluyendo festivos)
-        const requiredSum = (calendarDays || [])
-          .filter(day => day.holiday !== true)
-          .reduce((sum, day) => sum + (Number(day.hours_working) || 0), 0);
+        // Construir imputaciones por día exactamente como useCalendarData
+        const imputedByDay = {};
+        (timesheetLines || []).forEach((r) => {
+          const iso = (r.date || "").slice(0, 10);
+          const q = Number(r.quantity) || 0;
+          imputedByDay[iso] = (imputedByDay[iso] || 0) + q;
+        });
 
-        // Calcular horas imputadas (suma de quantity)
-        const imputedSum = (timesheetLines || [])
-          .reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
+        // Calcular horas requeridas (suma de dailyRequired)
+        const requiredSum = Object.values(dailyRequired || {}).reduce(
+          (a, b) => a + (Number(b) || 0),
+          0
+        );
+
+        // Calcular horas imputadas (suma de imputedByDay)
+        const imputedSum = Object.values(imputedByDay || {}).reduce(
+          (a, b) => a + (Number(b) || 0),
+          0
+        );
 
         // Calcular horas pendientes (requeridas - imputadas)
         const pendingHours = Math.max(0, requiredSum - imputedSum);
