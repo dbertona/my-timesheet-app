@@ -1550,7 +1550,7 @@ function TimesheetEdit({ headerId }) {
       // 🆕 Informar sobre líneas filtradas por campos requeridos incompletos
       const filteredLines = linesToProcess.length - validLinesToProcess.length;
       const deletedLines = deletedLineIds.length;
-      
+
       // Contar líneas nuevas (tmp-) vs existentes que se procesaron
       const newLinesProcessed = validLinesToProcess.filter(id => id.startsWith("tmp-")).length;
       const existingLinesWithChanges = validLinesToProcess.filter(id => {
@@ -1558,23 +1558,23 @@ function TimesheetEdit({ headerId }) {
         
         // Verificar si la línea existente realmente tiene cambios
         const lineData = editFormData[id];
-        const originalLine = lines.find((l) => l.id === id);
+        const serverSnapshot = serverSnapshotRef.current[id];
         
-        if (!lineData || !originalLine) return false;
+        if (!lineData || !serverSnapshot) return false;
         
-        // Comparar campos para detectar cambios reales
+        // Comparar campos para detectar cambios reales usando el snapshot del servidor
         const hasChanges = Object.keys(lineData).some((key) => {
           if (key === "date" && lineData[key]) {
-            return toIsoFromInput(lineData[key]) !== originalLine.date;
+            return toIsoFromInput(lineData[key]) !== serverSnapshot.date;
           }
-          return lineData[key] !== originalLine[key];
+          return lineData[key] !== serverSnapshot[key];
         });
         
         return hasChanges;
       }).length;
-      
+
       const totalProcessed = newLinesProcessed + existingLinesWithChanges + deletedLines;
-      
+
       if (totalProcessed === 0) {
         // No se guardó nada
         if (filteredLines > 0) {
@@ -1589,7 +1589,7 @@ function TimesheetEdit({ headerId }) {
         // Se guardó algo pero se omitieron líneas incompletas
         const lineText = filteredLines === 1 ? "línea" : "líneas";
         const savedParts = [];
-        
+
         if (newLinesProcessed > 0) {
           savedParts.push(newLinesProcessed === 1 ? "1 línea nueva guardada" : `${newLinesProcessed} líneas nuevas guardadas`);
         }
@@ -1599,15 +1599,15 @@ function TimesheetEdit({ headerId }) {
         if (deletedLines > 0) {
           savedParts.push(deletedLines === 1 ? "1 línea eliminada" : `${deletedLines} líneas eliminadas`);
         }
-        
+
         const savedText = savedParts.join(", ");
         const message = `${TOAST.SUCCESS.SAVE_ALL} (${savedText}, ${filteredLines} ${lineText} incompleta${filteredLines > 1 ? 's' : ''} omitida${filteredLines > 1 ? 's' : ''})`;
-        
+
         toast.success(message);
       } else {
         // Se guardó todo correctamente
         const savedParts = [];
-        
+
         if (newLinesProcessed > 0) {
           savedParts.push(newLinesProcessed === 1 ? "1 línea nueva" : `${newLinesProcessed} líneas nuevas`);
         }
@@ -1617,7 +1617,7 @@ function TimesheetEdit({ headerId }) {
         if (deletedLines > 0) {
           savedParts.push(deletedLines === 1 ? "1 línea eliminada" : `${deletedLines} líneas eliminadas`);
         }
-        
+
         if (savedParts.length > 0) {
           const savedText = savedParts.join(", ");
           toast.success(`${TOAST.SUCCESS.SAVE_ALL} (${savedText})`);
