@@ -1578,7 +1578,7 @@ function TimesheetEdit({ headerId }) {
             }
             return lineData[key] !== serverSnapshot[key];
           });
-          
+
           console.log(`🔍 Línea ${id} tiene cambios:`, {
             differences: differences,
             detailed: differences.map(key => ({
@@ -1587,7 +1587,9 @@ function TimesheetEdit({ headerId }) {
               serverSnapshot: serverSnapshot[key],
               isDate: key === "date",
               lineDataIso: key === "date" && lineData[key] ? toIsoFromInput(lineData[key]) : null
-            }))
+            })),
+            fullLineData: lineData,
+            fullServerSnapshot: serverSnapshot
           });
         }
 
