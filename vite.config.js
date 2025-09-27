@@ -1,10 +1,10 @@
 /* eslint-env node */
 /// <reference types="vitest/config" />
 import react from "@vitejs/plugin-react";
-import { createRequire } from "module";
-import { defineConfig } from "vite";
 import { readFileSync } from "fs";
+import { createRequire } from "module";
 import { resolve } from "path";
+import { defineConfig } from "vite";
 const require = createRequire(import.meta.url);
 
 // Plugin para recargar cuando cambie package.json
@@ -15,29 +15,29 @@ const packageJsonWatcher = () => {
       const packageJsonPath = resolve(process.cwd(), 'package.json'); // eslint-disable-line no-undef
       let lastVersion = null;
       let isReloading = false;
-      
+
       try {
         lastVersion = JSON.parse(readFileSync(packageJsonPath, 'utf-8')).version;
         console.log(`📦 Watching package.json version: ${lastVersion}`);
       } catch {
         console.warn('Could not read package.json version');
       }
-      
+
       const checkVersion = () => {
         if (isReloading) return; // Evitar múltiples recargas
-        
+
         try {
           const currentVersion = JSON.parse(readFileSync(packageJsonPath, 'utf-8')).version;
           if (lastVersion && currentVersion !== lastVersion) {
             console.log(`🔄 Version changed from ${lastVersion} to ${currentVersion}, reloading...`);
             isReloading = true;
             lastVersion = currentVersion;
-            
+
             // Forzar recarga completa
             server.ws.send({
               type: 'full-reload'
             });
-            
+
             // Reset flag after 2 seconds
             setTimeout(() => {
               isReloading = false;
@@ -47,7 +47,7 @@ const packageJsonWatcher = () => {
           // Ignore errors
         }
       };
-      
+
       // Check every 2 seconds
       setInterval(checkVersion, 2000);
     }
