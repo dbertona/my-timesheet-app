@@ -1549,12 +1549,27 @@ function TimesheetEdit({ headerId }) {
 
       // 🆕 Informar sobre líneas filtradas por campos requeridos incompletos
       const filteredLines = linesToProcess.length - validLinesToProcess.length;
-      if (filteredLines > 0) {
+      const deletedLines = deletedLineIds.length;
+      const totalProcessed = validLinesToProcess.length + deletedLines;
+      
+      if (totalProcessed === 0) {
+        // No se guardó nada
+        if (filteredLines > 0) {
+          const lineText = filteredLines === 1 ? "línea" : "líneas";
+          toast.warning(
+            `No se guardó nada (${filteredLines} ${lineText} incompleta${filteredLines > 1 ? 's' : ''})`
+          );
+        } else {
+          toast.info("No hay cambios para guardar");
+        }
+      } else if (filteredLines > 0) {
+        // Se guardó algo pero se omitieron líneas incompletas
         const lineText = filteredLines === 1 ? "línea" : "líneas";
         toast.success(
           `${TOAST.SUCCESS.SAVE_ALL} (${filteredLines} ${lineText} incompleta${filteredLines > 1 ? 's' : ''} omitida${filteredLines > 1 ? 's' : ''})`
         );
       } else {
+        // Se guardó todo correctamente
         toast.success(TOAST.SUCCESS.SAVE_ALL);
       }
 
