@@ -947,7 +947,18 @@ export default function TimesheetLines({
                     type="text"
                     name="description"
                     value={editFormData[line.id]?.description || ""}
-                    onChange={(e) => handleInputChange(line.id, e)}
+                    onChange={(e) => {
+                      // Convertir a mayúsculas automáticamente
+                      const upperValue = e.target.value.toUpperCase();
+                      const modifiedEvent = {
+                        ...e,
+                        target: {
+                          ...e.target,
+                          value: upperValue
+                        }
+                      };
+                      handleInputChange(line.id, modifiedEvent);
+                    }}
                     onBlur={() => {
                       if (typeof saveLineNow === "function")
                         saveLineNow(line.id);
