@@ -1,0 +1,3 @@
+[submodule "Power_Solution_BC/docs/shared"]
+	path = Power_Solution_BC/docs/shared
+	url = https://github.com/dbertona/power-solution-docs.git
