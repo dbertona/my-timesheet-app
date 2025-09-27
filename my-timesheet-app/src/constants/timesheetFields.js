@@ -2,6 +2,8 @@
 
 // Orden de columnas (debe coincidir con tu tabla/render)
 const TIMESHEET_FIELDS = [
+  "resource_no",
+  "resource_name",
   "job_no",
   "job_no_description", // Nueva columna: descripción del proyecto
   "job_task_no",
@@ -14,6 +16,8 @@ const TIMESHEET_FIELDS = [
 
 // Etiquetas para el <thead>
 export const TIMESHEET_LABELS = {
+  resource_no: "Recurso",
+  resource_name: "Nombre",
   job_no: "Nº proyecto",
   job_no_description: "Descripción proyecto", // Nueva etiqueta
   job_task_no: "Nº tarea",
@@ -26,6 +30,8 @@ export const TIMESHEET_LABELS = {
 
 // Alineación por columna (para inputs y celdas)
 export const TIMESHEET_ALIGN = {
+  resource_no: "left",
+  resource_name: "left",
   job_no: "left",
   job_no_description: "left", // Nueva alineación
   job_task_no: "left",
@@ -33,11 +39,13 @@ export const TIMESHEET_ALIGN = {
   work_type: "left",
   quantity: "right",
   date: "right",
-  department_code: "right", // nos pediste este a la derecha
+  department_code: "center", // Cambiado de "right" a "center"
 };
 
 // Límites de auto-ajuste por doble clic
 export const COL_MIN_WIDTH = {
+  resource_no: 120,
+  resource_name: 180,
   job_no: 140,
   job_no_description: 200, // Nuevo ancho mínimo
   job_task_no: 130,
@@ -49,6 +57,8 @@ export const COL_MIN_WIDTH = {
 };
 
 export const COL_MAX_WIDTH = {
+  resource_no: 200,
+  resource_name: 300,
   job_no: 240,
   job_no_description: 400, // Nuevo ancho máximo
   job_task_no: 240,

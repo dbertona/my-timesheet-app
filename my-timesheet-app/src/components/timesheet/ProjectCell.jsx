@@ -1,15 +1,16 @@
+// import { useVirtualizer } from "@tanstack/react-virtual"; // desactivado en fallback
 import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
-import useDropdownFilter from "../../utils/useDropdownFilter";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
-import TIMESHEET_FIELDS from "../../constants/timesheetFields";
 import { fetchJobStatus } from "../../api/jobs";
+import TIMESHEET_FIELDS from "../../constants/timesheetFields";
+import useDropdownFilter from "../../utils/useDropdownFilter";
 
 export default function ProjectCell({
   line,
@@ -44,13 +45,16 @@ export default function ProjectCell({
       jobsFilter.getVisible(
         lineId,
         jobs,
-        (j) => `${j.no} ${j.description || ""}`,
+        (j) => `${j.no} ${j.description || ""}`
       ),
-    [jobsFilter, jobs],
+    [jobsFilter, jobs]
   );
 
   // Estado para el status del proyecto seleccionado
   const [projectStatus, setProjectStatus] = useState(null);
+  // Estado para posicionamiento inteligente del dropdown
+  const [dropdownRect, setDropdownRect] = useState(null);
+  const cellWrapperRef = useRef(null);
 
   // Prefetch: cuando se abre el dropdown de proyectos o cambia el filtro,
   // pre-cargamos tareas de los primeros candidatos visibles (hasta 5) para
@@ -82,17 +86,58 @@ export default function ProjectCell({
     }
   }, [editFormData, line.id]);
 
+  // Posicionamiento inteligente para el dropdown de proyectos
+  useLayoutEffect(() => {
+    const updateRect = () => {
+      if (jobOpenFor !== line.id) return;
+      const el = cellWrapperRef.current;
+      if (!el) return;
+
+      const rect = el.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const dropdownHeight = 220;
+
+      let top = rect.bottom + window.scrollY;
+      let maxHeight = dropdownHeight;
+      const dropdownWidth = Math.max(rect.width, 420);
+      let left = rect.left + window.scrollX;
+
+      if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+        top = rect.top + window.scrollY - dropdownHeight;
+        if (top < 0) top = 0;
+      } else if (spaceBelow < dropdownHeight) {
+        maxHeight = Math.max(50, spaceBelow - 10);
+      }
+
+      // Clamp horizontal dentro del viewport, alineado con la celda
+      const maxLeft = window.scrollX + viewportWidth - dropdownWidth - 8;
+      const minLeft = window.scrollX + 8;
+      left = Math.max(minLeft, Math.min(left, maxLeft));
+
+      setDropdownRect({ left, top, width: dropdownWidth, maxHeight });
+    };
+
+    updateRect();
+    if (jobOpenFor === line.id) {
+      window.addEventListener("scroll", updateRect, true);
+      window.addEventListener("resize", updateRect);
+    }
+    return () => {
+      window.removeEventListener("scroll", updateRect, true);
+      window.removeEventListener("resize", updateRect);
+    };
+  }, [jobOpenFor, line.id]);
+
   // Virtualización: hooks deben llamarse siempre, nunca condicionalmente
-  const parentRef = useRef(null);
+  // const parentRef = useRef(null); // desactivado en fallback
   const items = useMemo(
     () => getVisibleJobs(line.id) || [],
-    [getVisibleJobs, line.id],
+    [getVisibleJobs, line.id]
   );
-  const rowVirtualizer = useVirtualizer({
-    count: jobOpenFor === line.id && jobsLoaded ? items.length : 0,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 28,
-  });
+  // Fallback sin virtualización: dejamos creado el ref por compatibilidad
 
   return (
     <td
@@ -101,7 +146,7 @@ export default function ProjectCell({
       style={{ ...colStyle, textAlign: align }}
     >
       {isEditable ? (
-        <div className="ts-cell">
+        <div className="ts-cell" data-line-id={line.id} ref={cellWrapperRef}>
           <div className="ts-cell">
             <input
               type="text"
@@ -131,7 +176,7 @@ export default function ProjectCell({
                   setFieldError(
                     line.id,
                     "job_no",
-                    "Proyecto inválido. Debe seleccionar uno de la lista.",
+                    "Proyecto inválido. Debe seleccionar uno de la lista."
                   );
                   const el = inputRefs?.current?.[line.id]?.["job_no"];
                   if (el)
@@ -164,18 +209,53 @@ export default function ProjectCell({
                 // 🆕 F8: copiar desde celda superior (debe ir ANTES de la navegación)
                 if (e.key === "F8") {
                   e.preventDefault();
-                  handleKeyDown(e, lineIndex, 0);
+                  handleKeyDown(
+                    e,
+                    lineIndex,
+                    TIMESHEET_FIELDS.indexOf("job_no")
+                  );
                   return;
                 }
-                // TODAS las teclas de navegación usan la misma función
-                if (
-                  e.key === "Tab" ||
-                  e.key === "Enter" ||
-                  e.key.startsWith("Arrow")
-                ) {
+                // 🆕 Autocompletado con Enter o Tab (navegar incluso si está vacío)
+                if (e.key === "Enter" || e.key === "Tab") {
+                  const raw = (editFormData[line.id]?.job_no || "").trim();
                   e.preventDefault(); // Prevenir comportamiento por defecto
-                  // job_no está en el índice 0 de TIMESHEET_FIELDS
-                  handleKeyDown(e, lineIndex, 0);
+
+                  if (raw) {
+                    // Intentar autocompletar
+                    const found = findJob(raw);
+                    if (found && found.no !== raw) {
+                      // Autocompletar con el proyecto encontrado
+                      handleInputChange(line.id, {
+                        target: { name: "job_no", value: found.no },
+                      });
+                      clearFieldError(line.id, "job_no");
+
+                      // Limpiar tarea cuando cambia el proyecto
+                      handleInputChange(line.id, {
+                        target: { name: "job_task_no", value: "" },
+                      });
+                      clearFieldError(line.id, "job_task_no");
+                    }
+                  }
+
+                  // Continuar con la navegación incluso si raw está vacío (sincrónico para tests)
+                  handleKeyDown(
+                    e,
+                    lineIndex,
+                    TIMESHEET_FIELDS.indexOf("job_no")
+                  );
+                  return;
+                }
+
+                // TODAS las demás teclas de navegación usan la misma función
+                if (e.key.startsWith("Arrow")) {
+                  e.preventDefault(); // Prevenir comportamiento por defecto
+                  handleKeyDown(
+                    e,
+                    lineIndex,
+                    TIMESHEET_FIELDS.indexOf("job_no")
+                  );
                   return;
                 }
               }}
@@ -209,6 +289,15 @@ export default function ProjectCell({
             <div
               className="ts-dropdown"
               onMouseDown={(e) => e.preventDefault()}
+              style={{
+                position: "fixed",
+                left: dropdownRect?.left ?? 0,
+                top: dropdownRect?.top ?? 0,
+                width: dropdownRect?.width ?? 420,
+                height: dropdownRect?.maxHeight ?? 220,
+                overflow: "hidden",
+                zIndex: 5000,
+              }}
             >
               <div className="ts-dropdown__header">
                 <FiSearch />
@@ -230,54 +319,41 @@ export default function ProjectCell({
               {!jobsLoaded ? (
                 <div style={{ padding: "8px", color: "#999" }}>Cargando…</div>
               ) : (
-                <div ref={parentRef} style={{ height: 220, overflow: "auto" }}>
-                  <div
-                    style={{
-                      height: rowVirtualizer.getTotalSize(),
-                      width: "100%",
-                      position: "relative",
-                    }}
-                  >
-                    {rowVirtualizer.getVirtualItems().map((v) => {
-                      const j = items[v.index];
-                      return (
-                        <div
-                          key={j.no}
-                          style={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            width: "100%",
-                            transform: `translateY(${v.start}px)`,
-                          }}
-                          onMouseDown={async () => {
-                            handleInputChange(line.id, {
-                              target: { name: "job_no", value: j.no },
-                            });
-                            setJobFilter((prev) => ({
-                              ...prev,
-                              [line.id]: j.no,
-                            }));
-                            setJobOpenFor(null);
-                            handleInputChange(line.id, {
-                              target: { name: "job_task_no", value: "" },
-                            });
-                            await ensureTasksLoaded(j.no);
-                            const el =
-                              inputRefs.current?.[line.id]?.["job_task_no"];
-                            if (el) {
-                              el.focus();
-                              el.select();
-                            }
-                          }}
-                          title={`${j.no} - ${j.description || ""}`}
-                        >
-                          <strong>{j.no}</strong>{" "}
-                          {j.description ? `— ${j.description}` : ""}
-                        </div>
-                      );
-                    })}
-                  </div>
+                <div
+                  style={{
+                    maxHeight: Math.max(40, (dropdownRect?.maxHeight ?? 220) - 40),
+                    overflowY: "auto",
+                  }}
+                >
+                  {(items || []).map((j) => (
+                    <div
+                      key={j.no}
+                      className="ts-dropdown__item"
+                      onMouseDown={async () => {
+                        handleInputChange(line.id, {
+                          target: { name: "job_no", value: j.no },
+                        });
+                        setJobFilter((prev) => ({
+                          ...prev,
+                          [line.id]: j.no,
+                        }));
+                        setJobOpenFor(null);
+                        handleInputChange(line.id, {
+                          target: { name: "job_task_no", value: "" },
+                        });
+                        await ensureTasksLoaded(j.no);
+                        const el = inputRefs.current?.[line.id]?.["job_task_no"];
+                        if (el) {
+                          el.focus();
+                          el.select();
+                        }
+                      }}
+                      title={`${j.no} - ${j.description || ""}`}
+                    >
+                      <strong>{j.no}</strong>{" "}
+                      {j.description ? `— ${j.description}` : ""}
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -290,28 +366,9 @@ export default function ProjectCell({
           )}
         </div>
       ) : (
-        // 🆕 Caso cuando no es editable (línea de Factorial)
-        <div className="ts-cell">
-          <div className="ts-cell">
-            <input
-              type="text"
-              name="job_no"
-              value={editFormData[line.id]?.job_no || ""}
-              onChange={() => {}} // No hacer nada en líneas de Factorial
-              onFocus={() => {}} // No hacer nada en líneas de Factorial
-              onKeyDown={() => {}} // No hacer nada en líneas de Factorial
-              disabled={true} // 🆕 Deshabilitar para líneas de Factorial
-              className="ts-input ts-input-factorial pr-icon" // 🆕 Usar base + padding icono
-              autoComplete="off"
-              style={{
-                textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
-              }}
-            />
-            <FiChevronDown
-              className="ts-icon ts-icon--chevron"
-              style={{ opacity: 0.5, cursor: "not-allowed" }} // 🆕 Icono deshabilitado
-            />
-          </div>
+        // 🆕 Solo lectura: mostrar el valor de la línea
+        <div className="ts-cell ts-readonly" title={line.job_no || ""}>
+          {line.job_no || ""}
         </div>
       )}
       {error && (

@@ -1,9 +1,33 @@
 /* TimesheetLines.css - Modal BC Style v2 */
 /* Tabla base */
 .ts-table {
-  border-collapse: collapse;
+  /* Sticky header funciona mejor con separate + spacing 0 */
+  border-collapse: separate;
+  border-spacing: 0;
   width: 100%;
   table-layout: fixed;
+}
+
+/* Contenedor scrollable para mantener thead sticky visible */
+.ts-responsive {
+  position: relative;
+  overflow: auto;
+}
+
+/* Doble tabla: wrapper/header/scroll */
+.ts-lines-wrap {
+  position: relative;
+}
+.ts-lines-header {
+  position: sticky;
+  top: 0;
+  z-index: 5; /* por encima de celdas */
+  background: #ffffff;
+}
+.ts-lines-scroll {
+  max-height: 65vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Encabezados y celdas */
@@ -17,6 +41,37 @@
   vertical-align: middle !important; /* ✅ Centrar contenido verticalmente */
   line-height: 1.1 !important; /* ✅ Line-height compacto */
   box-sizing: border-box !important;
+}
+
+/* Encabezados fijos al hacer scroll vertical */
+.ts-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3; /* por encima de celdas */
+  background: #ffffff; /* evitar transparencia al pasar */
+}
+
+/* Asegurar que el bloque thead esté por encima en todos los navegadores */
+.ts-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #ffffff;
+}
+
+/* Eliminado: forzar transform:none rompía listas virtualizadas en overlays */
+/* Permitir transform en overlays (dropdowns, calendarios) para virtualización */
+.ts-dropdown *,
+.ts-datepop * {
+  transform: unset !important;
+}
+
+/* Forzar sticky con mayor especificidad sobre .ts-th (que establece position:relative) */
+.ts-table thead .ts-th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background: #ffffff !important;
 }
 .ts-td {
   border: 1px solid #ddd;
@@ -426,4 +481,35 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 🆕 Estilos para celdas de solo lectura - alineación consistente */
+.ts-readonly {
+  width: 100%;
+  height: 100%;
+  padding: 0px 4px;
+  box-sizing: border-box;
+  text-align: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: inherit;
+}
+
+.ts-cell-content {
+  width: 100%;
+  height: 100%;
+  padding: 0px 4px;
+  box-sizing: border-box;
+  text-align: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: inherit;
 }

@@ -122,6 +122,3 @@ echo "   https://supabase.com/dashboard → Proyecto qfpswxjunoepznrpsltt → Se
 
 
 
-
-
-

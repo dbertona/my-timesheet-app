@@ -30,6 +30,14 @@ export default function LoginMicrosoft({ onLogin }) {
     }
   };
 
+  // Evitar iframe silencioso en producción
+  useEffect(() => {
+    if (accounts && accounts.length > 0) {
+      instance.setActiveAccount(accounts[0]);
+      onLogin?.(accounts[0].username);
+    }
+  }, [accounts, instance, onLogin]);
+
   return (
     <div>
       {!accounts || accounts.length === 0 ? (

@@ -1,5 +1,6 @@
 import { supabaseClient } from "../supabaseClient";
 import { toIsoFromInput } from "../utils/dateHelpers";
+import { getServerDate } from "./date";
 
 // Columnas seguras para escritura/lectura en tabla timesheet
 const SAFE_COLUMNS = [
@@ -19,9 +20,13 @@ const SAFE_COLUMNS = [
   "resource_no",
   "resource_responsible",
   "isFactorialLine", // 🆕 Marca para líneas de Factorial (no editables)
+  "status", // 🆕 Estado de la línea (Open, Pending, Approved, Rejected)
 ];
 
-export function prepareRowForDb(row, { header, jobResponsibleMap } = {}) {
+export function prepareRowForDb(
+  row,
+  { header, jobResponsibleMap, serverDate } = {}
+) {
   const out = {};
   for (const key of SAFE_COLUMNS) {
     if (key === "date") {
@@ -32,7 +37,9 @@ export function prepareRowForDb(row, { header, jobResponsibleMap } = {}) {
     } else if (key === "company") {
       out.company = header?.company ?? row.company ?? "";
     } else if (key === "creado") {
-      out.creado = row.creado ?? new Date().toISOString();
+      // Preferir fecha del servidor si está disponible
+      const createdAt = row.creado ?? serverDate?.toISOString();
+      out.creado = createdAt ?? new Date().toISOString();
     } else if (key === "job_no_and_description") {
       const j = row.job_no || "";
       const d = row.description || "";
@@ -40,7 +47,7 @@ export function prepareRowForDb(row, { header, jobResponsibleMap } = {}) {
     } else if (key === "job_responsible") {
       const jobNo = row.job_no || "";
       const resolved = jobResponsibleMap?.[jobNo];
-      out.job_responsible = resolved ?? row.job_responsible ?? "";
+      out.job_responsible = resolved?.responsible ?? row.job_responsible ?? "";
     } else if (key === "job_responsible_approval") {
       out.job_responsible_approval = true;
     } else if (key === "resource_no") {
@@ -50,6 +57,8 @@ export function prepareRowForDb(row, { header, jobResponsibleMap } = {}) {
         row.resource_responsible ?? header?.resource_no ?? "";
     } else if (key === "quantity") {
       out.quantity = Number(row.quantity) || 0;
+    } else if (key === "status") {
+      out.status = row.status || "Open"; // Estado por defecto es Open
     } else {
       out[key] = row[key] ?? null;
     }
@@ -67,6 +76,14 @@ export async function fetchTimesheetLines(headerId) {
 }
 
 export async function updateTimesheetLine(id, row) {
+  // Obtener fecha del servidor para diagnóstico
+  try {
+    const serverNow = await getServerDate();
+    console.log("[updateTimesheetLine] serverNow:", serverNow.toISOString());
+  } catch (e) {
+    console.warn("[updateTimesheetLine] no se pudo obtener serverNow:", e);
+  }
+
   const { error } = await supabaseClient
     .from("timesheet")
     .update(row)
@@ -75,6 +92,23 @@ export async function updateTimesheetLine(id, row) {
 }
 
 export async function insertTimesheetLines(rows) {
-  const { error } = await supabaseClient.from("timesheet").insert(rows);
+  // Obtener una única fecha de servidor para todos los registros del batch
+  let serverNowIso = null;
+  try {
+    const serverNow = await getServerDate();
+    serverNowIso = serverNow.toISOString();
+    console.log("[insertTimesheetLines] serverNow:", serverNowIso);
+  } catch (e) {
+    console.warn("[insertTimesheetLines] no se pudo obtener serverNow:", e);
+  }
+
+  const rowsWithCreated = rows.map((r) => ({
+    ...r,
+    creado: r.creado ?? serverNowIso ?? new Date().toISOString(),
+  }));
+
+  const { error } = await supabaseClient
+    .from("timesheet")
+    .insert(rowsWithCreated);
   if (error) throw error;
 }

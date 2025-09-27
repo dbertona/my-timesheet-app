@@ -1,6 +1,6 @@
+import { useMsal } from "@azure/msal-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { useMsal } from "@azure/msal-react";
 import { supabaseClient } from "../../supabaseClient";
 
 export default function EnsureResource() {
@@ -8,6 +8,9 @@ export default function EnsureResource() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [exists, setExists] = useState(false);
+
+  // Bypass de verificación de recurso para tests E2E
+  const isE2EBypass = import.meta.env?.VITE_E2E_AUTH_BYPASS === 'true';
 
   const check = useCallback(async () => {
     setLoading(true);
@@ -47,8 +50,14 @@ export default function EnsureResource() {
   }, [instance, accounts, navigate]);
 
   useEffect(() => {
+    // En modo E2E bypass, no verificar recurso
+    if (isE2EBypass) {
+      setLoading(false);
+      setExists(true);
+      return;
+    }
     check();
-  }, [check]);
+  }, [check, isE2EBypass]);
 
   if (loading) return null;
   if (!exists) return null; // ya redirigido al dashboard con modal

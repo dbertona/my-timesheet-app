@@ -1,9 +1,8 @@
-import React from "react";
-import { useEffect, useState } from "react";
-import { supabaseClient } from "../supabaseClient.js";
 import { useMsal } from "@azure/msal-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/TimesheetHeaderList.css";
+import { supabaseClient } from "../supabaseClient.js";
 
 function TimesheetHeaderList({ headers: propHeaders }) {
   // Componente TimesheetHeaderList renderizado
@@ -37,7 +36,7 @@ function TimesheetHeaderList({ headers: propHeaders }) {
 
   return (
     <div>
-      <h2 className="timesheet-title">Partes de Trabajo</h2>
+      <h2 className="timesheet-title">Partes de Horas</h2>
       {headers.length === 0 ? (
         <p>No hay cabeceras disponibles.</p>
       ) : (
@@ -45,16 +44,16 @@ function TimesheetHeaderList({ headers: propHeaders }) {
           <table className="timesheet-table">
             <thead>
               <tr>
-                <th>Recurso</th>
-                <th>Fecha parte</th>
-                <th>Descripción</th>
-                <th>Desde</th>
-                <th>Hasta</th>
-                <th>Período</th>
-                <th>Calendario</th>
-                <th>Departamento</th>
-                <th>Enviado a BC</th>
-                <th></th>
+                <th style={{ textAlign: "center" }}>Recurso</th>
+                <th style={{ textAlign: "center" }}>Fecha parte</th>
+                <th style={{ textAlign: "center" }}>Descripción</th>
+                <th style={{ textAlign: "center" }}>Desde</th>
+                <th style={{ textAlign: "center" }}>Hasta</th>
+                <th style={{ textAlign: "center" }}>Período</th>
+                <th style={{ textAlign: "center" }}>Calendario</th>
+                <th style={{ textAlign: "center" }}>Departamento</th>
+                <th style={{ textAlign: "center" }}>Enviado a BC</th>
+                <th style={{ textAlign: "center" }}></th>
               </tr>
             </thead>
             <tbody>

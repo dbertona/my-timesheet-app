@@ -10,13 +10,13 @@ if lsof -Pi :5173 -sTCP:LISTEN -t >/dev/null ; then
 else
     echo "📦 Instalando dependencias si es necesario..."
     npm install
-    
+
     echo "🔥 Iniciando servidor Vite..."
     npm run dev &
-    
+
     # Esperar un momento para que el servidor se inicie
     sleep 3
-    
+
     # Verificar si el servidor está funcionando
     if lsof -Pi :5173 -sTCP:LISTEN -t >/dev/null ; then
         echo "✅ Servidor iniciado exitosamente!"

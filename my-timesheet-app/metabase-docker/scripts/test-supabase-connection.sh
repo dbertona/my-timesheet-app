@@ -45,6 +45,3 @@ echo "5. Ejecuta este script de nuevo"
 
 
 
-
-
-

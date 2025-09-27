@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
-import { FiCalendar } from "react-icons/fi";
 import { parse } from "date-fns";
-import { parseDate, formatDate } from "../../utils/dateHelpers";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { FiCalendar } from "react-icons/fi";
 import TIMESHEET_FIELDS from "../../constants/timesheetFields";
 import "../../styles/DateInput.css";
+import { formatDate, parseDate } from "../../utils/dateHelpers";
 
 export default function DateCell({
   line,
@@ -15,6 +15,7 @@ export default function DateCell({
   error,
   header,
   editableHeader,
+  serverDate,
   calendarHolidays,
   disabled = false,
   align = "inherit", // 🆕 Prop para alineación
@@ -22,13 +23,26 @@ export default function DateCell({
   handleKeyDown,
 }) {
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [dropdownRect, setDropdownRect] = useState(null);
+  const cellWrapperRef = useRef(null);
+  const baseToday = serverDate || new Date();
   const [selectedDate, setSelectedDate] = useState(
-    parseDate(editFormData[line.id]?.date) || new Date()
+    parseDate(editFormData[line.id]?.date) || baseToday
   );
   const [currentMonth, setCurrentMonth] = useState(
-    parseDate(editFormData[line.id]?.date) || new Date()
+    parseDate(editFormData[line.id]?.date) || baseToday
   );
   const calendarRef = useRef(null);
+
+  // Si llega serverDate y no hay fecha en la línea, ajustar selección/mes
+  useEffect(() => {
+    const hasDate = Boolean(editFormData[line.id]?.date);
+    if (serverDate && !hasDate) {
+      setSelectedDate(serverDate);
+      setCurrentMonth(serverDate);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverDate, line.id]);
 
   // Cerrar calendario al hacer clic fuera
   useEffect(() => {
@@ -47,11 +61,55 @@ export default function DateCell({
     };
   }, [calendarOpen]);
 
-  // Re-renderizar cuando cambie el período para actualizar validación
-  useEffect(() => {
-    const effectivePeriod =
-      header?.allocation_period || editableHeader?.allocation_period;
+  // Posicionamiento inteligente del calendario
+  useLayoutEffect(() => {
+    const updateRect = () => {
+      if (!calendarOpen) return;
+      const el = cellWrapperRef.current;
+      if (!el) return;
 
+      const rect = el.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const dropdownHeight = 280;
+
+      let top = rect.bottom + window.scrollY;
+      let maxHeight = dropdownHeight;
+      const dropdownWidth = Math.max(rect.width, 300);
+      let left = rect.left + window.scrollX;
+      if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+        top = rect.top + window.scrollY - dropdownHeight;
+        if (top < 0) top = 0;
+      } else if (spaceBelow < dropdownHeight) {
+        maxHeight = Math.max(50, spaceBelow - 10);
+      }
+
+      const maxLeft = window.scrollX + viewportWidth - dropdownWidth - 8;
+      const minLeft = window.scrollX + 8;
+      left = Math.max(minLeft, Math.min(left, maxLeft));
+
+      setDropdownRect({ left, top, width: dropdownWidth, maxHeight });
+    };
+
+    updateRect();
+    if (calendarOpen) {
+      window.addEventListener("scroll", updateRect, true);
+      window.addEventListener("resize", updateRect);
+    }
+    return () => {
+      window.removeEventListener("scroll", updateRect, true);
+      window.removeEventListener("resize", updateRect);
+    };
+  }, [calendarOpen, line.id]);
+
+  // Re-renderizar cuando cambie el período para actualizar validación
+  const effectivePeriod = useMemo(() => {
+    return header?.allocation_period || editableHeader?.allocation_period;
+  }, [header?.allocation_period, editableHeader?.allocation_period]);
+
+  useEffect(() => {
     if (effectivePeriod) {
       const period = effectivePeriod;
       const match = period.match(/M(\d{2})-M(\d{2})/);
@@ -62,7 +120,7 @@ export default function DateCell({
         setCurrentMonth(newMonth);
       }
     }
-  }, [header?.allocation_period, editableHeader?.allocation_period]);
+  }, [effectivePeriod]);
 
   // Generar días del mes
   const generateDays = () => {
@@ -132,18 +190,44 @@ export default function DateCell({
     });
   };
 
-    // Verificar si una fecha está en el rango permitido
-  const isInRange = (date) => {
-    // Si hay header (edición), usar sus fechas
-    if (header && header.from_date && header.to_date) {
-      const fromDate = parse(header.from_date, "yyyy-MM-dd", new Date());
-      const toDate = parse(header.to_date, "yyyy-MM-dd", new Date());
-      return date >= fromDate && date <= toDate;
+  // Helper robusto: aceptar fechas del header como string o Date
+  const _parseHeaderDate = (val) => {
+    if (!val) return null;
+    if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+    if (typeof val === "string") {
+      // Intentar diferentes formatos de fecha que pueden venir de la BD
+      const formats = [
+        "yyyy-MM-dd", // 2024-01-15
+        "dd/MM/yyyy", // 15/01/2024
+        "yyyy-MM-dd'T'HH:mm:ss", // 2024-01-15T10:30:00
+        "yyyy-MM-dd'T'HH:mm:ss.SSS", // 2024-01-15T10:30:00.000
+        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", // 2024-01-15T10:30:00.000Z
+        "yyyy-MM-dd'T'HH:mm:ss'Z'", // 2024-01-15T10:30:00Z
+      ];
+
+      for (const format of formats) {
+        try {
+          const parsed = parse(val, format, new Date());
+          if (!isNaN(parsed.getTime())) return parsed;
+        } catch {
+          // Continuar con el siguiente formato
+        }
+      }
+
+      // Último intento con Date constructor
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) return d;
     }
-    
-    // Para nuevos partes, usar el período del editableHeader
-    if (editableHeader?.allocation_period) {
-      const period = editableHeader.allocation_period;
+    return null;
+  };
+
+  // Verificar si una fecha está en el rango permitido
+  const isInRange = (date) => {
+    // Usar allocation_period tanto para edición como inserción (unificado)
+    const period =
+      header?.allocation_period || editableHeader?.allocation_period;
+
+    if (period) {
       const match = period.match(/M(\d{2})-M(\d{2})/);
       if (match) {
         const year = 2000 + parseInt(match[1]);
@@ -153,7 +237,7 @@ export default function DateCell({
         return date >= firstDay && date <= lastDay;
       }
     }
-    
+
     // Fallback: permitir cualquier fecha
     return true;
   };
@@ -177,18 +261,13 @@ export default function DateCell({
     setCalendarOpen(false);
   };
 
-    // Verificar si se puede navegar hacia atrás
+  // Verificar si se puede navegar hacia atrás
   const canGoBack = () => {
-    // Si hay header (edición), usar sus fechas
-    if (header && header.from_date) {
-      const fromDate = parse(header.from_date, "yyyy-MM-dd", new Date());
-      const fromMonth = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
-      return currentMonth > fromMonth;
-    }
-    
-    // Para nuevos partes, usar el período del editableHeader
-    if (editableHeader?.allocation_period) {
-      const period = editableHeader.allocation_period;
+    // Usar allocation_period tanto para edición como inserción (unificado)
+    const period =
+      header?.allocation_period || editableHeader?.allocation_period;
+
+    if (period) {
       const match = period.match(/M(\d{2})-M(\d{2})/);
       if (match) {
         const year = 2000 + parseInt(match[1]);
@@ -197,22 +276,17 @@ export default function DateCell({
         return currentMonth > periodMonth;
       }
     }
-    
+
     return true;
   };
 
   // Verificar si se puede navegar hacia adelante
   const canGoForward = () => {
-    // Si hay header (edición), usar sus fechas
-    if (header && header.to_date) {
-      const toDate = parse(header.to_date, "yyyy-MM-dd", new Date());
-      const toMonth = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
-      return currentMonth < toMonth;
-    }
-    
-    // Para nuevos partes, usar el período del editableHeader
-    if (editableHeader?.allocation_period) {
-      const period = editableHeader.allocation_period;
+    // Usar allocation_period tanto para edición como inserción (unificado)
+    const period =
+      header?.allocation_period || editableHeader?.allocation_period;
+
+    if (period) {
       const match = period.match(/M(\d{2})-M(\d{2})/);
       if (match) {
         const year = 2000 + parseInt(match[1]);
@@ -221,7 +295,7 @@ export default function DateCell({
         return currentMonth < periodMonth;
       }
     }
-    
+
     return true;
   };
 
@@ -289,7 +363,7 @@ export default function DateCell({
 
   return (
     <td className="ts-td ts-cell" style={{ textAlign: align }}>
-      <div className="ts-cell">
+      <div className="ts-cell" data-line-id={line.id} ref={cellWrapperRef}>
         <div className="ts-cell">
           <input
             type="text"
@@ -303,8 +377,9 @@ export default function DateCell({
             }
             onBlur={(e) => {
               if (disabled) return;
+              const currentValue = e.target.value;
               const normalized =
-                normalizeDisplayDate(e.target.value) || e.target.value;
+                normalizeDisplayDate(currentValue) || currentValue;
               handleInputChange(line.id, {
                 target: { name: "date", value: normalized },
               });
@@ -331,6 +406,7 @@ export default function DateCell({
             ref={hasRefs ? (el) => setSafeRef(line.id, "date", el) : null}
             className={`ts-input pr-icon ${disabled ? "ts-input-factorial" : ""}`}
             autoComplete="off"
+            placeholder={serverDate ? formatDate(serverDate) : ""}
             disabled={disabled}
             style={{
               textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
@@ -348,7 +424,15 @@ export default function DateCell({
           />
 
           {calendarOpen && !disabled && (
-            <div className="ts-datepop" ref={calendarRef}>
+            <div className="ts-datepop" ref={calendarRef} style={{
+              position: "fixed",
+              left: dropdownRect?.left ?? 0,
+              top: dropdownRect?.top ?? 0,
+              width: dropdownRect?.width ?? 300,
+              height: dropdownRect?.maxHeight ?? 280,
+              overflow: "hidden",
+              zIndex: 5000,
+            }}>
               <div className="ts-calendar">
                 {/* Header del calendario */}
                 <div className="ts-calendar-header">
@@ -394,7 +478,7 @@ export default function DateCell({
                       selectedDate &&
                       date.toDateString() === selectedDate.toDateString();
                     const isToday =
-                      date.toDateString() === new Date().toDateString();
+                      date.toDateString() === baseToday.toDateString();
                     const isHolidayDate = isHoliday(date);
                     const inRange = isInRange(date);
                     const canSelect = inRange && !isHolidayDate;

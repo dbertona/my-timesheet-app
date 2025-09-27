@@ -1,9 +1,9 @@
 // src/components/timesheet/TaskCell.jsx
-import React, { useCallback, useMemo, useRef } from "react";
+// import { useVirtualizer } from "@tanstack/react-virtual"; // desactivado en fallback
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import useDropdownFilter from "../../utils/useDropdownFilter";
 import TIMESHEET_FIELDS from "../../constants/timesheetFields";
+import useDropdownFilter from "../../utils/useDropdownFilter";
 
 const TaskCell = ({
   line,
@@ -38,23 +38,63 @@ const TaskCell = ({
       tasksFilter.getVisible(
         lineId,
         tasksByJob[jobNo] || [],
-        (t) => `${t.no} ${t.description || ""}`,
+        (t) => `${t.no} ${t.description || ""}`
       ),
-    [tasksFilter, tasksByJob],
+    [tasksFilter, tasksByJob]
   );
 
+  // Estado y efecto para posicionamiento inteligente del dropdown de tareas
+  const [dropdownRect, setDropdownRect] = useState(null);
+  const cellWrapperRef = useRef(null);
+  useLayoutEffect(() => {
+    const updateRect = () => {
+      if (taskOpenFor !== line.id) return;
+      const el = cellWrapperRef.current;
+      if (!el) return;
+
+      const rect = el.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const dropdownHeight = 220;
+
+      let top = rect.bottom + window.scrollY;
+      let maxHeight = dropdownHeight;
+      const dropdownWidth = Math.max(rect.width, 420);
+      let left = rect.left + window.scrollX;
+      if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+        top = rect.top + window.scrollY - dropdownHeight;
+        if (top < 0) top = 0;
+      } else if (spaceBelow < dropdownHeight) {
+        maxHeight = Math.max(50, spaceBelow - 10);
+      }
+      const maxLeft = window.scrollX + viewportWidth - dropdownWidth - 8;
+      const minLeft = window.scrollX + 8;
+      left = Math.max(minLeft, Math.min(left, maxLeft));
+
+      setDropdownRect({ left, top, width: dropdownWidth, maxHeight });
+    };
+
+    updateRect();
+    if (taskOpenFor === line.id) {
+      window.addEventListener("scroll", updateRect, true);
+      window.addEventListener("resize", updateRect);
+    }
+    return () => {
+      window.removeEventListener("scroll", updateRect, true);
+      window.removeEventListener("resize", updateRect);
+    };
+  }, [taskOpenFor, line.id]);
+
   // Virtualización siempre montada para mantener orden de hooks estable
-  const parentRef = useRef(null);
+  // const parentRef = useRef(null); // desactivado en fallback
   const jobNo = editFormData[line.id]?.job_no || "";
   const items = useMemo(
     () => (jobNo ? getVisibleTasks(line.id, jobNo) : []),
-    [getVisibleTasks, line.id, jobNo],
+    [getVisibleTasks, line.id, jobNo]
   );
-  const rowVirtualizer = useVirtualizer({
-    count: taskOpenFor === line.id ? items.length : 0,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 28,
-  });
+  // Fallback sin virtualización
 
   return (
     <td
@@ -63,7 +103,7 @@ const TaskCell = ({
       style={{ ...colStyle, textAlign: align }}
     >
       {isEditable ? (
-        <div className="ts-cell">
+        <div className="ts-cell" data-line-id={line.id} ref={cellWrapperRef}>
           <div className="ts-cell">
             <input
               type="text"
@@ -87,7 +127,7 @@ const TaskCell = ({
                   setFieldError(
                     line.id,
                     "job_task_no",
-                    "Tarea inválida para el proyecto seleccionado.",
+                    "Tarea inválida para el proyecto seleccionado."
                   );
                   const el = inputRefs?.current?.[line.id]?.["job_task_no"];
                   if (el)
@@ -124,18 +164,53 @@ const TaskCell = ({
                 // 🆕 F8: copiar desde celda superior (debe ir ANTES de la navegación)
                 if (e.key === "F8") {
                   e.preventDefault();
-                  handleKeyDown(e, lineIndex, 2);
+                  handleKeyDown(
+                    e,
+                    lineIndex,
+                    TIMESHEET_FIELDS.indexOf("job_task_no")
+                  );
                   return;
                 }
-                // TODAS las teclas de navegación usan la misma función
-                if (
-                  e.key === "Tab" ||
-                  e.key === "Enter" ||
-                  e.key.startsWith("Arrow")
-                ) {
+                // 🆕 Autocompletado con Enter o Tab
+                if (e.key === "Enter" || e.key === "Tab") {
+                  const jobNo = editFormData[line.id]?.job_no || "";
+                  const raw = (editFormData[line.id]?.job_task_no || "").trim();
+
+                  if (raw && jobNo) {
+                    e.preventDefault(); // Prevenir comportamiento por defecto
+
+                    // Intentar autocompletar
+                    ensureTasksLoaded(jobNo).then(() => {
+                      const found = findTask(jobNo, raw);
+                      if (found && found.no !== raw) {
+                        // Autocompletar con la tarea encontrada
+                        handleInputChange(line.id, {
+                          target: { name: "job_task_no", value: found.no },
+                        });
+                        clearFieldError(line.id, "job_task_no");
+                      }
+
+                      // Continuar con la navegación después del autocompletado
+                      setTimeout(() => {
+                        handleKeyDown(
+                          e,
+                          lineIndex,
+                          TIMESHEET_FIELDS.indexOf("job_task_no")
+                        );
+                      }, 0);
+                    });
+                    return;
+                  }
+                }
+
+                // TODAS las demás teclas de navegación usan la misma función
+                if (e.key.startsWith("Arrow")) {
                   e.preventDefault(); // Prevenir comportamiento por defecto
-                  // job_task_no está en el índice 2 de TIMESHEET_FIELDS
-                  handleKeyDown(e, lineIndex, 2);
+                  handleKeyDown(
+                    e,
+                    lineIndex,
+                    TIMESHEET_FIELDS.indexOf("job_task_no")
+                  );
                   return;
                 }
               }}
@@ -156,11 +231,20 @@ const TaskCell = ({
             />
           </div>
 
-          {taskOpenFor === line.id && (
-            <div
-              className="ts-dropdown"
-              onMouseDown={(e) => e.preventDefault()}
-            >
+        {taskOpenFor === line.id && (
+          <div
+            className="ts-dropdown"
+            onMouseDown={(e) => e.preventDefault()}
+            style={{
+              position: "fixed",
+              left: dropdownRect?.left ?? 0,
+              top: dropdownRect?.top ?? 0,
+              width: dropdownRect?.width ?? 420,
+              height: dropdownRect?.maxHeight ?? 220,
+              overflow: "hidden",
+              zIndex: 5000,
+            }}
+          >
               <div className="ts-dropdown__header">
                 <FiSearch />
                 <input
@@ -176,45 +260,32 @@ const TaskCell = ({
                 />
               </div>
 
-              <div ref={parentRef} style={{ height: 220, overflow: "auto" }}>
-                <div
-                  style={{
-                    height: rowVirtualizer.getTotalSize(),
-                    width: "100%",
-                    position: "relative",
-                  }}
-                >
-                  {rowVirtualizer.getVirtualItems().map((v) => {
-                    const t = items[v.index];
-                    if (!t) return null;
-                    return (
-                      <div
-                        key={t.no}
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          transform: `translateY(${v.start}px)`,
-                        }}
-                        onMouseDown={() => {
-                          handleInputChange(line.id, {
-                            target: { name: "job_task_no", value: t.no },
-                          });
-                          setTaskFilter((prev) => ({
-                            ...prev,
-                            [line.id]: t.no,
-                          }));
-                          setTaskOpenFor(null);
-                        }}
-                        title={`${t.no} - ${t.description || ""}`}
-                      >
-                        <strong>{t.no}</strong>{" "}
-                        {t.description ? `— ${t.description}` : ""}
-                      </div>
-                    );
-                  })}
-                </div>
+              <div
+                style={{
+                  maxHeight: Math.max(40, (dropdownRect?.maxHeight ?? 220) - 40),
+                  overflowY: "auto",
+                }}
+              >
+                {(items || []).map((t) => (
+                  <div
+                    key={t.no}
+                    className="ts-dropdown__item"
+                    onMouseDown={() => {
+                      handleInputChange(line.id, {
+                        target: { name: "job_task_no", value: t.no },
+                      });
+                      setTaskFilter((prev) => ({
+                        ...prev,
+                        [line.id]: t.no,
+                      }));
+                      setTaskOpenFor(null);
+                    }}
+                    title={`${t.no} - ${t.description || ""}`}
+                  >
+                    <strong>{t.no}</strong>{" "}
+                    {t.description ? `— ${t.description}` : ""}
+                  </div>
+                ))}
               </div>
 
               {jobNo && items.length === 0 && (
@@ -226,28 +297,9 @@ const TaskCell = ({
           )}
         </div>
       ) : (
-        // 🆕 Caso cuando no es editable (línea de Factorial)
-        <div className="ts-cell">
-          <div className="ts-cell">
-            <input
-              type="text"
-              name="job_task_no"
-              value={editFormData[line.id]?.job_task_no || ""}
-              onChange={() => {}} // No hacer nada en líneas de Factorial
-              onFocus={() => {}} // No hacer nada en líneas de Factorial
-              onKeyDown={() => {}} // No hacer nada en líneas de Factorial
-              disabled={true} // 🆕 Deshabilitar para líneas de Factorial
-              className="ts-input-factorial" // 🆕 Clase especial para líneas de Factorial
-              autoComplete="off"
-              style={{
-                textAlign: "inherit !important", // 🆕 Heredar alineación del padre con !important
-              }}
-            />
-            <FiChevronDown
-              className="ts-icon ts-icon--chevron"
-              style={{ opacity: 0.5, cursor: "not-allowed" }} // 🆕 Icono deshabilitado
-            />
-          </div>
+        // 🆕 Solo lectura: mostrar el valor de la línea
+        <div className="ts-cell ts-readonly" title={line.job_task_no || ""}>
+          {line.job_task_no || ""}
         </div>
       )}
       {error && (

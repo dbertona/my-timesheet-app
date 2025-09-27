@@ -27,23 +27,11 @@ export default function ProjectDescriptionCell({
       style={{
         ...colStyle,
         textAlign: align,
-        backgroundColor: "#ffffff", // Color de fondo blanco
-        color: "#000000", // Color de texto negro
-        cursor: "default", // Cursor normal (no pointer)
       }}
       data-col="job_no_description"
+      title={projectDescription}
     >
-      <div
-        className="ts-cell-content"
-        style={{
-          padding: "0px 1px",
-          fontSize: "10px",
-          lineHeight: "1",
-          whiteSpace: "normal", // Permitir saltos de línea
-          wordWrap: "break-word", // Romper palabras largas
-        }}
-        title={projectDescription} // Tooltip con descripción completa
-      >
+      <div className="ts-readonly" style={{ padding: "0px 4px", textAlign: "inherit" }}>
         {projectDescription || (
           <span style={{ fontStyle: "italic", color: "#adb5bd" }}>
             Sin descripción

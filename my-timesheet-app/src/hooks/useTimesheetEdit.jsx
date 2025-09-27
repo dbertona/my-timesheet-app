@@ -1,6 +1,6 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { format, isAfter, isBefore, parse } from "date-fns";
+import { useCallback, useEffect, useRef, useState } from "react";
 import TIMESHEET_FIELDS from "../constants/timesheetFields";
-import { parse, isBefore, isAfter, format } from "date-fns";
 import { formatDate, parseDate } from "../utils/dateHelpers";
 
 export default function useTimesheetEdit({
@@ -12,6 +12,7 @@ export default function useTimesheetEdit({
   calendarHolidays,
   addEmptyLine, // función sincrónica del padre: crea línea local y devuelve id
   markAsChanged, // función para marcar cambios no guardados
+  readOnly = false,
 }) {
   const inputRefs = useRef({});
   const selectionRef = useRef({ lineId: null, field: null, start: 0, end: 0 });
@@ -262,6 +263,64 @@ export default function useTimesheetEdit({
           currentValue: editFormData?.[currentLineId]?.[field],
         });
 
+        // 🆕 Validación especial para tareas: permitir copia en más casos
+        if (field === "job_task_no") {
+          const currentJobNo = editFormData?.[currentLineId]?.job_no;
+          const prevJobNo = editFormData?.[prevLineId]?.job_no;
+
+          console.log("🔍 F8 TASK DEBUG:", {
+            currentJobNo,
+            prevJobNo,
+            valueAbove,
+            currentLineId,
+            prevLineId,
+            currentLineData: editFormData?.[currentLineId],
+            prevLineData: editFormData?.[prevLineId],
+          });
+
+          // 🆕 Lógica más permisiva: solo bloquear si hay una tarea específica que no es genérica
+          // Permitir copiar tareas genéricas como "GASTO", "HORAS", etc. independientemente del proyecto
+          const genericTasks = [
+            "GASTO",
+            "HORAS",
+            "VIAJE",
+            "REUNION",
+            "ADMIN",
+            "OTROS",
+          ];
+          const isGenericTask = genericTasks.some((task) =>
+            valueAbove?.toUpperCase().includes(task.toUpperCase())
+          );
+
+          // Solo bloquear si NO es una tarea genérica Y los proyectos son diferentes
+          if (
+            currentJobNo &&
+            prevJobNo &&
+            currentJobNo !== prevJobNo &&
+            !isGenericTask
+          ) {
+            console.log(
+              "🚫 F8: No copiar tarea - proyectos diferentes y tarea no genérica",
+              {
+                currentJobNo,
+                prevJobNo,
+                valueAbove,
+                isGenericTask,
+              }
+            );
+            e.preventDefault();
+            return;
+          }
+
+          // Si es una tarea genérica, permitir la copia
+          if (isGenericTask) {
+            console.log("✅ F8: Copiando tarea genérica", {
+              valueAbove,
+              isGenericTask,
+            });
+          }
+        }
+
         setEditFormData((prev) => ({
           ...prev,
           [currentLineId]: { ...prev[currentLineId], [field]: valueAbove },
@@ -294,6 +353,11 @@ export default function useTimesheetEdit({
     ].includes(key);
     if (!isNav) return;
 
+    // Dirección de navegación explícita (soporte Shift+Tab como retroceso)
+    const isBackward = key === "ArrowLeft" || (key === "Tab" && e.shiftKey);
+    const isForward =
+      key === "ArrowRight" || key === "Enter" || (key === "Tab" && !e.shiftKey);
+
     // Si estamos en "date", expandimos y validamos antes de movernos
     const field = TIMESHEET_FIELDS[fieldIndex];
     if (field === "date") {
@@ -325,6 +389,7 @@ export default function useTimesheetEdit({
     } else if (key === "ArrowDown") {
       // si es la última fila, crear nueva y enfocar MISMA columna
       if (
+        !readOnly &&
         lineIndex === lines.length - 1 &&
         typeof addEmptyLine === "function"
       ) {
@@ -332,27 +397,26 @@ export default function useTimesheetEdit({
         const colName = TIMESHEET_FIELDS[fieldIndex]; // misma columna
         setTimeout(() => {
           const input = inputRefs.current?.[newId]?.[colName];
-          if (input) {
-            input.focus();
-            input.select();
-          }
+          input?.focus?.();
+          input?.select?.();
         }, 0);
         return;
       } else {
         nextLineIndex = lineIndex + 1;
       }
-    } else if (key === "ArrowLeft") {
+    } else if (isBackward) {
       nextFieldIndex =
         fieldIndex > 0 ? fieldIndex - 1 : TIMESHEET_FIELDS.length - 1;
       if (nextFieldIndex === TIMESHEET_FIELDS.length - 1) {
         nextLineIndex = lineIndex > 0 ? lineIndex - 1 : lines.length - 1;
       }
-    } else if (key === "ArrowRight" || key === "Tab" || key === "Enter") {
+    } else if (isForward) {
       nextFieldIndex =
         fieldIndex < TIMESHEET_FIELDS.length - 1 ? fieldIndex + 1 : 0;
       if (nextFieldIndex === 0) {
         // hemos envuelto a la primera columna → bajar de fila
         if (
+          !readOnly &&
           lineIndex === lines.length - 1 &&
           typeof addEmptyLine === "function"
         ) {
@@ -360,10 +424,8 @@ export default function useTimesheetEdit({
           const firstCol = TIMESHEET_FIELDS[0]; // al tabular pasa a la primera columna
           setTimeout(() => {
             const input = inputRefs.current?.[newId]?.[firstCol];
-            if (input) {
-              input.focus();
-              input.select();
-            }
+            input?.focus?.();
+            input?.select?.();
           }, 0);
           return;
         } else {
@@ -374,9 +436,26 @@ export default function useTimesheetEdit({
 
     // Función para identificar si una columna es editable
     const isColumnEditable = (colKey) => {
-      // Columnas NO editables
-      const nonEditableColumns = ["job_no_description", "department_code"];
+      // Columnas NO editables o NO visibles en el body por defecto
+      const nonEditableColumns = [
+        "job_no_description",
+        "department_code",
+        "resource_no",
+        "resource_name",
+      ];
       return !nonEditableColumns.includes(colKey);
+    };
+
+    // Función para identificar si una línea es editable en general
+    const isRowEditable = (rowIndex) => {
+      if (readOnly) return false;
+      const ln = lines[rowIndex];
+      if (!ln) return false;
+      if (ln.isFactorialLine) return false;
+      if (ln.status === "Pending") return false;
+      // 🆕 Las líneas rechazadas no son editables hasta reabrir
+      if (ln.status === "Rejected") return false;
+      return true;
     };
 
     // Si el siguiente campo no es editable, saltarlo
@@ -387,7 +466,7 @@ export default function useTimesheetEdit({
       !isColumnEditable(TIMESHEET_FIELDS[nextFieldIndex]) &&
       attempts < maxAttempts
     ) {
-      if (key === "ArrowLeft") {
+      if (isBackward) {
         // Ir a la columna anterior
         nextFieldIndex =
           nextFieldIndex > 0 ? nextFieldIndex - 1 : TIMESHEET_FIELDS.length - 1;
@@ -395,7 +474,7 @@ export default function useTimesheetEdit({
           nextLineIndex =
             nextLineIndex > 0 ? nextLineIndex - 1 : lines.length - 1;
         }
-      } else if (key === "ArrowRight" || key === "Tab" || key === "Enter") {
+      } else if (isForward) {
         // Ir a la columna siguiente
         nextFieldIndex =
           nextFieldIndex < TIMESHEET_FIELDS.length - 1 ? nextFieldIndex + 1 : 0;
@@ -407,11 +486,37 @@ export default function useTimesheetEdit({
       attempts++;
     }
 
+    // Si la fila objetivo no es editable, buscar la siguiente fila editable
+    let rowAttempts = 0;
+    const maxRowAttempts = Math.max(1, lines.length);
+    while (!isRowEditable(nextLineIndex) && rowAttempts < maxRowAttempts) {
+      if (key === "ArrowUp") {
+        nextLineIndex = nextLineIndex > 0 ? nextLineIndex - 1 : lines.length - 1;
+      } else {
+        nextLineIndex = nextLineIndex < lines.length - 1 ? nextLineIndex + 1 : 0;
+      }
+      rowAttempts++;
+    }
+
+    // Garantizar que la columna elegida sea editable tras mover de fila
+    attempts = 0;
+    while (!isColumnEditable(TIMESHEET_FIELDS[nextFieldIndex]) && attempts < maxAttempts) {
+      if (isBackward || key === "ArrowUp") {
+        nextFieldIndex =
+          nextFieldIndex > 0 ? nextFieldIndex - 1 : TIMESHEET_FIELDS.length - 1;
+      } else {
+        nextFieldIndex =
+          nextFieldIndex < TIMESHEET_FIELDS.length - 1 ? nextFieldIndex + 1 : 0;
+      }
+      attempts++;
+    }
+
     // Después de saltar columnas no editables: si estamos en última fila y
     // el movimiento por Enter/Tab/ArrowRight termina en la primera columna,
     // crear una nueva línea y enfocar `job_no` en esa nueva línea.
     if (
-      (key === "ArrowRight" || key === "Tab" || key === "Enter") &&
+      !readOnly &&
+      isForward &&
       lineIndex === lines.length - 1 &&
       nextFieldIndex === 0 &&
       typeof addEmptyLine === "function"

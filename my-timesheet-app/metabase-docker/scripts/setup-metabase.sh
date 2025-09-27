@@ -56,6 +56,3 @@ echo "✅ Una vez configurado, tendrás acceso a todas las tablas de tu aplicaci
 
 
 
-
-
-

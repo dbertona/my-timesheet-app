@@ -1,13 +1,16 @@
 /* eslint-disable react-refresh/only-export-components */
 import React from "react";
 import { createBrowserRouter, Outlet, useParams } from "react-router-dom";
-import AppError from "./components/ui/AppError";
-import LoginMicrosoft from "./components/LoginMicrosoft";
-import TimesheetHeaderList from "./components/TimesheetHeaderList";
-import TimesheetEdit from "./components/TimesheetEdit";
-import HomeDashboard from "./components/HomeDashboard";
-import RequireMsalAuth from "./components/auth/RequireMsalAuth";
+import ApprovalPage from "./components/ApprovalPage";
 import EnsureResource from "./components/auth/EnsureResource";
+import RequireMsalAuth from "./components/auth/RequireMsalAuth";
+import HomeDashboard from "./components/HomeDashboard";
+import LoginMicrosoft from "./components/LoginMicrosoft";
+import RejectedLinesPage from "./components/RejectedLinesPage";
+import TimesheetEdit from "./components/TimesheetEdit";
+import TimesheetHeaderList from "./components/TimesheetHeaderList";
+import TimesheetListPage from "./components/TimesheetListPage";
+import AppError from "./components/ui/AppError";
 
 function TimesheetEditWrapper() {
   const { headerId } = useParams();
@@ -15,15 +18,21 @@ function TimesheetEditWrapper() {
 }
 
 function AppWrapper() {
+  // 💡 AppWrapper ahora solo provee el contexto de MSAL.
+  // El layout de página (flex, 100vh) se gestiona a nivel de cada
+  // componente de vista (Dashboard, Edit, Approval, etc.) para
+  // un control más granular y preciso.
   return (
     <RequireMsalAuth>
-      <div style={{ padding: "2rem", fontSize: "1.5rem" }}>
+      <div style={{ padding: 0, fontSize: "inherit", height: "100%" }}>
         <LoginMicrosoft />
         <Outlet />
       </div>
     </RequireMsalAuth>
   );
 }
+
+const BASENAME = import.meta.env.VITE_BASE_PATH || "/";
 
 export const router = createBrowserRouter([
   {
@@ -38,9 +47,24 @@ export const router = createBrowserRouter([
         errorElement: <AppError />,
       },
       {
+        path: "aprobacion",
+        element: <ApprovalPage />,
+        errorElement: <AppError />,
+      },
+      {
         element: <EnsureResource />, // Guard: requiere recurso válido
         errorElement: <AppError />,
         children: [
+          {
+            path: "mis-partes",
+            element: <TimesheetListPage />,
+            errorElement: <AppError />,
+          },
+          {
+            path: "lines/rejected",
+            element: <RejectedLinesPage />,
+            errorElement: <AppError />,
+          },
           {
             path: "edit/:headerId",
             element: <TimesheetEditWrapper />,
@@ -65,6 +89,4 @@ export const router = createBrowserRouter([
       },
     ],
   },
-], {
-  basename: "/my-timesheet-app"
-});
+], { basename: BASENAME });

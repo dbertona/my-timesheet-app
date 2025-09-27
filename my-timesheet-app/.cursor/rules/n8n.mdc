@@ -1,0 +1,62 @@
+---
+description: Documentar cómo interactuar con n8n para evitar problemas futuros
+globs:
+alwaysApply: true
+---
+
+# Reglas de Trabajo con n8n
+
+## Configuración y Mantenimiento
+
+- Documentar cómo interactuar con n8n para evitar problemas futuros
+- Mantener workflows actualizados y sincronizados entre n8n y el repositorio
+- Verificar que los workflows estén funcionando correctamente antes de considerarlos completos
+- Eliminar workflows inactivos de n8n cuando sea necesario
+
+## Gestión de Workflows
+
+- Crear workflows modulares y reutilizables
+- Usar nombres descriptivos para workflows y nodos
+- Documentar la funcionalidad de cada workflow
+- Mantener versiones de workflows para facilitar rollbacks
+- Implementar logging detallado en workflows críticos
+
+## Integración con Business Central
+
+- Configurar conexiones seguras entre n8n y Business Central
+- Usar autenticación apropiada para APIs de BC
+- Manejar límites de rate limiting en las APIs
+- Implementar retry logic para operaciones fallidas
+- Validar datos antes de enviar a Business Central
+
+## Gestión de Errores
+
+- Implementar manejo robusto de errores en workflows y aplicaciones
+- Capturar y reportar errores específicos sin detener procesos completos
+- Proporcionar información detallada sobre errores para facilitar la depuración
+- Manejar violaciones de claves foráneas y duplicados de manera elegante
+- Configurar alertas automáticas para errores críticos
+
+## Multiempresa
+
+- Diseñar sistemas que soporten múltiples empresas de manera dinámica
+- Usar parámetros de empresa para filtrar datos correctamente
+- Mantener consistencia en el manejo de datos entre diferentes empresas
+- Implementar resolución dinámica de empresa basada en parámetros de entrada
+- Validar permisos de empresa antes de procesar datos
+
+## Monitoreo y Logging
+
+- Implementar logging estructurado en todos los workflows
+- Monitorear el rendimiento de workflows críticos
+- Configurar alertas para fallos de workflows
+- Mantener historial de ejecuciones para auditoría
+- Documentar métricas de rendimiento y uso
+
+## Seguridad
+
+- Usar variables de entorno para credenciales sensibles
+- Implementar validación de entrada en todos los nodos
+- Configurar timeouts apropiados para operaciones
+- Mantener logs de acceso y operaciones sensibles
+- Revisar regularmente permisos y accesos

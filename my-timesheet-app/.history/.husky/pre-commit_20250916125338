@@ -1,0 +1,8 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Lint y smokes rápidos
+npm run lint || exit 1
+bash scripts/smoke-modals.sh || exit 1
+bash scripts/smoke-edit.sh || exit 1
+

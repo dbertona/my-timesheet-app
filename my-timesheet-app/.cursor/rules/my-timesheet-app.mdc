@@ -1,0 +1,30 @@
+---
+description: "Reglas del proyecto para integraciones y estilo"
+globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.al"]
+alwaysApply: true
+---
+
+## 1. UI y estilos
+
+- Usa estándares consistentes (ejemplo: Tailwind, naming convention clara).
+- Optimiza para legibilidad antes que para complejidad visual.
+- Respeta el diseño definido en `button-styles.mdc`.
+
+## 2. Workflow de desarrollo
+
+- Responde paso a paso cuando se trate de guías o instalaciones.
+- Resume al final con los próximos pasos recomendados.
+- Sigue el flujo descrito en `development-workflow.mdc`.
+
+## 3. Integraciones (n8n, Business Central, Supabase, etc.)
+
+- Indica los puntos críticos de error antes de dar el código.
+- Sugiere validaciones automáticas o handlers de errores.
+- Ajusta al estándar definido en `n8n.mdc` y `seguimiento.mdc`.
+
+## 4. Traducciones
+
+- Usa siempre traducciones consistentes según el archivo `translations.mdc`.
+- Mantén coherencia en las etiquetas y mensajes de UI.
+
+---

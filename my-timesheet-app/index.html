@@ -15,10 +15,45 @@
 
     <title>Timesheet</title>
     <script>
-      // Reparar rutas profundas en GitHub Pages: mantener navegación SPA
+      // Silenciar logs [vite] en desarrollo (antes de que cargue el cliente de Vite)
+      (function () {
+        try {
+          var orig = console.log;
+          console.log = function () {
+            try {
+              var first = arguments[0];
+              if (typeof first === "string" && first.indexOf("[vite]") === 0) return;
+            } catch {}
+            return orig.apply(this, arguments);
+          };
+        } catch {}
+      })();
+    </script>
+    <script>
+      // Forzar HTTPS en entornos de powersolution.es para que MSAL tenga crypto seguro
+      (function () {
+        try {
+          var host = window.location.hostname || "";
+          var isLocal = /^(localhost|127\.0\.0\.1)$/.test(host);
+          var isHttps = window.location.protocol === "https:";
+          var shouldBeHttps = /powersolution\.es$/i.test(host);
+          if (!isLocal && shouldBeHttps && !isHttps) {
+            window.location.replace(
+              "https://" + window.location.host + window.location.pathname + window.location.search + window.location.hash
+            );
+            return; // Evitar ejecutar el resto del HTML en HTTP
+          }
+        } catch (e) {
+          // no-op
+        }
+      })();
+    </script>
+    <script>
+      // Reparar rutas profundas SOLO en GitHub Pages (evitar afectar servidores reales)
       (function() {
         var l = window.location;
-        if (l.pathname.startsWith('/my-timesheet-app/') && !l.hash && l.pathname !== '/my-timesheet-app/') {
+        var isGitHubPages = /github\.io$/i.test(l.hostname);
+        if (isGitHubPages && l.pathname.startsWith('/my-timesheet-app/') && !l.hash && l.pathname !== '/my-timesheet-app/') {
           l.replace('/my-timesheet-app/#' + l.pathname.replace('/my-timesheet-app/', '') + l.search + l.hash);
         }
       })();

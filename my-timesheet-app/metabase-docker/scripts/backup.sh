@@ -49,6 +49,3 @@ echo "📊 Tamaño del backup: $(du -h "backups/metabase_backup_$TIMESTAMP.tar.g
 
 
 
-
-
-

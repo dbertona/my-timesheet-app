@@ -152,6 +152,3 @@ echo "   4. O usa 'Generic Database' con los endpoints individuales"
 
 
 
-
-
-

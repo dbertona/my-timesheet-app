@@ -68,6 +68,3 @@ echo "   ssh root@192.168.88.68 'cd /opt/metabase-docker && docker compose logs 
 
 
 
-
-
-

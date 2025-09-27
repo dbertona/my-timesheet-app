@@ -820,7 +820,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\n\nconst data = input[0].json;\nconst rows = Array.isArray(data.value) ? data.value : [];\nconst items = [];\n\nfor (const r of rows) {\n  const allocation_period = String(r.allocation_period ?? r.allocationPeriod ?? '').trim();\n  const calendar_code = String(r.calendar_code ?? r.calendarCode ?? '').trim();\n  const dayRaw = r.day ?? r.Day ?? r.date ?? '';\n  const dayStr = String(dayRaw).trim();\n\n  if (!allocation_period) continue;\n  if (!dayStr) continue;\n\n  const holiday = Boolean(r.holiday ?? r.Holiday ?? false);\n  const hours_working = Number(r.hours_working ?? r.hoursWorking ?? 0);\n\n  const dayNum = Number(dayStr);\n  const day = Number.isNaN(dayNum) ? dayStr : dayNum;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      allocation_period,\n      calendar_code,\n      day,\n      holiday,\n      hours_working,\n    },\n  });\n}\n\nreturn items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\n\nconst data = input[0].json;\nconst rows = Array.isArray(data.value) ? data.value : [];\nconst items = [];\n\nfor (const r of rows) {\n  const calendar_type = String(r.calendar_code ?? r.calendarCode ?? '').trim();\n  const dayRaw = r.day ?? r.Day ?? r.date ?? '';\n  const date = String(dayRaw).trim();\n  if (!date) continue;\n\n  const hours_working = Number(r.hours_working ?? r.hoursWorking ?? 0);\n  const is_working_day = hours_working > 0;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      date,\n      is_working_day,\n      calendar_type\n    }\n  });\n}\n\nreturn items;"
       },
       "id": "af42a909-709e-471a-82fa-e1231284f3b9",
       "name": "Transformar CalendarPeriodDays",
@@ -861,7 +861,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://192.168.88.68:8000/rest/v1/calendar_period_days?on_conflict=allocation_period,calendar_code,day,company_name",
+        "url": "http://192.168.88.68:8000/rest/v1/calendar_period_days?on_conflict=company_name,date,calendar_type",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

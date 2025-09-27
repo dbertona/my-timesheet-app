@@ -1,0 +1,37 @@
+# Contributing Workflow - Protección contra pérdida de trabajo
+
+1. Ramas y PRs
+- Trabajar SIEMPRE en ramas `feat/*`, `fix/*` o `hotfix/*`.
+- Nunca commitear directamente en `main`. Todo cambio va por Pull Request.
+
+2. Commits y pushes
+- Commits pequeños y atómicos (≤ 10-15 líneas si es posible) cada 5–10 min.
+- Mensajes semánticos: feat/fix/chore/test/docs.
+- Push al remoto tras cada bloque significativo (backup continuo).
+
+3. Checkpoints y tags
+- Antes de cambios grandes, crear `tag checkpoint-<fecha>-<tema>` o versionar `-beta.X`.
+- Mantener una rama `backup/<tema>` si se hace refactor amplio.
+
+4. Deshacer sin destruir
+- Prohibido `git reset --hard` sobre ramas compartidas.
+- Usar `git revert` para revertir commits ya compartidos.
+- Para recuperar estados, usar `cherry-pick` en una rama nueva.
+
+5. Smokes y tests obligatorios
+- Antes de commit crítico: `npm run lint` y `npm run test -- --run`.
+- Hooks:
+  - pre-commit: lint + smokes (`scripts/smoke-modals.sh`, `scripts/smoke-edit.sh`).
+  - pre-push: tests (`vitest --run`).
+
+6. Diffs y aprobación
+- Mostrar diff por archivo en el PR. No aplicar across files sin “APROBAR CAMBIOS”.
+- Revisar consola del navegador y pestaña Problems antes de decir “listo”.
+
+7. Versionado
+- Bump en `package.json` con sufijo `-beta.X` para PRs que afecten a UI/flujo.
+- Tag de la versión en el merge.
+
+8. Rollback plan
+- Si un PR rompe algo: `hotfix/revert-<sha>` con `git revert` del PR.
+- No mezclar arreglos con nuevas features.
