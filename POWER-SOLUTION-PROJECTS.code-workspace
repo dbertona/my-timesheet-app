@@ -29,6 +29,9 @@
 	"extensions": {
 		"recommendations": [
 			"ms-dynamics-smb.al"
+		],
+		"unwantedRecommendations": [
+			"bartpermentier.al-toolbox"
 		]
 	},
 	"launch": {
