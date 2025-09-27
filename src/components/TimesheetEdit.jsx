@@ -1550,8 +1550,9 @@ function TimesheetEdit({ headerId }) {
       // 🆕 Informar sobre líneas filtradas por campos requeridos incompletos
       const filteredLines = linesToProcess.length - validLinesToProcess.length;
       if (filteredLines > 0) {
+        const lineText = filteredLines === 1 ? "línea" : "líneas";
         toast.success(
-          `${TOAST.SUCCESS.SAVE_ALL} (${filteredLines} líneas con campos requeridos incompletos omitidas)`
+          `${TOAST.SUCCESS.SAVE_ALL} (${filteredLines} ${lineText} incompleta${filteredLines > 1 ? 's' : ''} omitida${filteredLines > 1 ? 's' : ''})`
         );
       } else {
         toast.success(TOAST.SUCCESS.SAVE_ALL);
