@@ -21,7 +21,10 @@
 		},
 		"window.restoreWindows": "all",
 		"workbench.startupEditor": "none",
-		"workbench.editor.restoreViewState": true
+		"workbench.editor.restoreViewState": true,
+		"al.enableCodeAnalysis": true,
+		"al.packageCachePath": "./Power_Solution_BC/.alpackages",
+		"al.codeAnalyzers": ["${PerTenantExtensionCop}", "${UICop}"]
 	},
 	"extensions": {
 		"recommendations": [
