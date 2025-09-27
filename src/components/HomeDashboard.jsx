@@ -558,7 +558,7 @@ const HomeDashboard = () => {
         // Obtener líneas de timesheet para calcular horas imputadas
         const fromIso = `${year}-${String(month).padStart(2, "0")}-01`;
         const toIso = `${year}-${String(month).padStart(2, "0")}-${new Date(year, month, 0).getDate()}`;
-        
+
         const { data: timesheetLines, error: timesheetError } = await supabaseClient
           .from("timesheet")
           .select("date, quantity")
