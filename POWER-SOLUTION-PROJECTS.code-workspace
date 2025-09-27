@@ -1,10 +1,12 @@
 {
 	"folders": [
 		{
-			"path": "my-timesheet-app"
+			"path": "my-timesheet-app",
+			"name": "Timesheet App"
 		},
 		{
-			"path": "Power_Solution_BC"
+			"path": "Power_Solution_BC",
+			"name": "Power Solution BC"
 		}
 	],
 	"settings": {
@@ -20,12 +22,35 @@
 		"window.restoreWindows": "all",
 		"workbench.startupEditor": "none",
 		"workbench.editor.restoreViewState": true,
-		"al.enableCodeAnalysis": false,
-		"al.packageCachePath": "./Power_Solution_BC/.alpackages"
+		"al.enableCodeAnalysis": true,
+		"al.packageCachePath": "./Power_Solution_BC/.alpackages",
+		"al.codeAnalyzers": ["${PerTenantExtensionCop}", "${UICop}"]
 	},
 	"extensions": {
 		"recommendations": [
 			"ms-dynamics-smb.al"
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Pruebas_PS",
+				"request": "launch",
+				"type": "al",
+				"environmentType": "Sandbox",
+				"server": "https://businesscentral.dynamics.com",
+				"serverInstance": "BC",
+				"authentication": "UserPassword",
+				"startupObjectId": 22,
+				"startupObjectType": "Page",
+				"breakOnError": "All",
+				"launchBrowser": true,
+				"enableLongRunningSqlStatements": true,
+				"enableSqlInformationDebugger": true,
+				"tenant": "default",
+				"usePublicURLFromServer": true
+			}
 		]
 	}
 }
