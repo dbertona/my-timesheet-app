@@ -1570,6 +1570,20 @@ function TimesheetEdit({ headerId }) {
           return lineData[key] !== serverSnapshot[key];
         });
         
+        // DEBUG: Log para entender qué está pasando
+        if (hasChanges) {
+          console.log(`🔍 Línea ${id} tiene cambios:`, {
+            lineData: lineData,
+            serverSnapshot: serverSnapshot,
+            differences: Object.keys(lineData).filter(key => {
+              if (key === "date" && lineData[key]) {
+                return toIsoFromInput(lineData[key]) !== serverSnapshot.date;
+              }
+              return lineData[key] !== serverSnapshot[key];
+            })
+          });
+        }
+        
         return hasChanges;
       }).length;
 
