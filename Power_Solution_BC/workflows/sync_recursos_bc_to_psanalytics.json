@@ -1,0 +1,378 @@
+{
+  "createdAt": "2025-09-28T09:43:13.949Z",
+  "updatedAt": "2025-09-28T10:42:18.000Z",
+  "id": "mDEUVZwVqcxvneOI",
+  "name": "sync_recursos_bc_to_psanalytics",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sync-recursos-psanalytics",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-start",
+      "name": "Webhook Start",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        320
+      ],
+      "webhookId": "27e09c41-6921-4382-82b0-17fec21a02d1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Genera dos compañías a procesar en paralelo\nreturn [\n  { json: { companyName: 'Power Solution Iberia SL', companyId: 'ca9dc1bf-54ee-ed11-884a-000d3a455d5b' } },\n  { json: { companyName: 'PS LAB CONSULTING SL',   companyId: '656f8f0e-2bf4-ed11-8848-000d3a4baf18' } },\n];"
+      },
+      "id": "generate-companies",
+      "name": "Generate Companies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT $1::text AS company_name, $2::text AS company_id, COALESCE((SELECT last_sync_at FROM ps_analytics.sync_state WHERE company_name=$1 AND entity='recursos'), TIMESTAMPTZ '1970-01-01 00:00:00+00') AS last_sync_at;",
+        "additionalFields": {
+          "queryParams": "companyName,companyId"
+        }
+      },
+      "id": "get-last-sync",
+      "name": "Get Last Sync (recursos)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        688,
+        320
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6I06GLCMi5toLQFI",
+          "name": "Postgres PS_Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $json || {};\nconst iso = new Date(String(r.last_sync_at || '1970-01-01T00:00:00Z').replace(' ', 'T')).toISOString();\nreturn [{ json: { companyName: r.company_name, companyId: r.company_id, lastSync: iso } }];"
+      },
+      "id": "build-last-sync",
+      "name": "Build Last Sync",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(' + $json.companyId + ')/Recursos' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$select",
+              "value": "no,name,arbvrneMail,globalDimension1Code,calendario,fechaDeBaja,fechaDeAlta,subcontratacion,perfil,lastModifiedDateTime"
+            },
+            {
+              "name": "$filter",
+              "value": "={{ 'lastModifiedDateTime ge ' + $json.lastSync }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bc-api-recursos",
+      "name": "BC API - Recursos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1136,
+        416
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO ps_analytics.recursos\n(\"no\", name, arbvrn_email, global_dimension1_code, calendario,\n fecha_de_baja, fecha_de_alta, subcontratacion, perfil,\n last_modified_datetime, updated_at)\nSELECT\n  $1,                 -- no\n  $2,                 -- name\n  NULLIF(btrim($3),''),  -- arbvrn_email, vacío → NULL\n  $4,                 -- global_dimension1_code\n  $5,                 -- calendario\n  NULLIF(NULLIF($6::text,''),'0001-01-01')::date,  -- fecha_de_baja\n  NULLIF(NULLIF($7::text,''),'0001-01-01')::date,  -- fecha_de_alta\n  CASE WHEN $8::text IN ('true','1','t','yes') THEN true ELSE false END, -- subcontratacion\n  $9,                 -- perfil\n  NULLIF($10::text,'')::timestamptz,               -- last_modified_datetime\n  NOW()               -- updated_at\nWHERE $1::text <> ''      -- no obligatorio\nON CONFLICT (\"no\")\nDO UPDATE SET\n  name                   = EXCLUDED.name,\n  arbvrn_email           = EXCLUDED.arbvrn_email,\n  global_dimension1_code = EXCLUDED.global_dimension1_code,\n  calendario             = EXCLUDED.calendario,\n  fecha_de_baja          = EXCLUDED.fecha_de_baja,\n  fecha_de_alta          = EXCLUDED.fecha_de_alta,\n  subcontratacion        = EXCLUDED.subcontratacion,\n  perfil                 = EXCLUDED.perfil,\n  last_modified_datetime = EXCLUDED.last_modified_datetime,\n  updated_at             = NOW()\nRETURNING *;",
+        "options": {
+          "queryReplacement": "{{$json.no}}\n{{$json.name}}\n{{$json.arbvrneMail}}\n{{$json.globalDimension1Code}}\n{{$json.calendario}}\n{{$json.fechaDeBaja}}\n{{$json.fechaDeAlta}}\n{{ $json.subcontratacion ? 'true' : 'false' }}\n{{$json.perfil}}\n{{$json.lastModifiedDateTime}}"
+        }
+      },
+      "id": "upsert-recursos",
+      "name": "Upsert Recursos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        912,
+        416
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6I06GLCMi5toLQFI",
+          "name": "Postgres PS_Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"Recursos sincronizados exitosamente\", \"timestamp\": new Date().toISOString(), \"records_processed\": $items(\"Transform Recursos\").length } }}",
+        "options": {}
+      },
+      "id": "response-success",
+      "name": "Response Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1872,
+        416
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        512
+      ],
+      "id": "manual-trigger",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normaliza entrada y mapea a ps_analytics.recursos\nconst input = $input.all();\nif (input.length === 0) return [];\n\nconst src = input[0]?.json ?? {};\nconst registros = Array.isArray(src.value) ? src.value : (Array.isArray(src) ? src : [src]);\nconst items = [];\n\n// helpers\nconst cleanDate = (v) => {\n  const s = String(v ?? '').trim();\n  if (!s || s === '0001-01-01') return '';\n  return s;\n};\nconst toBool = (v) => {\n  const s = String(v).toLowerCase();\n  return s === 'true' || s === '1' || s === 't' || s === 'yes';\n};\n\nfor (const r of registros) {\n  const no = String(r.no ?? r.code ?? '').trim();\n  if (!no) continue;\n\n  const name = String(r.name ?? '').trim();\n  const email = String(r.email ?? r.arbvrneMail ?? '').trim();\n  const globalDimension1Code = String(\n    r.globalDimension1Code ?? r.global_dimension1_code ?? r.department ?? ''\n  ).trim();\n  const calendario = String(\n    r.calendario ?? r.Calendario ?? r.calendar_type ?? r.calendarType ?? r.calendar ?? ''\n  ).trim();\n  const fechaDeBaja = cleanDate(r.fechaDeBaja ?? r.fecha_de_baja);\n  const fechaDeAlta = cleanDate(r.fechaDeAlta ?? r.fecha_de_alta);\n  const subcontratacion = (typeof r.subcontratacion === 'boolean') ? r.subcontratacion : toBool(r.subcontratacion);\n  const perfil = String(r.perfil ?? '').trim();\n  const lastModifiedDateTime = String(r.lastModifiedDateTime ?? r.last_modified_datetime ?? '').trim();\n\n  items.push({\n    json: {\n      no,\n      name,\n      arbvrneMail: email,\n      globalDimension1Code,\n      calendario,\n      fechaDeBaja,\n      fechaDeAlta,\n      subcontratacion,\n      perfil,\n      lastModifiedDateTime,\n    },\n  });\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        416
+      ],
+      "id": "d32c3a3e-c187-4c2b-82c7-0f6b7d3cae2d",
+      "name": "Transform Recursos"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+      },
+      "id": "compute-now-iso-resource",
+      "name": "Compute now ISO (resource)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO ps_analytics.sync_state (company_name, entity, last_sync_at) VALUES ($1, 'recursos', $2::timestamptz) ON CONFLICT (company_name, entity) DO UPDATE SET last_sync_at = EXCLUDED.last_sync_at;",
+        "additionalFields": {
+          "queryParams": "companyName,nowIso"
+        }
+      },
+      "id": "update-sync-state-resource",
+      "name": "Update sync_state (recursos)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        1824,
+        416
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6I06GLCMi5toLQFI",
+          "name": "Postgres PS_Analytics"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Start": {
+      "main": [
+        [
+          {
+            "node": "Generate Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BC API - Recursos": {
+      "main": [
+        [
+          {
+            "node": "Transform Recursos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Recursos": {
+      "main": [
+        [
+          {
+            "node": "Compute now ISO (resource)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Generate Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Recursos": {
+      "main": [
+        [
+          {
+            "node": "Upsert Recursos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Companies": {
+      "main": [
+        [
+          {
+            "node": "Get Last Sync (recursos)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Last Sync (recursos)": {
+      "main": [
+        [
+          {
+            "node": "Build Last Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Last Sync": {
+      "main": [
+        [
+          {
+            "node": "BC API - Recursos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (resource)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (recursos)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (recursos)": {
+      "main": [
+        [
+          {
+            "node": "Response Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "08ff5b98-b6fd-4a13-baa8-1811cf83f446",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "createdAt": "2025-09-28T09:43:13.971Z",
+      "updatedAt": "2025-09-28T09:43:13.971Z",
+      "role": "workflow:owner",
+      "workflowId": "mDEUVZwVqcxvneOI",
+      "projectId": "ijP8FvHt2ZVVaBt9",
+      "project": {
+        "createdAt": "2025-08-25T17:25:17.353Z",
+        "updatedAt": "2025-08-25T17:27:29.880Z",
+        "id": "ijP8FvHt2ZVVaBt9",
+        "name": "Daniel Bertona Sanchez <dbertona@powersolution.es>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-08-25T17:25:17.353Z",
+            "updatedAt": "2025-08-25T17:25:17.353Z",
+            "role": "project:personalOwner",
+            "userId": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
+            "projectId": "ijP8FvHt2ZVVaBt9",
+            "user": {
+              "createdAt": "2025-08-25T17:25:16.887Z",
+              "updatedAt": "2025-09-28T09:03:39.000Z",
+              "id": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
+              "email": "dbertona@powersolution.es",
+              "firstName": "Daniel",
+              "lastName": "Bertona Sanchez",
+              "personalizationAnswers": null,
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "71xpeeX1apKTpNe0",
+                "userActivatedAt": 1756717935545
+              },
+              "role": "global:owner",
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-09-27",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}
