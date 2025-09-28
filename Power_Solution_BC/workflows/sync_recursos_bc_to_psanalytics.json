@@ -65,7 +65,10 @@
         "operation": "executeQuery",
         "query": "SELECT $1::text AS company_name, $2::text AS company_id, COALESCE((SELECT last_sync_at FROM ps_analytics.sync_state WHERE company_name=$1 AND entity='recursos'), TIMESTAMPTZ '1970-01-01 00:00:00+00') AS last_sync_at;",
         "additionalFields": {
-          "queryParams": "companyName,companyId"
+          "queryParams": [
+            "companyName",
+            "companyId"
+          ]
         }
       },
       "id": "get-last-sync",
