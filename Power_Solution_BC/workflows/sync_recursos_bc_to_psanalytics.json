@@ -25,14 +25,38 @@
     },
     {
       "parameters": {
-        "jsCode": "// Genera dos compañías a procesar en paralelo\nreturn [\n  { json: { companyName: 'Power Solution Iberia SL', companyId: 'ca9dc1bf-54ee-ed11-884a-000d3a455d5b' } },\n  { json: { companyName: 'PS LAB CONSULTING SL',   companyId: '656f8f0e-2bf4-ed11-8848-000d3a4baf18' } },\n];"
+        "assignments": {
+          "assignments": [
+            {
+              "id": "company-param",
+              "name": "query.company",
+              "value": "psi",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
       },
-      "id": "generate-companies",
-      "name": "Generate Companies",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        320
+      ],
+      "id": "set-company",
+      "name": "Set Company"
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $json.params || {};\nconst slugRaw = (p.company || $json.query?.company || '').toString().trim().toLowerCase();\nconst slug = encodeURI(slugRaw);\nconst map = {\n  'psi': { companyName: 'Power Solution Iberia SL', companyId: 'ca9dc1bf-54ee-ed11-884a-000d3a455d5b' },\n  'pslab': { companyName: 'PS LAB CONSULTING SL', companyId: '656f8f0e-2bf4-ed11-8848-000d3a4baf18' }\n};\nconst chosen = map[slug];\nif (!chosen) {\n  return [{ json: { error: 'Invalid company', slug } }];\n}\nreturn [{ json: { companyName: chosen.companyName, companyId: chosen.companyId, slug } }];"
+      },
+      "id": "resolve-company",
+      "name": "Resolve Company",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        464,
+        688,
         320
       ]
     },
@@ -49,7 +73,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
       "position": [
-        688,
+        912,
         320
       ],
       "credentials": {
@@ -211,7 +235,7 @@
       "main": [
         [
           {
-            "node": "Generate Companies",
+            "node": "Set Company",
             "type": "main",
             "index": 0
           }
@@ -240,11 +264,11 @@
         ]
       ]
     },
-    "When clicking ‘Execute workflow’": {
+    "When clicking 'Execute workflow'": {
       "main": [
         [
           {
-            "node": "Generate Companies",
+            "node": "Set Company",
             "type": "main",
             "index": 0
           }
@@ -262,7 +286,18 @@
         ]
       ]
     },
-    "Generate Companies": {
+    "Set Company": {
+      "main": [
+        [
+          {
+            "node": "Resolve Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Company": {
       "main": [
         [
           {
