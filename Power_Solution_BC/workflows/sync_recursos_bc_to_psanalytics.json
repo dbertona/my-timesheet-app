@@ -25,45 +25,21 @@
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "company-param",
-              "name": "query.company",
-              "value": "psi",
-              "type": "string"
-            }
-          ]
-        },
-        "includeOtherFields": true,
-        "options": {}
+        "jsCode": "// Genera dos compañías a procesar en paralelo\nreturn [\n  { json: { companyName: 'Power Solution Iberia SL', companyId: 'ca9dc1bf-54ee-ed11-884a-000d3a455d5b' } },\n  { json: { companyName: 'PS LAB CONSULTING SL',   companyId: '656f8f0e-2bf4-ed11-8848-000d3a4baf18' } },\n];"
       },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        464,
-        320
-      ],
-      "id": "set-company",
-      "name": "Set Company"
-    },
-    {
-      "parameters": {
-        "jsCode": "const p = $json.params || {};\nconst slugRaw = (p.company || $json.query?.company || '').toString().trim().toLowerCase();\nconst slug = encodeURI(slugRaw);\nconst map = {\n  'psi': { companyName: 'Power Solution Iberia SL', companyId: 'ca9dc1bf-54ee-ed11-884a-000d3a455d5b' },\n  'pslab': { companyName: 'PS LAB CONSULTING SL', companyId: '656f8f0e-2bf4-ed11-8848-000d3a4baf18' }\n};\nconst chosen = map[slug];\nif (!chosen) {\n  return [{ json: { error: 'Invalid company', slug } }];\n}\nreturn [{ json: { companyName: chosen.companyName, companyId: chosen.companyId, slug } }];"
-      },
-      "id": "resolve-company",
-      "name": "Resolve Company",
+      "id": "generate-companies",
+      "name": "Generate Companies",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        688,
+        464,
         320
       ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT $1::text AS company_name, $2::text AS company_id, COALESCE((SELECT last_sync_at FROM ps_analytics.sync_state WHERE company_name=$1 AND entity='recursos'), TIMESTAMPTZ '1970-01-01 00:00:00+00') AS last_sync_at;",
+        "query": "SELECT $1::text AS company_name, $2::text AS company_id, COALESCE((SELECT last_sync_at FROM public.sync_state WHERE company_name=$1 AND entity='recursos'), TIMESTAMPTZ '1970-01-01 00:00:00+00') AS last_sync_at;",
         "additionalFields": {
           "queryParams": [
             "companyName",
@@ -76,7 +52,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
       "position": [
-        912,
+        688,
         320
       ],
       "credentials": {
@@ -137,7 +113,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO ps_analytics.recursos\n(company_name, \"no\", name, arbvrn_email, global_dimension1_code, calendario,\n fecha_de_baja, fecha_de_alta, subcontratacion, perfil,\n last_modified_datetime, updated_at)\nSELECT\n  $1,                 -- company_name\n  $2,                 -- no\n  $3,                 -- name\n  NULLIF(btrim($4),''),  -- arbvrn_email, vacío → NULL\n  $5,                 -- global_dimension1_code\n  $6,                 -- calendario\n  NULLIF(NULLIF($7::text,''),'0001-01-01')::date,  -- fecha_de_baja\n  NULLIF(NULLIF($8::text,''),'0001-01-01')::date,  -- fecha_de_alta\n  CASE WHEN $9::text IN ('true','1','t','yes') THEN true ELSE false END, -- subcontratacion\n  $10,                -- perfil\n  NULLIF($11::text,'')::timestamptz,               -- last_modified_datetime\n  NOW()               -- updated_at\nWHERE $2::text <> ''      -- no obligatorio\nON CONFLICT (\"no\")\nDO UPDATE SET\n  company_name           = EXCLUDED.company_name,\n  name                   = EXCLUDED.name,\n  arbvrn_email           = EXCLUDED.arbvrn_email,\n  global_dimension1_code = EXCLUDED.global_dimension1_code,\n  calendario             = EXCLUDED.calendario,\n  fecha_de_baja          = EXCLUDED.fecha_de_baja,\n  fecha_de_alta          = EXCLUDED.fecha_de_alta,\n  subcontratacion        = EXCLUDED.subcontratacion,\n  perfil                 = EXCLUDED.perfil,\n  last_modified_datetime = EXCLUDED.last_modified_datetime,\n  updated_at             = NOW()\nRETURNING *;",
+        "query": "INSERT INTO public.recursos\n(company_name, \"no\", name, arbvrn_email, global_dimension1_code, calendario,\n fecha_de_baja, fecha_de_alta, subcontratacion, perfil,\n last_modified_datetime, updated_at)\nSELECT\n  $1,                 -- company_name\n  $2,                 -- no\n  $3,                 -- name\n  NULLIF(btrim($4),''),  -- arbvrn_email, vacío → NULL\n  $5,                 -- global_dimension1_code\n  $6,                 -- calendario\n  NULLIF(NULLIF($7::text,''),'0001-01-01')::date,  -- fecha_de_baja\n  NULLIF(NULLIF($8::text,''),'0001-01-01')::date,  -- fecha_de_alta\n  CASE WHEN $9::text IN ('true','1','t','yes') THEN true ELSE false END, -- subcontratacion\n  $10,                -- perfil\n  NULLIF($11::text,'')::timestamptz,               -- last_modified_datetime\n  NOW()               -- updated_at\nWHERE $2::text <> ''      -- no obligatorio\nON CONFLICT (\"no\")\nDO UPDATE SET\n  company_name           = EXCLUDED.company_name,\n  name                   = EXCLUDED.name,\n  arbvrn_email           = EXCLUDED.arbvrn_email,\n  global_dimension1_code = EXCLUDED.global_dimension1_code,\n  calendario             = EXCLUDED.calendario,\n  fecha_de_baja          = EXCLUDED.fecha_de_baja,\n  fecha_de_alta          = EXCLUDED.fecha_de_alta,\n  subcontratacion        = EXCLUDED.subcontratacion,\n  perfil                 = EXCLUDED.perfil,\n  last_modified_datetime = EXCLUDED.last_modified_datetime,\n  updated_at             = NOW()\nRETURNING *;",
         "options": {
           "queryReplacement": "{{$json.companyName}}\n{{$json.no}}\n{{$json.name}}\n{{$json.arbvrneMail}}\n{{$json.globalDimension1Code}}\n{{$json.calendario}}\n{{$json.fechaDeBaja}}\n{{$json.fechaDeAlta}}\n{{ $json.subcontratacion ? 'true' : 'false' }}\n{{$json.perfil}}\n{{$json.lastModifiedDateTime}}"
         }
@@ -212,9 +188,12 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO ps_analytics.sync_state (company_name, entity, last_sync_at) VALUES ($1, 'recursos', $2::timestamptz) ON CONFLICT (company_name, entity) DO UPDATE SET last_sync_at = EXCLUDED.last_sync_at;",
+        "query": "INSERT INTO public.sync_state (company_name, entity, last_sync_at) VALUES ($1, 'recursos', $2::timestamptz) ON CONFLICT (company_name, entity) DO UPDATE SET last_sync_at = EXCLUDED.last_sync_at;",
         "additionalFields": {
-          "queryParams": "companyName,nowIso"
+          "queryParams": [
+            "companyName",
+            "nowIso"
+          ]
         }
       },
       "id": "update-sync-state-resource",
@@ -238,7 +217,7 @@
       "main": [
         [
           {
-            "node": "Set Company",
+            "node": "Generate Companies",
             "type": "main",
             "index": 0
           }
@@ -267,11 +246,11 @@
         ]
       ]
     },
-    "When clicking 'Execute workflow'": {
+    "When clicking ‘Execute workflow’": {
       "main": [
         [
           {
-            "node": "Set Company",
+            "node": "Generate Companies",
             "type": "main",
             "index": 0
           }
@@ -289,18 +268,7 @@
         ]
       ]
     },
-    "Set Company": {
-      "main": [
-        [
-          {
-            "node": "Resolve Company",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Resolve Company": {
+    "Generate Companies": {
       "main": [
         [
           {
