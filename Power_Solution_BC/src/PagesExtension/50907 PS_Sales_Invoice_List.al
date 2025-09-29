@@ -8,6 +8,7 @@ pageextension 50907 PS_Sales_Invoice_List extends "Sales Invoice List"
         UserDepartment: Code[10];
         JobRec: Record Job;
         SalesInvLine: Record "Sales Invoice Line";
+        UserSetupRec: Record "User Setup";
         grp: Integer;
         ApplyJobFilter: Codeunit "PS_ApplyJobFilter";
         RecRef: RecordRef;
@@ -35,8 +36,10 @@ pageextension 50907 PS_Sales_Invoice_List extends "Sales Invoice List"
         AdditionalSearchFieldRef1 := 7180960;
         AdditionalSearchFieldRef2 := 40;
 
-        // Llamar al procedimiento ApplyFilter del nuevo codeunit ApplyJobFilter
-        ApplyJobFilter.ApplyFilter(RecRef, FieldId, JobTypeFilter, LineRecRef, LineFieldId);
+        // Llamar al procedimiento ApplyFilter solo si "Project team filter" es verdadero en User Setup
+        if UserSetupRec.Get(UserId()) then
+            if UserSetupRec."Project team filter" then
+                ApplyJobFilter.ApplyFilter(RecRef, FieldId, JobTypeFilter, LineRecRef, LineFieldId);
 
         JobRec.FilterGroup(grp);
         RecRef.SetTable(Rec);
