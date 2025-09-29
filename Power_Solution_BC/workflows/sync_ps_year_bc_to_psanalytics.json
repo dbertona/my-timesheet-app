@@ -1,0 +1,396 @@
+{
+  "createdAt": "2025-09-29T06:45:00.000Z",
+  "updatedAt": "2025-09-29T06:45:00.000Z",
+  "id": "sync_ps_year_bc_to_psanalytics",
+  "name": "sync_ps_year_bc_to_psanalytics",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sync-ps-year-psanalytics",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-start",
+      "name": "Webhook Start",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        464,
+        512
+      ],
+      "webhookId": "sync-ps-year-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $json || {};\nconst resolved = $items('Resolve Company')[0]?.json ?? {};\n\nconst companyName = String(row.company_name ?? resolved.companyName ?? '').trim();\nconst companyId   = String(resolved.companyId ?? row.company_id ?? '').trim();\nconst lastSync    = new Date(String(row.last_sync_at ?? '1970-01-01T00:00:00Z').replace(' ', 'T')).toISOString();\n\nreturn [{ json: { companyName, companyId, lastSync } }];"
+      },
+      "id": "build-last-sync",
+      "name": "Build Last Sync",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(' + $json.companyId + ')/PS_Years' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$select",
+              "value": "PS_Year"
+            },
+            {
+              "name": "$filter",
+              "value": "={{ 'lastModifiedDateTime ge ' + $json.lastSync }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bc-api-years",
+      "name": "BC API - PS_Years",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1360,
+        416
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.ps_year\n(company_name, \"PS_Year\", updated_at)\nSELECT\n  $1,                 -- company_name\n  $2::integer,        -- PS_Year\n  NOW()               -- updated_at\nWHERE $2::text <> ''      -- PS_Year obligatorio\nON CONFLICT (company_name, \"PS_Year\")\nDO UPDATE SET\n  updated_at = NOW()\nRETURNING *;",
+        "options": {
+          "queryReplacement": "{{$json.companyName}}\n{{$json.PS_Year}}"
+        }
+      },
+      "id": "upsert-ps-year",
+      "name": "Upsert PS_Year",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        1808,
+        416
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6I06GLCMi5toLQFI",
+          "name": "Postgres PS_Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"PS_Years sincronizados exitosamente\", \"timestamp\": new Date().toISOString(), \"records_processed\": $items(\"Transform PS_Years\").length } }}",
+        "options": {}
+      },
+      "id": "response-success",
+      "name": "Response Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2480,
+        416
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        320
+      ],
+      "id": "manual-trigger",
+      "name": "When clicking 'Execute workflow'"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normaliza entrada y mapea a public.ps_year\nconst input = $input.all();\nif (input.length === 0) return [];\n\nconst src = input[0]?.json ?? {};\nconst registros = Array.isArray(src.value) ? src.value : (Array.isArray(src) ? src : [src]);\nconst items = [];\n\nconst companyName = $items('Build Last Sync')[0]?.json?.companyName || '';\n\nfor (const r of registros) {\n  const psYear = String(r.PS_Year ?? r.ps_year ?? '').trim();\n  if (!psYear) continue;\n\n  items.push({\n    json: {\n      companyName,\n      PS_Year: parseInt(psYear) || 0,\n    },\n  });\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        416
+      ],
+      "id": "transform-ps-years",
+      "name": "Transform PS_Years"
+    },
+    {
+      "parameters": {
+        "jsCode": "const companyName = $items('Build Last Sync')[0]?.json?.companyName || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"
+      },
+      "id": "compute-now-iso-year",
+      "name": "Compute now ISO (year)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2032,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "ps_year"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "update-sync-state-year",
+      "name": "Update sync_state (ps_year)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2256,
+        416
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "pCM59OXAIeZSuk0Q",
+          "name": "Supabase PS-Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "useCustomSchema": true,
+        "operation": "getAll",
+        "tableId": "=sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            }
+          ]
+        }
+      },
+      "id": "get-sync-state-years",
+      "name": "Get sync_state ALL",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        912,
+        416
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "pCM59OXAIeZSuk0Q",
+          "name": "Supabase PS-Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $json.params || {};\nconst slugRaw = (p.company || $json.query?.company || '').toString().trim().toLowerCase();\nconst slug = encodeURI(slugRaw);\nconst map = {\n  'psi': { companyName: 'Power Solution Iberia SL', companyId: 'ca9dc1bf-54ee-ed11-884a-000d3a455d5b' },\n  'pslab': { companyName: 'PS LAB CONSULTING SL', companyId: '656f8f0e-2bf4-ed11-8848-000d3a4baf18' }\n};\nconst chosen = map[slug];\nif (!chosen) {\n  return [{ json: { error: 'Invalid company', slug } }];\n}\nreturn [{ json: { companyName: chosen.companyName, companyId: chosen.companyId, slug } }];"
+      },
+      "id": "resolve-company-years",
+      "name": "Resolve Company",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "company-param-years",
+              "name": "query.company",
+              "value": "psi",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        320
+      ],
+      "id": "set-company-years",
+      "name": "Set Company"
+    }
+  ],
+  "connections": {
+    "Webhook Start": {
+      "main": [
+        [
+          {
+            "node": "Resolve Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BC API - PS_Years": {
+      "main": [
+        [
+          {
+            "node": "Transform PS_Years",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert PS_Year": {
+      "main": [
+        [
+          {
+            "node": "Compute now ISO (year)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Set Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform PS_Years": {
+      "main": [
+        [
+          {
+            "node": "Upsert PS_Year",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Last Sync": {
+      "main": [
+        [
+          {
+            "node": "BC API - PS_Years",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (year)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (ps_year)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (ps_year)": {
+      "main": [
+        [
+          {
+            "node": "Response Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get sync_state ALL": {
+      "main": [
+        [
+          {
+            "node": "Build Last Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Company": {
+      "main": [
+        [
+          {
+            "node": "Get sync_state ALL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Company": {
+      "main": [
+        [
+          {
+            "node": "Resolve Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "sync-ps-year-v1",
+  "triggerCount": 0,
+  "shared": [],
+  "tags": []
+}

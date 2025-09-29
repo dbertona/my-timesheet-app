@@ -1,0 +1,1442 @@
+{
+  "createdAt": "2025-09-03T06:32:12.599Z",
+  "updatedAt": "2025-09-26T12:29:57.000Z",
+  "id": "XSYOmZ8mRuaXl6sg",
+  "name": "001_sincronizacion_completa_smart",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Resolve Company').first().json.companyId\n  + ')/ProyectosTareas?$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['job_task']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "5f8c4a0d-0532-4c62-ae76-17f395051e3e",
+      "name": "HTTP - ProyectosTareas (filtrado)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -368,
+        -16
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\nconst jobSet = new Set(($('Build job set').first().json.jobNos || []).map(s => String(s).trim()));\n\nconst data = input[0].json;\nconst tareas = data.value || [];\nconst items = [];\n\nfor (const t of tareas) {\n  const job_no = String(t.projectNo ?? t.jobNo ?? t.job_no ?? '').trim();\n  const task_no = String(t.no ?? '').trim();\n  const description = String(t.description ?? '').trim() || 'Sin descripción';\n  if (!job_no || !task_no) continue;\n  if (!jobSet.has(job_no)) continue;\n\n  items.push({\n    json: { job_no, task_no, description, company_name: companyName },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+      },
+      "id": "63e26142-e632-41b3-bbb2-d9c18bf2a19b",
+      "name": "Transformar ProyectosTareas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.job_task (company_name, job_no, no, description)\nSELECT $1, $2, $3, $4\nWHERE EXISTS (\n  SELECT 1 FROM public.job j\n  WHERE j.company_name = $1 AND j.no = $2\n)\nON CONFLICT ON CONSTRAINT job_task_pkey\nDO UPDATE SET description = EXCLUDED.description\nWHERE EXISTS (\n  SELECT 1 FROM public.job j\n  WHERE j.company_name = EXCLUDED.company_name AND j.no = EXCLUDED.job_no\n)\nRETURNING *;",
+        "additionalFields": {
+          "queryParams": "company_name,job_no,task_no,description"
+        }
+      },
+      "id": "c9a7b021-ac9f-41b9-b25b-d764afe74195",
+      "name": "HTTP - Upsert job_task (Postgres REST)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        80,
+        -16
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "c9eTNKkKFrWSIJep",
+          "name": "Postgres Timesheet"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+      },
+      "id": "335106a4-574d-4fe0-9827-d5dd3d5b358b",
+      "name": "Compute now ISO (tasks)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "job_task"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "9667fd55-41f7-43f6-8ea4-1f681d375e86",
+      "name": "Update sync_state (tasks)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        528,
+        -16
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "QvaPKMHblJKE8tl3",
+          "name": "Supabase – PS‑Timesheet (Local)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Resolve Company').first().json.companyId\n  + ')/Recursos?$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['resource']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "973701f3-3878-40f2-ad7c-f0da4431dfd8",
+      "name": "HTTP - Recursos (filtrado)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1712,
+        -112
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst first = input[0];\nconst data = first.json;\nconst recursos = data.value || [];\nconst items = [];\n\nconst company = $('Resolve Company').first().json.companyName; // <- dinámico\n\nfor (const r of recursos) {\n  const code = r.no || '';\n  const name = r.name || '';\n  const email = String(r.email ?? r.arbvrneMail ?? '').trim(); // prioriza email\n  const department = String(r.globalDimension1Code ?? r.department ?? '').trim();\n  const calendarRaw = r.calendar_type ?? r.calendarType ?? r.Calendario ?? r.calendario ?? '';\n  const calendar_type = String(calendarRaw).trim();\n\n  if (!email || !email.includes('@')) continue;\n  if (!department) continue;\n\n  items.push({\n    json: {\n      code,\n      name,\n      email,\n      department_code: department,\n      company_name: company, // <- aquí\n      calendar_type,\n    },\n  });\n}\n\nreturn items;"
+      },
+      "id": "0becabaf-e350-4ce5-8b88-b5cfd10912b4",
+      "name": "Transformar Recursos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1488,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.resource (company_name, code, name, calendar_type, email, department_code)\nSELECT\n  $1, $2, $3, $4,\n  NULLIF(btrim($5), ''),\n  NULLIF(btrim($6), '')\nWHERE btrim(coalesce($5,'')) <> ''   -- email no vacío\n  AND btrim(coalesce($6,'')) <> ''   -- dept no vacío\nON CONFLICT (code, company_name)\nDO UPDATE SET\n  name = EXCLUDED.name,\n  calendar_type = EXCLUDED.calendar_type,\n  email = EXCLUDED.email,\n  department_code = EXCLUDED.department_code\nRETURNING *;",
+        "additionalFields": {
+          "queryParams": "company_name, code, name, calendar_type, email, department_code"
+        }
+      },
+      "id": "d75efc9f-78a7-41b4-aa98-c1cba17cd581",
+      "name": "HTTP - Upsert resource (Postgres REST)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        -1264,
+        -112
+      ],
+      "alwaysOutputData": false,
+      "credentials": {
+        "postgres": {
+          "id": "c9eTNKkKFrWSIJep",
+          "name": "Postgres Timesheet"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+      },
+      "id": "7ce121c9-2b04-44ca-97e8-2b70c84c3731",
+      "name": "Compute now ISO (resource)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1040,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "resource"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "15dc6bc4-b5a9-4ad7-b282-d9d0c4edc83e",
+      "name": "Update sync_state (resource)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        -112
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "QvaPKMHblJKE8tl3",
+          "name": "Supabase – PS‑Timesheet (Local)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Resolve Company').first().json.companyId\n  + ')/Proyectos?$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['job']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "3ccb39f4-524d-47eb-b900-df561bec75e9",
+      "name": "HTTP - Proyectos (filtrado)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1712,
+        512
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName; // <- dinámico\nconst data = input[0].json;\nconst proyectos = data.value || [];\nconst items = [];\n\nconst allowed = new Set(['Planning','Quote','Open','Completed','Lost']);\n\nfor (const p of proyectos) {\n  const statusRaw = p.estado ?? p.Estado ?? p.status ?? '';\n  const status = String(statusRaw).trim();\n  \n  // DEBUG: Log el status original\n  console.log('Status original:', JSON.stringify(statusRaw), '-> Normalizado:', status);\n  \n  // Normalizar status: si no está en la lista permitida, usar 'Open'\n  const normalizedStatus = allowed.has(status) ? status : 'Open';\n  \n  // DEBUG: Log el status final\n  console.log('Status final:', normalizedStatus);\n\n  // Filtrar proyectos que comienzan por PP o PY\n  const projectNo = String(p.no || '').trim();\n  if (projectNo.startsWith('PP') || projectNo.startsWith('PY')) {\n    continue;\n  }\n\n  items.push({\n    json: {\n      no: projectNo,\n      description: p.description || '',\n      status: normalizedStatus, // <- usar el status normalizado\n      responsible: p.Responsible || p.responsible || '',\n      departamento: p.departamento || p.GlobalDimension1Code || '',\n      company_name: companyName, // <- aquí\n    },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+      },
+      "id": "45a17355-3dcf-4ec7-9d6e-4fd89c8ba0d7",
+      "name": "Transformar Proyectos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1488,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO job (company_name, no, description, status, responsible, departamento)\nVALUES ($1,$2,$3,$4,$5,$6)\nON CONFLICT (company_name, no)\nDO UPDATE SET\n  description=EXCLUDED.description,\n  status=EXCLUDED.status,\n  responsible=EXCLUDED.responsible\nRETURNING *;",
+        "additionalFields": {
+          "queryParams": "=company_name,no,description,status,responsible,departamento"
+        }
+      },
+      "id": "eebd4259-ce7b-499d-82b1-ccca5395cdf0",
+      "name": "HTTP - Upsert job (Postgres REST)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        -1264,
+        608
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "c9eTNKkKFrWSIJep",
+          "name": "Postgres Timesheet"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+      },
+      "id": "c6911608-91a8-4b47-ac53-d6b3cc8ea9c3",
+      "name": "Compute now ISO (jobs)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1040,
+        688
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "job"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "e8c1325d-fead-4972-b78f-7664cb22e242",
+      "name": "Update sync_state (jobs)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        688
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "QvaPKMHblJKE8tl3",
+          "name": "Supabase – PS‑Timesheet (Local)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Resolve Company').first().json.companyId\n  + ')/ProyectosEquipos?$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['job_team']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "f1eba5de-4fdb-48ec-82d7-439784bd0a27",
+      "name": "HTTP - ProyectosEquipos (filtrado)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -368,
+        -208
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\nconst jobSet = new Set(($('Build job set').first().json.jobNos || []).map(s => String(s).trim()));\n\nconst data = input[0].json;\nconst equipos = data.value || [];\nconst items = [];\n\nfor (const e of equipos) {\n  const job_no = String(e.job_no ?? e.jobNo ?? e.NoProyecto ?? '').trim();\n  const resource_no = String(e.resource_no ?? e.resourceNo ?? e.NoRecurso ?? '').trim();\n\n  if (!job_no || !resource_no) continue;\n  if (!jobSet.has(job_no)) continue;\n\n  items.push({\n    json: { company_name: companyName, job_no, resource_no },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+      },
+      "id": "eb533c92-e81b-47d1-ba43-a3ab657b5c75",
+      "name": "Transformar ProyectosEquipos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.job_team (company_name, job_no, resource_no)\nSELECT $1, $2, $3\nWHERE EXISTS (SELECT 1 FROM public.job      j  WHERE j.company_name=$1 AND j.no=$2)\n  AND EXISTS (SELECT 1 FROM public.resource r  WHERE r.company_name=$1 AND r.code=$3)\nON CONFLICT ON CONSTRAINT job_team_pkey DO NOTHING\nRETURNING *;",
+        "additionalFields": {
+          "queryParams": "company_name,job_no,resource_no"
+        }
+      },
+      "id": "d420f94b-e027-4ee7-a681-38945d7b6a02",
+      "name": "HTTP - Upsert job_team (Postgres REST)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        80,
+        -208
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "c9eTNKkKFrWSIJep",
+          "name": "Postgres Timesheet"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+      },
+      "id": "9153d598-7c94-4551-91ad-86f86c985420",
+      "name": "Compute now ISO (team)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Resolve Company').first().json.companyId\n  + ')/RecursosCostos?$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['resource_cost']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "12317ee8-eba3-48f6-b661-055050d50462",
+      "name": "HTTP - RecursosCostos (filtrado)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -368,
+        176
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst data = input[0].json;\nconst rows = data.value || [];\nconst items = [];\n\nconst companyName = $('Resolve Company').first().json.companyName; // dinámico\n\nfor (const r of rows) {\n  const resource_no = String(r.resource_no ?? r.resourceNo ?? r.noRecurso ?? '').trim();\n  const cost_center = String(r.work_type ?? r.workType ?? r.tipoTrabajo ?? '').trim();\n  const cost_per_hour = Number(r.unit_cost ?? r.unitCost ?? r.costoUnitario ?? 0);\n\n  if (!resource_no || !cost_center) continue;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      resource_no,\n      cost_center,\n      cost_per_hour,\n    },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+      },
+      "id": "831b0583-8c0b-448b-b8a0-8beaebf61516",
+      "name": "Transformar RecursosCostos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.resource_cost (company_name, resource_no, work_type, unit_cost)\nSELECT $1, $2, $3, $4::numeric\nWHERE btrim(coalesce($3,'')) <> ''\nON CONFLICT ON CONSTRAINT resource_cost_pkey\nDO UPDATE SET unit_cost = EXCLUDED.unit_cost\nRETURNING *;",
+        "additionalFields": {
+          "queryParams": "company_name,resource_no,cost_center,cost_per_hour"
+        }
+      },
+      "id": "9efc0ff4-ac97-42d3-acaf-3e84df6063a1",
+      "name": "HTTP - Upsert resource_cost (Postgres REST)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        80,
+        176
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "c9eTNKkKFrWSIJep",
+          "name": "Postgres Timesheet"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+      },
+      "id": "71779a6e-6880-4872-ad9d-01108464b717",
+      "name": "Compute now ISO (resource_cost)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "resource_cost"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "1319561a-e172-4096-91ce-fab3574958c5",
+      "name": "Update sync_state (resource_cost)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        528,
+        176
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "QvaPKMHblJKE8tl3",
+          "name": "Supabase – PS‑Timesheet (Local)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Resolve Company').first().json.companyId\n  + ')/CalendaroPeriodosDias?$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['calendar_period_days']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "b2d785ec-68ba-4d43-8064-1b4bb7ec9bed",
+      "name": "HTTP - CalendarPeriodDays (filtrado)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -368,
+        832
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\n\nconst data = input[0].json;\nconst rows = Array.isArray(data.value) ? data.value : [];\nconst items = [];\n\nfor (const r of rows) {\n  // DEBUG: Log todos los campos disponibles\n  console.log('Campos disponibles:', Object.keys(r));\n  console.log('Valor completo del registro:', JSON.stringify(r, null, 2));\n  \n  const allocation_period = String(r.allocation_period ?? r.allocationPeriod ?? '').trim();\n  const calendar_code = String(r.calendar_code ?? r.calendarCode ?? r.calendar ?? r.Calendar ?? r.ARBVRNCalendar ?? r.calendar_type ?? r.calendarType ?? '').trim();\nif (!calendar_code) continue;\n  const dayRaw = r.day ?? r.Day ?? r.date ?? '';\n  const dayStr = String(dayRaw).trim();\n\n  if (!allocation_period) continue;\n  if (!dayStr) continue;\n\n  const holiday = Boolean(r.holiday ?? r.Holiday ?? false);\n  const hours_working = Number(r.hours_working ?? r.hoursWorking ?? 0);\n\n  const dayNum = Number(dayStr);\n  const day = Number.isNaN(dayNum) ? dayStr : dayNum;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      allocation_period,\n      calendar_code,\n      day,\n      holiday,\n      hours_working,\n    },\n  });\n}\n\nreturn items;"
+      },
+      "id": "041410e4-bd77-424b-be93-99348f5a27ca",
+      "name": "Transformar CalendarPeriodDays",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO calendar_period_days (\n  company_name, calendar_code, allocation_period, day, holiday, hours_working\n)\nVALUES ($1, $2, $3, $4, $5, $6)\nON CONFLICT (company_name, calendar_code, allocation_period, day)\nDO UPDATE SET \n  holiday = EXCLUDED.holiday,\n  hours_working = EXCLUDED.hours_working\nRETURNING *;",
+        "additionalFields": {
+          "queryParams": "company_name, calendar_code, allocation_period, day, holiday, hours_working "
+        }
+      },
+      "id": "24d10876-df09-424f-a5c3-e4de3b6a40e6",
+      "name": "HTTP - Upsert calendar_period_days (Postgres REST)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        80,
+        832
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "c9eTNKkKFrWSIJep",
+          "name": "Postgres Timesheet"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+      },
+      "id": "8d8763c0-0d1f-4673-a151-466a31f1bb9e",
+      "name": "Compute now ISO (calendar)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "calendar_period_days"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "366dfd41-15ac-458b-ad74-25f5fd3f9147",
+      "name": "Update sync_state (calendar)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        528,
+        832
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "QvaPKMHblJKE8tl3",
+          "name": "Supabase – PS‑Timesheet (Local)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ejecutar-sync-bc-to-supabase",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2608,
+        608
+      ],
+      "id": "6b33f432-7632-4f7c-855c-1f3df8b10dfe",
+      "name": "Webhook Trigger",
+      "webhookId": "8a27722f-ef0b-42c3-abb3-32ab91bda2a3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $json.params || {};\nconst slugRaw = (p.company || $json.query?.company || '').toString().trim().toLowerCase();\nconst slug = encodeURI(slugRaw);\nconst map = {\n  'psi': { companyName: 'Power Solution Iberia SL', companyId: 'ca9dc1bf-54ee-ed11-884a-000d3a455d5b' },\n  'pslab': { companyName: 'PS LAB CONSULTING SL', companyId: '656f8f0e-2bf4-ed11-8848-000d3a4baf18' }\n};\nconst chosen = map[slug];\nif (!chosen) {\n  return [{ json: { error: 'Invalid company', slug } }];\n}\nreturn [{ json: { companyName: chosen.companyName, companyId: chosen.companyId, slug } }];"
+      },
+      "id": "2bb2f7b5-eda5-44cc-9a7a-7a8943e8bde7",
+      "name": "Resolve Company",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2384,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, message: \"Sincronización BC a Supabase completada exitosamente\", timestamp: new Date().toISOString(), errors: $('Collect Errors').first().json.errors || [] } }}",
+        "options": {}
+      },
+      "id": "36e37421-1dcf-4eb2-83df-e35d8dcdb64d",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Recopilar errores de todas las entidades\nconst errors = [];\n\n// Función para extraer errores de una respuesta HTTP\nfunction extractErrors(response, entity) {\n  if (!response || !response.error) return;\n  \n  const error = response.error;\n  let message = error.message || 'Error desconocido';\n  \n  // Detectar duplicados específicamente\n  if (message.includes('duplicate') || message.includes('conflict') || message.includes('already exists')) {\n    message = `DUPLICADO: ${message}`;\n  }\n  \n  // Extraer detalles del proyecto si es posible\n  let projectInfo = '';\n  if (response.body) {\n    try {\n      const body = typeof response.body === 'string' ? JSON.parse(response.body) : response.body;\n      if (body.no) projectInfo = ` (Proyecto: ${body.no})`;\n      if (body.job_no) projectInfo = ` (Job: ${body.job_no})`;\n      if (body.resource_no) projectInfo = ` (Recurso: ${body.resource_no})`;\n    } catch (e) {\n      // Ignorar errores de parsing\n    }\n  }\n  \n  errors.push({\n    entity,\n    error: message + projectInfo,\n    timestamp: new Date().toISOString()\n  });\n}\n\n// Recopilar errores de todas las entidades\nconst allInputs = $input.all();\nfor (const input of allInputs) {\n  if (input.json && input.json.error) {\n    extractErrors(input.json, 'General');\n  }\n}\n\nreturn [{ json: { errors, totalErrors: errors.length } }];"
+      },
+      "id": "9729a1c3-ee1f-452b-a1cb-498ab62012bf",
+      "name": "Collect Errors",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ejecutar una vez para todos los items\nconst httpData = $items('HTTP - Upsert job (Postgres REST)') || [];\nconst out = [];\n\nfor (const it of httpData) {\n  const err = it.json?.error; // PostgREST: { code, details, hint, message }\n  if (err) {\n    let message = err.message || 'Error desconocido en proyecto';\n    if (/(duplicate|conflict|already exists|unique constraint)/i.test(message)) {\n      message = `DUPLICADO: ${message}`;\n    }\n    out.push({\n      json: {\n        status: 'error',\n        message,\n        code: err.code ?? null,\n        details: err.details ?? null,\n        hint: err.hint ?? null,\n        input: it.json?.input ?? null\n      }\n    });\n  }\n}\n\n// Si quieres emitir algo solo si hubo errores:\nreturn out;\n\n// Si prefieres pasar los OK cuando no hay errores, usa:\n// return out.length ? out : $input.all();"
+      },
+      "id": "7970667f-354d-41d0-8930-5f087a5c3629",
+      "name": "Error Handler (Jobs)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]);\n\n// Entidades que nos interesan\nconst entities = ['job','job_task','calendar_period_days','job_team','resource','resource_cost'];\n\nconst byEntity = {};\nfor (const r of rows) {\n  const e = String(r.entity || '').trim();\n  const raw = String(r.last_sync_at || '').trim();\n  if (!e || !raw) continue;\n  const iso = new Date(raw.replace(' ', 'T')).toISOString();\n  byEntity[e] = iso;\n}\n\n// NO lanzar error: devolver faltantes para que el flujo las salte\nconst missing = entities.filter(e => !(e in byEntity));\n\nreturn [{\n  json: {\n    syncStateByEntity: byEntity,\n    missing,\n    company: $('Resolve Company').first().json.companyName,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1936,
+        512
+      ],
+      "id": "110fa449-5f1b-4f18-a7e4-e84ed28099ae",
+      "name": "Build sync_state map"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2832,
+        416
+      ],
+      "id": "d36a3585-5c96-41a3-bca3-4f8f16580805",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "18ae6cd4-9853-4694-ac15-bcf52e8e4597",
+              "name": "query.company",
+              "value": "psi",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2608,
+        416
+      ],
+      "id": "0e08f529-7d7e-4147-854d-ae7999a32f1a",
+      "name": "Set Company"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            }
+          ]
+        }
+      },
+      "id": "5cacc2cc-9971-4619-b4ab-3346fa680912",
+      "name": "Get sync_state ALL",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2160,
+        512
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "QvaPKMHblJKE8tl3",
+          "name": "Supabase – PS‑Timesheet (Local)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]);\n\n// En la tabla job la clave es \"no\" (y como fallback \"job_no\")\nconst jobNos = rows\n  .map(r => String(r.no ?? r.job_no ?? '').trim())\n  .filter(Boolean);\n\nreturn [{ json: { jobNos } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -368,
+        368
+      ],
+      "id": "97f8af4f-60c3-4bdd-a71f-6873cd0dd3e0",
+      "name": "Build job set"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -592,
+        -112
+      ],
+      "id": "0a7b8e89-c8ae-46e1-ab51-aae5e0d38d92",
+      "name": "Wait jobs+resources"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "numberInputs": 5
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        752,
+        128
+      ],
+      "id": "72146fc8-be79-4453-9a37-7f26964f49df",
+      "name": "Wait All Complete"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "job_team"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "5400d23c-ddaa-426d-a0ea-1b538ce745ce",
+      "name": "Update sync_state (team)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        528,
+        -208
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "QvaPKMHblJKE8tl3",
+          "name": "Supabase – PS‑Timesheet (Local)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "HTTP - ProyectosTareas (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar ProyectosTareas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar ProyectosTareas": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert job_task (Postgres REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert job_task (Postgres REST)": {
+      "main": [
+        [
+          {
+            "node": "Compute now ISO (tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (tasks)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (tasks)": {
+      "main": [
+        [
+          {
+            "node": "Wait All Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Recursos (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar Recursos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar Recursos": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert resource (Postgres REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert resource (Postgres REST)": {
+      "main": [
+        [
+          {
+            "node": "Compute now ISO (resource)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (resource)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (resource)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (resource)": {
+      "main": [
+        [
+          {
+            "node": "Wait jobs+resources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Proyectos (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar Proyectos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar Proyectos": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert job (Postgres REST)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build job set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert job (Postgres REST)": {
+      "main": [
+        [
+          {
+            "node": "Compute now ISO (jobs)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Handler (Jobs)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Handler (Jobs)": {
+      "main": [
+        [
+          {
+            "node": "Wait All Complete",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (jobs)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (jobs)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (jobs)": {
+      "main": [
+        [
+          {
+            "node": "Wait jobs+resources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP - ProyectosEquipos (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar ProyectosEquipos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar ProyectosEquipos": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert job_team (Postgres REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert job_team (Postgres REST)": {
+      "main": [
+        [
+          {
+            "node": "Compute now ISO (team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (team)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - RecursosCostos (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar RecursosCostos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar RecursosCostos": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert resource_cost (Postgres REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert resource_cost (Postgres REST)": {
+      "main": [
+        [
+          {
+            "node": "Compute now ISO (resource_cost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (resource_cost)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (resource_cost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - CalendarPeriodDays (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar CalendarPeriodDays",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar CalendarPeriodDays": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert calendar_period_days (Postgres REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert calendar_period_days (Postgres REST)": {
+      "main": [
+        [
+          {
+            "node": "Compute now ISO (calendar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (calendar)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (calendar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Resolve Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Company": {
+      "main": [
+        [
+          {
+            "node": "Get sync_state ALL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build sync_state map": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Proyectos (filtrado)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - CalendarPeriodDays (filtrado)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - Recursos (filtrado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Set Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Company": {
+      "main": [
+        [
+          {
+            "node": "Resolve Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get sync_state ALL": {
+      "main": [
+        [
+          {
+            "node": "Build sync_state map",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build job set": {
+      "main": [
+        [
+          {
+            "node": "Transformar ProyectosEquipos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Transformar ProyectosTareas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait jobs+resources": {
+      "main": [
+        [
+          {
+            "node": "HTTP - ProyectosTareas (filtrado)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - ProyectosEquipos (filtrado)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - RecursosCostos (filtrado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait All Complete": {
+      "main": [
+        [
+          {
+            "node": "Collect Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Errors": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (resource_cost)": {
+      "main": [
+        [
+          {
+            "node": "Wait All Complete",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Update sync_state (calendar)": {
+      "main": [
+        [
+          {
+            "node": "Wait All Complete",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Update sync_state (team)": {
+      "main": [
+        [
+          {
+            "node": "Wait All Complete",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "01e81f45-c060-418e-8c0a-cfda505c7c81",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "createdAt": "2025-09-03T06:32:12.601Z",
+      "updatedAt": "2025-09-03T06:32:12.601Z",
+      "role": "workflow:owner",
+      "workflowId": "XSYOmZ8mRuaXl6sg",
+      "projectId": "ijP8FvHt2ZVVaBt9",
+      "project": {
+        "createdAt": "2025-08-25T17:25:17.353Z",
+        "updatedAt": "2025-08-25T17:27:29.880Z",
+        "id": "ijP8FvHt2ZVVaBt9",
+        "name": "Daniel Bertona Sanchez <dbertona@powersolution.es>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-08-25T17:25:17.353Z",
+            "updatedAt": "2025-08-25T17:25:17.353Z",
+            "role": "project:personalOwner",
+            "userId": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
+            "projectId": "ijP8FvHt2ZVVaBt9",
+            "user": {
+              "createdAt": "2025-08-25T17:25:16.887Z",
+              "updatedAt": "2025-09-28T09:03:39.000Z",
+              "id": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
+              "email": "dbertona@powersolution.es",
+              "firstName": "Daniel",
+              "lastName": "Bertona Sanchez",
+              "personalizationAnswers": null,
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "71xpeeX1apKTpNe0",
+                "userActivatedAt": 1756717935545
+              },
+              "role": "global:owner",
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-09-27",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}
