@@ -206,7 +206,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Normaliza entrada y mapea a public.ps_year\nconst input = $input.all();\nif (input.length === 0) return [];\n\nconst src = input[0]?.json ?? {};\nconst registros = Array.isArray(src.value) ? src.value : (Array.isArray(src) ? src : [src]);\nconst items = [];\n\nconst companyName = $items('Build Last Sync (PS_Years)')[0]?.json?.companyName || '';\n\nfor (const r of registros) {\n  const psYear = String(r.PS_Year ?? r.ps_year ?? '').trim();\n  if (!psYear || psYear === '0') continue;\n\n  items.push({\n    json: {\n      companyName,\n      PS_Year: parseInt(psYear) || 0,\n    },\n  });\n}\n\nreturn items;"
+        "jsCode": "// Normaliza entrada y mapea a public.ps_year\nconst input = $input.all();\nif (input.length === 0) return [];\n\nconst src = input[0]?.json ?? {};\nconst registros = Array.isArray(src.value) ? src.value : (Array.isArray(src) ? src : [src]);\nconst items = [];\n\n// Obtener companyName del contexto actual (de BC API)\nconst companyName = $items('Build Last Sync (PS_Years)')[0]?.json?.companyName || '';\n\nfor (const r of registros) {\n  const psYear = String(r.PS_Year ?? r.ps_year ?? '').trim();\n  if (!psYear || psYear === '0') continue;\n\n  items.push({\n    json: {\n      companyName,\n      PS_Year: parseInt(psYear) || 0,\n    },\n  });\n}\n\nreturn items;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -605,3 +605,4 @@
   "shared": [],
   "tags": []
 }
+
