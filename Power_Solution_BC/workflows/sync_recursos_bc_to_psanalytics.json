@@ -1,6 +1,6 @@
 {
   "createdAt": "2025-09-28T09:43:13.949Z",
-  "updatedAt": "2025-09-28T10:42:18.000Z",
+  "updatedAt": "2025-09-29T05:51:37.000Z",
   "id": "mDEUVZwVqcxvneOI",
   "name": "sync_recursos_bc_to_psanalytics",
   "active": true,
@@ -25,54 +25,15 @@
     },
     {
       "parameters": {
-        "jsCode": "// Genera dos compañías a procesar en paralelo\nreturn [\n  { json: { companyName: 'Power Solution Iberia SL', companyId: 'ca9dc1bf-54ee-ed11-884a-000d3a455d5b' } },\n  { json: { companyName: 'PS LAB CONSULTING SL',   companyId: '656f8f0e-2bf4-ed11-8848-000d3a4baf18' } },\n];"
-      },
-      "id": "generate-companies",
-      "name": "Generate Companies",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        464,
-        320
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT $1::text AS company_name, $2::text AS company_id, COALESCE((SELECT last_sync_at FROM public.sync_state WHERE company_name=$1 AND entity='recursos'), TIMESTAMPTZ '1970-01-01 00:00:00+00') AS last_sync_at;",
-        "additionalFields": {
-          "queryParams": [
-            "companyName",
-            "companyId"
-          ]
-        }
-      },
-      "id": "get-last-sync",
-      "name": "Get Last Sync (recursos)",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.4,
-      "position": [
-        688,
-        320
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "6I06GLCMi5toLQFI",
-          "name": "Postgres PS_Analytics"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const r = $json || {};\nconst iso = new Date(String(r.last_sync_at || '1970-01-01T00:00:00Z').replace(' ', 'T')).toISOString();\nreturn [{ json: { companyName: r.company_name, companyId: r.company_id, lastSync: iso } }];"
+        "jsCode": "const row = $json || {};\nconst resolved = $items('Resolve Company')[0]?.json ?? {};\n\nconst companyName = String(row.company_name ?? resolved.companyName ?? '').trim();\nconst companyId   = String(resolved.companyId ?? row.company_id ?? '').trim();\nconst lastSync    = new Date(String(row.last_sync_at ?? '1970-01-01T00:00:00Z').replace(' ', 'T')).toISOString();\n\nreturn [{ json: { companyName, companyId, lastSync } }];"
       },
       "id": "build-last-sync",
       "name": "Build Last Sync",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        912,
-        320
+        1136,
+        416
       ]
     },
     {
@@ -100,7 +61,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1136,
+        1360,
         416
       ],
       "credentials": {
@@ -123,7 +84,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
       "position": [
-        912,
+        1808,
         416
       ],
       "credentials": {
@@ -144,7 +105,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1872,
+        2480,
         416
       ]
     },
@@ -153,7 +114,7 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        240,
+        688,
         512
       ],
       "id": "manual-trigger",
@@ -166,7 +127,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1360,
+        1584,
         416
       ],
       "id": "d32c3a3e-c187-4c2b-82c7-0f6b7d3cae2d",
@@ -181,7 +142,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1600,
+        2032,
         416
       ]
     },
@@ -189,19 +150,14 @@
       "parameters": {
         "operation": "executeQuery",
         "query": "INSERT INTO public.sync_state (company_name, entity, last_sync_at) VALUES ($1, 'recursos', $2::timestamptz) ON CONFLICT (company_name, entity) DO UPDATE SET last_sync_at = EXCLUDED.last_sync_at;",
-        "additionalFields": {
-          "queryParams": [
-            "companyName",
-            "nowIso"
-          ]
-        }
+        "options": {}
       },
       "id": "update-sync-state-resource",
       "name": "Update sync_state (recursos)",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
       "position": [
-        1824,
+        2256,
         416
       ],
       "credentials": {
@@ -210,18 +166,80 @@
           "name": "Postgres PS_Analytics"
         }
       }
+    },
+    {
+      "parameters": {
+        "useCustomSchema": true,
+        "operation": "getAll",
+        "tableId": "=sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            }
+          ]
+        }
+      },
+      "id": "a12949c8-faca-4f84-a770-f94611d024f3",
+      "name": "Get sync_state ALL",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        912,
+        416
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "pCM59OXAIeZSuk0Q",
+          "name": "Supabase PS-Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $json.params || {};\nconst slugRaw = (p.company || $json.query?.company || '').toString().trim().toLowerCase();\nconst slug = encodeURI(slugRaw);\nconst map = {\n  'psi': { companyName: 'Power Solution Iberia SL', companyId: 'ca9dc1bf-54ee-ed11-884a-000d3a455d5b' },\n  'pslab': { companyName: 'PS LAB CONSULTING SL', companyId: '656f8f0e-2bf4-ed11-8848-000d3a4baf18' }\n};\nconst chosen = map[slug];\nif (!chosen) {\n  return [{ json: { error: 'Invalid company', slug } }];\n}\nreturn [{ json: { companyName: chosen.companyName, companyId: chosen.companyId, slug } }];"
+      },
+      "id": "a709c1ea-ce18-4f20-b817-5401e1fe0aa9",
+      "name": "Resolve Company",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "18ae6cd4-9853-4694-ac15-bcf52e8e4597",
+              "name": "query.company",
+              "value": "psi",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        320
+      ],
+      "id": "a892f006-1677-4dc4-b54f-52d5bd02fd71",
+      "name": "Set Company"
     }
   ],
   "connections": {
     "Webhook Start": {
       "main": [
-        [
-          {
-            "node": "Generate Companies",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "BC API - Recursos": {
@@ -250,7 +268,7 @@
       "main": [
         [
           {
-            "node": "Generate Companies",
+            "node": "Set Company",
             "type": "main",
             "index": 0
           }
@@ -262,28 +280,6 @@
         [
           {
             "node": "Upsert Recursos",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Generate Companies": {
-      "main": [
-        [
-          {
-            "node": "Get Last Sync (recursos)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Last Sync (recursos)": {
-      "main": [
-        [
-          {
-            "node": "Build Last Sync",
             "type": "main",
             "index": 0
           }
@@ -322,6 +318,39 @@
           }
         ]
       ]
+    },
+    "Get sync_state ALL": {
+      "main": [
+        [
+          {
+            "node": "Build Last Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Company": {
+      "main": [
+        [
+          {
+            "node": "Get sync_state ALL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Company": {
+      "main": [
+        [
+          {
+            "node": "Resolve Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -332,7 +361,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "08ff5b98-b6fd-4a13-baa8-1811cf83f446",
+  "versionId": "0c3fe509-ba12-466d-8185-f3d1bc34fb5d",
   "triggerCount": 1,
   "shared": [
     {
@@ -358,7 +387,7 @@
             "projectId": "ijP8FvHt2ZVVaBt9",
             "user": {
               "createdAt": "2025-08-25T17:25:16.887Z",
-              "updatedAt": "2025-09-28T09:03:39.000Z",
+              "updatedAt": "2025-09-28T22:10:42.000Z",
               "id": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
               "email": "dbertona@powersolution.es",
               "firstName": "Daniel",
@@ -372,7 +401,7 @@
               "role": "global:owner",
               "disabled": false,
               "mfaEnabled": false,
-              "lastActiveAt": "2025-09-27",
+              "lastActiveAt": "2025-09-28",
               "isPending": false
             }
           }
