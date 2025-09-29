@@ -62,11 +62,11 @@
           "parameters": [
             {
               "name": "$select",
-              "value": "PS_Year"
+              "value": "year"
             },
             {
               "name": "$filter",
-              "value": "={{ 'lastModifiedDateTime ge ' + $json.syncStateByEntity.ps_year }}"
+              "value": ""
             }
           ]
         },
@@ -107,7 +107,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO public.ps_year\n(company_name, ps_year, updated_at)\nSELECT\n  $1,                 -- company_name\n  $2::integer,        -- ps_year\n  NOW()               -- updated_at\nWHERE $2::text <> '' AND $2::text != '0'      -- ps_year obligatorio y válido\nON CONFLICT (company_name, ps_year)\nDO UPDATE SET\n  updated_at = NOW()\nRETURNING *;",
+        "query": "INSERT INTO public.ps_year\n(company_name, ps_year)\nSELECT\n  $1,                 -- company_name\n  $2::integer         -- ps_year\nWHERE $2::text <> '' AND $2::text != '0'      -- ps_year obligatorio y válido\nON CONFLICT (ps_year)\nDO UPDATE SET\n  company_name = EXCLUDED.company_name\nRETURNING *;",
         "options": {
           "queryReplacement": "{{$json.companyName}}\n{{$json.PS_Year}}"
         }
@@ -156,7 +156,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Normaliza entrada y mapea a public.ps_year\nconst input = $input.all();\nif (input.length === 0) return [];\n\nconst src = input[0]?.json ?? {};\nconst registros = Array.isArray(src.value) ? src.value : (Array.isArray(src) ? src : [src]);\nconst items = [];\n\n// Obtener companyName del nodo Build sync_state map\nconst companyName = $items('Build sync_state map')[0]?.json?.company || '';\n\nfor (const r of registros) {\n  const psYear = String(r.PS_Year ?? r.ps_year ?? '').trim();\n  if (!psYear || psYear === '0') continue;\n\n  items.push({\n    json: {\n      companyName,\n      PS_Year: parseInt(psYear) || 0,\n    },\n  });\n}\n\nreturn items;"
+        "jsCode": "// Normaliza entrada y mapea a public.ps_year\nconst input = $input.all();\nif (input.length === 0) return [];\n\nconst src = input[0]?.json ?? {};\nconst registros = Array.isArray(src.value) ? src.value : (Array.isArray(src) ? src : [src]);\nconst items = [];\n\n// Obtener companyName del nodo Build sync_state map\nconst companyName = $items('Build sync_state map')[0]?.json?.company || '';\n\nfor (const r of registros) {\n  const psYear = String(r.year ?? r.Year ?? r.PS_Year ?? r.ps_year ?? '').trim();\n  if (!psYear || psYear === '0') continue;\n\n  items.push({\n    json: {\n      companyName,\n      PS_Year: parseInt(psYear) || 0,\n    },\n  });\n}\n\nreturn items;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
