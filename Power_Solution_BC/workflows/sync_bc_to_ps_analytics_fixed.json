@@ -17,7 +17,10 @@
       "name": "Webhook Start",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [464, 512],
+      "position": [
+        464,
+        512
+      ],
       "webhookId": "sync-recursos-y-ps-years-webhook"
     },
     {
@@ -44,7 +47,10 @@
       "name": "BC API - Recursos",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1360, 320],
+      "position": [
+        1360,
+        320
+      ],
       "credentials": {
         "oAuth2Api": {
           "id": "5caHilW1m87Snw87",
@@ -57,26 +63,17 @@
         "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(' + $json.companyId + ')/PS_Years' }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "$select",
-              "value": "year"
-            },
-            {
-              "name": "$filter",
-              "value": ""
-            }
-          ]
-        },
+        "sendQuery": false,
         "options": {}
       },
       "id": "bc-api-years",
       "name": "BC API - PS_Years",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1360, 512],
+      "position": [
+        1360,
+        512
+      ],
       "credentials": {
         "oAuth2Api": {
           "id": "5caHilW1m87Snw87",
@@ -96,7 +93,10 @@
       "name": "Upsert Recursos",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
-      "position": [1808, 320],
+      "position": [
+        1808,
+        320
+      ],
       "credentials": {
         "postgres": {
           "id": "6I06GLCMi5toLQFI",
@@ -116,7 +116,10 @@
       "name": "Upsert PS_Year",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
-      "position": [1808, 512],
+      "position": [
+        1808,
+        512
+      ],
       "credentials": {
         "postgres": {
           "id": "6I06GLCMi5toLQFI",
@@ -134,13 +137,19 @@
       "name": "Response Success",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [2480, 416]
+      "position": [
+        2480,
+        416
+      ]
     },
     {
       "parameters": {},
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [240, 320],
+      "position": [
+        240,
+        320
+      ],
       "id": "manual-trigger",
       "name": "When clicking 'Execute workflow'"
     },
@@ -150,7 +159,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1584, 320],
+      "position": [
+        1584,
+        320
+      ],
       "id": "transform-recursos",
       "name": "Transform Recursos"
     },
@@ -160,7 +172,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1584, 512],
+      "position": [
+        1584,
+        512
+      ],
       "id": "transform-ps-years",
       "name": "Transform PS_Years"
     },
@@ -172,7 +187,10 @@
       "name": "Compute now ISO (Recursos)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2032, 320]
+      "position": [
+        2032,
+        320
+      ]
     },
     {
       "parameters": {
@@ -182,7 +200,10 @@
       "name": "Compute now ISO (PS_Years)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2032, 512]
+      "position": [
+        2032,
+        512
+      ]
     },
     {
       "parameters": {
@@ -216,7 +237,10 @@
       "name": "Update sync_state (Recursos)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [2256, 320],
+      "position": [
+        2256,
+        320
+      ],
       "credentials": {
         "supabaseApi": {
           "id": "pCM59OXAIeZSuk0Q",
@@ -256,7 +280,10 @@
       "name": "Update sync_state (PS_Years)",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [2256, 512],
+      "position": [
+        2256,
+        512
+      ],
       "credentials": {
         "supabaseApi": {
           "id": "pCM59OXAIeZSuk0Q",
@@ -284,7 +311,10 @@
       "name": "Get sync_state ALL",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [912, 416],
+      "position": [
+        912,
+        416
+      ],
       "credentials": {
         "supabaseApi": {
           "id": "pCM59OXAIeZSuk0Q",
@@ -300,7 +330,10 @@
       "name": "Resolve Company",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [688, 416]
+      "position": [
+        688,
+        416
+      ]
     },
     {
       "parameters": {
@@ -319,7 +352,10 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [464, 320],
+      "position": [
+        464,
+        320
+      ],
       "id": "set-company",
       "name": "Set Company"
     },
@@ -329,7 +365,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1104, 416],
+      "position": [
+        1104,
+        416
+      ],
       "id": "bba67df3-9066-4590-9dbf-bbe2906df978",
       "name": "Build sync_state map"
     }
