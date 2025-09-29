@@ -68,10 +68,11 @@ page 50452 "PS_SyncSetup Card"
 
                     if Http.Post(Url, Cnt, Resp) then begin
                         Msg := StrSubstNo('HTTP %1 %2', Format(Resp.HttpStatusCode), Resp.ReasonPhrase);
-                    end else
-                        Msg := 'Fallo al enviar la solicitud HTTP.';
+                    end else begin
+                        Msg := StrSubstNo('Fallo al enviar la solicitud HTTP: %1', GetLastErrorText());
+                    end;
 
-                    Message(Msg);
+                    Message('%1\nURL: %2', Msg, Url);
                 end;
             }
         }
