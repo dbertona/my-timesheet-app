@@ -33,6 +33,30 @@ codeunit 50442 "PS_Analytics SyncWorker"
         exit(Summary);
     end;
 
+    local procedure MapEntityKey(EntityText: Text): Text
+    var
+        EntityKeyLower: Text;
+    begin
+        // Mapea nombres de entidad de la cola a claves de details del webhook
+        // Ejemplos: "Recursos" -> "recursos", "Proyectos" -> "proyectos"
+        EntityKeyLower := LowerCase(EntityText);
+        if EntityKeyLower = 'job planning line' then
+            exit('movimientos_proyectos');
+        if EntityKeyLower = 'job' then
+            exit('proyectos');
+        if EntityKeyLower = 'resource' then
+            exit('recursos');
+        if (EntityKeyLower = 'equipo proyectos') or (EntityKeyLower = 'equipo_proyectos') then
+            exit('equipo_proyectos');
+        if (EntityKeyLower = 'ps_year') or (EntityKeyLower = 'ps years') or (EntityKeyLower = 'ps_years') then
+            exit('ps_year');
+        if EntityKeyLower = 'dimension value' then
+            exit('centros_responsabilidad');
+        if EntityKeyLower = 'user setup' then
+            exit('configuracion_usuarios');
+        exit(EntityKeyLower);
+    end;
+
     procedure RunSync()
     var
         Queue: Record "PS_SyncQueue";
@@ -55,6 +79,12 @@ codeunit 50442 "PS_Analytics SyncWorker"
         SuccessStr: Text;
         SuccessComma: Integer;
         SuccessCount: Integer;
+        RootJObj: JsonObject;
+        DetailsJObj: JsonObject;
+        JTok: JsonToken;
+        EntityTok: JsonToken;
+        StatusVal: JsonValue;
+        EntityKey: Text;
     begin
         if not Setup.FindFirst() then begin
             exit;
@@ -134,21 +164,41 @@ codeunit 50442 "PS_Analytics SyncWorker"
                                 Queue.Modify(true);
                             end;
                         end else begin
-                            // Body con status
-                            if StrPos(RespBody, '"status":"error"') > 0 then begin
-                                Queue.Status := Queue.Status::Error;
-                                Queue."Last Error" := CopyStr(ExtractErrorSummary(RespBody), 1, MaxStrLen(Queue."Last Error"));
-                            end else if StrPos(RespBody, '"status":"partial_error"') > 0 then begin
-                                // partial_error es exitoso si hay al menos una entidad con "status":"ok" en details
-                                if StrPos(RespBody, '"status":"ok"') > 0 then begin
-                                    Queue.Status := Queue.Status::Done;
-                                    Queue."Last Error" := CopyStr(ExtractErrorSummary(RespBody), 1, MaxStrLen(Queue."Last Error"));
-                                end else begin
+                            // Interpretar resultado por entidad (Queue."Entity") usando details[entity].status
+                            if RootJObj.ReadFrom(RespBody) then begin
+                                // Default: si overall es error, marcar Error; si es ok, Done
+                                if RootJObj.Get('status', JTok) and JTok.IsValue() then begin
+                                    StatusVal := JTok.AsValue();
+                                end;
+
+                                EntityKey := MapEntityKey(Queue."Entity");
+                                if RootJObj.Get('details', JTok) and JTok.IsObject() then begin
+                                    DetailsJObj := JTok.AsObject();
+                                    if DetailsJObj.Get(EntityKey, EntityTok) and EntityTok.IsObject() then begin
+                                        if EntityTok.AsObject().Get('status', JTok) and JTok.IsValue() then begin
+                                            StatusVal := JTok.AsValue();
+                                        end;
+                                    end;
+                                end;
+
+                                if LowerCase(StatusVal.AsText()) = 'error' then begin
                                     Queue.Status := Queue.Status::Error;
                                     Queue."Last Error" := CopyStr(ExtractErrorSummary(RespBody), 1, MaxStrLen(Queue."Last Error"));
+                                end else begin
+                                    // ok o partial con entidad ok => Done
+                                    Queue.Status := Queue.Status::Done;
+                                    // Guardamos resumen de posibles parciales para consulta
+                                    Queue."Last Error" := CopyStr(ExtractErrorSummary(RespBody), 1, MaxStrLen(Queue."Last Error"));
                                 end;
-                            end else
-                                Queue.Status := Queue.Status::Done;
+                            end else begin
+                                // Fallback si no parsea JSON
+                                if StrPos(RespBody, '"status":"error"') > 0 then begin
+                                    Queue.Status := Queue.Status::Error;
+                                    Queue."Last Error" := CopyStr(ExtractErrorSummary(RespBody), 1, MaxStrLen(Queue."Last Error"));
+                                end else
+                                    Queue.Status := Queue.Status::Done;
+                            end;
+
                             Queue."Processed At" := CurrentDateTime();
                             Queue.Modify(true);
                         end;
