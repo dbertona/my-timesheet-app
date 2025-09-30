@@ -136,5 +136,11 @@ permissionset 50000 GeneratedPermission
         table "PS API Insert TimeSheet" = X,
         codeunit PS_InsertTimeSheetLineAPI = X,
         page "PS InsertLine API" = X,
-        page PS_TimesheetHeaderAPI = X;
+        page PS_TimesheetHeaderAPI = X,
+        tabledata PS_SyncQueue = RIMD,
+        table PS_SyncQueue = X,
+        tabledata PS_SyncSetup = RIMD,
+        table PS_SyncSetup = X,
+        codeunit "PS_Analytics SyncWorker" = X,
+        codeunit "PS_Analytics WebhookSync" = X;
 }

@@ -25,6 +25,15 @@ page 50452 "PS_SyncSetup Card"
                 {
                     ApplicationArea = All;
                 }
+                field("Supabase REST URL"; Rec."Supabase REST URL")
+                {
+                    ApplicationArea = All;
+                }
+                field("Supabase API Key"; Rec."Supabase API Key")
+                {
+                    ApplicationArea = All;
+                    ExtendedDatatype = Masked;
+                }
             }
         }
     }

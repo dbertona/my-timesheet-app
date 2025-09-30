@@ -1,10 +1,5 @@
 {
-  "createdAt": "2025-09-29T06:58:11.841Z",
-  "updatedAt": "2025-09-30T10:32:21.000Z",
-  "id": "5xXYMywFBYBL5TGM",
   "name": "sync_bc_to_ps_analytics",
-  "active": true,
-  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -114,7 +109,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO public.recursos\n(company_name, \"no\", name, arbvrn_email, global_dimension1_code, calendario,\n fecha_de_baja, fecha_de_alta, subcontratacion, perfil,\n last_modified_datetime, updated_at)\nSELECT\n  $1,                 -- company_name\n  $2,                 -- no\n  $3,                 -- name\n  NULLIF(btrim($4),''),  -- arbvrn_email, vac\u00edo \u2192 NULL\n  $5,                 -- global_dimension1_code\n  $6,                 -- calendario\n  NULLIF(NULLIF($7::text,''),'0001-01-01')::date,  -- fecha_de_baja\n  NULLIF(NULLIF($8::text,''),'0001-01-01')::date,  -- fecha_de_alta\n  CASE WHEN $9::text IN ('true','1','t','yes') THEN true ELSE false END, -- subcontratacion\n  $10,                -- perfil\n  NULLIF($11::text,'')::timestamptz,               -- last_modified_datetime\n  NOW()               -- updated_at\nWHERE $2::text <> ''      -- no obligatorio\nON CONFLICT (\"no\")\nDO UPDATE SET\n  company_name           = EXCLUDED.company_name,\n  name                   = EXCLUDED.name,\n  arbvrn_email           = EXCLUDED.arbvrn_email,\n  global_dimension1_code = EXCLUDED.global_dimension1_code,\n  calendario             = EXCLUDED.calendario,\n  fecha_de_baja          = EXCLUDED.fecha_de_baja,\n  fecha_de_alta          = EXCLUDED.fecha_de_alta,\n  subcontratacion        = EXCLUDED.subcontratacion,\n  perfil                 = EXCLUDED.perfil,\n  last_modified_datetime = EXCLUDED.last_modified_datetime,\n  updated_at             = NOW()\nRETURNING *;",
+        "query": "INSERT INTO public.recursos\n(company_name, \"no\", name, arbvrn_email, global_dimension1_code, calendario,\n fecha_de_baja, fecha_de_alta, subcontratacion, perfil,\n last_modified_datetime, updated_at)\nSELECT\n  $1,                 -- company_name\n  $2,                 -- no\n  $3,                 -- name\n  NULLIF(btrim($4),''),  -- arbvrn_email, vacío → NULL\n  $5,                 -- global_dimension1_code\n  $6,                 -- calendario\n  NULLIF(NULLIF($7::text,''),'0001-01-01')::date,  -- fecha_de_baja\n  NULLIF(NULLIF($8::text,''),'0001-01-01')::date,  -- fecha_de_alta\n  CASE WHEN $9::text IN ('true','1','t','yes') THEN true ELSE false END, -- subcontratacion\n  $10,                -- perfil\n  NULLIF($11::text,'')::timestamptz,               -- last_modified_datetime\n  NOW()               -- updated_at\nWHERE $2::text <> ''      -- no obligatorio\nON CONFLICT (\"no\")\nDO UPDATE SET\n  company_name           = EXCLUDED.company_name,\n  name                   = EXCLUDED.name,\n  arbvrn_email           = EXCLUDED.arbvrn_email,\n  global_dimension1_code = EXCLUDED.global_dimension1_code,\n  calendario             = EXCLUDED.calendario,\n  fecha_de_baja          = EXCLUDED.fecha_de_baja,\n  fecha_de_alta          = EXCLUDED.fecha_de_alta,\n  subcontratacion        = EXCLUDED.subcontratacion,\n  perfil                 = EXCLUDED.perfil,\n  last_modified_datetime = EXCLUDED.last_modified_datetime,\n  updated_at             = NOW()\nRETURNING *;",
         "options": {
           "queryReplacement": "{{$json.companyName}}\n{{$json.no}}\n{{$json.name}}\n{{$json.arbvrneMail}}\n{{$json.globalDimension1Code}}\n{{$json.calendario}}\n{{$json.fechaDeBaja}}\n{{$json.fechaDeAlta}}\n{{ $json.subcontratacion ? 'true' : 'false' }}\n{{$json.perfil}}\n{{$json.lastModifiedDateTime}}"
         }
@@ -137,7 +132,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO public.ps_year\n(company_name, ps_year)\nSELECT\n  $1,                 -- company_name\n  $2::integer         -- ps_year\nWHERE $2::text <> '' AND $2::text != '0'      -- ps_year obligatorio y v\u00e1lido\nON CONFLICT (ps_year)\nDO UPDATE SET\n  company_name = EXCLUDED.company_name\nRETURNING *;",
+        "query": "INSERT INTO public.ps_year\n(company_name, ps_year)\nSELECT\n  $1,                 -- company_name\n  $2::integer         -- ps_year\nWHERE $2::text <> '' AND $2::text != '0'      -- ps_year obligatorio y válido\nON CONFLICT (ps_year)\nDO UPDATE SET\n  company_name = EXCLUDED.company_name\nRETURNING *;",
         "options": {
           "queryReplacement": "{{$json.companyName}}\n{{$json.PS_Year}}"
         }
@@ -160,7 +155,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO public.proyectos\n(company_name, \"no\", description, departamento, probability, tipo_proyecto, estado, fecha_fin, do_not_consolidate, responsible, last_modified_datetime, updated_at)\nSELECT\n  $1,                 -- company_name\n  $2,                 -- no\n  $3,                 -- description\n  $4,                 -- departamento\n  CASE \n    WHEN $5::text ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN $5::numeric\n    ELSE 0::numeric\n  END,                -- probability (maneja valores no num\u00e9ricos)\n  $6,                 -- tipo_proyecto\n  $7,                 -- estado\n  NULLIF(NULLIF($8::text,''),'0001-01-01')::date,  -- fecha_fin\n  CASE WHEN $9::text IN ('true','1','t','yes') THEN true ELSE false END, -- do_not_consolidate\n  $10,                -- responsible\n  NULLIF($11::text,'')::timestamptz,               -- last_modified_datetime\n  NOW()               -- updated_at\nWHERE $2::text <> ''      -- no obligatorio\nON CONFLICT (\"no\")\nDO UPDATE SET\n  company_name           = EXCLUDED.company_name,\n  description            = EXCLUDED.description,\n  departamento           = EXCLUDED.departamento,\n  probability            = EXCLUDED.probability,\n  tipo_proyecto          = EXCLUDED.tipo_proyecto,\n  estado                 = EXCLUDED.estado,\n  fecha_fin              = EXCLUDED.fecha_fin,\n  do_not_consolidate     = EXCLUDED.do_not_consolidate,\n  responsible            = EXCLUDED.responsible,\n  last_modified_datetime = EXCLUDED.last_modified_datetime,\n  updated_at             = NOW()\nRETURNING *;",
+        "query": "INSERT INTO public.proyectos\n(company_name, \"no\", description, departamento, probability, tipo_proyecto, estado, fecha_fin, do_not_consolidate, responsible, last_modified_datetime, updated_at)\nSELECT\n  $1,                 -- company_name\n  $2,                 -- no\n  $3,                 -- description\n  $4,                 -- departamento\n  CASE \n    WHEN $5::text ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN $5::numeric\n    ELSE 0::numeric\n  END,                -- probability (maneja valores no numéricos)\n  $6,                 -- tipo_proyecto\n  $7,                 -- estado\n  NULLIF(NULLIF($8::text,''),'0001-01-01')::date,  -- fecha_fin\n  CASE WHEN $9::text IN ('true','1','t','yes') THEN true ELSE false END, -- do_not_consolidate\n  $10,                -- responsible\n  NULLIF($11::text,'')::timestamptz,               -- last_modified_datetime\n  NOW()               -- updated_at\nWHERE $2::text <> ''      -- no obligatorio\nON CONFLICT (\"no\")\nDO UPDATE SET\n  company_name           = EXCLUDED.company_name,\n  description            = EXCLUDED.description,\n  departamento           = EXCLUDED.departamento,\n  probability            = EXCLUDED.probability,\n  tipo_proyecto          = EXCLUDED.tipo_proyecto,\n  estado                 = EXCLUDED.estado,\n  fecha_fin              = EXCLUDED.fecha_fin,\n  do_not_consolidate     = EXCLUDED.do_not_consolidate,\n  responsible            = EXCLUDED.responsible,\n  last_modified_datetime = EXCLUDED.last_modified_datetime,\n  updated_at             = NOW()\nRETURNING *;",
         "options": {
           "queryReplacement": "{{$json.companyName}}\n{{$json.no}}\n{{$json.description}}\n{{$json.departamento}}\n{{$json.probability}}\n{{$json.tipoProyecto}}\n{{$json.estado}}\n{{$json.fechaFin}}\n{{ $json.doNotConsolidate ? 'true' : 'false' }}\n{{$json.responsible}}\n{{$json.lastModifiedDateTime}}"
         }
@@ -314,7 +309,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Build sync_state map').first().json.company;\nconst data = input[0].json;\nconst proyectos = data.value || [];\nconst items = [];\n\nconst allowed = new Set(['Planning','Quote','Open','Completed','Lost']);\n\n// helpers\nconst cleanDate = (v) => {\n  const s = String(v ?? '').trim();\n  if (!s || s === '0001-01-01') return '';\n  return s;\n};\nconst toBool = (v) => {\n  const s = String(v).toLowerCase();\n  return s === 'true' || s === '1' || s === 't' || s === 'yes';\n};\n\nfor (const p of proyectos) {\n  // DEBUG: Log para ver los datos originales\n  console.log('Proyecto original:', JSON.stringify(p));\n  \n  const statusRaw = p.estado ?? p.Estado ?? p.status ?? '';\n  const status = String(statusRaw).trim();\n  \n  // Normalizar status: si no est\u00e1 en la lista permitida, usar 'Open'\n  const normalizedStatus = allowed.has(status) ? status : 'Open';\n\n  // Manejar valores no num\u00e9ricos en Probability - M\u00c1S ROBUSTO\n  let probability = 0;\n  const probValue = p.Probability ?? p.probability;\n  \n  if (probValue !== undefined && probValue !== null) {\n    if (typeof probValue === 'string' && probValue.trim() === '') {\n      probability = 0;\n    } else {\n      const num = Number(probValue);\n      if (!isNaN(num) && isFinite(num)) {\n        probability = num;\n      }\n    }\n  }\n  \n  // DEBUG: Log para ver la transformaci\u00f3n\n  console.log('Probability transformado:', probability, 'de:', probValue);\n  \n  const no = String(p.no || '').trim();\n  const description = String(p.description || '').trim();\n  const departamento = String(p.departamento || p.globalDimension1Code || '').trim();\n  const tipoProyecto = String(p.TipoProyecto ?? p.tipoProyecto ?? '').trim();\n  const fechaFin = cleanDate(p.Fechafin ?? p.fechaFin ?? p.endingDate ?? '');\n  const doNotConsolidate = (typeof p.DoNotConsolidate === 'boolean') ? p.DoNotConsolidate : toBool(p.DoNotConsolidate);\n  const responsible = String(p.Responsible ?? p.responsible ?? '').trim();\n  const lastModifiedDateTime = String(p.lastModifiedDateTime ?? p.last_modified_datetime ?? '').trim();\n\n  // Crear objeto con nombres de campo en min\u00fasculas para evitar problemas\n  const proyectoTransformado = {\n    companyName,\n    no,\n    description,\n    departamento,\n    probability: probability,  // min\u00fascula\n    tipoProyecto: tipoProyecto,  // min\u00fascula\n    estado: normalizedStatus,  // min\u00fascula\n    fechaFin: fechaFin,  // min\u00fascula\n    doNotConsolidate: doNotConsolidate,\n    responsible: responsible,  // min\u00fascula\n    lastModifiedDateTime,\n  };\n\n  // DEBUG: Verificar el objeto transformado\n  console.log('Proyecto transformado:', JSON.stringify(proyectoTransformado));\n\n  items.push({\n    json: proyectoTransformado,\n  });\n}\n\nreturn items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Build sync_state map').first().json.company;\nconst data = input[0].json;\nconst proyectos = data.value || [];\nconst items = [];\n\nconst allowed = new Set(['Planning','Quote','Open','Completed','Lost']);\n\n// helpers\nconst cleanDate = (v) => {\n  const s = String(v ?? '').trim();\n  if (!s || s === '0001-01-01') return '';\n  return s;\n};\nconst toBool = (v) => {\n  const s = String(v).toLowerCase();\n  return s === 'true' || s === '1' || s === 't' || s === 'yes';\n};\n\nfor (const p of proyectos) {\n  // DEBUG: Log para ver los datos originales\n  console.log('Proyecto original:', JSON.stringify(p));\n  \n  const statusRaw = p.estado ?? p.Estado ?? p.status ?? '';\n  const status = String(statusRaw).trim();\n  \n  // Normalizar status: si no está en la lista permitida, usar 'Open'\n  const normalizedStatus = allowed.has(status) ? status : 'Open';\n\n  // Manejar valores no numéricos en Probability - MÁS ROBUSTO\n  let probability = 0;\n  const probValue = p.Probability ?? p.probability;\n  \n  if (probValue !== undefined && probValue !== null) {\n    if (typeof probValue === 'string' && probValue.trim() === '') {\n      probability = 0;\n    } else {\n      const num = Number(probValue);\n      if (!isNaN(num) && isFinite(num)) {\n        probability = num;\n      }\n    }\n  }\n  \n  // DEBUG: Log para ver la transformación\n  console.log('Probability transformado:', probability, 'de:', probValue);\n  \n  const no = String(p.no || '').trim();\n  const description = String(p.description || '').trim();\n  const departamento = String(p.departamento || p.globalDimension1Code || '').trim();\n  const tipoProyecto = String(p.TipoProyecto ?? p.tipoProyecto ?? '').trim();\n  const fechaFin = cleanDate(p.Fechafin ?? p.fechaFin ?? p.endingDate ?? '');\n  const doNotConsolidate = (typeof p.DoNotConsolidate === 'boolean') ? p.DoNotConsolidate : toBool(p.DoNotConsolidate);\n  const responsible = String(p.Responsible ?? p.responsible ?? '').trim();\n  const lastModifiedDateTime = String(p.lastModifiedDateTime ?? p.last_modified_datetime ?? '').trim();\n\n  // Crear objeto con nombres de campo en minúsculas para evitar problemas\n  const proyectoTransformado = {\n    companyName,\n    no,\n    description,\n    departamento,\n    probability: probability,  // minúscula\n    tipoProyecto: tipoProyecto,  // minúscula\n    estado: normalizedStatus,  // minúscula\n    fechaFin: fechaFin,  // minúscula\n    doNotConsolidate: doNotConsolidate,\n    responsible: responsible,  // minúscula\n    lastModifiedDateTime,\n  };\n\n  // DEBUG: Verificar el objeto transformado\n  console.log('Proyecto transformado:', JSON.stringify(proyectoTransformado));\n\n  items.push({\n    json: proyectoTransformado,\n  });\n}\n\nreturn items;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -966,56 +961,5 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "staticData": null,
-  "meta": null,
-  "pinData": {},
-  "versionId": "70ba7340-2af5-45a1-943d-0c24d2774207",
-  "triggerCount": 1,
-  "shared": [
-    {
-      "createdAt": "2025-09-29T06:58:11.842Z",
-      "updatedAt": "2025-09-29T06:58:11.842Z",
-      "role": "workflow:owner",
-      "workflowId": "5xXYMywFBYBL5TGM",
-      "projectId": "ijP8FvHt2ZVVaBt9",
-      "project": {
-        "createdAt": "2025-08-25T17:25:17.353Z",
-        "updatedAt": "2025-08-25T17:27:29.880Z",
-        "id": "ijP8FvHt2ZVVaBt9",
-        "name": "Daniel Bertona Sanchez <dbertona@powersolution.es>",
-        "type": "personal",
-        "icon": null,
-        "description": null,
-        "projectRelations": [
-          {
-            "createdAt": "2025-08-25T17:25:17.353Z",
-            "updatedAt": "2025-08-25T17:25:17.353Z",
-            "role": "project:personalOwner",
-            "userId": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
-            "projectId": "ijP8FvHt2ZVVaBt9",
-            "user": {
-              "createdAt": "2025-08-25T17:25:16.887Z",
-              "updatedAt": "2025-09-29T22:12:10.000Z",
-              "id": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
-              "email": "dbertona@powersolution.es",
-              "firstName": "Daniel",
-              "lastName": "Bertona Sanchez",
-              "personalizationAnswers": null,
-              "settings": {
-                "userActivated": true,
-                "firstSuccessfulWorkflowId": "71xpeeX1apKTpNe0",
-                "userActivatedAt": 1756717935545
-              },
-              "role": "global:owner",
-              "disabled": false,
-              "mfaEnabled": false,
-              "lastActiveAt": "2025-09-29",
-              "isPending": false
-            }
-          }
-        ]
-      }
-    }
-  ],
-  "tags": []
+  "staticData": null
 }

@@ -1,0 +1,119 @@
+{
+  "name": "business-central-token-refresh",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            1,
+            "hours"
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBasicAuth",
+        "sendBody": true,
+        "bodyContentType": "x-www-form-urlencoded",
+        "options": {}
+      },
+      "id": "refresh-token",
+      "name": "Refresh Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        464,
+        300
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Business Central OAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verificar si la renovación fue exitosa\nconst response = $input.first().json;\n\nif (response.access_token) {\n  console.log('✅ Token renovado exitosamente');\n  return [{ json: { success: true, message: 'Token renovado', timestamp: new Date().toISOString() } }];\n} else {\n  console.log('❌ Error renovando token:', response);\n  return [{ json: { success: false, error: response.error, message: response.error_description, timestamp: new Date().toISOString() } }];\n}"
+      },
+      "id": "check-response",
+      "name": "Check Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "item",
+        "item": {
+          "json": {
+            "success": "={{ $json.success }}",
+            "message": "={{ $json.message }}",
+            "timestamp": "={{ $json.timestamp }}"
+          }
+        }
+      },
+      "id": "format-output",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Refresh Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh Token": {
+      "main": [
+        [
+          {
+            "node": "Check Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Response": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null
+}

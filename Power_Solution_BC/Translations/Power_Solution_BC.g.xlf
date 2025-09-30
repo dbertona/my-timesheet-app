@@ -1168,6 +1168,86 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table PS_Resultado - Field ID - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 1824322774 - Field 1357648586 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Attempts</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncQueue - Field Attempts - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1824322774 - Field 3997336476 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Company Name</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncQueue - Field Company Name - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1824322774 - Field 2570673311 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Created At</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncQueue - Field Created At - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1824322774 - Field 3247369565 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Entity</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncQueue - Field Entity - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1824322774 - Field 1270596704 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Event Type</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncQueue - Field Event Type - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1824322774 - Field 442663435 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Http Status Code</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncQueue - Field Http Status Code - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1824322774 - Field 3641927271 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncQueue - Field ID - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1824322774 - Field 401751910 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Last Error</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncQueue - Field Last Error - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1824322774 - Field 1175426187 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Last Response</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncQueue - Field Last Response - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1824322774 - Field 4208776898 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Payload</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncQueue - Field Payload - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1824322774 - Field 2446130881 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Processed At</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncQueue - Field Processed At - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1824322774 - Field 513339096 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Status</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncQueue - Field Status - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1581670352 - Field 4253087169 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>API Key</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncSetup - Field API Key - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1581670352 - Field 2398091030 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Debounce Seconds</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncSetup - Field Debounce Seconds - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1581670352 - Field 1663593181 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Primary Key</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncSetup - Field Primary Key - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1581670352 - Field 2980039796 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Webhook URL</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table PS_SyncSetup - Field Webhook URL - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 3060711032 - Field 1211660521 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Adjustment</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -5897,6 +5977,41 @@
           <source>Actual Cost</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page PS_Stadistycs - Control UsageCostLCYTotal - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 676435988 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>PS Sync Queue</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS_SyncQueue List - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 676435988 - Action 3191213951 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Marcar como Hecho</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS_SyncQueue List - Action MarkDone - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 676435988 - Action 1471555966 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Marcar como Pendiente</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS_SyncQueue List - Action MarkPending - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 676435988 - Action 3309156975 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Procesar ahora</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS_SyncQueue List - Action ProcessNow - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 676435988 - Action 59167481 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Ver detalle</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS_SyncQueue List - Action ViewDetails - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3773769156 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>PS Sync Setup</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS_SyncSetup Card - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3773769156 - Action 3777777959 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Probar Webhook</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page PS_SyncSetup Card - Action TestWebhook - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 4114494469 - Control 149686053 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Job No. Texto</source>

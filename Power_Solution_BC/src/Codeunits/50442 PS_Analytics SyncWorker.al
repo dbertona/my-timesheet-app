@@ -48,6 +48,9 @@ codeunit 50442 "PS_Analytics SyncWorker"
         NowDT: DateTime;
         DebounceDur: Duration;
         StatusCode: Integer;
+        PollUrl: Text;
+        PollResp: HttpResponseMessage;
+        PollBody: Text;
     begin
         if not Setup.FindFirst() then begin
             exit;
@@ -96,15 +99,46 @@ codeunit 50442 "PS_Analytics SyncWorker"
                         Queue."Last Response" := CopyStr(RespBody, 1, MaxStrLen(Queue."Last Response"));
 
                     if Resp.IsSuccessStatusCode() then begin
-                        // Parsear "status" del JSON: si contiene "error" → marcar Error
-                        if (StrPos(RespBody, '"status":"error"') > 0) or (StrPos(RespBody, '"status":"partial_error"') > 0) then begin
-                            Queue.Status := Queue.Status::Error;
-                            Queue."Last Error" := CopyStr(ExtractErrorSummary(RespBody), 1, MaxStrLen(Queue."Last Error"));
+                        // Si no hay body o no es conclusivo, hacemos polling a Supabase sync_executions
+                        if (StrLen(RespBody) = 0) or (StrPos(RespBody, '"status":') = 0) then begin
+                            // Construir URL: {Supabase REST URL}/sync_executions?company_name=eq.{Company}&order=finished_at.desc&limit=1
+                            if (Setup."Supabase REST URL" <> '') and (Setup."Supabase API Key" <> '') then begin
+                                PollUrl := Setup."Supabase REST URL" + '/sync_executions?company_name=eq.' + Queue."Company Name" + '&order=finished_at.desc&limit=1';
+                                Http.DefaultRequestHeaders().Remove('apikey');
+                                Http.DefaultRequestHeaders().Remove('Authorization');
+                                Http.DefaultRequestHeaders().Add('apikey', Setup."Supabase API Key");
+                                Http.DefaultRequestHeaders().Add('Authorization', 'Bearer ' + Setup."Supabase API Key");
+                                if Http.Get(PollUrl, PollResp) then begin
+                                    if PollResp.Content().ReadAs(PollBody) then begin
+                                        // Guardar respuesta
+                                        Queue."Last Response" := CopyStr(PollBody, 1, MaxStrLen(Queue."Last Response"));
+                                        // Determinar estado a partir de JSON array con último registro
+                                        if (StrPos(PollBody, '"status":"error"') > 0) or (StrPos(PollBody, '"status":"partial_error"') > 0) then begin
+                                            Queue.Status := Queue.Status::Error;
+                                            Queue."Last Error" := CopyStr(ExtractErrorSummary(PollBody), 1, MaxStrLen(Queue."Last Error"));
+                                        end else begin
+                                            Queue.Status := Queue.Status::Done;
+                                        end;
+                                        Queue."Processed At" := CurrentDateTime();
+                                        Queue.Modify(true);
+                                    end;
+                                end;
+                            end else begin
+                                // Fallback: sin supabase config, usar 200 OK como Done
+                                Queue.Status := Queue.Status::Done;
+                                Queue."Processed At" := CurrentDateTime();
+                                Queue.Modify(true);
+                            end;
                         end else begin
-                            Queue.Status := Queue.Status::Done;
+                            // Body con status
+                            if (StrPos(RespBody, '"status":"error"') > 0) or (StrPos(RespBody, '"status":"partial_error"') > 0) then begin
+                                Queue.Status := Queue.Status::Error;
+                                Queue."Last Error" := CopyStr(ExtractErrorSummary(RespBody), 1, MaxStrLen(Queue."Last Error"));
+                            end else
+                                Queue.Status := Queue.Status::Done;
+                            Queue."Processed At" := CurrentDateTime();
+                            Queue.Modify(true);
                         end;
-                        Queue."Processed At" := CurrentDateTime();
-                        Queue.Modify(true);
                     end else begin
                         Queue.Status := Queue.Status::Error;
                         Queue."Last Error" := CopyStr(Resp.ReasonPhrase(), 1, MaxStrLen(Queue."Last Error"));

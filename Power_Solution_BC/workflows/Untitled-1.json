@@ -1,0 +1,231 @@
+{
+    "name": "BC → PS_Analytics (Proyectos, paginado + upsert compuesto)",
+    "nodes": [
+      {
+        "id": "Manual",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [ 140, 280 ]
+      },
+      {
+        "id": "Config",
+        "name": "Config",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 2,
+        "position": [ 360, 280 ],
+        "parameters": {
+          "mode": "keepKeyMatches",
+          "assignments": {
+            "values": [
+              { "name": "companyName", "value": "Power Solution Iberia SL" },
+              { "name": "bcCompanyId", "value": "REEMPLAZA_POR_ID_DE_COMPANY_EN_BC" },
+              { "name": "tenantId", "value": "REEMPLAZA_TENANT_GUID" },
+              { "name": "env", "value": "production" },
+              { "name": "pageTop", "value": 200 },
+              { "name": "defaultStartIso", "value": "2023-12-01T00:00:00Z" },
+              { "name": "proyectosBaseUrl", "value": "https://api.businesscentral.dynamics.com/v2.0/{{ $json.tenantId }}/{{ $json.env }}/api/v2.0/companies({{ $json.bcCompanyId }})/proyectos" }
+            ]
+          }
+        }
+      },
+      {
+        "id": "Now",
+        "name": "Compute now (ISO)",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 2,
+        "position": [ 360, 420 ],
+        "parameters": {
+          "functionCode": "return [{ nowIso: new Date().toISOString() }];"
+        }
+      },
+      {
+        "id": "GetLastSync",
+        "name": "Get last_sync_at (proyectos)",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 1,
+        "position": [ 580, 280 ],
+        "credentials": { "postgres": { "name": "PS Analytics DB" } },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT last_sync_at FROM public.sync_state WHERE company_name = $1 AND entity = 'proyectos' LIMIT 1;",
+          "additionalFields": {
+            "queryParams": "={{ JSON.stringify([$json.companyName]) }}"
+          }
+        }
+      },
+      {
+        "id": "ResolveStart",
+        "name": "Resolve start ISO",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 2,
+        "position": [ 800, 280 ],
+        "parameters": {
+          "functionCode": "const has = (items) => Array.isArray(items) && items.length && items[0].last_sync_at;\nconst last = has(items) ? items[0].last_sync_at : null;\nreturn [{ startIso: last || $json.defaultStartIso }];"
+        }
+      },
+      {
+        "id": "FetchPage1",
+        "name": "Fetch Proyectos (page 1)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 5,
+        "position": [ 1020, 280 ],
+        "credentials": { "oAuth2Api": { "name": "BC S2S (Client Credentials)" } },
+        "parameters": {
+          "authentication": "oAuth2",
+          "requestMethod": "GET",
+          "url": "={{$json.proyectosBaseUrl}}",
+          "responseFormat": "json",
+          "sendQuery": true,
+          "queryParametersUi": {
+            "parameter": [
+              { "name": "$top", "value": "={{$json.pageTop}}"},
+              { "name": "$filter", "value": "={{\"lastModifiedDateTime ge '\" + $json.startIso + \"'\"}}"}
+            ]
+          }
+        }
+      },
+      {
+        "id": "Aggregate",
+        "name": "Aggregate (append pages)",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 2,
+        "position": [ 1260, 280 ],
+        "parameters": {
+          "mode": "passThrough",
+          "combineOperation": "append"
+        }
+      },
+      {
+        "id": "HasNext",
+        "name": "Has @odata.nextLink?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [ 1480, 280 ],
+        "parameters": {
+          "conditions": {
+            "boolean": [{ "value1": "={{ !!$json['@odata.nextLink'] }}", "operation": "isTrue" }]
+          }
+        }
+      },
+      {
+        "id": "FetchNext",
+        "name": "Fetch next page",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 5,
+        "position": [ 1700, 220 ],
+        "credentials": { "oAuth2Api": { "name": "BC S2S (Client Credentials)" } },
+        "parameters": {
+          "authentication": "oAuth2",
+          "requestMethod": "GET",
+          "url": "={{ $json['@odata.nextLink'] }}",
+          "responseFormat": "json"
+        }
+      },
+      {
+        "id": "LoopMerge",
+        "name": "Merge pages",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 2,
+        "position": [ 1920, 280 ],
+        "parameters": {
+          "mode": "passThrough",
+          "combineOperation": "append"
+        }
+      },
+      {
+        "id": "LoopBack",
+        "name": "Loop back if next",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [ 2140, 280 ]
+      },
+      {
+        "id": "ExtractValues",
+        "name": "Extract value[]",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 2,
+        "position": [ 2360, 280 ],
+        "parameters": {
+          "functionCode": "const out=[]; for (const it of items){\n  const arr = it.json.value || [];\n  for (const r of arr) out.push({json:r});\n}\nreturn out;"
+        }
+      },
+      {
+        "id": "MapFields",
+        "name": "Map → proyectos (normalize)",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 2,
+        "position": [ 2580, 280 ],
+        "parameters": {
+          "functionCode": "function b(v){return typeof v==='string'?v.trim():v}\nfunction num(v){ if(v===null||v===undefined||v==='') return 0; const n=Number(v); return isNaN(n)?0:n }\nfunction dateOrNull(v){ if(!v) return null; if(v==='0001-01-01' || v==='0001-01-01T00:00:00Z') return null; return v }\nreturn items.map(it=>({json:{\n  company_name: $items(\"Config\")[0].json.companyName,\n  no: String(it.json.no||it.json.No||'').trim(),\n  description: b(it.json.description||it.json.Description||''),\n  departamento: b(it.json.departamento||it.json.Department||''),\n  probability: num(it.json.probability||it.json.Probability),\n  tipo_proyecto: b(it.json.tipoProyecto||it.json.ProjectType||''),\n  estado: b(it.json.estado||it.json.Status||''),\n  fecha_fin: dateOrNull(it.json.fechaFin||it.json.EndDate||null),\n  do_not_consolidate: !!(it.json.doNotConsolidate===true || String(it.json.doNotConsolidate).match(/^(true|1|t|yes)$/i)),\n  responsible: b(it.json.responsible||it.json.Responsible||''),\n  last_modified_datetime: b(it.json.lastModifiedDateTime||it.json.LastModifiedDateTime||null)\n}}));"
+        }
+      },
+      {
+        "id": "UpsertProyectos",
+        "name": "Upsert proyectos (ON CONFLICT company,\"no\")",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 1,
+        "position": [ 2800, 280 ],
+        "credentials": { "postgres": { "name": "PS Analytics DB" } },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO public.proyectos\n(company_name, \"no\", description, departamento, probability, tipo_proyecto, estado, fecha_fin, do_not_consolidate, responsible, last_modified_datetime, updated_at)\nVALUES (\n  '{{$json.company_name}}',\n  '{{$json.no}}',\n  '{{$json.description}}',\n  '{{$json.departamento}}',\n  {{ $json.probability || 0 }},\n  '{{$json.tipo_proyecto}}',\n  '{{$json.estado}}',\n  {{ $json.fecha_fin ? `'${$json.fecha_fin}'::date` : 'NULL' }},\n  {{ $json.do_not_consolidate ? 'true' : 'false' }},\n  '{{$json.responsible}}',\n  {{ $json.last_modified_datetime ? `'${$json.last_modified_datetime}'::timestamptz` : 'NULL' }},\n  NOW()\n)\nON CONFLICT (company_name, \"no\") DO UPDATE SET\n  description = EXCLUDED.description,\n  departamento = EXCLUDED.departamento,\n  probability = EXCLUDED.probability,\n  tipo_proyecto = EXCLUDED.tipo_proyecto,\n  estado = EXCLUDED.estado,\n  fecha_fin = EXCLUDED.fecha_fin,\n  do_not_consolidate = EXCLUDED.do_not_consolidate,\n  responsible = EXCLUDED.responsible,\n  last_modified_datetime = EXCLUDED.last_modified_datetime,\n  updated_at = NOW();",
+          "additionalFields": { "enableBatchQueries": true }
+        }
+      },
+      {
+        "id": "WaitAll",
+        "name": "Wait (barrier)",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 2,
+        "position": [ 3020, 280 ],
+        "parameters": { "mode": "passThrough", "combineOperation": "mergeByIndex" }
+      },
+      {
+        "id": "UpdateSyncState",
+        "name": "UPSERT sync_state",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 1,
+        "position": [ 3240, 280 ],
+        "credentials": { "postgres": { "name": "PS Analytics DB" } },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO public.sync_state (company_name, entity, last_sync_at)\nVALUES ('{{$items(\"Config\")[0].json.companyName}}','proyectos','{{$items(\"Now\")[0].json.nowIso}}')\nON CONFLICT (company_name, entity)\nDO UPDATE SET last_sync_at = EXCLUDED.last_sync_at;"
+        }
+      },
+      {
+        "id": "Done",
+        "name": "Response (OK)",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [ 3460, 280 ],
+        "parameters": {
+          "responseBody": "={\"status\":\"ok\",\"entity\":\"proyectos\",\"updated_at\":\"{{$items(\"Now\")[0].json.nowIso}}\"}",
+          "responseCode": 200
+        }
+      }
+    ],
+    "connections": {
+      "Manual Trigger": { "main": [ [ { "node": "Config", "type": "main", "index": 0 }, { "node": "Now", "type": "main", "index": 0 } ] ] },
+      "Config": { "main": [ [ { "node": "Get last_sync_at (proyectos)", "type": "main", "index": 0 } ] ] },
+      "Get last_sync_at (proyectos)": { "main": [ [ { "node": "Resolve start ISO", "type": "main", "index": 0 } ] ] },
+      "Resolve start ISO": { "main": [ [ { "node": "Fetch Proyectos (page 1)", "type": "main", "index": 0 } ] ] },
+      "Fetch Proyectos (page 1)": { "main": [ [ { "node": "Aggregate (append pages)", "type": "main", "index": 0 } ] ] },
+      "Aggregate (append pages)": { "main": [ [ { "node": "Has @odata.nextLink?", "type": "main", "index": 0 } ] ] },
+      "Has @odata.nextLink?": {
+        "main": [
+          [ { "node": "Fetch next page", "type": "main", "index": 0 } ],
+          [ { "node": "Extract value[]", "type": "main", "index": 0 } ]
+        ]
+      },
+      "Fetch next page": { "main": [ [ { "node": "Merge pages", "type": "main", "index": 1 } ] ] },
+      "Aggregate (append pages) -> Has @odata.nextLink? loop": {},
+      "Merge pages": { "main": [ [ { "node": "Has @odata.nextLink?", "type": "main", "index": 0 } ] ] },
+      "Extract value[]": { "main": [ [ { "node": "Map → proyectos (normalize)", "type": "main", "index": 0 } ] ] },
+      "Map → proyectos (normalize)": { "main": [ [ { "node": "Upsert proyectos (ON CONFLICT company,\"no\")", "type": "main", "index": 0 } ] ] },
+      "Upsert proyectos (ON CONFLICT company,\"no\")": { "main": [ [ { "node": "Wait (barrier)", "type": "main", "index": 0 } ] ] },
+      "Now": { "main": [ [ { "node": "Wait (barrier)", "type": "main", "index": 1 } ] ] },
+      "Wait (barrier)": { "main": [ [ { "node": "UPSERT sync_state", "type": "main", "index": 0 } ] ] },
+      "UPSERT sync_state": { "main": [ [ { "node": "Response (OK)", "type": "main", "index": 0 } ] ] }
+    }
+  }

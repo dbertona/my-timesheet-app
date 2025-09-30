@@ -43,7 +43,7 @@ on run
             key code 36 -- Return
         end tell
     end tell
-    
+
     -- Esperar descarga de símbolos
     delay 3.0
 

@@ -1,4 +1,4 @@
-codeunit 50441 "PS_Analytics Webhook Dispatcher"
+codeunit 50441 "PS_Analytics WebhookSync"
 {
     SingleInstance = true;
 
@@ -143,40 +143,18 @@ codeunit 50441 "PS_Analytics Webhook Dispatcher"
 
     local procedure TriggerSync(Entity: Text)
     var
-        Client: HttpClient;
-        Content: HttpContent;
-        Headers: HttpHeaders;
-        Response: HttpResponseMessage;
-        Body: Text;
+        Q: Record "PS_SyncQueue";
         CompanyNameTxt: Text;
-        Slug: Text;
-        Url: Text;
     begin
         CompanyNameTxt := CompanyName();
-
-        case CompanyNameTxt of
-            'Power Solution Iberia SL':
-                Slug := 'psi';
-            'PS LAB CONSULTING SL':
-                Slug := 'pslab';
-            else
-                Slug := '';
-        end;
-
-        Url := 'http://192.168.88.68:5678/webhook/sync-recursos-y-ps-years-psanalytics';
-        if Slug <> '' then
-            Url := Url + '?company=' + Slug;
-
-        Body := '{"companyName":"' + CompanyNameTxt + '","entity":"' + Entity + '"}';
-
-        Content.Clear();
-        Content.WriteFrom(Body);
-        Content.GetHeaders(Headers);
-        Headers.Remove('Content-Type');
-        Headers.Add('Content-Type', 'application/json');
-
-        Client.Post(Url, Content, Response);
-        // En esta primera versión, no se gestionan reintentos ni respuesta.
+        Q.Init();
+        Q."Company Name" := CompanyNameTxt;
+        Q.Entity := Entity;
+        Q."Event Type" := Q."Event Type"::Modify; // genérico
+        Q.Status := Q.Status::Pending;
+        Q."Attempts" := 0;
+        Q."Created At" := CurrentDateTime();
+        Q.Insert(true);
     end;
 }
 

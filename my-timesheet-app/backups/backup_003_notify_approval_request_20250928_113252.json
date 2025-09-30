@@ -1,0 +1,246 @@
+{
+  "createdAt": "2025-09-24T16:09:32.719Z",
+  "updatedAt": "2025-09-28T09:30:24.153Z",
+  "id": "PDULMvttkJXEIhOY",
+  "name": "003_notify_approval_request",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "notify-approval-request",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "webhook-trigger",
+      "name": "Webhook - Notificación Aprobación",
+      "webhookId": "notify-approval-request-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Procesar datos de la solicitud de aprobación\nconst input = $input.all()[0];\nconst payload = input.json;\n\nconst {\n  header_id,\n  requester_email,\n  approver_codes = [],\n  recipients = [],\n  env\n} = payload;\n\n// Validar datos requeridos\nif (!header_id) {\n  return [{\n    json: {\n      error: 'header_id es requerido',\n      status: 'error'\n    }\n  }];\n}\n\n// Construir objeto de datos para el email\nconst emailData = {\n  header_id,\n  requester_email: requester_email || 'desconocido',\n  approver_codes,\n  recipients,\n  env,\n  timestamp: new Date().toISOString(),\n  subject: `Solicitud de Aprobación - Timesheet #${header_id.substring(0, 8)}`,\n  message: `Se ha enviado una solicitud de aprobación para el timesheet ${header_id}.\n\nDetalles:\n- Solicitante: ${requester_email || 'desconocido'}\n- Aprobadores: ${approver_codes.length} responsables\n- Destinatarios: ${recipients.length} emails\n- Entorno: ${env || 'desconocido'}\n\nPor favor, revisa la solicitud en el sistema de timesheet.`\n};\n\nreturn [{\n  json: emailData\n}];"
+      },
+      "id": "process-approval-data",
+      "name": "Procesar Datos Aprobación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "split-recipients",
+      "name": "Split por Destinatario",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        608,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Preparar email para cada destinatario\n// Obtener datos originales del nodo anterior\nconst emailData = $('Procesar Datos Aprobación').first().json;\nconst currentRecipient = $('Split por Destinatario').item.json;\n\n// Validar que tenemos los datos necesarios\nif (!emailData || !emailData.header_id) {\n  return [{\n    json: {\n      error: 'Datos de email no disponibles',\n      status: 'error'\n    }\n  }];\n}\n\n// Formato correcto para Microsoft Outlook\nconst emailConfig = {\n  toRecipients: currentRecipient,\n  subject: emailData.subject,\n  html: `\n    <!DOCTYPE html>\n    <html>\n    <head>\n      <meta charset=\"utf-8\">\n      <style>\n        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }\n        .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n        .header { background: #007c89; color: white; padding: 20px; text-align: center; }\n        .content { padding: 20px; background: #f9f9f9; }\n        .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }\n        .button { background: #007c89; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; }\n      </style>\n    </head>\n    <body>\n      <div class=\"container\">\n        <div class=\"header\">\n          <h1>📋 Solicitud de Aprobación</h1>\n        </div>\n        <div class=\"content\">\n          <h2>Timesheet Pendiente de Aprobación</h2>\n          <p><strong>ID:</strong> ${emailData.header_id}</p>\n          <p><strong>Solicitante:</strong> ${emailData.requester_email}</p>\n          <p><strong>Fecha:</strong> ${new Date(emailData.timestamp).toLocaleString('es-ES')}</p>\n          \n          <p>Se ha enviado una solicitud de aprobación que requiere tu revisión.</p>\n          \n          <div style=\"text-align: center; margin: 30px 0;\">\n            <a href=\"${emailData.env === 'testing' ? 'https://testingapp.powersolution.es' : 'https://app.powersolution.es'}/my-timesheet-app/aprobacion\" class=\"button\">\n              Revisar Solicitud\n            </a>\n          </div>\n          \n          <p><em>Este es un mensaje automático, por favor no respondas a este email.</em></p>\n        </div>\n        <div class=\"footer\">\n          <p>Power Solution - Sistema de Timesheet</p>\n          <p>Entorno: ${emailData.env || 'desconocido'}</p>\n        </div>\n      </div>\n    </body>\n    </html>\n  `\n};\n\nreturn [{\n  json: {\n    ...emailData,\n    emailConfig\n  }\n}];"
+      },
+      "id": "prepare-email",
+      "name": "Preparar Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "toRecipients": "={{ $json.emailConfig.toRecipients }}",
+        "subject": "={{ $json.emailConfig.subject }}",
+        "bodyContent": "={{ $json.emailConfig.html }}",
+        "additionalFields": {
+          "from": "noreply@powersolution.es",
+          "replyTo": "noreply@powersolution.es"
+        }
+      },
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "send-email-outlook",
+      "name": "Enviar Email Outlook",
+      "webhookId": "4c622e7e-5ab3-44c6-9c78-dbfefe33f70c",
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "h00orQRUq5JSckyz",
+          "name": "Microsoft Outlook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Recopilar resultados del envío\nconst emailResults = $input.all();\nconst emailData = $('Procesar Datos Aprobación').first().json;\n\nconst sentEmails = emailResults\n  .filter(result => result.json && result.json.success)\n  .map(result => result.json.emailConfig.toRecipients);\n\nconst failedEmails = emailResults\n  .filter(result => result.json && !result.json.success)\n  .map(result => ({\n    to: result.json.emailConfig.toRecipients,\n    error: result.json.error\n  }));\n\nreturn [{\n  json: {\n    header_id: emailData.header_id,\n    total_recipients: emailData.recipients.length,\n    sent_count: sentEmails.length,\n    failed_count: failedEmails.length,\n    sent_emails: sentEmails,\n    failed_emails: failedEmails,\n    timestamp: new Date().toISOString(),\n    status: failedEmails.length === 0 ? 'success' : 'partial'\n  }\n}];"
+      },
+      "id": "collect-results",
+      "name": "Recopilar Resultados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  success: true,\n  message: 'Notificación de aprobación procesada',\n  header_id: $json.header_id,\n  total_recipients: $json.total_recipients,\n  sent_count: $json.sent_count,\n  failed_count: $json.failed_count,\n  timestamp: $json.timestamp,\n  status: $json.status\n} }}",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Respuesta Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1808,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - Notificación Aprobación": {
+      "main": [
+        [
+          {
+            "node": "Procesar Datos Aprobación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar Datos Aprobación": {
+      "main": [
+        [
+          {
+            "node": "Split por Destinatario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split por Destinatario": {
+      "main": [
+        [
+          {
+            "node": "Preparar Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Email": {
+      "main": [
+        [
+          {
+            "node": "Enviar Email Outlook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Email Outlook": {
+      "main": [
+        [
+          {
+            "node": "Recopilar Resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recopilar Resultados": {
+      "main": [
+        [
+          {
+            "node": "Respuesta Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "063fdbd7-ad84-4cc5-b5f8-e0580108ab5b",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "createdAt": "2025-09-24T16:09:32.721Z",
+      "updatedAt": "2025-09-24T16:09:32.721Z",
+      "role": "workflow:owner",
+      "workflowId": "PDULMvttkJXEIhOY",
+      "projectId": "ijP8FvHt2ZVVaBt9",
+      "project": {
+        "createdAt": "2025-08-25T17:25:17.353Z",
+        "updatedAt": "2025-08-25T17:27:29.880Z",
+        "id": "ijP8FvHt2ZVVaBt9",
+        "name": "Daniel Bertona Sanchez <dbertona@powersolution.es>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-08-25T17:25:17.353Z",
+            "updatedAt": "2025-08-25T17:25:17.353Z",
+            "role": "project:personalOwner",
+            "userId": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
+            "projectId": "ijP8FvHt2ZVVaBt9",
+            "user": {
+              "createdAt": "2025-08-25T17:25:16.887Z",
+              "updatedAt": "2025-09-28T09:03:39.000Z",
+              "id": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
+              "email": "dbertona@powersolution.es",
+              "firstName": "Daniel",
+              "lastName": "Bertona Sanchez",
+              "personalizationAnswers": null,
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "71xpeeX1apKTpNe0",
+                "userActivatedAt": 1756717935545
+              },
+              "role": "global:owner",
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-09-27",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}
