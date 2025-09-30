@@ -950,17 +950,6 @@
       "main": [
         [
           {
-            "node": "Insert Sync Execution",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Insert Sync Execution": {
-      "main": [
-        [
-          {
             "node": "Response Success",
             "type": "main",
             "index": 0
