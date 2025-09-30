@@ -24,6 +24,9 @@ query 50204 PS_EquipoProyectos
             column(ARBVRNResourceNo; ARBVRNResourceNo)
             {
             }
+            column(lastModifiedDateTime; SystemModifiedAt)
+            {
+            }
         }
     }
 
