@@ -51,6 +51,10 @@ codeunit 50442 "PS_Analytics SyncWorker"
         PollUrl: Text;
         PollResp: HttpResponseMessage;
         PollBody: Text;
+        SuccessPos: Integer;
+        SuccessStr: Text;
+        SuccessComma: Integer;
+        SuccessCount: Integer;
     begin
         if not Setup.FindFirst() then begin
             exit;
@@ -131,9 +135,34 @@ codeunit 50442 "PS_Analytics SyncWorker"
                             end;
                         end else begin
                             // Body con status
-                            if (StrPos(RespBody, '"status":"error"') > 0) or (StrPos(RespBody, '"status":"partial_error"') > 0) then begin
+                            if StrPos(RespBody, '"status":"error"') > 0 then begin
                                 Queue.Status := Queue.Status::Error;
                                 Queue."Last Error" := CopyStr(ExtractErrorSummary(RespBody), 1, MaxStrLen(Queue."Last Error"));
+                            end else if StrPos(RespBody, '"status":"partial_error"') > 0 then begin
+                                // partial_error es exitoso si hay al menos un éxito
+                                if StrPos(RespBody, '"success":') > 0 then begin
+                                    // Extraer número de éxitos
+                                    SuccessPos := StrPos(RespBody, '"success":');
+                                    if SuccessPos > 0 then begin
+                                        SuccessStr := CopyStr(RespBody, SuccessPos + 9, 10);
+                                        SuccessComma := StrPos(SuccessStr, ',');
+                                        if SuccessComma > 0 then
+                                            SuccessStr := CopyStr(SuccessStr, 1, SuccessComma - 1);
+                                        if Evaluate(SuccessCount, SuccessStr) and (SuccessCount > 0) then begin
+                                            Queue.Status := Queue.Status::Done;
+                                            Queue."Last Error" := CopyStr(ExtractErrorSummary(RespBody), 1, MaxStrLen(Queue."Last Error"));
+                                        end else begin
+                                            Queue.Status := Queue.Status::Error;
+                                            Queue."Last Error" := CopyStr(ExtractErrorSummary(RespBody), 1, MaxStrLen(Queue."Last Error"));
+                                        end;
+                                    end else begin
+                                        Queue.Status := Queue.Status::Done;
+                                        Queue."Last Error" := CopyStr(ExtractErrorSummary(RespBody), 1, MaxStrLen(Queue."Last Error"));
+                                    end;
+                                end else begin
+                                    Queue.Status := Queue.Status::Done;
+                                    Queue."Last Error" := CopyStr(ExtractErrorSummary(RespBody), 1, MaxStrLen(Queue."Last Error"));
+                                end;
                             end else
                                 Queue.Status := Queue.Status::Done;
                             Queue."Processed At" := CurrentDateTime();
