@@ -1,5 +1,10 @@
 {
+  "createdAt": "2025-09-03T06:32:12.599Z",
+  "updatedAt": "2025-09-26T12:29:57.000Z",
+  "id": "XSYOmZ8mRuaXl6sg",
   "name": "001_sincronizacion_completa_smart",
+  "active": false,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -341,8 +346,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        -800,
-        608
+        -816,
+        688
       ],
       "credentials": {
         "supabaseApi": {
@@ -566,7 +571,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\n\nconst data = input[0].json;\nconst rows = Array.isArray(data.value) ? data.value : [];\nconst items = [];\n\nfor (const r of rows) {\n  const calendar_code = String(r.calendar_code ?? r.calendarCode ?? r.calendar_type ?? r.calendarType ?? '').trim() || 'DEFAULT';\n  const day = String(r.day ?? r.Day ?? r.date ?? '').trim();\n  if (!day) continue;\n  const allocation_period = day.slice(0, 7);\n  const hours_working = Number(r.hours_working ?? r.hoursWorking ?? (r.is_working_day === false ? 0 : 8));\n  const holiday = !(hours_working > 0);\n\n  items.push({ json: { company_name: companyName, calendar_code, allocation_period, day, holiday, hours_working } });\n}\n\nreturn items;"
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\n\nconst data = input[0].json;\nconst rows = Array.isArray(data.value) ? data.value : [];\nconst items = [];\n\nfor (const r of rows) {\n  // DEBUG: Log todos los campos disponibles\n  console.log('Campos disponibles:', Object.keys(r));\n  console.log('Valor completo del registro:', JSON.stringify(r, null, 2));\n  \n  const allocation_period = String(r.allocation_period ?? r.allocationPeriod ?? '').trim();\n  const calendar_code = String(r.calendar_code ?? r.calendarCode ?? r.calendar ?? r.Calendar ?? r.ARBVRNCalendar ?? r.calendar_type ?? r.calendarType ?? '').trim();\nif (!calendar_code) continue;\n  const dayRaw = r.day ?? r.Day ?? r.date ?? '';\n  const dayStr = String(dayRaw).trim();\n\n  if (!allocation_period) continue;\n  if (!dayStr) continue;\n\n  const holiday = Boolean(r.holiday ?? r.Holiday ?? false);\n  const hours_working = Number(r.hours_working ?? r.hoursWorking ?? 0);\n\n  const dayNum = Number(dayStr);\n  const day = Number.isNaN(dayNum) ? dayStr : dayNum;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      allocation_period,\n      calendar_code,\n      day,\n      holiday,\n      hours_working,\n    },\n  });\n}\n\nreturn items;"
       },
       "id": "041410e4-bd77-424b-be93-99348f5a27ca",
       "name": "Transformar CalendarPeriodDays",
@@ -889,7 +894,6 @@
       }
     }
   ],
-  "pinData": {},
   "connections": {
     "HTTP - ProyectosTareas (filtrado)": {
       "main": [
@@ -1380,13 +1384,59 @@
       ]
     }
   },
-  "active": false,
   "settings": {},
-  "versionId": "0f21d3dd-f626-4368-b2c0-3399097e31c7",
+  "staticData": null,
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "5f4a76193498dfc211473f5de0a4e75faf68e0d1feb31e98054dc9c9b3f6aa8c"
+    "templateCredsSetupCompleted": true
   },
-  "id": "XSYOmZ8mRuaXl6sg",
+  "pinData": {},
+  "versionId": "01e81f45-c060-418e-8c0a-cfda505c7c81",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "createdAt": "2025-09-03T06:32:12.601Z",
+      "updatedAt": "2025-09-03T06:32:12.601Z",
+      "role": "workflow:owner",
+      "workflowId": "XSYOmZ8mRuaXl6sg",
+      "projectId": "ijP8FvHt2ZVVaBt9",
+      "project": {
+        "createdAt": "2025-08-25T17:25:17.353Z",
+        "updatedAt": "2025-08-25T17:27:29.880Z",
+        "id": "ijP8FvHt2ZVVaBt9",
+        "name": "Daniel Bertona Sanchez <dbertona@powersolution.es>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-08-25T17:25:17.353Z",
+            "updatedAt": "2025-08-25T17:25:17.353Z",
+            "role": "project:personalOwner",
+            "userId": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
+            "projectId": "ijP8FvHt2ZVVaBt9",
+            "user": {
+              "createdAt": "2025-08-25T17:25:16.887Z",
+              "updatedAt": "2025-09-28T09:03:39.000Z",
+              "id": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
+              "email": "dbertona@powersolution.es",
+              "firstName": "Daniel",
+              "lastName": "Bertona Sanchez",
+              "personalizationAnswers": null,
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "71xpeeX1apKTpNe0",
+                "userActivatedAt": 1756717935545
+              },
+              "role": "global:owner",
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-09-27",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
   "tags": []
 }

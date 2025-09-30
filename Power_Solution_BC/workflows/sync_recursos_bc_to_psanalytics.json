@@ -2,14 +2,14 @@
   "createdAt": "2025-09-28T09:43:13.949Z",
   "updatedAt": "2025-09-29T06:46:38.000Z",
   "id": "mDEUVZwVqcxvneOI",
-  "name": "sync_recursos_bc_to_psanalytics",
+  "name": "sync_recursos_y_ps_years_bc_to_psanalytics",
   "active": true,
   "isArchived": false,
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "sync-recursos-psanalytics",
+        "path": "sync-recursos-y-ps-years-psanalytics",
         "responseMode": "responseNode",
         "options": {}
       },

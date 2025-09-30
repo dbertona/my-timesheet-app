@@ -1,1 +1,953 @@
-{"createdAt":"2025-09-29T06:58:11.841Z","updatedAt":"2025-09-29T07:49:31.000Z","id":"5xXYMywFBYBL5TGM","name":"sync_bc_to_ps_analytics","active":true,"isArchived":false,"nodes":[{"parameters":{"httpMethod":"POST","path":"sync-recursos-y-ps-years-psanalytics","responseMode":"responseNode","options":{}},"id":"webhook-start","name":"Webhook Start","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[464,512],"webhookId":"sync-recursos-y-ps-years-webhook"},{"parameters":{"url":"={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(' + $json.companyId + ')/Recursos' }}","authentication":"genericCredentialType","genericAuthType":"oAuth2Api","sendQuery":true,"queryParameters":{"parameters":[{"name":"$select","value":"no,name,arbvrneMail,globalDimension1Code,calendario,fechaDeBaja,fechaDeAlta,subcontratacion,perfil,lastModifiedDateTime"},{"name":"$filter","value":"={{ 'lastModifiedDateTime ge ' + $json.lastSync }}"}]},"options":{}},"id":"bc-api-recursos","name":"BC API - Recursos","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[1360,320],"credentials":{"oAuth2Api":{"id":"5caHilW1m87Snw87","name":"Business Central"}}},{"parameters":{"url":"={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies(' + $json.companyId + ')/PS_Years' }}","authentication":"genericCredentialType","genericAuthType":"oAuth2Api","sendQuery":true,"queryParameters":{"parameters":[{"name":"$select","value":"PS_Year"},{"name":"$filter","value":"={{ 'lastModifiedDateTime ge ' + $json.lastSync }}"}]},"options":{}},"id":"bc-api-years","name":"BC API - PS_Years","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[1360,512],"credentials":{"oAuth2Api":{"id":"5caHilW1m87Snw87","name":"Business Central"}}},{"parameters":{"operation":"executeQuery","query":"INSERT INTO public.recursos\n(company_name, \"no\", name, arbvrn_email, global_dimension1_code, calendario,\n fecha_de_baja, fecha_de_alta, subcontratacion, perfil,\n last_modified_datetime, updated_at)\nSELECT\n  $1,                 -- company_name\n  $2,                 -- no\n  $3,                 -- name\n  NULLIF(btrim($4),''),  -- arbvrn_email, vacío → NULL\n  $5,                 -- global_dimension1_code\n  $6,                 -- calendario\n  NULLIF(NULLIF($7::text,''),'0001-01-01')::date,  -- fecha_de_baja\n  NULLIF(NULLIF($8::text,''),'0001-01-01')::date,  -- fecha_de_alta\n  CASE WHEN $9::text IN ('true','1','t','yes') THEN true ELSE false END, -- subcontratacion\n  $10,                -- perfil\n  NULLIF($11::text,'')::timestamptz,               -- last_modified_datetime\n  NOW()               -- updated_at\nWHERE $2::text <> ''      -- no obligatorio\nON CONFLICT (\"no\")\nDO UPDATE SET\n  company_name           = EXCLUDED.company_name,\n  name                   = EXCLUDED.name,\n  arbvrn_email           = EXCLUDED.arbvrn_email,\n  global_dimension1_code = EXCLUDED.global_dimension1_code,\n  calendario             = EXCLUDED.calendario,\n  fecha_de_baja          = EXCLUDED.fecha_de_baja,\n  fecha_de_alta          = EXCLUDED.fecha_de_alta,\n  subcontratacion        = EXCLUDED.subcontratacion,\n  perfil                 = EXCLUDED.perfil,\n  last_modified_datetime = EXCLUDED.last_modified_datetime,\n  updated_at             = NOW()\nRETURNING *;","options":{"queryReplacement":"{{$json.companyName}}\n{{$json.no}}\n{{$json.name}}\n{{$json.arbvrneMail}}\n{{$json.globalDimension1Code}}\n{{$json.calendario}}\n{{$json.fechaDeBaja}}\n{{$json.fechaDeAlta}}\n{{ $json.subcontratacion ? 'true' : 'false' }}\n{{$json.perfil}}\n{{$json.lastModifiedDateTime}}"}},"id":"upsert-recursos","name":"Upsert Recursos","type":"n8n-nodes-base.postgres","typeVersion":2.4,"position":[1808,320],"credentials":{"postgres":{"id":"6I06GLCMi5toLQFI","name":"Postgres PS_Analytics"}}},{"parameters":{"operation":"executeQuery","query":"INSERT INTO public.ps_year\n(company_name, ps_year, updated_at)\nSELECT\n  $1,                 -- company_name\n  $2::integer,        -- ps_year\n  NOW()               -- updated_at\nWHERE $2::text <> '' AND $2::text != '0'      -- ps_year obligatorio y válido\nON CONFLICT (company_name, ps_year)\nDO UPDATE SET\n  updated_at = NOW()\nRETURNING *;","options":{"queryReplacement":"{{$json.companyName}}\n{{$json.PS_Year}}"}},"id":"upsert-ps-year","name":"Upsert PS_Year","type":"n8n-nodes-base.postgres","typeVersion":2.4,"position":[1808,512],"credentials":{"postgres":{"id":"6I06GLCMi5toLQFI","name":"Postgres PS_Analytics"}}},{"parameters":{"respondWith":"json","responseBody":"={{ { \"success\": true, \"message\": \"Recursos y PS_Years sincronizados exitosamente\", \"timestamp\": new Date().toISOString(), \"recursos_processed\": $items(\"Transform Recursos\").length, \"ps_years_processed\": $items(\"Transform PS_Years\").length } }}","options":{}},"id":"response-success","name":"Response Success","type":"n8n-nodes-base.respondToWebhook","typeVersion":1.1,"position":[2480,416]},{"parameters":{},"type":"n8n-nodes-base.manualTrigger","typeVersion":1,"position":[240,320],"id":"manual-trigger","name":"When clicking 'Execute workflow'"},{"parameters":{"jsCode":"// Normaliza entrada y mapea a public.recursos\nconst input = $input.all();\nif (input.length === 0) return [];\n\nconst src = input[0]?.json ?? {};\nconst registros = Array.isArray(src.value) ? src.value : (Array.isArray(src) ? src : [src]);\nconst items = [];\n\n// helpers\nconst cleanDate = (v) => {\n  const s = String(v ?? '').trim();\n  if (!s || s === '0001-01-01') return '';\n  return s;\n};\nconst toBool = (v) => {\n  const s = String(v).toLowerCase();\n  return s === 'true' || s === '1' || s === 't' || s === 'yes';\n};\n\nconst companyName = $items('Build Last Sync (Recursos)')[0]?.json?.companyName || '';\n\nfor (const r of registros) {\n  const no = String(r.no ?? r.code ?? '').trim();\n  if (!no) continue;\n\n  const name = String(r.name ?? '').trim();\n  const email = String(r.email ?? r.arbvrneMail ?? '').trim();\n  const globalDimension1Code = String(\n    r.globalDimension1Code ?? r.global_dimension1_code ?? r.department ?? ''\n  ).trim();\n  const calendario = String(\n    r.calendario ?? r.Calendario ?? r.calendar_type ?? r.calendarType ?? r.calendar ?? ''\n  ).trim();\n  const fechaDeBaja = cleanDate(r.fechaDeBaja ?? r.fecha_de_baja);\n  const fechaDeAlta = cleanDate(r.fechaDeAlta ?? r.fecha_de_alta);\n  const subcontratacion = (typeof r.subcontratacion === 'boolean') ? r.subcontratacion : toBool(r.subcontratacion);\n  const perfil = String(r.perfil ?? '').trim();\n  const lastModifiedDateTime = String(r.lastModifiedDateTime ?? r.last_modified_datetime ?? '').trim();\n\n  items.push({\n    json: {\n      companyName,\n      no,\n      name,\n      arbvrneMail: email,\n      globalDimension1Code,\n      calendario,\n      fechaDeBaja,\n      fechaDeAlta,\n      subcontratacion,\n      perfil,\n      lastModifiedDateTime,\n    },\n  });\n}\n\nreturn items;"},"type":"n8n-nodes-base.code","typeVersion":2,"position":[1584,320],"id":"transform-recursos","name":"Transform Recursos"},{"parameters":{"jsCode":"// Normaliza entrada y mapea a public.ps_year\nconst input = $input.all();\nif (input.length === 0) return [];\n\nconst src = input[0]?.json ?? {};\nconst registros = Array.isArray(src.value) ? src.value : (Array.isArray(src) ? src : [src]);\nconst items = [];\n\n// Obtener companyName del contexto actual (de BC API)\nconst companyName = $items('Build Last Sync (PS_Years)')[0]?.json?.companyName || '';\n\nfor (const r of registros) {\n  const psYear = String(r.PS_Year ?? r.ps_year ?? '').trim();\n  if (!psYear || psYear === '0') continue;\n\n  items.push({\n    json: {\n      companyName,\n      PS_Year: parseInt(psYear) || 0,\n    },\n  });\n}\n\nreturn items;"},"type":"n8n-nodes-base.code","typeVersion":2,"position":[1584,512],"id":"transform-ps-years","name":"Transform PS_Years"},{"parameters":{"jsCode":"const companyName = $items('Build Last Sync (Recursos)')[0]?.json?.companyName || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"},"id":"compute-now-iso-recursos","name":"Compute now ISO (Recursos)","type":"n8n-nodes-base.code","typeVersion":2,"position":[2032,320]},{"parameters":{"jsCode":"const companyName = $items('Build Last Sync (PS_Years)')[0]?.json?.companyName || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"},"id":"compute-now-iso-years","name":"Compute now ISO (PS_Years)","type":"n8n-nodes-base.code","typeVersion":2,"position":[2032,512]},{"parameters":{"operation":"update","tableId":"sync_state","matchType":"allFilters","filters":{"conditions":[{"keyName":"company_name","condition":"eq","keyValue":"={{ $('Resolve Company').first().json.companyName }}"},{"keyName":"entity","condition":"eq","keyValue":"recursos"}]},"fieldsUi":{"fieldValues":[{"fieldId":"last_sync_at","fieldValue":"={{ $json.nowIso }}"}]}},"id":"update-sync-state-recursos","name":"Update sync_state (Recursos)","type":"n8n-nodes-base.supabase","typeVersion":1,"position":[2256,320],"credentials":{"supabaseApi":{"id":"pCM59OXAIeZSuk0Q","name":"Supabase PS-Analytics"}}},{"parameters":{"operation":"update","tableId":"sync_state","matchType":"allFilters","filters":{"conditions":[{"keyName":"company_name","condition":"eq","keyValue":"={{ $('Resolve Company').first().json.companyName }}"},{"keyName":"entity","condition":"eq","keyValue":"ps_year"}]},"fieldsUi":{"fieldValues":[{"fieldId":"last_sync_at","fieldValue":"={{ $json.nowIso }}"}]}},"id":"update-sync-state-years","name":"Update sync_state (PS_Years)","type":"n8n-nodes-base.supabase","typeVersion":1,"position":[2256,512],"credentials":{"supabaseApi":{"id":"pCM59OXAIeZSuk0Q","name":"Supabase PS-Analytics"}}},{"parameters":{"useCustomSchema":true,"operation":"getAll","tableId":"=sync_state","matchType":"allFilters","filters":{"conditions":[{"keyName":"company_name","condition":"eq","keyValue":"={{ $('Resolve Company').first().json.companyName }}"}]}},"id":"get-sync-state-all","name":"Get sync_state ALL","type":"n8n-nodes-base.supabase","typeVersion":1,"position":[912,416],"credentials":{"supabaseApi":{"id":"pCM59OXAIeZSuk0Q","name":"Supabase PS-Analytics"}}},{"parameters":{"jsCode":"const p = $json.params || {};\nconst slugRaw = (p.company || $json.query?.company || '').toString().trim().toLowerCase();\nconst slug = encodeURI(slugRaw);\nconst map = {\n  'psi': { companyName: 'Power Solution Iberia SL', companyId: 'ca9dc1bf-54ee-ed11-884a-000d3a455d5b' },\n  'pslab': { companyName: 'PS LAB CONSULTING SL', companyId: '656f8f0e-2bf4-ed11-8848-000d3a4baf18' }\n};\nconst chosen = map[slug];\nif (!chosen) {\n  return [{ json: { error: 'Invalid company', slug } }];\n}\nreturn [{ json: { companyName: chosen.companyName, companyId: chosen.companyId, slug } }];"},"id":"resolve-company","name":"Resolve Company","type":"n8n-nodes-base.code","typeVersion":2,"position":[688,416]},{"parameters":{"assignments":{"assignments":[{"id":"company-param-integrated","name":"query.company","value":"psi","type":"string"}]},"includeOtherFields":true,"options":{}},"type":"n8n-nodes-base.set","typeVersion":3.4,"position":[464,320],"id":"set-company","name":"Set Company"},{"parameters":{"jsCode":"const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]);\n\n// Entidades que nos interesan\nconst entities = ['recursos','recursos','proyectos','movimientos_proyectos','equipo_proyectos','configuracion_usuarios','centros_de_responsabilidad'];\n\nconst byEntity = {};\nfor (const r of rows) {\n  const e = String(r.entity || '').trim();\n  const raw = String(r.last_sync_at || '').trim();\n  if (!e || !raw) continue;\n  const iso = new Date(raw.replace(' ', 'T')).toISOString();\n  byEntity[e] = iso;\n}\n\n// NO lanzar error: devolver faltantes para que el flujo las salte\nconst missing = entities.filter(e => !(e in byEntity));\n\nreturn [{\n  json: {\n    syncStateByEntity: byEntity,\n    missing,\n    company: $('Resolve Company').first().json.companyName,\n  }\n}];"},"type":"n8n-nodes-base.code","typeVersion":2,"position":[1104,416],"id":"bba67df3-9066-4590-9dbf-bbe2906df978","name":"Build sync_state map"}],"connections":{"Webhook Start":{"main":[[{"node":"Resolve Company","type":"main","index":0}]]},"BC API - Recursos":{"main":[[{"node":"Transform Recursos","type":"main","index":0}]]},"BC API - PS_Years":{"main":[[{"node":"Transform PS_Years","type":"main","index":0}]]},"Upsert Recursos":{"main":[[{"node":"Compute now ISO (Recursos)","type":"main","index":0}]]},"Upsert PS_Year":{"main":[[{"node":"Compute now ISO (PS_Years)","type":"main","index":0}]]},"When clicking 'Execute workflow'":{"main":[[{"node":"Set Company","type":"main","index":0}]]},"Transform Recursos":{"main":[[{"node":"Upsert Recursos","type":"main","index":0}]]},"Transform PS_Years":{"main":[[{"node":"Upsert PS_Year","type":"main","index":0}]]},"Compute now ISO (Recursos)":{"main":[[{"node":"Update sync_state (Recursos)","type":"main","index":0}]]},"Compute now ISO (PS_Years)":{"main":[[{"node":"Update sync_state (PS_Years)","type":"main","index":0}]]},"Update sync_state (Recursos)":{"main":[[{"node":"Response Success","type":"main","index":0}]]},"Update sync_state (PS_Years)":{"main":[[{"node":"Response Success","type":"main","index":0}]]},"Get sync_state ALL":{"main":[[{"node":"Build sync_state map","type":"main","index":0}]]},"Resolve Company":{"main":[[{"node":"Get sync_state ALL","type":"main","index":0}]]},"Set Company":{"main":[[{"node":"Resolve Company","type":"main","index":0}]]},"Build sync_state map":{"main":[[{"node":"BC API - Recursos","type":"main","index":0},{"node":"BC API - PS_Years","type":"main","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":null,"meta":null,"pinData":{},"versionId":"189db7cb-9060-4706-b234-17cd275b45b8","triggerCount":1,"shared":[{"createdAt":"2025-09-29T06:58:11.842Z","updatedAt":"2025-09-29T06:58:11.842Z","role":"workflow:owner","workflowId":"5xXYMywFBYBL5TGM","projectId":"ijP8FvHt2ZVVaBt9","project":{"createdAt":"2025-08-25T17:25:17.353Z","updatedAt":"2025-08-25T17:27:29.880Z","id":"ijP8FvHt2ZVVaBt9","name":"Daniel Bertona Sanchez <dbertona@powersolution.es>","type":"personal","icon":null,"description":null,"projectRelations":[{"createdAt":"2025-08-25T17:25:17.353Z","updatedAt":"2025-08-25T17:25:17.353Z","role":"project:personalOwner","userId":"b802b4cc-8f5c-4608-9aec-e44abff8bf5d","projectId":"ijP8FvHt2ZVVaBt9","user":{"createdAt":"2025-08-25T17:25:16.887Z","updatedAt":"2025-09-28T22:10:42.000Z","id":"b802b4cc-8f5c-4608-9aec-e44abff8bf5d","email":"dbertona@powersolution.es","firstName":"Daniel","lastName":"Bertona Sanchez","personalizationAnswers":null,"settings":{"userActivated":true,"firstSuccessfulWorkflowId":"71xpeeX1apKTpNe0","userActivatedAt":1756717935545},"role":"global:owner","disabled":false,"mfaEnabled":false,"lastActiveAt":"2025-09-28","isPending":false}}]}}],"tags":[]}
+{
+  "createdAt": "2025-09-29T06:58:11.841Z",
+  "updatedAt": "2025-09-30T10:32:21.000Z",
+  "id": "5xXYMywFBYBL5TGM",
+  "name": "sync_bc_to_ps_analytics",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sync-recursos-y-ps-years-psanalytics",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-start",
+      "name": "Webhook Start",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        464,
+        512
+      ],
+      "webhookId": "sync-recursos-y-ps-years-webhook"
+    },
+    {
+      "parameters": {
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Build sync_state map').first().json.companyId\n  + ')/Recursos?$select=no,name,arbvrneMail,globalDimension1Code,calendario,fechaDeBaja,fechaDeAlta,subcontratacion,perfil,lastModifiedDateTime&$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['recursos']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "bc-api-recursos",
+      "name": "BC API - Recursos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1360,
+        320
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Build sync_state map').first().json.companyId\n  + ')/PS_Years'\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "bc-api-years",
+      "name": "BC API - PS_Years",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1360,
+        512
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Build sync_state map').first().json.companyId\n  + ')/Proyectos?$select=no,description,departamento,Probability,TipoProyecto,Estado,Fechafin,DoNotConsolidate,Responsible,lastModifiedDateTime&$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['proyectos']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "bc-api-proyectos",
+      "name": "BC API - Proyectos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1360,
+        704
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Build sync_state map').first().json.companyId\n  + ')/EquipoProyectos?$select=NoProyecto,NoRecurso,lastModifiedDateTime&$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['equipo_proyectos']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "bc-api-equipo-proyectos",
+      "name": "BC API - Equipo Proyectos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1360,
+        896
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.recursos\n(company_name, \"no\", name, arbvrn_email, global_dimension1_code, calendario,\n fecha_de_baja, fecha_de_alta, subcontratacion, perfil,\n last_modified_datetime, updated_at)\nSELECT\n  $1,                 -- company_name\n  $2,                 -- no\n  $3,                 -- name\n  NULLIF(btrim($4),''),  -- arbvrn_email, vac\u00edo \u2192 NULL\n  $5,                 -- global_dimension1_code\n  $6,                 -- calendario\n  NULLIF(NULLIF($7::text,''),'0001-01-01')::date,  -- fecha_de_baja\n  NULLIF(NULLIF($8::text,''),'0001-01-01')::date,  -- fecha_de_alta\n  CASE WHEN $9::text IN ('true','1','t','yes') THEN true ELSE false END, -- subcontratacion\n  $10,                -- perfil\n  NULLIF($11::text,'')::timestamptz,               -- last_modified_datetime\n  NOW()               -- updated_at\nWHERE $2::text <> ''      -- no obligatorio\nON CONFLICT (\"no\")\nDO UPDATE SET\n  company_name           = EXCLUDED.company_name,\n  name                   = EXCLUDED.name,\n  arbvrn_email           = EXCLUDED.arbvrn_email,\n  global_dimension1_code = EXCLUDED.global_dimension1_code,\n  calendario             = EXCLUDED.calendario,\n  fecha_de_baja          = EXCLUDED.fecha_de_baja,\n  fecha_de_alta          = EXCLUDED.fecha_de_alta,\n  subcontratacion        = EXCLUDED.subcontratacion,\n  perfil                 = EXCLUDED.perfil,\n  last_modified_datetime = EXCLUDED.last_modified_datetime,\n  updated_at             = NOW()\nRETURNING *;",
+        "options": {
+          "queryReplacement": "{{$json.companyName}}\n{{$json.no}}\n{{$json.name}}\n{{$json.arbvrneMail}}\n{{$json.globalDimension1Code}}\n{{$json.calendario}}\n{{$json.fechaDeBaja}}\n{{$json.fechaDeAlta}}\n{{ $json.subcontratacion ? 'true' : 'false' }}\n{{$json.perfil}}\n{{$json.lastModifiedDateTime}}"
+        }
+      },
+      "id": "upsert-recursos",
+      "name": "Upsert Recursos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        1808,
+        320
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6I06GLCMi5toLQFI",
+          "name": "Postgres PS_Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.ps_year\n(company_name, ps_year)\nSELECT\n  $1,                 -- company_name\n  $2::integer         -- ps_year\nWHERE $2::text <> '' AND $2::text != '0'      -- ps_year obligatorio y v\u00e1lido\nON CONFLICT (ps_year)\nDO UPDATE SET\n  company_name = EXCLUDED.company_name\nRETURNING *;",
+        "options": {
+          "queryReplacement": "{{$json.companyName}}\n{{$json.PS_Year}}"
+        }
+      },
+      "id": "upsert-ps-year",
+      "name": "Upsert PS_Year",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        1808,
+        512
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6I06GLCMi5toLQFI",
+          "name": "Postgres PS_Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.proyectos\n(company_name, \"no\", description, departamento, probability, tipo_proyecto, estado, fecha_fin, do_not_consolidate, responsible, last_modified_datetime, updated_at)\nSELECT\n  $1,                 -- company_name\n  $2,                 -- no\n  $3,                 -- description\n  $4,                 -- departamento\n  CASE \n    WHEN $5::text ~ '^-?[0-9]+(\\.[0-9]+)?$' THEN $5::numeric\n    ELSE 0::numeric\n  END,                -- probability (maneja valores no num\u00e9ricos)\n  $6,                 -- tipo_proyecto\n  $7,                 -- estado\n  NULLIF(NULLIF($8::text,''),'0001-01-01')::date,  -- fecha_fin\n  CASE WHEN $9::text IN ('true','1','t','yes') THEN true ELSE false END, -- do_not_consolidate\n  $10,                -- responsible\n  NULLIF($11::text,'')::timestamptz,               -- last_modified_datetime\n  NOW()               -- updated_at\nWHERE $2::text <> ''      -- no obligatorio\nON CONFLICT (\"no\")\nDO UPDATE SET\n  company_name           = EXCLUDED.company_name,\n  description            = EXCLUDED.description,\n  departamento           = EXCLUDED.departamento,\n  probability            = EXCLUDED.probability,\n  tipo_proyecto          = EXCLUDED.tipo_proyecto,\n  estado                 = EXCLUDED.estado,\n  fecha_fin              = EXCLUDED.fecha_fin,\n  do_not_consolidate     = EXCLUDED.do_not_consolidate,\n  responsible            = EXCLUDED.responsible,\n  last_modified_datetime = EXCLUDED.last_modified_datetime,\n  updated_at             = NOW()\nRETURNING *;",
+        "options": {
+          "queryReplacement": "{{$json.companyName}}\n{{$json.no}}\n{{$json.description}}\n{{$json.departamento}}\n{{$json.probability}}\n{{$json.tipoProyecto}}\n{{$json.estado}}\n{{$json.fechaFin}}\n{{ $json.doNotConsolidate ? 'true' : 'false' }}\n{{$json.responsible}}\n{{$json.lastModifiedDateTime}}"
+        }
+      },
+      "id": "upsert-proyectos",
+      "name": "Upsert Proyectos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        1808,
+        704
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6I06GLCMi5toLQFI",
+          "name": "Postgres PS_Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.equipo_proyectos\n(company_name, no_proyecto, no_recurso, last_modified_datetime, updated_at)\nSELECT\n  $1,                 -- company_name\n  $2,                 -- no_proyecto\n  $3,                 -- no_recurso\n  NULLIF($4::text,'')::timestamptz,               -- last_modified_datetime\n  NOW()               -- updated_at\nWHERE $2::text <> '' AND $3::text <> ''      -- ambos campos obligatorios\nON CONFLICT (no_proyecto, no_recurso)\nDO UPDATE SET\n  company_name           = EXCLUDED.company_name,\n  last_modified_datetime = EXCLUDED.last_modified_datetime,\n  updated_at             = NOW()\nRETURNING *;",
+        "options": {
+          "queryReplacement": "{{$json.companyName}}\n{{$json.noProyecto}}\n{{$json.noRecurso}}\n{{$json.lastModifiedDateTime}}"
+        }
+      },
+      "id": "upsert-equipo-proyectos",
+      "name": "Upsert Equipo Proyectos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        1808,
+        896
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "6I06GLCMi5toLQFI",
+          "name": "Postgres PS_Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "=({ status: \"ok\", timestamp: new Date().toISOString(), company: ( ($('Resolve Company').first() && $('Resolve Company').first().json && $('Resolve Company').first().json.companyName) || \"\" ) })",
+        "options": {}
+      },
+      "id": "response-success",
+      "name": "Response Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2480,
+        608
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        320
+      ],
+      "id": "manual-trigger",
+      "name": "When clicking 'Execute workflow'"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normaliza entrada y mapea a public.recursos\nconst input = $input.all();\nif (input.length === 0) return [];\n\nconst src = input[0]?.json ?? {};\nconst registros = Array.isArray(src.value) ? src.value : (Array.isArray(src) ? src : [src]);\nconst items = [];\n\n// helpers\nconst cleanDate = (v) => {\n  const s = String(v ?? '').trim();\n  if (!s || s === '0001-01-01') return '';\n  return s;\n};\nconst toBool = (v) => {\n  const s = String(v).toLowerCase();\n  return s === 'true' || s === '1' || s === 't' || s === 'yes';\n};\n\n// Obtener companyName del nodo Build sync_state map\nconst companyName = $items('Build sync_state map')[0]?.json?.company || '';\n\nfor (const r of registros) {\n  const no = String(r.no ?? r.code ?? '').trim();\n  if (!no) continue;\n\n  const name = String(r.name ?? '').trim();\n  const email = String(r.email ?? r.arbvrneMail ?? '').trim();\n  const globalDimension1Code = String(\n    r.globalDimension1Code ?? r.global_dimension1_code ?? r.department ?? ''\n  ).trim();\n  const calendario = String(\n    r.calendario ?? r.Calendario ?? r.calendar_type ?? r.calendarType ?? r.calendar ?? ''\n  ).trim();\n  const fechaDeBaja = cleanDate(r.fechaDeBaja ?? r.fecha_de_baja);\n  const fechaDeAlta = cleanDate(r.fechaDeAlta ?? r.fecha_de_alta);\n  const subcontratacion = (typeof r.subcontratacion === 'boolean') ? r.subcontratacion : toBool(r.subcontratacion);\n  const perfil = String(r.perfil ?? '').trim();\n  const lastModifiedDateTime = String(r.lastModifiedDateTime ?? r.last_modified_datetime ?? '').trim();\n\n  items.push({\n    json: {\n      companyName,\n      no,\n      name,\n      arbvrneMail: email,\n      globalDimension1Code,\n      calendario,\n      fechaDeBaja,\n      fechaDeAlta,\n      subcontratacion,\n      perfil,\n      lastModifiedDateTime,\n    },\n  });\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        320
+      ],
+      "id": "transform-recursos",
+      "name": "Transform Recursos"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normaliza entrada y mapea a public.ps_year\nconst input = $input.all();\nif (input.length === 0) return [];\n\nconst src = input[0]?.json ?? {};\nconst registros = Array.isArray(src.value) ? src.value : (Array.isArray(src) ? src : [src]);\nconst items = [];\n\n// Obtener companyName del nodo Build sync_state map\nconst companyName = $items('Build sync_state map')[0]?.json?.company || '';\n\nfor (const r of registros) {\n  const psYear = String(r.year ?? r.Year ?? r.PS_Year ?? r.ps_year ?? '').trim();\n  if (!psYear || psYear === '0') continue;\n\n  items.push({\n    json: {\n      companyName,\n      PS_Year: parseInt(psYear) || 0,\n    },\n  });\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        512
+      ],
+      "id": "transform-ps-years",
+      "name": "Transform PS_Years"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Build sync_state map').first().json.company;\nconst data = input[0].json;\nconst proyectos = data.value || [];\nconst items = [];\n\nconst allowed = new Set(['Planning','Quote','Open','Completed','Lost']);\n\n// helpers\nconst cleanDate = (v) => {\n  const s = String(v ?? '').trim();\n  if (!s || s === '0001-01-01') return '';\n  return s;\n};\nconst toBool = (v) => {\n  const s = String(v).toLowerCase();\n  return s === 'true' || s === '1' || s === 't' || s === 'yes';\n};\n\nfor (const p of proyectos) {\n  // DEBUG: Log para ver los datos originales\n  console.log('Proyecto original:', JSON.stringify(p));\n  \n  const statusRaw = p.estado ?? p.Estado ?? p.status ?? '';\n  const status = String(statusRaw).trim();\n  \n  // Normalizar status: si no est\u00e1 en la lista permitida, usar 'Open'\n  const normalizedStatus = allowed.has(status) ? status : 'Open';\n\n  // Manejar valores no num\u00e9ricos en Probability - M\u00c1S ROBUSTO\n  let probability = 0;\n  const probValue = p.Probability ?? p.probability;\n  \n  if (probValue !== undefined && probValue !== null) {\n    if (typeof probValue === 'string' && probValue.trim() === '') {\n      probability = 0;\n    } else {\n      const num = Number(probValue);\n      if (!isNaN(num) && isFinite(num)) {\n        probability = num;\n      }\n    }\n  }\n  \n  // DEBUG: Log para ver la transformaci\u00f3n\n  console.log('Probability transformado:', probability, 'de:', probValue);\n  \n  const no = String(p.no || '').trim();\n  const description = String(p.description || '').trim();\n  const departamento = String(p.departamento || p.globalDimension1Code || '').trim();\n  const tipoProyecto = String(p.TipoProyecto ?? p.tipoProyecto ?? '').trim();\n  const fechaFin = cleanDate(p.Fechafin ?? p.fechaFin ?? p.endingDate ?? '');\n  const doNotConsolidate = (typeof p.DoNotConsolidate === 'boolean') ? p.DoNotConsolidate : toBool(p.DoNotConsolidate);\n  const responsible = String(p.Responsible ?? p.responsible ?? '').trim();\n  const lastModifiedDateTime = String(p.lastModifiedDateTime ?? p.last_modified_datetime ?? '').trim();\n\n  // Crear objeto con nombres de campo en min\u00fasculas para evitar problemas\n  const proyectoTransformado = {\n    companyName,\n    no,\n    description,\n    departamento,\n    probability: probability,  // min\u00fascula\n    tipoProyecto: tipoProyecto,  // min\u00fascula\n    estado: normalizedStatus,  // min\u00fascula\n    fechaFin: fechaFin,  // min\u00fascula\n    doNotConsolidate: doNotConsolidate,\n    responsible: responsible,  // min\u00fascula\n    lastModifiedDateTime,\n  };\n\n  // DEBUG: Verificar el objeto transformado\n  console.log('Proyecto transformado:', JSON.stringify(proyectoTransformado));\n\n  items.push({\n    json: proyectoTransformado,\n  });\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        704
+      ],
+      "id": "transform-proyectos",
+      "name": "Transform Proyectos"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normaliza entrada y mapea a public.equipo_proyectos\nconst input = $input.all();\nif (input.length === 0) return [];\n\nconst src = input[0]?.json ?? {};\nconst registros = Array.isArray(src.value) ? src.value : (Array.isArray(src) ? src : [src]);\nconst items = [];\n\n// Obtener companyName del nodo Build sync_state map\nconst companyName = $items('Build sync_state map')[0]?.json?.company || '';\n\nfor (const r of registros) {\n  const noProyecto = String(r.NoProyecto ?? r.noProyecto ?? r.projectNo ?? '').trim();\n  const noRecurso = String(r.NoRecurso ?? r.noRecurso ?? r.resourceNo ?? '').trim();\n  \n  if (!noProyecto || !noRecurso) continue;\n\n  const lastModifiedDateTime = String(r.lastModifiedDateTime ?? r.last_modified_datetime ?? '').trim();\n\n  items.push({\n    json: {\n      companyName,\n      noProyecto,\n      noRecurso,\n      lastModifiedDateTime,\n    },\n  });\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        896
+      ],
+      "id": "transform-equipo-proyectos",
+      "name": "Transform Equipo Proyectos"
+    },
+    {
+      "parameters": {
+        "jsCode": "const companyName = $items('Build sync_state map')[0]?.json?.company || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"
+      },
+      "id": "compute-now-iso-recursos",
+      "name": "Compute now ISO (Recursos)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2032,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const companyName = $items('Build sync_state map')[0]?.json?.company || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"
+      },
+      "id": "compute-now-iso-years",
+      "name": "Compute now ISO (PS_Years)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2032,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const companyName = $items('Build sync_state map')[0]?.json?.company || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"
+      },
+      "id": "compute-now-iso-proyectos",
+      "name": "Compute now ISO (Proyectos)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2032,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const companyName = $items('Build sync_state map')[0]?.json?.company || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"
+      },
+      "id": "compute-now-iso-equipo-proyectos",
+      "name": "Compute now ISO (Equipo Proyectos)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2032,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Build sync_state map').first().json.company }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "recursos"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "update-sync-state-recursos",
+      "name": "Update sync_state (Recursos)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2256,
+        320
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "pCM59OXAIeZSuk0Q",
+          "name": "Supabase PS-Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Build sync_state map').first().json.company }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "ps_year"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "update-sync-state-years",
+      "name": "Update sync_state (PS_Years)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2256,
+        512
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "pCM59OXAIeZSuk0Q",
+          "name": "Supabase PS-Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Build sync_state map').first().json.company }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "proyectos"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "update-sync-state-proyectos",
+      "name": "Update sync_state (Proyectos)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2256,
+        704
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "pCM59OXAIeZSuk0Q",
+          "name": "Supabase PS-Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Build sync_state map').first().json.company }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "equipo_proyectos"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "update-sync-state-equipo-proyectos",
+      "name": "Update sync_state (Equipo Proyectos)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2256,
+        896
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "pCM59OXAIeZSuk0Q",
+          "name": "Supabase PS-Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "useCustomSchema": true,
+        "operation": "getAll",
+        "tableId": "=sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            }
+          ]
+        }
+      },
+      "id": "get-sync-state-all",
+      "name": "Get sync_state ALL",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        912,
+        416
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "pCM59OXAIeZSuk0Q",
+          "name": "Supabase PS-Analytics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $json.params || {};\nconst slugRaw = (p.company || $json.query?.company || '').toString().trim().toLowerCase();\nconst slug = encodeURI(slugRaw);\nconst map = {\n  'psi': { companyName: 'Power Solution Iberia SL', companyId: 'ca9dc1bf-54ee-ed11-884a-000d3a455d5b' },\n  'pslab': { companyName: 'PS LAB CONSULTING SL', companyId: '656f8f0e-2bf4-ed11-8848-000d3a4baf18' }\n};\nconst chosen = map[slug];\nif (!chosen) {\n  return [{ json: { error: 'Invalid company', slug } }];\n}\nreturn [{ json: { companyName: chosen.companyName, companyId: chosen.companyId, slug } }];"
+      },
+      "id": "resolve-company",
+      "name": "Resolve Company",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "company-param-integrated",
+              "name": "query.company",
+              "value": "psi",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        320
+      ],
+      "id": "set-company",
+      "name": "Set Company"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]);\n\n// Entidades que nos interesan\nconst entities = ['recursos','ps_year','proyectos','equipo_proyectos'];\n\nconst byEntity = {};\nfor (const r of rows) {\n  const e = String(r.entity || '').trim();\n  const raw = String(r.last_sync_at || '').trim();\n  if (!e || !raw) continue;\n  const iso = new Date(raw.replace(' ', 'T')).toISOString();\n  byEntity[e] = iso;\n}\n\n// Para entidades faltantes, usar una fecha muy antigua para obtener todos los registros\nconst defaultDate = '1900-01-01T00:00:00.000Z';\nfor (const entity of entities) {\n  if (!byEntity[entity]) {\n    byEntity[entity] = defaultDate;\n  }\n}\n\n// Devolver un elemento por cada entidad para que cada nodo de API reciba datos\nconst items = [];\nconst companyName = $('Resolve Company').first().json.companyName;\nconst companyId = $('Resolve Company').first().json.companyId;\n\nfor (const entity of entities) {\n  items.push({\n    json: {\n      syncStateByEntity: byEntity,\n      company: companyName,\n      companyId: companyId,\n      entity: entity\n    }\n  });\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        416
+      ],
+      "id": "bba67df3-9066-4590-9dbf-bbe2906df978",
+      "name": "Build sync_state map"
+    }
+  ],
+  "connections": {
+    "Webhook Start": {
+      "main": [
+        [
+          {
+            "node": "Resolve Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BC API - Recursos": {
+      "main": [
+        [
+          {
+            "node": "Transform Recursos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BC API - PS_Years": {
+      "main": [
+        [
+          {
+            "node": "Transform PS_Years",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BC API - Proyectos": {
+      "main": [
+        [
+          {
+            "node": "Transform Proyectos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BC API - Equipo Proyectos": {
+      "main": [
+        [
+          {
+            "node": "Transform Equipo Proyectos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Recursos": {
+      "main": [
+        [
+          {
+            "node": "Compute now ISO (Recursos)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert PS_Year": {
+      "main": [
+        [
+          {
+            "node": "Compute now ISO (PS_Years)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Proyectos": {
+      "main": [
+        [
+          {
+            "node": "Compute now ISO (Proyectos)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Equipo Proyectos": {
+      "main": [
+        [
+          {
+            "node": "Compute now ISO (Equipo Proyectos)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Set Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Recursos": {
+      "main": [
+        [
+          {
+            "node": "Upsert Recursos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform PS_Years": {
+      "main": [
+        [
+          {
+            "node": "Upsert PS_Year",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Proyectos": {
+      "main": [
+        [
+          {
+            "node": "Upsert Proyectos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Equipo Proyectos": {
+      "main": [
+        [
+          {
+            "node": "Upsert Equipo Proyectos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (Recursos)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (Recursos)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (PS_Years)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (PS_Years)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (Proyectos)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (Proyectos)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (Equipo Proyectos)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (Equipo Proyectos)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (Recursos)": {
+      "main": [
+        [
+          {
+            "node": "Response Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (PS_Years)": {
+      "main": [
+        [
+          {
+            "node": "Response Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (Proyectos)": {
+      "main": [
+        [
+          {
+            "node": "Response Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (Equipo Proyectos)": {
+      "main": [
+        [
+          {
+            "node": "Response Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get sync_state ALL": {
+      "main": [
+        [
+          {
+            "node": "Build sync_state map",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Company": {
+      "main": [
+        [
+          {
+            "node": "Get sync_state ALL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Response Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Company": {
+      "main": [
+        [
+          {
+            "node": "Resolve Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build sync_state map": {
+      "main": [
+        [
+          {
+            "node": "BC API - Recursos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "BC API - PS_Years",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "BC API - Proyectos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "BC API - Equipo Proyectos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "70ba7340-2af5-45a1-943d-0c24d2774207",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "createdAt": "2025-09-29T06:58:11.842Z",
+      "updatedAt": "2025-09-29T06:58:11.842Z",
+      "role": "workflow:owner",
+      "workflowId": "5xXYMywFBYBL5TGM",
+      "projectId": "ijP8FvHt2ZVVaBt9",
+      "project": {
+        "createdAt": "2025-08-25T17:25:17.353Z",
+        "updatedAt": "2025-08-25T17:27:29.880Z",
+        "id": "ijP8FvHt2ZVVaBt9",
+        "name": "Daniel Bertona Sanchez <dbertona@powersolution.es>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-08-25T17:25:17.353Z",
+            "updatedAt": "2025-08-25T17:25:17.353Z",
+            "role": "project:personalOwner",
+            "userId": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
+            "projectId": "ijP8FvHt2ZVVaBt9",
+            "user": {
+              "createdAt": "2025-08-25T17:25:16.887Z",
+              "updatedAt": "2025-09-29T22:12:10.000Z",
+              "id": "b802b4cc-8f5c-4608-9aec-e44abff8bf5d",
+              "email": "dbertona@powersolution.es",
+              "firstName": "Daniel",
+              "lastName": "Bertona Sanchez",
+              "personalizationAnswers": null,
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "71xpeeX1apKTpNe0",
+                "userActivatedAt": 1756717935545
+              },
+              "role": "global:owner",
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-09-29",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}
