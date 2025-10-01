@@ -28,7 +28,7 @@
         "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Build sync_state map').first().json.companyId\n  + ')/Recursos?$select=no,name,arbvrneMail,globalDimension1Code,calendario,fechaDeBaja,fechaDeAlta,subcontratacion,perfil,lastModifiedDateTime&$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['recursos']\n}}",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
-        "options": {"ignoreResponseCode": true}
+        "options": {"ignoreResponseCode": true, "fullResponse": true}
       },
       "id": "bc-api-recursos",
       "name": "BC API - Recursos",
@@ -51,7 +51,7 @@
         "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Build sync_state map').first().json.companyId\n  + ')/PS_Years'\n}}",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
-        "options": {"ignoreResponseCode": true}
+        "options": {"ignoreResponseCode": true, "fullResponse": true}
       },
       "id": "bc-api-years",
       "name": "BC API - PS_Years",
@@ -74,7 +74,7 @@
         "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Build sync_state map').first().json.companyId\n  + ')/Proyectos?$select=no,description,departamento,Probability,TipoProyecto,Estado,Fechafin,DoNotConsolidate,Responsible,lastModifiedDateTime&$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['proyectos']\n}}",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
-        "options": {"ignoreResponseCode": true}
+        "options": {"ignoreResponseCode": true, "fullResponse": true}
       },
       "id": "bc-api-proyectos",
       "name": "BC API - Proyectos",
@@ -97,7 +97,7 @@
         "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Build sync_state map').first().json.companyId\n  + ')/EquipoProyectos?$select=ARBVRNJobNo,ARBVRNResourceNo,lastModifiedDateTime&$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['equipo_proyectos']\n}}",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
-        "options": {"ignoreResponseCode": true}
+        "options": {"ignoreResponseCode": true, "fullResponse": true}
       },
       "id": "bc-api-equipo-proyectos",
       "name": "BC API - Equipo Proyectos",
