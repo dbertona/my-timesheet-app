@@ -123,6 +123,7 @@
       "name": "Upsert Recursos",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
+      "continueOnFail": true,
       "position": [
         1808,
         320
@@ -146,6 +147,7 @@
       "name": "Upsert PS_Year",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
+      "continueOnFail": true,
       "position": [
         1808,
         512
@@ -169,6 +171,7 @@
       "name": "Upsert Proyectos",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
+      "continueOnFail": true,
       "position": [
         1808,
         704
@@ -192,6 +195,7 @@
       "name": "Upsert Equipo Proyectos",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
+      "continueOnFail": true,
       "position": [
         1808,
         896
@@ -205,7 +209,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Construir resumen de resultados por entidad\nconst entities = [\n  \"recursos\",\n  \"proyectos\",\n  \"movimientos_proyectos\",\n  \"equipo_proyectos\",\n  \"ps_year\",\n  \"centros_responsabilidad\",\n  \"tecnologias\",\n  \"tipologias\",\n  \"configuracion_usuarios\"\n];\n\nconst details = {};\nlet totalSuccess = 0;\nlet totalFailed = 0;\n\nfor (const entity of entities) {\n  const transformNodeName = \"Transform \" + entity.charAt(0).toUpperCase() + entity.slice(1).replace(/_/g, \" \");\n  \n  try {\n    const items = $items(transformNodeName);\n    const synced = Array.isArray(items) ? items.length : 1;\n    details[entity] = {\n      status: \"ok\",\n      synced: synced\n    };\n    totalSuccess++;\n  } catch (error) {\n    details[entity] = {\n      status: \"error\",\n      message: error.message || \"Node not found or failed\"\n    };\n    totalFailed++;\n  }\n}\n\nconst overallStatus = totalFailed === 0 ? \"ok\" : (totalSuccess > 0 ? \"partial_error\" : \"error\");\n\nreturn [{\n  json: {\n    status: overallStatus,\n    timestamp: new Date().toISOString(),\n    company: $('Resolve Company').first().json.companyName || \"\",\n    summary: {\n      total_entities: entities.length,\n      success: totalSuccess,\n      failed: totalFailed\n    },\n    details: details\n  }\n}];"
+        "jsCode": "// Resumen consolidado tras Merge Results usando $input.all()\nconst inputs = $input.all();\n\nconst details = {};\nlet success = 0, failed = 0;\n\nfor (const it of inputs) {\n  const d = it?.json || {};\n  const key = d.key || 'unknown';\n  const status = d.status || (d.message ? 'error' : 'ok');\n  if (status === 'ok') success++; else failed++;\n  const entry = { status };\n  if (typeof d.synced !== 'undefined') entry.synced = d.synced;\n  if (typeof d.success !== 'undefined') entry.success = d.success;\n  if (typeof d.failed !== 'undefined') entry.failed = d.failed;\n  if (d.message) entry.message = String(d.message);\n  if (d.causeNode) entry.causeNode = d.causeNode;\n  details[key] = entry;\n}\n\nconst overall = failed === 0 ? 'ok' : (success > 0 ? 'partial_error' : 'error');\nconst company = ($('Resolve Company').first()?.json?.companyName) || '';\n\nreturn [{ json: { status: overall, timestamp: new Date().toISOString(), company, summary: { total_entities: Object.keys(details).length, success, failed }, details } }];"
       },
       "id": "compute-execution-summary",
       "name": "Compute Execution Summary",
@@ -213,6 +217,71 @@
       "typeVersion": 2,
       "position": [
         2256,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Resultado por entidad: Recursos\nconst items = $input.all();\nlet failed = 0;\nlet firstErr = '';\nfor (const it of items) {\n  const j = it?.json || {};\n  const msg = j?.error?.message || j?.message || j?.data?.error || j?.response?.body || j?.responseBody || null;\n  if (msg && !firstErr) firstErr = String(msg);\n  if (msg) failed++;\n}\nconst success = items.length - failed;\nlet synced = success;\ntry { if (synced === 0) synced = $items('Transform Recursos').length; } catch (e) {}\nconst res = { key: 'recursos', causeNode: 'Upsert Recursos' };\nif (failed > 0) { res.status = 'error'; res.synced = success; res.failed = failed; res.message = firstErr; } else { res.status = 'ok'; res.synced = synced; res.success = success; }\nreturn [{ json: res }];"
+      },
+      "id": "result-recursos",
+      "name": "Result Recursos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Resultado por entidad: PS_Years\nconst items = $input.all();\nlet failed = 0;\nlet firstErr = '';\nfor (const it of items) {\n  const j = it?.json || {};\n  const msg = j?.error?.message || j?.message || j?.data?.error || j?.response?.body || j?.responseBody || null;\n  if (msg && !firstErr) firstErr = String(msg);\n  if (msg) failed++;\n}\nconst success = items.length - failed;\nlet synced = success;\ntry { if (synced === 0) synced = $items('Transform PS_Years').length; } catch (e) {}\nconst res = { key: 'ps_year', causeNode: 'Upsert PS_Year' };\nif (failed > 0) { res.status = 'error'; res.synced = success; res.failed = failed; res.message = firstErr; } else { res.status = 'ok'; res.synced = synced; res.success = success; }\nreturn [{ json: res }];"
+      },
+      "id": "result-ps-years",
+      "name": "Result PS_Years",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Resultado por entidad: Proyectos\nconst items = $input.all();\nlet failed = 0;\nlet firstErr = '';\nfor (const it of items) {\n  const j = it?.json || {};\n  const msg = j?.error?.message || j?.message || j?.data?.error || j?.response?.body || j?.responseBody || null;\n  if (msg && !firstErr) firstErr = String(msg);\n  if (msg) failed++;\n}\nconst success = items.length - failed;\nlet synced = success;\ntry { if (synced === 0) synced = $items('Transform Proyectos').length; } catch (e) {}\nconst res = { key: 'proyectos', causeNode: 'Upsert Proyectos' };\nif (failed > 0) { res.status = 'error'; res.synced = success; res.failed = failed; res.message = firstErr; } else { res.status = 'ok'; res.synced = synced; res.success = success; }\nreturn [{ json: res }];"
+      },
+      "id": "result-proyectos",
+      "name": "Result Proyectos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Resultado por entidad: Equipo Proyectos\nconst items = $input.all();\nlet failed = 0;\nlet firstErr = '';\nfor (const it of items) {\n  const j = it?.json || {};\n  const msg = j?.error?.message || j?.message || j?.data?.error || j?.response?.body || j?.responseBody || null;\n  if (msg && !firstErr) firstErr = String(msg);\n  if (msg) failed++;\n}\nconst success = items.length - failed;\nlet synced = success;\ntry { if (synced === 0) synced = $items('Transform Equipo Proyectos').length; } catch (e) {}\nconst res = { key: 'equipo_proyectos', causeNode: 'Upsert Equipo Proyectos' };\nif (failed > 0) { res.status = 'error'; res.synced = success; res.failed = failed; res.message = firstErr; } else { res.status = 'ok'; res.synced = synced; res.success = success; }\nreturn [{ json: res }];"
+      },
+      "id": "result-equipo-proyectos",
+      "name": "Result Equipo Proyectos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "wait"
+      },
+      "id": "merge-results",
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        2080,
         608
       ]
     },
@@ -340,7 +409,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const companyName = $items('Build sync_state map')[0]?.json?.company || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"
+        "jsCode": "const err = $node['Upsert Recursos']?.json?.error;\nif (err) { return []; }\nconst companyName = $items('Build sync_state map')[0]?.json?.company || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"
       },
       "id": "compute-now-iso-recursos",
       "name": "Compute now ISO (Recursos)",
@@ -353,7 +422,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const companyName = $items('Build sync_state map')[0]?.json?.company || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"
+        "jsCode": "const err = $node['Upsert PS_Year']?.json?.error;\nif (err) { return []; }\nconst companyName = $items('Build sync_state map')[0]?.json?.company || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"
       },
       "id": "compute-now-iso-years",
       "name": "Compute now ISO (PS_Years)",
@@ -366,7 +435,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const companyName = $items('Build sync_state map')[0]?.json?.company || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"
+        "jsCode": "const err = $node['Upsert Proyectos']?.json?.error;\nif (err) { return []; }\nconst companyName = $items('Build sync_state map')[0]?.json?.company || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"
       },
       "id": "compute-now-iso-proyectos",
       "name": "Compute now ISO (Proyectos)",
@@ -379,7 +448,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const companyName = $items('Build sync_state map')[0]?.json?.company || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"
+        "jsCode": "const err = $node['Upsert Equipo Proyectos']?.json?.error;\nif (err) { return []; }\nconst companyName = $items('Build sync_state map')[0]?.json?.company || '';\nreturn [{ json: { companyName, nowIso: new Date().toISOString() } }];"
       },
       "id": "compute-now-iso-equipo-proyectos",
       "name": "Compute now ISO (Equipo Proyectos)",
@@ -707,6 +776,11 @@
             "node": "Compute now ISO (Recursos)",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Result Recursos",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -716,6 +790,11 @@
         [
           {
             "node": "Compute now ISO (PS_Years)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Result PS_Years",
             "type": "main",
             "index": 0
           }
@@ -729,6 +808,11 @@
             "node": "Compute now ISO (Proyectos)",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Result Proyectos",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -738,6 +822,11 @@
         [
           {
             "node": "Compute now ISO (Equipo Proyectos)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Result Equipo Proyectos",
             "type": "main",
             "index": 0
           }
@@ -846,44 +935,24 @@
     "Update sync_state (Recursos)": {
       "main": [
         [
-          {
-            "node": "Compute Execution Summary",
-            "type": "main",
-            "index": 0
-          }
         ]
       ]
     },
     "Update sync_state (PS_Years)": {
       "main": [
         [
-          {
-            "node": "Compute Execution Summary",
-            "type": "main",
-            "index": 0
-          }
         ]
       ]
     },
     "Update sync_state (Proyectos)": {
       "main": [
         [
-          {
-            "node": "Compute Execution Summary",
-            "type": "main",
-            "index": 0
-          }
         ]
       ]
     },
     "Update sync_state (Equipo Proyectos)": {
       "main": [
         [
-          {
-            "node": "Compute Execution Summary",
-            "type": "main",
-            "index": 0
-          }
         ]
       ]
     },
@@ -903,11 +972,6 @@
         [
           {
             "node": "Get sync_state ALL",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Response Success",
             "type": "main",
             "index": 0
           }
@@ -945,6 +1009,61 @@
           },
           {
             "node": "BC API - Equipo Proyectos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Result Recursos": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Result PS_Years": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Result Proyectos": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Result Equipo Proyectos": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge Results": {
+      "main": [
+        [
+          {
+            "node": "Compute Execution Summary",
             "type": "main",
             "index": 0
           }
