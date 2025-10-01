@@ -1,0 +1,1817 @@
+{
+  "name": "001_sincronizacion_completa_smart",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Resolve Company').first().json.companyId\n  + ')/ProyectosTareas?$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['job_task']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "60ecb5ed-40bf-4063-92ba-8460dfc95f28",
+      "name": "HTTP - ProyectosTareas (filtrado)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        432,
+        -880
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\nconst jobSet = new Set(($('Build job set').first().json.jobNos || []).map(s => String(s).trim()));\n\nconst data = input[0].json;\nconst tareas = data.value || [];\nconst items = [];\n\nfor (const t of tareas) {\n  const job_no = String(t.projectNo ?? t.jobNo ?? t.job_no ?? '').trim();\n  const task_no = String(t.no ?? '').trim();\n  const description = String(t.description ?? '').trim() || 'Sin descripción';\n  if (!job_no || !task_no) continue;\n  if (!jobSet.has(job_no)) continue;\n\n  items.push({\n    json: { job_no, task_no, description, company_name: companyName },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+      },
+      "id": "036cd795-aa75-40d7-9642-e521a8a6ad04",
+      "name": "Transformar ProyectosTareas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        -784
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 100,
+        "options": {}
+      },
+      "id": "9bc1791c-14b7-4cfa-88f5-e959be1ee5b4",
+      "name": "Split In Batches (upsert tasks)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -784
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json); return [{ json: { payload: rows } }];"
+      },
+      "id": "0c4282d0-6d72-4ff3-bf0c-205402c48dd9",
+      "name": "Pack batch (tasks)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        -864
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.88.68:8000/rest/v1/job_task?on_conflict=company_name,job_no,task_no",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "bc8f4f53-5078-4155-abab-5455e6167f32",
+      "name": "HTTP - Upsert job_task (Supabase REST)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1328,
+        -784
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+      },
+      "id": "42788064-ce5d-4cd4-94ab-d9f7a73dec15",
+      "name": "Compute now ISO (tasks)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        -784
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "job_task"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "e8702a81-ed7c-40d4-998c-4d5b038b90b3",
+      "name": "Update sync_state (tasks)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        -784
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Resolve Company').first().json.companyId\n  + ')/Recursos?$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['resource']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "cb136f48-4e84-4c8c-b445-3c46a8a7012c",
+      "name": "HTTP - Recursos (filtrado)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1360,
+        -1008
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst first = input[0];\nconst data = first.json;\nconst recursos = data.value || [];\nconst items = [];\n\nconst company = $('Resolve Company').first().json.companyName; // <- dinámico\n\nfor (const r of recursos) {\n  const code = r.no || '';\n  const name = r.name || '';\n  const email = String(r.email ?? r.arbvrneMail ?? '').trim(); // prioriza email\n  const department = String(r.globalDimension1Code ?? r.department ?? '').trim();\n  const calendarRaw = r.calendar_type ?? r.calendarType ?? r.Calendario ?? r.calendario ?? '';\n  const calendar_type = String(calendarRaw).trim();\n\n  if (!email || !email.includes('@')) continue;\n  if (!department) continue;\n\n  items.push({\n    json: {\n      code,\n      name,\n      email,\n      department_code: department,\n      company_name: company, // <- aquí\n      calendar_type,\n    },\n  });\n}\n\nreturn items;"
+      },
+      "id": "7ae9e50a-c78b-41d6-aee4-ee4fcb856b7d",
+      "name": "Transformar Recursos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1136,
+        -1008
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 100,
+        "options": {}
+      },
+      "id": "a8739a63-bb6b-44a6-b470-1c5e45696830",
+      "name": "Split In Batches (upsert)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        -1008
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => {\n  const j = i.json || {};\n  return {\n    ...j,\n    calendar_type: (j.calendar_type && String(j.calendar_type).trim())\n      || (j.calendarType && String(j.calendarType).trim())\n      || 'DEFAULT' // valor por defecto\n  };\n});\nreturn [{ json: { payload: rows } }];"
+      },
+      "id": "8a8ac98e-0623-4e0b-a4e7-63fad549fe02",
+      "name": "Pack batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -688,
+        -1024
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.88.68:8000/rest/v1/resource?on_conflict=company_name,code",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "e7ae76a5-1f3b-4d87-b69b-6635cf1b525e",
+      "name": "HTTP - Upsert resource (Supabase REST)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -464,
+        -1008
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+      },
+      "id": "00033b2f-8a6f-4345-bd0c-32a0e15dd83d",
+      "name": "Compute now ISO (resource)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        -1008
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "resource"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "5de41ae9-b519-4634-9dab-cd46bf92a4ac",
+      "name": "Update sync_state (resource)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        -1008
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Resolve Company').first().json.companyId\n  + ')/Proyectos?$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['job']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "c4557795-cc59-4b0b-97cb-3d5f7fe74bae",
+      "name": "HTTP - Proyectos (filtrado)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1360,
+        -160
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName; // <- dinámico\nconst data = input[0].json;\nconst proyectos = data.value || [];\nconst items = [];\n\nconst allowed = new Set(['Open','Planning','Completed','Lost']);\n\nfor (const p of proyectos) {\n  const statusRaw = p.estado ?? p.Estado ?? p.status ?? '';\n  const status = String(statusRaw).trim();\n  if (!allowed.has(status)) continue;\n\n  // Filtrar proyectos que comienzan por PP o PY\n  const projectNo = String(p.no || '').trim();\n  if (projectNo.startsWith('PP') || projectNo.startsWith('PY')) {\n    continue;\n  }\n\n  items.push({\n    json: {\n      no: projectNo,\n      description: p.description || '',\n      status,\n      responsible: p.Responsible || p.responsible || '',\n      departamento: p.departamento || p.GlobalDimension1Code || '',\n      company_name: companyName, // <- aquí\n    },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+      },
+      "id": "7fa4a1f1-e541-46fb-905f-8949f5e61aa6",
+      "name": "Transformar Proyectos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1136,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 100,
+        "options": {}
+      },
+      "id": "4e8cad1a-d2f6-49cc-8643-b5fb789bf94d",
+      "name": "Split In Batches (upsert jobs)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json); return [{ json: { payload: rows } }];"
+      },
+      "id": "7f92766e-31b7-4081-9746-f9b5be1e5fec",
+      "name": "Pack batch (jobs)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -688,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.88.68:8000/rest/v1/job?on_conflict=company_name,no",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "d52f6651-90cd-4c5f-abda-c8412e52dc9c",
+      "name": "HTTP - Upsert job (Supabase REST)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -464,
+        -64
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+      },
+      "id": "b26d24ba-324e-4373-b8b7-63559daf4f00",
+      "name": "Compute now ISO (jobs)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "job"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "76c96c70-e632-4cc7-8501-68cd83e1d70d",
+      "name": "Update sync_state (jobs)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        16
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Resolve Company').first().json.companyId\n  + ')/ProyectosEquipos?$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['job_team']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "975d1eb7-695e-4958-a2b9-2d52e8e0f951",
+      "name": "HTTP - ProyectosEquipos (filtrado)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        432,
+        -1168
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\nconst jobSet = new Set(($('Build job set').first().json.jobNos || []).map(s => String(s).trim()));\n\nconst data = input[0].json;\nconst equipos = data.value || [];\nconst items = [];\n\nfor (const e of equipos) {\n  const job_no = String(e.job_no ?? e.jobNo ?? e.NoProyecto ?? '').trim();\n  const resource_no = String(e.resource_no ?? e.resourceNo ?? e.NoRecurso ?? '').trim();\n\n  if (!job_no || !resource_no) continue;\n  if (!jobSet.has(job_no)) continue;\n\n  items.push({\n    json: { company_name: companyName, job_no, resource_no },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+      },
+      "id": "7b7495e8-6f1f-41f2-a67e-488466daac4a",
+      "name": "Transformar ProyectosEquipos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        -1072
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 100,
+        "options": {}
+      },
+      "id": "a45aa8e5-e4ca-4658-8908-30a443b595c4",
+      "name": "Split In Batches (upsert team)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -1072
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.88.68:8000/rest/v1/job_team?on_conflict=company_name,job_no,resource_no",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "33d1c1c9-55e4-4dd0-abe6-42cce4cd7507",
+      "name": "HTTP - Upsert job_team (Supabase REST)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1328,
+        -1072
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+      },
+      "id": "c897b185-d8c3-4818-ad22-df6f0705dc5f",
+      "name": "Compute now ISO (team)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        -1072
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "job_team"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "c99c0fef-4a22-435f-b06f-db2ade33ef4a",
+      "name": "Update sync_state (team)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        -1072
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Resolve Company').first().json.companyId\n  + ')/RecursosCostos?$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['resource_cost']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "963ac79f-6da6-4151-9a5e-3e1c128d6df3",
+      "name": "HTTP - RecursosCostos (filtrado)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        432,
+        -592
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst data = input[0].json;\nconst rows = data.value || [];\nconst items = [];\n\nconst companyName = $('Resolve Company').first().json.companyName; // dinámico\n\nfor (const r of rows) {\n  const resource_no = String(r.resource_no ?? r.resourceNo ?? r.noRecurso ?? '').trim();\n  const cost_center = String(r.work_type ?? r.workType ?? r.tipoTrabajo ?? '').trim();\n  const cost_per_hour = Number(r.unit_cost ?? r.unitCost ?? r.costoUnitario ?? 0);\n\n  if (!resource_no || !cost_center) continue;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      resource_no,\n      cost_center,\n      cost_per_hour,\n    },\n    pairedItem: { item: 0 },\n  });\n}\n\nreturn items;"
+      },
+      "id": "15238363-f59c-455d-809f-0b5d773b0238",
+      "name": "Transformar RecursosCostos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        -496
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 100,
+        "options": {}
+      },
+      "id": "412e5f3c-ca2d-43dc-bdde-5a6ac23fcc0a",
+      "name": "Split In Batches (upsert resource_cost)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -496
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json || {}); return [{ json: { payload: rows } }];"
+      },
+      "id": "64331bb1-28cb-4ad7-868b-ed6362de213f",
+      "name": "Pack batch (resource_cost)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        -576
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.88.68:8000/rest/v1/resource_cost?on_conflict=company_name,resource_no,cost_center",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "e093c5fb-60ed-46ca-a77c-7eb440b02175",
+      "name": "HTTP - Upsert resource_cost (Supabase REST)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1328,
+        -496
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+      },
+      "id": "ab8636b1-fa56-4c39-8091-f888b3102558",
+      "name": "Compute now ISO (resource_cost)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        -496
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "resource_cost"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "3b970e36-3ddb-4738-8a90-e04c7005499d",
+      "name": "Update sync_state (resource_cost)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        -496
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Resolve Company').first().json.companyId\n  + ')/CalendaroPeriodosDias?$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['calendar_period_days']\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "ba321c73-7239-4762-8341-a52e5829f53d",
+      "name": "HTTP - CalendarPeriodDays (filtrado)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        432,
+        160
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "5caHilW1m87Snw87",
+          "name": "Business Central"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();\nif (input.length === 0) return [];\n\nconst companyName = $('Resolve Company').first().json.companyName;\n\nconst data = input[0].json;\nconst rows = Array.isArray(data.value) ? data.value : [];\nconst items = [];\n\nfor (const r of rows) {\n  const calendar_type = String(r.calendar_code ?? r.calendarCode ?? '').trim();\n  const dayRaw = r.day ?? r.Day ?? r.date ?? '';\n  const date = String(dayRaw).trim();\n  if (!date) continue;\n\n  const hours_working = Number(r.hours_working ?? r.hoursWorking ?? 0);\n  const is_working_day = hours_working > 0;\n\n  items.push({\n    json: {\n      company_name: companyName,\n      date,\n      is_working_day,\n      calendar_type\n    }\n  });\n}\n\nreturn items;"
+      },
+      "id": "af42a909-709e-471a-82fa-e1231284f3b9",
+      "name": "Transformar CalendarPeriodDays",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 100,
+        "options": {}
+      },
+      "id": "d802a670-c549-4c90-a245-cf8856700bed",
+      "name": "Split In Batches (upsert calendar)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        880,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json || {}); return [{ json: { payload: rows } }];"
+      },
+      "id": "28b156fe-9876-4d35-b17a-f3b24b48e1d7",
+      "name": "Pack batch (calendar)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.88.68:8000/rest/v1/calendar_period_days?on_conflict=company_name,date,calendar_type",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "23b6ed32-2f47-47bd-92e2-195f574e7fc5",
+      "name": "HTTP - Upsert calendar_period_days (Supabase REST)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1328,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { nowIso: new Date().toISOString() } }];"
+      },
+      "id": "aeea1b55-4189-49c2-9fad-f851c997d607",
+      "name": "Compute now ISO (calendar)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            },
+            {
+              "keyName": "entity",
+              "condition": "eq",
+              "keyValue": "calendar_period_days"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_sync_at",
+              "fieldValue": "={{ $json.nowIso }}"
+            }
+          ]
+        }
+      },
+      "id": "a15ba316-215e-4b22-98b9-3baa3c21619e",
+      "name": "Update sync_state (calendar)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        160
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ejecutar-sync-bc-to-supabase",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2256,
+        -64
+      ],
+      "id": "a0e6df3d-5357-4c06-842b-29b59a27954b",
+      "name": "Webhook Trigger",
+      "webhookId": "8a27722f-ef0b-42c3-abb3-32ab91bda2a3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $json.params || {};\nconst slugRaw = (p.company || $json.query?.company || '').toString().trim().toLowerCase();\nconst slug = encodeURI(slugRaw);\nconst map = {\n  'psi': { companyName: 'Power Solution Iberia SL', companyId: 'ca9dc1bf-54ee-ed11-884a-000d3a455d5b' },\n  'pslab': { companyName: 'PS LAB CONSULTING SL', companyId: '656f8f0e-2bf4-ed11-8848-000d3a4baf18' }\n};\nconst chosen = map[slug];\nif (!chosen) {\n  return [{ json: { error: 'Invalid company', slug } }];\n}\nreturn [{ json: { companyName: chosen.companyName, companyId: chosen.companyId, slug } }];"
+      },
+      "id": "c804002a-c455-47c0-a1ab-9493c6cf576a",
+      "name": "Resolve Company",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2032,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, message: \"Sincronización BC a Supabase completada exitosamente\", timestamp: new Date().toISOString(), errors: $('Collect Errors').first().json.errors || [] } }}",
+        "options": {}
+      },
+      "id": "6f23f500-500a-4be8-92d4-b5f4e3ed5fec",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2448,
+        -496
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Recopilar errores de todas las entidades\nconst errors = [];\n\n// Función para extraer errores de una respuesta HTTP\nfunction extractErrors(response, entity) {\n  if (!response || !response.error) return;\n  \n  const error = response.error;\n  let message = error.message || 'Error desconocido';\n  \n  // Detectar duplicados específicamente\n  if (message.includes('duplicate') || message.includes('conflict') || message.includes('already exists')) {\n    message = `DUPLICADO: ${message}`;\n  }\n  \n  // Extraer detalles del proyecto si es posible\n  let projectInfo = '';\n  if (response.body) {\n    try {\n      const body = typeof response.body === 'string' ? JSON.parse(response.body) : response.body;\n      if (body.no) projectInfo = ` (Proyecto: ${body.no})`;\n      if (body.job_no) projectInfo = ` (Job: ${body.job_no})`;\n      if (body.resource_no) projectInfo = ` (Recurso: ${body.resource_no})`;\n    } catch (e) {\n      // Ignorar errores de parsing\n    }\n  }\n  \n  errors.push({\n    entity,\n    error: message + projectInfo,\n    timestamp: new Date().toISOString()\n  });\n}\n\n// Recopilar errores de todas las entidades\nconst allInputs = $input.all();\nfor (const input of allInputs) {\n  if (input.json && input.json.error) {\n    extractErrors(input.json, 'General');\n  }\n}\n\nreturn [{ json: { errors, totalErrors: errors.length } }];"
+      },
+      "id": "9d48f976-75d1-46a1-a7e8-e505f5ed4ae5",
+      "name": "Collect Errors",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2224,
+        -496
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Manejar errores específicos de proyectos\nconst input = $input.all();\nconst errors = [];\n\n// Obtener datos del nodo HTTP anterior\nconst httpData = $('HTTP - Upsert job (Supabase REST)').all();\n\nfor (const httpItem of httpData) {\n  // Verificar si hay error en la respuesta HTTP\n  if (httpItem.json && httpItem.json.error) {\n    const error = httpItem.json.error;\n    let message = error.message || 'Error desconocido en proyecto';\n    \n    // Detectar duplicados\n    if (message.includes('duplicate') || message.includes('conflict') || message.includes('already exists') || message.includes('unique constraint')) {\n      message = `DUPLICADO: ${message}`;\n    }\n    \n    // Extraer información del proyecto del payload original\n    let projectInfo = '';\n    try {\n      // Buscar en el payload original que se envió\n      const payload = httpItem.json.body || httpItem.json.payload || {};\n      let projectData = {};\n      \n      if (Array.isArray(payload)) {\n        // Si es un array, tomar el primer elemento\n        projectData = payload[0] || {};\n      } else if (typeof payload === 'object') {\n        projectData = payload;\n      }\n      \n      if (projectData.no) projectInfo = ` (Proyecto: ${projectData.no})`;\n      if (projectData.description) projectInfo += ` (${projectData.description})`;\n    } catch (e) {\n      // Ignorar errores de parsing\n    }\n    \n    errors.push({\n      entity: 'job',\n      error: message + projectInfo,\n      timestamp: new Date().toISOString()\n    });\n  }\n}\n\n// Si no hay errores, devolver array vacío\nreturn [{ json: { errors, totalErrors: errors.length } }];"
+      },
+      "id": "fa48e5ec-f5fe-4c56-bb83-b4e6ccda2502",
+      "name": "Error Handler (Jobs)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1776,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json || {}); return [{ json: { payload: rows } }];"
+      },
+      "id": "e01ccd2e-ea7a-4a5a-b442-ec8663e7be09",
+      "name": "Pack batch (team)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        -1152
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]);\n\n// Entidades que nos interesan\nconst entities = ['job','job_task','calendar_period_days','job_team','resource','resource_cost'];\n\nconst byEntity = {};\nfor (const r of rows) {\n  const e = String(r.entity || '').trim();\n  const raw = String(r.last_sync_at || '').trim();\n  if (!e || !raw) continue;\n  const iso = new Date(raw.replace(' ', 'T')).toISOString();\n  byEntity[e] = iso;\n}\n\n// NO lanzar error: devolver faltantes para que el flujo las salte\nconst missing = entities.filter(e => !(e in byEntity));\n\nreturn [{\n  json: {\n    syncStateByEntity: byEntity,\n    missing,\n    company: $('Resolve Company').first().json.companyName,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1584,
+        -160
+      ],
+      "id": "ead10554-f5c7-4257-ac1a-9918bb96c4d9",
+      "name": "Build sync_state map"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2480,
+        -256
+      ],
+      "id": "54e7f8ec-ed15-45cb-9a19-9e542638770e",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "18ae6cd4-9853-4694-ac15-bcf52e8e4597",
+              "name": "query.company",
+              "value": "psi",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2256,
+        -256
+      ],
+      "id": "1170033b-0d9c-451e-8d4b-f0f3b2fbe850",
+      "name": "Set Company"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "sync_state",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "company_name",
+              "condition": "eq",
+              "keyValue": "={{ $('Resolve Company').first().json.companyName }}"
+            }
+          ]
+        }
+      },
+      "id": "4fa1e328-036e-4e2b-81b1-3cb9a3c43957",
+      "name": "Get sync_state ALL",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1808,
+        -160
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Qa0kL8CVFxjwQVZ5",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().flatMap(i => Array.isArray(i.json) ? i.json : [i.json]);\n\n// En la tabla job la clave es \"no\" (y como fallback \"job_no\")\nconst jobNos = rows\n  .map(r => String(r.no ?? r.job_no ?? '').trim())\n  .filter(Boolean);\n\nreturn [{ json: { jobNos } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        -400
+      ],
+      "id": "2c2db7d8-f164-42c7-b2c2-eee194d27d9d",
+      "name": "Build job set"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        208,
+        -1008
+      ],
+      "id": "0ae7c24d-43d0-41df-b7f1-e609f882f405",
+      "name": "Wait jobs+resources"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "numberInputs": 5
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2000,
+        -544
+      ],
+      "id": "d6d00076-8a12-4b9a-804d-99c3a7b0f6d5",
+      "name": "Wait All Complete"
+    }
+  ],
+  "connections": {
+    "HTTP - ProyectosTareas (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar ProyectosTareas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar ProyectosTareas": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches (upsert tasks)": {
+      "main": [
+        [
+          {
+            "node": "Pack batch (tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pack batch (tasks)": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert job_task (Supabase REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert job_task (Supabase REST)": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert tasks)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compute now ISO (tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (tasks)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (tasks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (tasks)": {
+      "main": [
+        [
+          {
+            "node": "Wait All Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Recursos (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar Recursos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar Recursos": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches (upsert)": {
+      "main": [
+        [
+          {
+            "node": "Pack batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pack batch": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert resource (Supabase REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert resource (Supabase REST)": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compute now ISO (resource)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (resource)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (resource)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (resource)": {
+      "main": [
+        [
+          {
+            "node": "Wait jobs+resources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Proyectos (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar Proyectos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar Proyectos": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert jobs)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build job set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches (upsert jobs)": {
+      "main": [
+        [
+          {
+            "node": "Pack batch (jobs)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pack batch (jobs)": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert job (Supabase REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert job (Supabase REST)": {
+      "main": [
+        [
+          {
+            "node": "Compute now ISO (jobs)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split In Batches (upsert jobs)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Handler (Jobs)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Handler (Jobs)": {
+      "main": [
+        [
+          {
+            "node": "Wait All Complete",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (jobs)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (jobs)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (jobs)": {
+      "main": [
+        [
+          {
+            "node": "Wait jobs+resources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP - ProyectosEquipos (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar ProyectosEquipos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar ProyectosEquipos": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches (upsert team)": {
+      "main": [
+        [
+          {
+            "node": "Pack batch (team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert job_team (Supabase REST)": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert team)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compute now ISO (team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (team)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (team)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (team)": {
+      "main": [
+        [
+          {
+            "node": "Wait All Complete",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP - RecursosCostos (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar RecursosCostos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar RecursosCostos": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert resource_cost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches (upsert resource_cost)": {
+      "main": [
+        [
+          {
+            "node": "Pack batch (resource_cost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pack batch (resource_cost)": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert resource_cost (Supabase REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert resource_cost (Supabase REST)": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert resource_cost)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compute now ISO (resource_cost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (resource_cost)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (resource_cost)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - CalendarPeriodDays (filtrado)": {
+      "main": [
+        [
+          {
+            "node": "Transformar CalendarPeriodDays",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transformar CalendarPeriodDays": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert calendar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches (upsert calendar)": {
+      "main": [
+        [
+          {
+            "node": "Pack batch (calendar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pack batch (calendar)": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert calendar_period_days (Supabase REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Upsert calendar_period_days (Supabase REST)": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches (upsert calendar)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Compute now ISO (calendar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute now ISO (calendar)": {
+      "main": [
+        [
+          {
+            "node": "Update sync_state (calendar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Resolve Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Company": {
+      "main": [
+        [
+          {
+            "node": "Get sync_state ALL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pack batch (team)": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Upsert job_team (Supabase REST)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build sync_state map": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Proyectos (filtrado)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - CalendarPeriodDays (filtrado)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - Recursos (filtrado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Set Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Company": {
+      "main": [
+        [
+          {
+            "node": "Resolve Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get sync_state ALL": {
+      "main": [
+        [
+          {
+            "node": "Build sync_state map",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build job set": {
+      "main": [
+        [
+          {
+            "node": "Transformar ProyectosEquipos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Transformar ProyectosTareas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait jobs+resources": {
+      "main": [
+        [
+          {
+            "node": "HTTP - ProyectosTareas (filtrado)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - ProyectosEquipos (filtrado)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - RecursosCostos (filtrado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait All Complete": {
+      "main": [
+        [
+          {
+            "node": "Collect Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Errors": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update sync_state (resource_cost)": {
+      "main": [
+        [
+          {
+            "node": "Wait All Complete",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Update sync_state (calendar)": {
+      "main": [
+        [
+          {
+            "node": "Wait All Complete",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  }
+}

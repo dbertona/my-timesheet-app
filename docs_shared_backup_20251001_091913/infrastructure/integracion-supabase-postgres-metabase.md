@@ -12,17 +12,11 @@ Este documento describe cómo están desplegados y cómo conectar nuestros servi
   - API: `http://192.168.88.68:3001/api/`
 - PS-Analytics:
   - PostgreSQL: host `192.168.88.68`, puerto `5435`, database `postgres`, usuario `postgres`
-<<<<<<< HEAD:my-timesheet-app/docs/integracion-supabase-postgres-metabase.md
   - PostgREST: No disponible actualmente (sin tablas creadas)
 - Metabase:
   - UI: `http://192.168.88.68:3000/`
 - Supabase Studio Analytics:
   - UI: `http://192.168.88.68:3003/`
-=======
-  - PostgREST: `http://192.168.88.68:3002/rest/v1/` (vacío actualmente)
-- Metabase:
-  - UI: `http://192.168.88.68:3000/`
->>>>>>> aa59b93 (Add shared documentation as submodule):docs/integracion-supabase-postgres-metabase.md
 
 Notas:
 - En el host hay otros servicios escuchando 5432 (Metabase DB interna) y 5433 (Timesheet PG). PS-Analytics expone su PostgreSQL en 5435.
@@ -73,7 +67,6 @@ jdbc:postgresql://192.168.88.68:5435/postgres
 ```bash
 curl -s "http://192.168.88.68:8000/rest/v1/timesheet?limit=1"
 ```
-<<<<<<< HEAD:my-timesheet-app/docs/integracion-supabase-postgres-metabase.md
 - Supabase Studio (Timesheet):
 ```bash
 curl -s "http://192.168.88.68:3002/" | head -5
@@ -81,11 +74,6 @@ curl -s "http://192.168.88.68:3002/" | head -5
 - Supabase Studio Analytics:
 ```bash
 curl -s "http://192.168.88.68:3003/" | head -5
-=======
-- PostgREST (PS-Analytics):
-```bash
-curl -s "http://192.168.88.68:3002/rest/v1/"
->>>>>>> aa59b93 (Add shared documentation as submodule):docs/integracion-supabase-postgres-metabase.md
 ```
 - Backend Timesheet:
 ```bash
@@ -102,13 +90,8 @@ curl -s "http://192.168.88.68:3000/" | head -5
 - 5433: `timesheet-postgres` (Supabase Timesheet)
 - 5435: `ps-analytics-db` (PostgreSQL expuesto para Metabase)
 - 3001: Backend Node (Timesheet)
-<<<<<<< HEAD:my-timesheet-app/docs/integracion-supabase-postgres-metabase.md
 - 3002: Supabase Studio (Timesheet)
 - 3003: Supabase Studio Analytics
-=======
-- 3002: PostgREST PS-Analytics
-- 3003: Supabase Studio (Timesheet)
->>>>>>> aa59b93 (Add shared documentation as submodule):docs/integracion-supabase-postgres-metabase.md
 
 ## Troubleshooting
 

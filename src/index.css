@@ -1,0 +1,63 @@
+html {
+  font-family:
+    "Segoe UI",
+    SegoeUI,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    Inter,
+    "Noto Sans",
+    "Liberation Sans",
+    system-ui,
+    sans-serif;
+  font-size: clamp(12px, 0.9vw + 10px, 16px);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
+}
+
+body {
+  font-family: inherit;
+  margin: 0; /* Eliminar margen por defecto que provoca scroll */
+}
+
+/* Asegurar que el viewport ocupa toda la altura disponible */
+html,
+body {
+  height: 100%;
+  overflow-x: hidden; /* Prevenir desbordes horizontales que generan scroll */
+  overflow-y: hidden; /* Bloquear scroll vertical global; usar scroll interno por vista */
+}
+
+/* Bloquear scroll global cuando las vistas gestionan su propio scroll interno */
+html.no-scroll,
+body.no-scroll {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Margen/padding horizontal unificado entre páginas (igual que edición) */
+.ts-page {
+  padding-left: 20px;
+  padding-right: 20px;
+  margin-top: 12px;
+  box-sizing: border-box;
+  max-width: 100vw;
+}
+
+* {
+  font-family: inherit;
+}
+
+table,
+th,
+td,
+input,
+button,
+select,
+textarea {
+  font-family: inherit !important;
+  font-size: inherit;
+}

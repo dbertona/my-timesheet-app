@@ -1,0 +1,384 @@
+// import { useVirtualizer } from "@tanstack/react-virtual"; // desactivado en fallback
+import React, {
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+import { FiChevronDown, FiSearch } from "react-icons/fi";
+import { fetchJobStatus } from "../../api/jobs";
+import TIMESHEET_FIELDS from "../../constants/timesheetFields";
+import useDropdownFilter from "../../utils/useDropdownFilter";
+
+export default function ProjectCell({
+  line,
+  lineIndex,
+  colStyle,
+  align,
+  editFormData,
+  inputRefs,
+  hasRefs,
+  setSafeRef,
+  error,
+  isEditable = true, // 🆕 Nueva prop para controlar si es editable
+  handlers,
+  jobsState,
+}) {
+  const {
+    handleInputChange,
+    handleInputFocus,
+    handleKeyDown,
+    setFieldError,
+    clearFieldError,
+  } = handlers;
+
+  const { jobsLoaded, ensureTasksLoaded, findJob, jobs = [] } = jobsState;
+  const jobsFilter = useDropdownFilter();
+  const jobFilter = jobsFilter.filterByLine;
+  const setJobFilter = jobsFilter.setFilterByLine;
+  const jobOpenFor = jobsFilter.openFor;
+  const setJobOpenFor = jobsFilter.setOpenFor;
+  const getVisibleJobs = useCallback(
+    (lineId) =>
+      jobsFilter.getVisible(
+        lineId,
+        jobs,
+        (j) => `${j.no} ${j.description || ""}`
+      ),
+    [jobsFilter, jobs]
+  );
+
+  // Estado para el status del proyecto seleccionado
+  const [projectStatus, setProjectStatus] = useState(null);
+  // Estado para posicionamiento inteligente del dropdown
+  const [dropdownRect, setDropdownRect] = useState(null);
+  const cellWrapperRef = useRef(null);
+
+  // Prefetch: cuando se abre el dropdown de proyectos o cambia el filtro,
+  // pre-cargamos tareas de los primeros candidatos visibles (hasta 5) para
+  // que el despliegue de tareas sea inmediato al seleccionar.
+  useEffect(() => {
+    if (jobOpenFor !== line.id || !jobsLoaded) return;
+    try {
+      const candidates = (getVisibleJobs(line.id) || []).slice(0, 5);
+      candidates.forEach((j) => {
+        if (j?.no) Promise.resolve(ensureTasksLoaded(j.no)).catch(() => {});
+      });
+    } catch {
+      /* ignore */
+    }
+    // Dependemos del valor del filtro específico de esta línea para reaccionar
+    // a los cambios que hace el usuario al escribir.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobOpenFor, jobsLoaded, jobFilter?.[line.id]]);
+
+  // Verificar el status del proyecto cuando cambie
+  useEffect(() => {
+    const currentJobNo = editFormData[line.id]?.job_no;
+    if (currentJobNo) {
+      fetchJobStatus(currentJobNo)
+        .then((status) => setProjectStatus(status))
+        .catch(() => setProjectStatus(null));
+    } else {
+      setProjectStatus(null);
+    }
+  }, [editFormData, line.id]);
+
+  // Posicionamiento inteligente para el dropdown de proyectos
+  useLayoutEffect(() => {
+    const updateRect = () => {
+      if (jobOpenFor !== line.id) return;
+      const el = cellWrapperRef.current;
+      if (!el) return;
+
+      const rect = el.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const dropdownHeight = 220;
+
+      let top = rect.bottom + window.scrollY;
+      let maxHeight = dropdownHeight;
+      const dropdownWidth = Math.max(rect.width, 420);
+      let left = rect.left + window.scrollX;
+
+      if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+        top = rect.top + window.scrollY - dropdownHeight;
+        if (top < 0) top = 0;
+      } else if (spaceBelow < dropdownHeight) {
+        maxHeight = Math.max(50, spaceBelow - 10);
+      }
+
+      // Clamp horizontal dentro del viewport, alineado con la celda
+      const maxLeft = window.scrollX + viewportWidth - dropdownWidth - 8;
+      const minLeft = window.scrollX + 8;
+      left = Math.max(minLeft, Math.min(left, maxLeft));
+
+      setDropdownRect({ left, top, width: dropdownWidth, maxHeight });
+    };
+
+    updateRect();
+    if (jobOpenFor === line.id) {
+      window.addEventListener("scroll", updateRect, true);
+      window.addEventListener("resize", updateRect);
+    }
+    return () => {
+      window.removeEventListener("scroll", updateRect, true);
+      window.removeEventListener("resize", updateRect);
+    };
+  }, [jobOpenFor, line.id]);
+
+  // Virtualización: hooks deben llamarse siempre, nunca condicionalmente
+  // const parentRef = useRef(null); // desactivado en fallback
+  const items = useMemo(
+    () => getVisibleJobs(line.id) || [],
+    [getVisibleJobs, line.id]
+  );
+  // Fallback sin virtualización: dejamos creado el ref por compatibilidad
+
+  return (
+    <td
+      data-col="job_no"
+      className="ts-td ts-cell"
+      style={{ ...colStyle, textAlign: align }}
+    >
+      {isEditable ? (
+        <div className="ts-cell" data-line-id={line.id} ref={cellWrapperRef}>
+          <div className="ts-cell">
+            <input
+              type="text"
+              name="job_no"
+              value={editFormData[line.id]?.job_no || ""}
+              onChange={(e) => {
+                // Solo actualizamos job_no y, si cambió, limpiamos la TAREA. No tocamos quantity.
+                handleInputChange(line.id, e);
+                clearFieldError(line.id, "job_no");
+                setJobFilter((prev) => ({
+                  ...prev,
+                  [line.id]: e.target.value,
+                }));
+
+                if (e.target.value !== editFormData[line.id]?.job_no) {
+                  handleInputChange(line.id, {
+                    target: { name: "job_task_no", value: "" },
+                  });
+                  clearFieldError(line.id, "job_task_no");
+                }
+              }}
+              onBlur={() => {
+                const raw = (editFormData[line.id]?.job_no || "").trim();
+                if (!raw) return;
+                const found = findJob(raw);
+                if (!found) {
+                  setFieldError(
+                    line.id,
+                    "job_no",
+                    "Proyecto inválido. Debe seleccionar uno de la lista."
+                  );
+                  const el = inputRefs?.current?.[line.id]?.["job_no"];
+                  if (el)
+                    setTimeout(() => {
+                      el.focus();
+                      el.select();
+                    }, 0);
+                  return;
+                }
+                if (found.no !== raw) {
+                  handleInputChange(line.id, {
+                    target: { name: "job_no", value: found.no },
+                  });
+                }
+                clearFieldError(line.id, "job_no");
+                setJobOpenFor(null);
+              }}
+              onFocus={(e) => handleInputFocus(line.id, "job_no", e)}
+              onKeyDown={async (e) => {
+                if (e.altKey && e.key === "ArrowDown") {
+                  setJobOpenFor(line.id);
+                  e.preventDefault();
+                  return;
+                }
+                if (e.altKey && e.key === "ArrowUp") {
+                  setJobOpenFor(null);
+                  e.preventDefault();
+                  return;
+                }
+                // 🆕 F8: copiar desde celda superior (debe ir ANTES de la navegación)
+                if (e.key === "F8") {
+                  e.preventDefault();
+                  handleKeyDown(
+                    e,
+                    lineIndex,
+                    TIMESHEET_FIELDS.indexOf("job_no")
+                  );
+                  return;
+                }
+                // 🆕 Autocompletado con Enter o Tab (navegar incluso si está vacío)
+                if (e.key === "Enter" || e.key === "Tab") {
+                  const raw = (editFormData[line.id]?.job_no || "").trim();
+                  e.preventDefault(); // Prevenir comportamiento por defecto
+
+                  if (raw) {
+                    // Intentar autocompletar
+                    const found = findJob(raw);
+                    if (found && found.no !== raw) {
+                      // Autocompletar con el proyecto encontrado
+                      handleInputChange(line.id, {
+                        target: { name: "job_no", value: found.no },
+                      });
+                      clearFieldError(line.id, "job_no");
+
+                      // Limpiar tarea cuando cambia el proyecto
+                      handleInputChange(line.id, {
+                        target: { name: "job_task_no", value: "" },
+                      });
+                      clearFieldError(line.id, "job_task_no");
+                    }
+                  }
+
+                  // Continuar con la navegación incluso si raw está vacío (sincrónico para tests)
+                  handleKeyDown(
+                    e,
+                    lineIndex,
+                    TIMESHEET_FIELDS.indexOf("job_no")
+                  );
+                  return;
+                }
+
+                // TODAS las demás teclas de navegación usan la misma función
+                if (e.key.startsWith("Arrow")) {
+                  e.preventDefault(); // Prevenir comportamiento por defecto
+                  handleKeyDown(
+                    e,
+                    lineIndex,
+                    TIMESHEET_FIELDS.indexOf("job_no")
+                  );
+                  return;
+                }
+              }}
+              ref={hasRefs ? (el) => setSafeRef(line.id, "job_no", el) : null}
+              className={`ts-input pr-icon`}
+              autoComplete="off"
+            />
+            <FiChevronDown
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setJobOpenFor((prev) => (prev === line.id ? null : line.id));
+              }}
+              className="ts-icon ts-icon--chevron"
+            />
+          </div>
+
+          {/* Aviso de proyecto completado o perdido */}
+          {editFormData[line.id]?.job_no &&
+            projectStatus &&
+            (projectStatus === "Completed" || projectStatus === "Lost") && (
+              <div className="ts-project-status-warning">
+                <span className="ts-project-status-warning__icon">⚠️</span>
+                <span className="ts-project-status-warning__text">
+                  Proyecto{" "}
+                  {projectStatus === "Completed" ? "Completado" : "Perdido"}
+                </span>
+              </div>
+            )}
+
+          {jobOpenFor === line.id && (
+            <div
+              className="ts-dropdown"
+              onMouseDown={(e) => e.preventDefault()}
+              style={{
+                position: "fixed",
+                left: dropdownRect?.left ?? 0,
+                top: dropdownRect?.top ?? 0,
+                width: dropdownRect?.width ?? 420,
+                height: dropdownRect?.maxHeight ?? 220,
+                overflow: "hidden",
+                zIndex: 5000,
+              }}
+            >
+              <div className="ts-dropdown__header">
+                <FiSearch />
+                <input
+                  value={jobFilter[line.id] || ""}
+                  onChange={(e) =>
+                    setJobFilter((prev) => ({
+                      ...prev,
+                      [line.id]: e.target.value,
+                    }))
+                  }
+                  placeholder="Buscar proyecto..."
+                  style={{ width: "100%", border: "none", outline: "none" }}
+                />
+                {!jobsLoaded && (
+                  <span className="ts-spinner" aria-label="Cargando" />
+                )}
+              </div>
+              {!jobsLoaded ? (
+                <div style={{ padding: "8px", color: "#999" }}>Cargando…</div>
+              ) : (
+                <div
+                  style={{
+                    maxHeight: Math.max(40, (dropdownRect?.maxHeight ?? 220) - 40),
+                    overflowY: "auto",
+                  }}
+                >
+                  {(items || []).map((j) => (
+                    <div
+                      key={j.no}
+                      className="ts-dropdown__item"
+                      onMouseDown={async () => {
+                        handleInputChange(line.id, {
+                          target: { name: "job_no", value: j.no },
+                        });
+                        setJobFilter((prev) => ({
+                          ...prev,
+                          [line.id]: j.no,
+                        }));
+                        setJobOpenFor(null);
+                        handleInputChange(line.id, {
+                          target: { name: "job_task_no", value: "" },
+                        });
+                        await ensureTasksLoaded(j.no);
+                        const el = inputRefs.current?.[line.id]?.["job_task_no"];
+                        if (el) {
+                          el.focus();
+                          el.select();
+                        }
+                      }}
+                      title={`${j.no} - ${j.description || ""}`}
+                    >
+                      <strong>{j.no}</strong>{" "}
+                      {j.description ? `— ${j.description}` : ""}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {jobsLoaded && items.length === 0 && (
+                <div style={{ padding: "8px", color: "#999" }}>
+                  Sin resultados…
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        // 🆕 Solo lectura: mostrar el valor de la línea
+        <div className="ts-cell ts-readonly" title={line.job_no || ""}>
+          {line.job_no || ""}
+        </div>
+      )}
+      {error && (
+        <div className="ts-error">
+          <span className="ts-inline-error">
+            <span className="ts-inline-error__dot" />
+            {error}
+          </span>
+        </div>
+      )}
+    </td>
+  );
+}
