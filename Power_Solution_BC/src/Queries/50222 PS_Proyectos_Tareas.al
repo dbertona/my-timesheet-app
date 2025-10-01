@@ -26,6 +26,9 @@ query 50222 PS_Proyectos_Tareas
             column(lastModifiedDateTime; SystemModifiedAt)
             {
             }
+            column(ARBVRNTimeSheetBlocked; ARBVRNTimeSheetBlocked)
+            {
+            }
 
             dataitem(job; Job)
             {
