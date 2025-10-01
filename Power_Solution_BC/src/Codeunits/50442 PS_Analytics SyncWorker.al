@@ -65,18 +65,18 @@ codeunit 50442 "PS_Analytics SyncWorker"
         EntTok: JsonToken;
         EntObj: JsonObject;
         Val: JsonValue;
-        Key: Text;
+        EntityKeyName: Text;
         StatusTxt: Text;
         SyncedTxt: Text;
         MessageTxt: Text;
         Summary: Text;
     begin
         Summary := '';
-        Key := MapEntityKey(EntityText);
+        EntityKeyName := MapEntityKey(EntityText);
         if Root.ReadFrom(JsonText) then begin
             if Root.Get('details', Tok) and Tok.IsObject() then begin
                 Details := Tok.AsObject();
-                if Details.Get(Key, EntTok) and EntTok.IsObject() then begin
+                if Details.Get(EntityKeyName, EntTok) and EntTok.IsObject() then begin
                     EntObj := EntTok.AsObject();
                     if EntObj.Get('status', Tok) and Tok.IsValue() then begin
                         Val := Tok.AsValue();
@@ -90,7 +90,7 @@ codeunit 50442 "PS_Analytics SyncWorker"
                         Val := Tok.AsValue();
                         MessageTxt := Val.AsText();
                     end;
-                    Summary := Key + ': status=' + StatusTxt;
+                    Summary := EntityKeyName + ': status=' + StatusTxt;
                     if SyncedTxt <> '' then
                         Summary := Summary + ', synced=' + SyncedTxt;
                     if MessageTxt <> '' then
@@ -195,7 +195,10 @@ codeunit 50442 "PS_Analytics SyncWorker"
                                         // Guardar respuesta
                                         Queue."Last Response" := CopyStr(PollBody, 1, MaxStrLen(Queue."Last Response"));
                                         // Determinar estado a partir de JSON array con último registro
-                                        if (StrPos(PollBody, '"status":"error"') > 0) or (StrPos(PollBody, '"status":"partial_error"') > 0) then begin
+                                        if (StrLen(PollBody) = 0) or (StrPos(PollBody, '"status":') = 0) then begin
+                                            Queue.Status := Queue.Status::Error;
+                                            Queue."Last Error" := CopyStr('Webhook 200 sin cuerpo/estado y polling sin estado', 1, MaxStrLen(Queue."Last Error"));
+                                        end else if (StrPos(PollBody, '"status":"error"') > 0) or (StrPos(PollBody, '"status":"partial_error"') > 0) then begin
                                             Queue.Status := Queue.Status::Error;
                                             Queue."Last Error" := CopyStr(ExtractErrorSummaryForEntity(PollBody, Queue.Entity), 1, MaxStrLen(Queue."Last Error"));
                                         end else begin
@@ -206,8 +209,9 @@ codeunit 50442 "PS_Analytics SyncWorker"
                                     end;
                                 end;
                             end else begin
-                                // Fallback: sin supabase config, usar 200 OK como Done
-                                Queue.Status := Queue.Status::Done;
+                                // Fallback: sin supabase config, marcar Error (no hay cuerpo/estado)
+                                Queue.Status := Queue.Status::Error;
+                                Queue."Last Error" := CopyStr('Webhook 200 sin cuerpo/estado y sin polling Supabase', 1, MaxStrLen(Queue."Last Error"));
                                 Queue."Processed At" := CurrentDateTime();
                                 Queue.Modify(true);
                             end;
