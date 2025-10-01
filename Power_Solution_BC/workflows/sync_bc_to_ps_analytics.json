@@ -34,6 +34,7 @@
       "name": "BC API - Recursos",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
+      "continueOnFail": true,
       "position": [
         1360,
         320
@@ -56,6 +57,7 @@
       "name": "BC API - PS_Years",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
+      "continueOnFail": true,
       "position": [
         1360,
         512
@@ -78,6 +80,7 @@
       "name": "BC API - Proyectos",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
+      "continueOnFail": true,
       "position": [
         1360,
         704
@@ -91,7 +94,7 @@
     },
     {
       "parameters": {
-        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Build sync_state map').first().json.companyId\n  + ')/EquipoProyectos?$select=NoProyecto,NoRecurso,lastModifiedDateTime&$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['equipo_proyectos']\n}}",
+        "url": "={{ \n  'https://api.businesscentral.dynamics.com/v2.0/a18dc497-a8b8-4740-b723-65362ab7a3fb/Pruebas_PS/api/Power_Solution/PS_API/v2.0/companies('\n  + $('Build sync_state map').first().json.companyId\n  + ')/EquipoProyectos?$select=ARBVRNJobNo,ARBVRNResourceNo,lastModifiedDateTime&$filter=lastModifiedDateTime%20ge%20'\n  + $('Build sync_state map').first().json.syncStateByEntity['equipo_proyectos']\n}}",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "options": {}
@@ -100,6 +103,7 @@
       "name": "BC API - Equipo Proyectos",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
+      "continueOnFail": true,
       "position": [
         1360,
         896
@@ -396,7 +400,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Normaliza entrada y mapea a public.equipo_proyectos\nconst input = $input.all();\nif (input.length === 0) return [];\n\nconst src = input[0]?.json ?? {};\nconst registros = Array.isArray(src.value) ? src.value : (Array.isArray(src) ? src : [src]);\nconst items = [];\n\n// Obtener companyName del nodo Build sync_state map\nconst companyName = $items('Build sync_state map')[0]?.json?.company || '';\n\nfor (const r of registros) {\n  const noProyecto = String(r.NoProyecto ?? r.noProyecto ?? r.projectNo ?? '').trim();\n  const noRecurso = String(r.NoRecurso ?? r.noRecurso ?? r.resourceNo ?? '').trim();\n  \n  if (!noProyecto || !noRecurso) continue;\n\n  const lastModifiedDateTime = String(r.lastModifiedDateTime ?? r.last_modified_datetime ?? '').trim();\n\n  items.push({\n    json: {\n      companyName,\n      noProyecto,\n      noRecurso,\n      lastModifiedDateTime,\n    },\n  });\n}\n\nreturn items;"
+        "jsCode": "// Normaliza entrada y mapea a public.equipo_proyectos\nconst input = $input.all();\nif (input.length === 0) return [];\n\nconst src = input[0]?.json ?? {};\nconst registros = Array.isArray(src.value) ? src.value : (Array.isArray(src) ? src : [src]);\nconst items = [];\n\n// Obtener companyName del nodo Build sync_state map\nconst companyName = $items('Build sync_state map')[0]?.json?.company || '';\n\nfor (const r of registros) {\n  const noProyecto = String(r.ARBVRNJobNo ?? r.NoProyecto ?? r.noProyecto ?? r.projectNo ?? '').trim();\n  const noRecurso = String(r.ARBVRNResourceNo ?? r.NoRecurso ?? r.noRecurso ?? r.resourceNo ?? '').trim();\n  \n  if (!noProyecto || !noRecurso) continue;\n\n  const lastModifiedDateTime = String(r.lastModifiedDateTime ?? r.last_modified_datetime ?? '').trim();\n\n  items.push({\n    json: {\n      companyName,\n      noProyecto,\n      noRecurso,\n      lastModifiedDateTime,\n    },\n  });\n}\n\nreturn items;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -732,6 +736,11 @@
             "node": "Transform Recursos",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Result Recursos",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -741,6 +750,11 @@
         [
           {
             "node": "Transform PS_Years",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Result PS_Years",
             "type": "main",
             "index": 0
           }
@@ -754,6 +768,11 @@
             "node": "Transform Proyectos",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Result Proyectos",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -763,6 +782,11 @@
         [
           {
             "node": "Transform Equipo Proyectos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Result Equipo Proyectos",
             "type": "main",
             "index": 0
           }
